@@ -12,14 +12,69 @@
 import { hashPayload } from '../audit/chain.js';
 import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models.js';
 import { servedModelsOf } from './turn-record-models.js';
+import { z } from 'zod';
+import { openTenantPayload } from '../security/field-encryption';
+import { admitRunCoordination, readCoordinationKey, requireRunOwnerContext, parseOwnerPrivacyMetadata,
+  ownerPrivateReceiptForHistory, readOwnerPrivateMarkers, type RunOwnerPrivacyMetadata } from './run-control';
+import { verifySequencedRow } from '../audit/chain-row';
+import type { CoordinationScope, CoordinationPool } from './run-events';
 import {
   sha256Hex,
   TURN_RECORD_AUDIT_ACTION,
+  TURN_RECORD_RESOURCE,
   type Queryable,
   type TextRef,
   type TurnOutcome,
   type TurnRecordBody,
+  OWNER_PRIVATE_TURN_SCHEMA,
 } from './turn-record.js';
+
+export interface OwnerPrivateReadScope { organizationId: number; userId: number; runId?: string; threadId?: string | null; projectId?: number | null }
+const privateBoxSchema = z.object({ schema: z.literal('owner-private-text/1'), privacy: z.unknown().transform(parseOwnerPrivacyMetadata), keyArn: z.string(),
+  ciphertext: z.string().max(24000000), ciphertextSha256: z.string().regex(/^[a-f0-9]{64}$/), sha256: z.string().regex(/^[a-f0-9]{64}$/), chars: z.number().int().min(0).max(16000000),
+  context: z.object({ purpose: z.literal('owner_private_turn'), organizationId: z.number().int().positive(), ownerUserId: z.number().int().positive(),
+    projectId: z.number().int().positive().nullable(), runId: z.string(), threadId: z.string().nullable(), recordId: z.string().uuid(),
+    sourceHash: z.string().regex(/^[a-f0-9]{64}$/), policyVersion: z.number().int().positive() }).strict() }).strict();
+export async function openOwnerPrivateText(q: Queryable, raw: unknown, actor: OwnerPrivateReadScope): Promise<string> {
+  await requireRunOwnerContext(q, actor);
+  const box = privateBoxSchema.parse(raw), marker = box.privacy;
+  const pairs = [[marker.organizationId,actor.organizationId],[marker.ownerUserId,actor.userId],[box.context.organizationId,marker.organizationId],
+    [box.context.ownerUserId,marker.ownerUserId],[box.context.projectId,marker.projectId],[box.context.runId,marker.runId],
+    [box.context.threadId,marker.threadId],[box.context.sourceHash,box.sha256],[box.context.policyVersion,marker.keyVersion],[box.keyArn,marker.keyArn]];
+  if (!pairs.every(([a,b]) => a === b) || actor.runId !== undefined && actor.runId !== marker.runId ||
+      actor.threadId !== undefined && actor.threadId !== marker.threadId || actor.projectId !== undefined && actor.projectId !== marker.projectId) throw new Error('OWNER_PRIVATE_SCOPE_MISMATCH');
+  await ownerPrivateReceiptForHistory(q, { ...actor, runId: marker.runId, threadId: marker.threadId, projectId: marker.projectId });
+  const markers = await readOwnerPrivateMarkers(q, marker);
+  if (!markers.some(item => item.markerId === marker.markerId && item.markerHash === marker.markerHash) || sha256Hex(box.ciphertext) !== box.ciphertextSha256) throw new Error('OWNER_PRIVATE_CIPHERTEXT_INVALID');
+  const plaintext = await openTenantPayload(box.ciphertext, box.context, box.keyArn);
+  if (sha256Hex(plaintext) !== box.sha256 || plaintext.length !== box.chars) throw new Error('OWNER_PRIVATE_CIPHERTEXT_INVALID');
+  await requireRunOwnerContext(q, actor);
+  await ownerPrivateReceiptForHistory(q, { ...actor, runId: marker.runId, threadId: marker.threadId, projectId: marker.projectId });
+  return plaintext;
+}
+
+/** Only the current owner, with current project access, can open a peer body.
+ * Generic turn-record text resolution never follows these encrypted refs. */
+export async function openCoordinationText(q: Pick<CoordinationPool, 'query'>, scope: CoordinationScope, raw: unknown): Promise<string> {
+  await requireRunOwnerContext(q, scope);
+  const admitted = await admitRunCoordination(q, scope);
+  if (admitted.ownerId !== scope.userId) throw new Error('COORDINATION_OWNER_REQUIRED');
+  const ref = z.object({ blobSha256: z.string().regex(/^[a-f0-9]{64}$/), sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    chars: z.number().int().min(1).max(2000), keyArn: z.string(), context: z.object({ purpose: z.literal('run_coordination'),
+      organizationId: z.number().int(), projectId: z.number().int(), ownerUserId: z.number().int().positive(), derivativeId: z.string().uuid(), sourceHash: z.string(),
+      policyVersion: z.number().int(), expiresAt: z.string().datetime() }).strict() }).strict().parse(raw);
+  if (ref.context.organizationId !== scope.organizationId || ref.context.projectId !== admitted.projectId || ref.context.ownerUserId !== scope.userId) throw new Error('COORDINATION_CONTENT_HELD');
+  const rows = await q.query('SELECT text FROM ana_record_blobs WHERE organization_id=$1 AND sha256=$2', [scope.organizationId, ref.blobSha256]);
+  const ciphertext = rows.rows[0]?.text;
+  if (typeof ciphertext !== 'string' || sha256Hex(ciphertext) !== ref.blobSha256) throw new Error('COORDINATION_CONTENT_HELD');
+  const currentKey = await readCoordinationKey(q, scope.organizationId);
+  if (currentKey.keyArn !== ref.keyArn || currentKey.version !== ref.context.policyVersion) throw new Error('COORDINATION_CONTENT_HELD');
+  const plaintext = await openTenantPayload(ciphertext, ref.context, ref.keyArn);
+  if (sha256Hex(plaintext) !== ref.sha256 || plaintext.length !== ref.chars) throw new Error('COORDINATION_CONTENT_HELD');
+  await admitRunCoordination(q, scope);
+  await requireRunOwnerContext(q, scope);
+  return plaintext;
+}
 
 /** Every text reference a record makes, for verification and export. */
 export function textRefsOf(body: TurnRecordBody): TextRef[] {
@@ -185,9 +240,9 @@ function checkReferenceLengths(refs: TextRef[], texts: Map<string, string>, limi
  * tenant has no record with that id. Reads only — the verdict is
  * verifyTurnRecord's, over exactly what this returns.
  */
-export async function loadTurnRecord(
+async function loadTurnRecordRows(
   q: Queryable, orgId: number, id: string, limits?: TurnRecordReadLimits,
-): Promise<StoredTurnRecord | null> {
+) {
   if (limits !== undefined && (!limits || !validReadLimits(limits))) {
     throw new TurnRecordReadError('LIMIT_EXCEEDED');
   }
@@ -216,11 +271,75 @@ export async function loadTurnRecord(
     )
   ).rows[0];
   if (limits && chainRow && Number(chainRow.audit_bytes) > limits.maxAuditBytes) throw new TurnRecordReadError('LIMIT_EXCEEDED');
+  return { rec, chainRow };
+}
+export async function loadTurnRecord(q: Queryable, orgId: number, id: string, limits?: TurnRecordReadLimits): Promise<StoredTurnRecord | null> {
+  const rows = await loadTurnRecordRows(q, orgId, id, limits);
+  if (!rows) return null;
+  const { rec, chainRow } = rows;
+  if (rec.schema_version === OWNER_PRIVATE_TURN_SCHEMA) throw new Error('OWNER_PRIVATE_RECORD');
   const body = parseBody(rec.record_text);
   const refs = refsForRead(body, limits);
   const texts = await loadTexts(q, orgId, [...new Set(refs.map(r => r.sha256))], limits);
   checkReferenceLengths(refs, texts, limits);
   return storedRecordOf(rec, chainRow, texts);
+}
+export interface OwnerPrivateTurnRecord {
+  stored: StoredTurnRecord; decoded: { recordText: string; recordSha256: string; body: TurnRecordBody; texts: Map<string,string> };
+  verification: { ok: boolean; outerRecordIntact: boolean; outerChainCarriesHash: boolean; outerChainPayloadIntact: boolean;
+    outerChainLinked: boolean; innerRecordIntact: boolean; textsIntact: boolean }; privacy: RunOwnerPrivacyMetadata;
+}
+const privateContainerSchema = z.object({ schema: z.literal(OWNER_PRIVATE_TURN_SCHEMA), privacy: z.unknown().transform(parseOwnerPrivacyMetadata),
+  originalRecordSha256: z.string().regex(/^[a-f0-9]{64}$/), bundle: z.object({ sha256: z.string().regex(/^[a-f0-9]{64}$/), chars: z.number().int().positive().max(24000000) }).strict() }).strict();
+const privateBundleSchema = z.object({ schema: z.literal('owner-private-bundle/1'), recordText: z.string().max(16000000), recordSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  blobs: z.array(z.object({sha256:z.string().regex(/^[a-f0-9]{64}$/),text:z.string(),chars:z.number().int().nonnegative()}).strict()).max(20000) }).strict();
+type StoredRows = NonNullable<Awaited<ReturnType<typeof loadTurnRecordRows>>>;
+function privateRecordIntegrityRefused(): never { throw new Error('OWNER_PRIVATE_RECORD_INTEGRITY'); }
+async function verifyPrivateOuter(q: Queryable, orgId:number,id:string,ownerId:number,rows:StoredRows) {
+  const {rec,chainRow}=rows;
+  if(rec.schema_version!==OWNER_PRIVATE_TURN_SCHEMA||Number(rec.actor_user_id)!==ownerId||!chainRow)throw new Error('OWNER_PRIVATE_RECORD');
+  const outerRecordIntact=sha256Hex(rec.record_text)===rec.record_sha256;
+  const outerChainCarriesHash=chainRow.new_values?.recordSha256===rec.record_sha256;
+  const outerChainPayloadIntact=hashPayload(chainRow.new_values)===chainRow.payload_hash;
+  const link=await verifySequencedRow(q,{action:TURN_RECORD_AUDIT_ACTION,actor_id:ownerId,target:`${TURN_RECORD_RESOURCE}:${id}`,
+    payload_hash:chainRow.payload_hash,occurred_at:chainRow.occurred_at,tenant_id:orgId,sha256_chain:chainRow.sha256_chain,hmac_seal:chainRow.hmac_seal,chain_seq:chainRow.chain_seq});
+  const outerChainLinked=link.link==='linked'&&['valid','no-key'].includes(link.seal);
+  if(![outerRecordIntact,outerChainCarriesHash,outerChainPayloadIntact,outerChainLinked].every(Boolean))return privateRecordIntegrityRefused();
+  return {outerRecordIntact,outerChainCarriesHash,outerChainPayloadIntact,outerChainLinked};
+}
+async function openPrivateBundle(q:Queryable,actor:{orgId:number;ownerId:number},rows:StoredRows,container:z.infer<typeof privateContainerSchema>,limits?:TurnRecordReadLimits) {
+  const {orgId,ownerId}=actor;
+  const ciphertexts=await loadTexts(q,orgId,[container.bundle.sha256],limits),boxText=ciphertexts.get(container.bundle.sha256);
+  if(!boxText||sha256Hex(boxText)!==container.bundle.sha256||boxText.length!==container.bundle.chars)return privateRecordIntegrityRefused();
+  const box=privateBoxSchema.parse(JSON.parse(boxText));
+  if(box.privacy.markerHash!==container.privacy.markerHash)return privateRecordIntegrityRefused();
+  const raw=await openOwnerPrivateText(q,box,{organizationId:orgId,userId:ownerId,runId:rows.rec.run_id,threadId:rows.rec.thread_id});
+  return {ciphertexts,bundle:privateBundleSchema.parse(JSON.parse(raw))};
+}
+function verifyPrivateInner(rows:StoredRows,ownerId:number,container:z.infer<typeof privateContainerSchema>,bundle:z.infer<typeof privateBundleSchema>,limits?:TurnRecordReadLimits) {
+  const body=parseBody(bundle.recordText);
+  if(!body)return privateRecordIntegrityRefused();
+  const pairs=[[body.turn.organizationId,Number(rows.rec.organization_id)],[body.turn.actorUserId,ownerId],
+    [body.turn.runId,rows.rec.run_id],[body.turn.threadId,rows.rec.thread_id]];
+  if(!pairs.every(([actual,expected])=>actual===expected))return privateRecordIntegrityRefused();
+  const texts=new Map(bundle.blobs.map(blob=>[blob.sha256,blob.text]));
+  const innerRecordIntact=sha256Hex(bundle.recordText)===bundle.recordSha256&&bundle.recordSha256===container.originalRecordSha256;
+  const refs=refsForRead(body,limits);
+  const textsIntact=texts.size===bundle.blobs.length&&bundle.blobs.every(blob=>sha256Hex(blob.text)===blob.sha256&&blob.text.length===blob.chars)
+    &&refs.every(ref=>texts.has(ref.sha256)&&texts.get(ref.sha256)?.length===ref.chars);
+  if(!innerRecordIntact||!textsIntact)return privateRecordIntegrityRefused();
+  return {decoded:{recordText:bundle.recordText,recordSha256:bundle.recordSha256,body,texts},innerRecordIntact,textsIntact};
+}
+export async function loadOwnerPrivateTurnRecord(q: Queryable, orgId: number, id: string, ownerId: number, limits?: TurnRecordReadLimits): Promise<OwnerPrivateTurnRecord | null> {
+  await requireRunOwnerContext(q,{organizationId:orgId,userId:ownerId});
+  const rows=await loadTurnRecordRows(q,orgId,id,limits);
+  if(!rows)return null;
+  const outer=await verifyPrivateOuter(q,orgId,id,ownerId,rows);
+  const container=privateContainerSchema.parse(JSON.parse(rows.rec.record_text));
+  const {ciphertexts,bundle}=await openPrivateBundle(q,{orgId,ownerId},rows,container,limits);
+  const {decoded,innerRecordIntact,textsIntact}=verifyPrivateInner(rows,ownerId,container,bundle,limits);
+  return {stored:storedRecordOf(rows.rec,rows.chainRow,ciphertexts),decoded,
+    verification:{ok:true,...outer,innerRecordIntact,textsIntact},privacy:container.privacy};
 }
 
 function storedRecordOf(rec: Record<string, any>, chainRow: Record<string, any> | undefined, texts: Map<string, string>): StoredTurnRecord {

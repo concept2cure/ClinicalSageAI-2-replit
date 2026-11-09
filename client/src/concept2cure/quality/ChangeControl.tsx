@@ -57,7 +57,8 @@ import { useChangeSummary } from './changeHooks';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
-import { postQmsApproval } from './qmsApproval';
+import { postQmsApproval, verifyLearningReviewHash, type LearningReviewView } from './qmsApproval';
+import { stableStringify } from '@shared/canonical-json';
 import { C2CForm } from '../v2/C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
@@ -67,6 +68,8 @@ import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites
 import { ChangeLinkForm } from './ChangeLinkForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import type { ChangeType, Classification, Relationship } from './changeData';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuthoringReadSession } from '../v2/editor/authoringCurrentRead';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -138,6 +141,18 @@ function ChangeControlSession({
   const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
   const [approving, setApproving] = React.useState<ChangeControlRow | null>(null);
+  const learningReview = approving?.learningReview ?? null;
+  const [learningAccepted, setLearningAccepted] = React.useState(false);
+  const [checkedLearning, setCheckedLearning] = React.useState<LearningReviewView | null>(null);
+  React.useEffect(() => {
+    let active = true; setLearningAccepted(false); setCheckedLearning(null);
+    if (learningReview && !('unavailable' in learningReview)) void verifyLearningReviewHash(learningReview)
+      .then(valid => { if (active && valid) setCheckedLearning(learningReview); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [learningReview]);
+  const learningRefusal = !learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
+    ? 'The exact aggregate artifact could not be verified. Reload this change before signing.'
+    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null;
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
   const [drawer, setDrawer] = React.useState<
     | { kind: 'raise' }
@@ -213,6 +228,8 @@ function ChangeControlSession({
           </div>
         </div>
         <div className="qms-actions">
+          <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
+            onCreated={id => { setEditingId(id); onRetry?.(); }} />
           <button
             className="qms-btn ghost"
             title="Sends this request to AnA; nothing in the log changes"
@@ -632,9 +649,15 @@ function ChangeControlSession({
           defaultMeaning="approval"
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+          commitRefusal={learningRefusal}
+          renderMeaningDetails={learningReview && !('unavailable' in learningReview) ? (_meaning, committing) => <LearningInvariantReview
+            review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} /> : undefined}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
-            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input);
+            if (learningRefusal) throw new Error(learningRefusal);
+            const review = learningReview && !('unavailable' in learningReview)
+              ? { expectedArtifactSha256: learningReview.artifactSha256, invariantAccepted: true as const } : undefined;
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review);
             onRetry?.();
             return manifest;
           }}
@@ -642,4 +665,74 @@ function ChangeControlSession({
       )}
     </>
   );
+}
+
+/** Prepares an unsigned public template in the existing controlled-document editor. */
+function ReviewedLearningPreparation(props: { programId: string | null; onCreated: (id: number) => void }) {
+  const owner = useAuthoringReadSession(useAuthUser());
+  return <ReviewedLearningPreparationSession key={`${owner.actor}:${owner.key}`} {...props} owner={owner} />;
+}
+function preparedLearningId(response: Response, body: any): number {
+  const id = body?.learningContribution?.documentId;
+  if (!response.ok || body?.audited !== true || !Number.isSafeInteger(id) || id < 1) throw new Error('UNCONFIRMED');
+  return id;
+}
+function ReviewedLearningPreparationSession({ programId, onCreated, owner }: { programId: string | null; onCreated: (id: number) => void;
+  owner: ReturnType<typeof useAuthoringReadSession> }) {
+  const [canCurate, setCanCurate] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const live = React.useRef(true);
+  const writing = React.useRef(false);
+  React.useEffect(() => {
+    live.current = true;
+    void (async () => {
+      try {
+        const response = await apiRequest('GET', '/api/ai-placement-policy'), body = await response.json().catch(() => null);
+        if (live.current && owner.sameRevision()) setCanCurate(response.ok && body?.learningContribution?.canCurate === true);
+      } catch { /* No preparation control without current curator standing. */ }
+    })();
+    return () => { live.current = false; };
+  }, [owner]);
+  if (!canCurate) return null;
+  return <>
+    <button className="qms-btn ghost" disabled={!programId} onClick={() => { setError(null); setOpen(true); }}>
+      Prepare reviewed learning
+    </button>
+    {open && <C2CForm config={{ title: 'Prepare reviewed learning', sub: 'Only server-defined generic guidance and coarse cohort counts are prepared. Document review and the exact-artifact invariant signature are separate approvals.', notice: error ?? undefined,
+      fields: [
+        { key: 'classKey', label: 'Pattern class', type: 'select', required: true, options: [
+          { value: 'source_identity_check', label: 'Current source identity' }, { value: 'cross_section_consistency', label: 'Cross-section consistency' }, { value: 'independent_review', label: 'Independent review' }] },
+        { key: 'agency', label: 'Agency group', type: 'select', required: true, options: ['fda', 'ema', 'pmda', 'mhra', 'hc', 'swissmedic', 'other'] },
+        { key: 'documentType', label: 'Document group', type: 'select', required: true, options: ['protocol', 'ib', 'cmc', 'labeling', 'cer', 'response_letter', 'meeting_minutes', 'section', 'briefing_package', 'other'] },
+        { key: 'reasonForChange', label: 'Reason for preparing this candidate', type: 'textarea', required: true, min: 8 },
+        { key: 'password', label: 'Current password', type: 'password', required: true },
+        { key: 'totp', label: 'Authenticator code, if required', type: 'password' },
+      ], submitLabel: 'Prepare unsigned candidate',
+    }} onCancel={() => setOpen(false)} onSubmit={async values => {
+      if (!programId || !owner.sameRevision()) { setOpen(false); return; }
+      if (writing.current) return;
+      writing.current = true;
+      setError(null);
+      try {
+        const response = await apiRequest('PUT', '/api/ai-placement-policy', { action: 'learning_prepare', programId,
+          classKey: values.classKey, agency: values.agency, documentType: values.documentType, reasonForChange: values.reasonForChange,
+          reauth: { password: values.password, ...(values.totp ? { totp: values.totp } : {}) } });
+        const body = await response.json().catch(() => null);
+        if (!live.current || !owner.sameRevision()) return;
+        const id = preparedLearningId(response, body);
+        setOpen(false); onCreated(id);
+      } catch {
+        if (live.current && owner.sameRevision()) setError('The candidate could not be prepared. Re-read its status before retrying.');
+      } finally { writing.current = false; }
+    }} />}
+  </>;
+}
+
+function LearningInvariantReview({ review, accepted, disabled, onChange }: {
+  review: LearningReviewView; accepted: boolean; disabled: boolean; onChange(value: boolean): void;
+}) {
+  return <div><p>{review.instructions}</p><pre aria-label="Exact aggregate artifact">{stableStringify(review.artifact)}</pre>
+    <p>SHA-256 {review.artifactSha256}</p><label><input type="checkbox" checked={accepted} disabled={disabled}
+      onChange={event => onChange(event.target.checked)} />No client facts, identity or strategy are encoded in this shared artifact.</label></div>;
 }

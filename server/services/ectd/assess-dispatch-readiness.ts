@@ -767,20 +767,36 @@ async function waivabilityOrNotOffered(
   }
 }
 
+/** The not-found answer for a sequence this tenant has no live row of: by its
+ *  number when it was removed from its submission, so the reader is told which
+ *  and why; the plain one otherwise. */
+async function sequenceNotFound(sequenceId: number, organizationId: number): Promise<Error> {
+  const [removed] = await db
+    .select({ sequenceNumber: ectdSequences.sequenceNumber })
+    .from(ectdSequences)
+    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId)))
+    .limit(1);
+  const message = removed
+    ? `Sequence ${removed.sequenceNumber} was removed from this submission, so it has no dispatch readiness.`
+    : 'Sequence not found in this organization.';
+  return Object.assign(new Error(message), { code: 'NOT_FOUND' });
+}
+
 export async function assessSequenceDispatchReadiness(
   params: AssessDispatchReadinessParams
 ): Promise<DispatchReadinessAssessment> {
   const { sequenceId, organizationId } = params;
 
-  // 1. Tenant-scoped sequence (region + status).
+  // 1. Tenant-scoped LIVE sequence (region + status). A removed sequence (the
+  // filed baseline's removal of drafts, filed-sequence-baseline.ts) has no
+  // readiness: it is answered as not found, never as ready or not ready (F1
+  // repair B, 2026-11-08).
   const [sequence] = await db
     .select()
     .from(ectdSequences)
-    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId)))
+    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId), isNull(ectdSequences.deletedAt)))
     .limit(1);
-  if (!sequence) {
-    throw Object.assign(new Error('Sequence not found in this organization.'), { code: 'NOT_FOUND' });
-  }
+  if (!sequence) throw await sequenceNotFound(sequenceId, organizationId);
   const submissionApplicationType = await loadApplicationType(sequence.submissionId, organizationId);
   const asOf = params.asOf ?? dispatchAsOfDate();
   // P-33: a US IND's cross-reference register, read once — the Module 3

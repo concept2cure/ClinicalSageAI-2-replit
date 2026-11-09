@@ -1,0 +1,5 @@
+MUTATION M11-E6-document-reused in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T13:41:57.198494Z): replaced [if (Date.parse(String(meta.created_at)) < Date.parse(t.submittedAt) || reused.rows.length) {] with [if (Date.parse(String(meta.created_at)) < Date.parse(t.submittedAt)) {]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T4: the document, the kind and the signer > E6: a document that settled another send of the same sequence cannot settle this one 496ms
+      Tests  1 failed | 30 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1 (expected 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1)

@@ -62,8 +62,8 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 
 import { useAuthoringDraftReview } from '../editor/useAuthoringDraftReview';
 import { AuthoredHtml } from '../editor/AuthoredHtml';
-import { AlternativeReview, AlternativesPicker } from '../editor/DraftAlternatives';
-import { NO_ALTERNATIVES, alternativeWording, type DraftProposalTarget } from '../editor/draftAlternatives';
+import { AlternativeReview, AlternativesPicker, CsrFigureNote, useFocusReturn } from '../editor/DraftAlternatives';
+import { NO_ALTERNATIVES, alternativeWording, csrFigureHold, sectionShownName, type DraftProposalTarget } from '../editor/draftAlternatives';
 import { PassageAlternatives } from '../editor/DraftPassage';
 import type { PassageRequest } from '../editor/draftPassage';
 import type { AcceptedAttribution, AiDraftGenerationInputs, AiDraftMetadata, AiDraftReviewSession, PendingAiDraft } from '../editor/authoringDraftTransport';
@@ -210,6 +210,10 @@ export function describeAcceptFailure(
         'was rolled back with it. Content is not saved without provenance. The section is unchanged.',
     };
   }
+  // CSR slice 2: the server names each figure the study's engine did not produce; the draft stays to be corrected.
+  if (code === 'CSR_FIGURE_NOT_FROM_ENGINE' && message && message.trim()) {
+    return { clearDraft: false, text: message };
+  }
   if (status === 401) {
     return {
       clearDraft: false,
@@ -255,7 +259,7 @@ function DraftCheck({ check, edited }: { check: AnswerCheckView | null; edited: 
 }
 
 /** Grounding, model, check and record for one draft: the facts a reviewer needs before reading a word. */
-function DraftFacts({ draft, edited }: { draft: PendingAiDraft; edited: boolean }) {
+function DraftFacts({ draft, edited, text }: { draft: PendingAiDraft; edited: boolean; text?: string }) {
   const grounding = describeGrounding(draft);
   const generator = describeGenerator(draft.metadata);
   return (
@@ -269,6 +273,7 @@ function DraftFacts({ draft, edited }: { draft: PendingAiDraft; edited: boolean 
         {' · not saved'}
       </div>
       <DraftCheck check={draft.check} edited={edited} />
+      <CsrFigureNote draft={draft} text={text ?? draft.generated} id={`ai-draft-csr-figures-${draft.draftId ?? 'none'}`} />
       <DraftRecord turnRecord={draft.turnRecord} />
     </>
   );
@@ -321,6 +326,8 @@ export function AuthoringAiDraft({
   const generate = () => { if (!generationHold) return review.generate({ tone, region, context, requirements }); };
   const accept = review.accept;
   const edited = draft != null && body !== draft.generated;
+  // CSR slice 2: a blocking figure still in the text holds the accept; the server re-checks what is accepted.
+  const figureHeld = draft != null && (csrFigureHold(draft, body)?.blocking.length ?? 0) > 0;
   const wording = alternativeWording(review.state, edited);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const passageShown = !!passage && passage.sectionId === sectionId;
@@ -329,9 +336,12 @@ export function AuthoringAiDraft({
 
   const grounding = draft ? describeGrounding(draft) : null;
   const busy = generating || accepting || checking;
+  // A browser drops focus from a control disabled while AnA drafts; it returns there when the request ends (walk, 2026-11-06).
+  const pressed = useFocusReturn(busy);
+  const shown = sectionShownName(sectionCode, sectionTitle);
   if (passage && passageShown) {
     return <>{regionNote && !generationHold && <p role="status" data-testid="ai-draft-region-note">{regionNote}</p>}
-      <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={sectionCode}
+      <PassageAlternatives key={passage.requestId} passage={passage} docId={docId} programId={programId} sectionCode={shown.name}
       region={region} docSealed={docSealed} editorDirty={editorDirty} savedUpdatedAt={savedUpdatedAt} target={proposals}
       generationHold={generationHold ?? undefined} sources={reviewSession?.sources} fireToast={fireToast} onBack={() => onPassageClose?.()} onClose={onClose} renderFacts={d => <DraftFacts draft={d} edited={false} />} /></>;
   }
@@ -350,7 +360,7 @@ export function AuthoringAiDraft({
           tabIndex={-1}
           style={{ fontSize: 13, fontWeight: 600, margin: 0 }}
         >
-          {I.sparkles} Draft {sectionCode} from Data Room sources
+          {I.sparkles} Draft {shown.name} from Data Room sources
         </h2>
         <span style={{ flex: 1 }} />
         <button className="nda-open" onClick={onClose} disabled={busy}>
@@ -394,7 +404,7 @@ export function AuthoringAiDraft({
       {generating && (
         <AnaActivity
           streaming
-          phase={phase ?? `Retrieving Data Room evidence and drafting ${sectionCode}…`}
+          phase={phase ?? `Retrieving Data Room evidence and drafting ${shown.name}…`}
           startedAt={generatingSince ?? undefined}
         />
       )}
@@ -404,7 +414,7 @@ export function AuthoringAiDraft({
           <p style={{ fontSize: 12, margin: 0, opacity: 0.85 }}>
             Retrieves evidence from this project’s Data Room and drafts{' '}
             <b>
-              {sectionCode} {sectionTitle}
+              {shown.code ? `${shown.code} ${sectionTitle}` : shown.name}
             </b>{' '}
             from it. Nothing is saved until you accept the result — and accepting records the
             verified source spans behind the text, which a normal save cannot do.
@@ -466,7 +476,7 @@ export function AuthoringAiDraft({
             <button
               className="btn primary"
               style={{ height: 30 }}
-              onClick={() => void generate()}
+              onClick={e => { pressed(e.currentTarget); void generate(); }}
               disabled={busy || docSealed || !!acceptUnknown || !!generationHold}
               data-testid="ai-draft-generate"
               title={
@@ -477,7 +487,7 @@ export function AuthoringAiDraft({
             >
               {generating ? 'Drafting…' : 'Draft section'}
             </button>{' '}
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => void generateAlternatives()}
+            <button className="btn ghost" style={{ height: 30 }} onClick={e => { pressed(e.currentTarget); void generateAlternatives(); }}
               disabled={busy || docSealed || !!acceptUnknown || !!generationHold} data-testid="ai-draft-alternatives"
               title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}>
               Draft three alternatives
@@ -493,7 +503,7 @@ export function AuthoringAiDraft({
       {draft && grounding && (
         <>
           <AlternativesPicker state={review.state} accepting={accepting} onShow={review.showAlternative} />
-          <DraftFacts draft={draft} edited={edited} />
+          <DraftFacts draft={draft} edited={edited} text={body} />
           <AlternativeReview state={review.state} draft={draft} label={wording.paragraphLabel} edited={edited} savedContent={savedContent}
             savedUpdatedAt={savedUpdatedAt} target={proposals} busy={busy} docSealed={docSealed}
             onRevise={generationHold ? undefined : instruction => void review.revise(instruction, { tone, region, context, requirements })} />
@@ -518,7 +528,7 @@ export function AuthoringAiDraft({
               the Label-in-Name failure (WCAG 2.5.3) — so the visible text
               carries the section instead. */}
           <label style={{ fontSize: 12, display: 'grid', gap: 3 }}>
-            {`Proposed content for ${sectionCode} — edit before accepting if you want to`}
+            {`Proposed content for ${shown.name} — edit before accepting if you want to`}
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}
@@ -581,7 +591,8 @@ export function AuthoringAiDraft({
                 className="btn primary"
                 style={{ height: 30 }}
                 onClick={() => void accept()}
-                disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId}
+                disabled={busy || docSealed || editorDirty || !!acceptUnknown || !!baseChanged || draft.sectionId !== sectionId || figureHeld}
+                aria-describedby={figureHeld ? `ai-draft-csr-figures-${draft.draftId ?? 'none'}` : undefined}
                 data-testid="ai-draft-accept"
               >
                 {accepting ? 'Saving…' : wording.accept}

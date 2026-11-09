@@ -4,7 +4,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authService } from '@/services/portal/authService';
 import { clearAuthToken } from '@/utils/authToken';
-import { programFromBody, useProgramRead } from '../programSummary';
+import { offersIndLibrary, programFromBody, useProgramRead } from '../programSummary';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
@@ -54,5 +54,17 @@ describe('project filing context admission', () => {
     await waitFor(() => expect(result.current.program?.registryId).toBe('US_NDA'));
     await act(async () => { old.resolve(ok({ id: PID, registry_id: 'US_BLA' })); });
     expect(result.current.program?.registryId).toBe('US_NDA');
+  });
+});
+
+/* J1 → J3 handoff, 2026-11-06: the editor's Project files rail offered "IND
+   documents" on a 510(k). Project home already hides it for a device or
+   diagnostic project; the editor asks the same rule of the program it read. */
+describe('the editor files rail offers the IND library only where an IND is filed', () => {
+  it('not for a device or diagnostic filing, yes for an IND, and yes while the program is unread', () => {
+    const p = (programType: string | null) => programFromBody({ id: 'p', program_type: programType }, 'p');
+    expect(offersIndLibrary(p('510k'))).toBe(false);
+    expect(offersIndLibrary(p('ind'))).toBe(true);
+    expect(offersIndLibrary(null)).toBe(true);
   });
 });

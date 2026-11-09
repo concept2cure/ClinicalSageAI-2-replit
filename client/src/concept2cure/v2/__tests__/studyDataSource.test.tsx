@@ -110,6 +110,40 @@ it('separates a failed or malformed source list from a confirmed empty one, and 
   expect(screen.getByText(/source list reached its limit/)).toBeTruthy();
 });
 
+/* D2-CSR F5 (2026-11-05): the list offers clinical sources only. The files it could not read are named, so a
+   failed read is never shown as an empty list, and the JSON files that are not clinical sources are counted. */
+const UNREADABLE = { documentId: '11111111-2222-4333-8444-000000000006', documentTitle: 'cdiscpilot01-adam-bundle', version: '1.0' };
+function serveList(body: unknown) {
+  const original = apiRequest.getMockImplementation()!;
+  apiRequest.mockImplementation((method, path, requestBody) => String(path).includes('/csr/sources?')
+    ? Promise.resolve(response(body)) : original(method, path, requestBody));
+}
+
+it('names a Vault file it could not read beside the sources it offers, and counts the JSON files that are not sources', async () => {
+  serveList({ ...list, unreadable: [UNREADABLE], notClinicalSources: 1 });
+  render(<StudyDataSource {...sourceProps} />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/could not be read.*cdiscpilot01-adam-bundle, version 1\.0/);
+  expect(screen.getByRole('option', { name: /Approved synthetic study source/ })).toBeTruthy();
+  expect(screen.getByText(/1 other JSON file in this project’s Vault is not a clinical source/)).toBeTruthy();
+});
+
+it('with no source offered, a file it could not read is an alert, not only "no clinical source"', async () => {
+  serveList({ ...list, sources: [], unreadable: [UNREADABLE], notClinicalSources: 0 });
+  render(<StudyDataSource {...sourceProps} />);
+  expect((await screen.findByRole('alert')).textContent).toMatch(/cdiscpilot01-adam-bundle/);
+  expect(screen.queryByRole('combobox', { name: 'Clinical source' })).toBeNull();
+});
+
+it.each([
+  ['an unreadable entry without its id', { ...list, unreadable: [{ documentTitle: 'x', version: '1' }], notClinicalSources: 0 }],
+  ['a negative count', { ...list, unreadable: [], notClinicalSources: -1 }],
+])('treats a list with %s as incomplete, never as a list', async (_name, body) => {
+  serveList(body);
+  render(<StudyDataSource {...sourceProps} />);
+  expect((await screen.findByRole('alert')).textContent).toBe('The project’s clinical sources could not be listed.');
+  expect(screen.queryByRole('combobox', { name: 'Clinical source' })).toBeNull();
+});
+
 it.each([
   ['another source hash', { ...preview, source: { ...receipt, sha256: 'b'.repeat(64) } }],
   ['missing required table', { ...preview, tables: { disposition: tables.disposition } }],

@@ -1,0 +1,9 @@
+# eslint on the changed files: warnings at HEAD 8dc4a34dec -> with this change
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts errors 0 warnings 1 -> 1
+server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts errors 0 warnings 0 -> 0
+server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts errors 0 warnings 0 -> 0
+server/services/artifact-approval-act.ts errors 0 warnings 0 -> 0
+tests/artifact-status-lock-covers-approval.test.ts errors 0 warnings 0 -> 0
+TOTAL errors 0 warnings 1 -> 1
+   artifact-approval-ceremony.pglite.integration.test.ts max-lines File has too many lines (863). Maximum allowed is 500.
+server/routes/c2c/__tests__/project-write-gates.pglite.test.ts errors 0 warnings 0 -> 0

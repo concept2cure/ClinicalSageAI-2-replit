@@ -22,6 +22,7 @@ import type { TaskEventNotice } from '../tasking/task-side-effects.js';
 import { logGeneration, validateArtifactQuality } from './enforcement.js';
 import { executeGovernedAnaOperation } from '../governed-ana-execution.js';
 import type { ArtifactWriteHook } from '../artifact-tagger.js';
+import type { ProjectReadScope, ProjectScopeRefusal } from '../ana/project-scope-admission';
 import {
   artifactVersionContentBinding,
   assertVerifiedSignoff,
@@ -30,6 +31,7 @@ import {
   signGovernedCommand,
 } from './governed-command-signature.js';
 import { signArtifactStatusByAna } from './ana-signed-artifact-act';
+import { moveArtifactToSection } from '../artifact-approval-act';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -121,6 +123,11 @@ export interface CommandContext {
   userId: number;
   organizationId: number;
   activeProjectId?: number;
+  /**
+   * The open project as the client sent it: a regulatory_programs uuid under the v2 shell, where activeProjectId is
+   * unset. Read only to narrow this dispatch's project read scope to that project's sponsor (dispatchReadScope).
+   */
+  activeProjectRef?: string;
   userName?: string;
   userRole?: string;
   /**
@@ -786,9 +793,9 @@ async function lockArtifactForSigning(
   client: PoolClient,
   ctx: CommandContext,
   params: { projectId: number; artifactId: number | string }
-): Promise<{ artifact_id: string; version: number; content: string; title: string | null } | null> {
+): Promise<{ id: number; artifact_id: string; version: number; content: string; title: string | null } | null> {
   const found = await client.query(
-    `SELECT artifact_id, version, content, title
+    `SELECT id, artifact_id, version, content, title
        FROM concept2cure_artifacts
       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
       FOR UPDATE`,
@@ -829,15 +836,15 @@ export async function placeInDossier(
         message: `Artifact ${params.artifactId} was not found in this project, so nothing was placed.`,
       };
     }
-    await client.query(
-      `UPDATE concept2cure_artifacts
-       SET ctd_section = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
-      [artifact.artifact_id, params.projectId, ctx.organizationId, params.ctdSection]
-    );
+    // P-95 Q2 (2026-11-09): a move voids review decisions, as an edit does, so
+    // the version can move on here. The signature binds the version the
+    // artifact has at its new place.
+    const placed = await moveArtifactToSection(client, Number(artifact.id), ctx.organizationId, params.ctdSection);
+    if (!placed) throw new Error(`Artifact ${artifact.artifact_id} could not be placed in this organization.`);
+    const placedVersion = placed.version;
     const binding = artifactVersionContentBinding({
       artifactId: artifact.artifact_id,
-      version: Number(artifact.version),
+      version: placedVersion,
       content: artifact.content,
       ctdSection: params.ctdSection,
     });
@@ -847,12 +854,12 @@ export async function placeInDossier(
       payload: {
         projectId: params.projectId,
         artifactId: artifact.artifact_id,
-        version: Number(artifact.version),
+        version: placedVersion,
         ctdSection: params.ctdSection,
         contentSha256: binding.contentSha256,
       },
       binding,
-      extraManifest: { version: Number(artifact.version), ctdSection: params.ctdSection, contentSha256: binding.contentSha256 },
+      extraManifest: { version: placedVersion, ctdSection: params.ctdSection, contentSha256: binding.contentSha256 },
     });
     await client.query('COMMIT');
 
@@ -879,18 +886,96 @@ export async function placeInDossier(
   }
 }
 
-/** List artifacts in a project */
+// ─────────────────────────────────────────────────────────────────────────────
+// Project read scope (F1-C, 2026-11-05)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The artifact reads held to the projects the person can open, and inside an open project to its sponsor's. Each read
+ * concept2cure_artifacts or concept2cure_artifact_versions by organization and a project or artifact id from params
+ * (the model's channel, or the request body's), with only role RBAC before it: a member read a private project's
+ * artifacts and, inside one sponsor's project, a CRO's other sponsors'. An id outside the scope reads as no row, so it
+ * is answered as a missing id is.
+ */
+const PROJECT_SCOPED_READS: ReadonlySet<string> = new Set([
+  'list_artifacts', 'check_dossier_readiness', 'search_artifacts', 'list_artifact_versions',
+  'run_compliance_scan', 'export_artifact', 'compare_versions', 'review_version_impact',
+]);
+
+/** Each dispatch's scope, resolved once: keyed by its context, so neither a caller nor params can supply one. */
+const dispatchScopes = new WeakMap<CommandContext, Promise<ProjectReadScope | ProjectScopeRefusal>>();
+
+/**
+ * The projects this dispatch's reads may read: the sharing policy's for the person (ctx.userId, ctx.organizationId),
+ * narrowed to the open project's sponsor when one is open (ctx.activeProjectId or ctx.activeProjectRef). The resolver
+ * is AnA's tools' own (project-scope-admission.ts). A project named in params is read only when it is inside it.
+ */
+function dispatchReadScope(ctx: CommandContext): Promise<ProjectReadScope | ProjectScopeRefusal> {
+  let scope = dispatchScopes.get(ctx);
+  if (!scope) {
+    scope = import('../ana/project-scope-admission.js')
+      .then(({ resolveProjectReadScope }) => resolveProjectReadScope('This command', {
+        organizationId: ctx.organizationId, userId: ctx.userId, projectId: ctx.activeProjectId, projectRef: ctx.activeProjectRef,
+      }))
+      .catch(() => ({ error: 'Current project access could not be verified. Nothing was read.', code: 'PROJECT_ACCESS_UNAVAILABLE' }));
+    dispatchScopes.set(ctx, scope);
+  }
+  return scope;
+}
+
+/**
+ * The refusal of a read whose scope could not be resolved. An open project the person cannot open reads as one that
+ * does not exist: POST /api/ana-ri/execute takes it from the request body, so the answer must not tell a private
+ * project from a missing one.
+ */
+function scopeRefusalResult(action: string, refusal: ProjectScopeRefusal): CommandResult {
+  if (refusal.code === 'ANA_PROJECT_ACCESS_DENIED' || refusal.code === 'ANA_PROJECT_NOT_FOUND') {
+    return { success: false, action, error: 'ANA_PROJECT_NOT_FOUND', message: 'Project not found. Nothing was read.' };
+  }
+  return { success: false, action, error: refusal.code, message: refusal.error };
+}
+
+/** The project ids a scoped read may read, or the refusal it returns instead. */
+async function scopedProjectIds(ctx: CommandContext, action: string): Promise<number[] | CommandResult> {
+  const scope = await dispatchReadScope(ctx);
+  return 'code' in scope ? scopeRefusalResult(action, scope) : scope.projectIds;
+}
+
+/** Before a scoped read runs: its refusal when the scope cannot be resolved, else null. Other commands pass. */
+async function scopeRefusalBeforeRead(command: string, ctx: CommandContext): Promise<CommandResult | null> {
+  if (!PROJECT_SCOPED_READS.has(command)) return null;
+  const scoped = await scopedProjectIds(ctx, command);
+  return Array.isArray(scoped) ? null : scoped;
+}
+
+/** A positive integer project id from params, else the open project's; null when neither is one. */
+function readProjectId(ctx: CommandContext, value: unknown): number | null {
+  const id = Number(value ?? ctx.activeProjectId);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * List artifacts in a project. Takes (ctx, params), the contract dispatch uses (`handler(ctx, cmd.params)`): it was
+ * declared (ctx, projectId, filters), so the dispatched params object reached the SQL as the project id and every
+ * dispatched call failed (F1-C, 2026-11-05; update_project had the same defect).
+ */
 export async function listArtifacts(
   ctx: CommandContext,
-  projectId: number,
-  filters?: { status?: string; ctdSection?: string }
+  params: { projectId?: number; status?: string; ctdSection?: string }
 ): Promise<CommandResult> {
+  const projectId = readProjectId(ctx, params?.projectId);
+  if (projectId === null) {
+    return { success: false, action: 'list_artifacts', message: 'projectId (a project id) is required.', error: 'PROJECT_ID_REQUIRED' };
+  }
+  const scoped = await scopedProjectIds(ctx, 'list_artifacts');
+  if (!Array.isArray(scoped)) return scoped;
+  const filters = params;
   try {
     let query = `SELECT artifact_id, title, status, ctd_section, version, type, created_at, updated_at
                  FROM concept2cure_artifacts
-                 WHERE project_id = $1 AND organization_id = $2`;
-    const values: unknown[] = [projectId, ctx.organizationId];
-    let paramIdx = 3;
+                 WHERE project_id = $1 AND organization_id = $2 AND project_id = ANY($3::int[])`;
+    const values: unknown[] = [projectId, ctx.organizationId, scoped];
+    let paramIdx = 4;
 
     if (filters?.status) {
       query += ` AND status = $${paramIdx}`;
@@ -1460,19 +1545,25 @@ export async function listTasks(
 // 4. DOSSIER / SUBMISSION READINESS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Check dossier readiness for a project */
+/** Check dossier readiness for a project. (ctx, params), the contract dispatch uses, as listArtifacts (F1-C). */
 export async function checkDossierReadiness(
   ctx: CommandContext,
-  projectId: number
+  params: { projectId?: number }
 ): Promise<CommandResult> {
+  const projectId = readProjectId(ctx, params?.projectId);
+  if (projectId === null) {
+    return { success: false, action: 'check_dossier_readiness', message: 'projectId (a project id) is required.', error: 'PROJECT_ID_REQUIRED' };
+  }
+  const scoped = await scopedProjectIds(ctx, 'check_dossier_readiness');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     // Get all artifacts and their placement status
     const artifacts = await pool.query(
       `SELECT artifact_id, title, status, ctd_section, version
        FROM concept2cure_artifacts
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND project_id = ANY($3::int[])
        ORDER BY ctd_section`,
-      [projectId, ctx.organizationId]
+      [projectId, ctx.organizationId, scoped]
     );
 
     const total = artifacts.rows.length;
@@ -2196,16 +2287,19 @@ export async function searchArtifacts(
     limit?: number;
   }
 ): Promise<CommandResult> {
+  // Searches the projects the person can open, inside an open project its sponsor's (F1-C); params.projectId narrows.
+  const scoped = await scopedProjectIds(ctx, 'search_artifacts');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     let sql = `SELECT artifact_id, title, status, ctd_section, project_id,
                       ts_rank(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, '')),
                               plainto_tsquery('english', $2)) as relevance
                FROM concept2cure_artifacts
-               WHERE organization_id = $1
+               WHERE organization_id = $1 AND project_id = ANY($3::int[])
                  AND to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))
                      @@ plainto_tsquery('english', $2)`;
-    const values: unknown[] = [ctx.organizationId, params.query];
-    let paramIdx = 3;
+    const values: unknown[] = [ctx.organizationId, params.query, scoped];
+    let paramIdx = 4;
 
     if (params.projectId) {
       sql += ` AND project_id = $${paramIdx}`;
@@ -2229,9 +2323,9 @@ export async function searchArtifacts(
       const fallback = await pool.query(
         `SELECT artifact_id, title, status, ctd_section, project_id
          FROM concept2cure_artifacts
-         WHERE organization_id = $1 AND (title ILIKE $2 OR content ILIKE $2)
+         WHERE organization_id = $1 AND project_id = ANY($4::int[]) AND (title ILIKE $2 OR content ILIKE $2)
          ORDER BY updated_at DESC LIMIT $3`,
-        [ctx.organizationId, `%${params.query}%`, params.limit || 20]
+        [ctx.organizationId, `%${params.query}%`, params.limit || 20, scoped]
       );
       return {
         success: true,
@@ -2294,16 +2388,18 @@ export async function listArtifactVersions(
     artifactId: number;
   }
 ): Promise<CommandResult> {
+  const scoped = await scopedProjectIds(ctx, 'list_artifact_versions');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     const result = await pool.query(
       `SELECT v.id, v.version, v.change_description, v.created_by_id, v.created_at,
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
-       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2 AND a.project_id = ANY($3::int[])
        LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
-      [params.artifactId, ctx.organizationId]
+      [params.artifactId, ctx.organizationId, scoped]
     );
     return {
       success: true,
@@ -2333,13 +2429,15 @@ export async function runComplianceScan(
     artifactId: number;
   }
 ): Promise<CommandResult> {
+  const scoped = await scopedProjectIds(ctx, 'run_compliance_scan');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     // Load artifact content
     const artifact = await pool.query(
       `SELECT artifact_id, title, content, ctd_section, status
        FROM concept2cure_artifacts
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
-      [params.artifactId, params.projectId, ctx.organizationId]
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3 AND project_id = ANY($4::int[])`,
+      [params.artifactId, params.projectId, ctx.organizationId, scoped]
     );
 
     if (artifact.rows.length === 0) {
@@ -2487,13 +2585,15 @@ export async function exportArtifact(
     format: 'docx' | 'pdf';
   }
 ): Promise<CommandResult> {
+  const scoped = await scopedProjectIds(ctx, 'export_artifact');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     // Load artifact
     const artifact = await pool.query(
       `SELECT artifact_id, title, content, ctd_section, version, status
        FROM concept2cure_artifacts
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
-      [params.artifactId, params.projectId, ctx.organizationId]
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3 AND project_id = ANY($4::int[])`,
+      [params.artifactId, params.projectId, ctx.organizationId, scoped]
     );
 
     if (artifact.rows.length === 0) {
@@ -2569,16 +2669,18 @@ export async function compareVersions(
     versionB: number;
   }
 ): Promise<CommandResult> {
+  const scoped = await scopedProjectIds(ctx, 'compare_versions');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
-       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4 AND a.project_id = ANY($5::int[])
        LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId, scoped]
     );
 
     if (versions.rows.length < 2) {
@@ -2675,17 +2777,19 @@ export async function reviewVersionImpact(
     saveAsArtifact?: boolean;
   }
 ): Promise<CommandResult> {
+  const scoped = await scopedProjectIds(ctx, 'review_version_impact');
+  if (!Array.isArray(scoped)) return scoped;
   try {
     // 1. Load both versions
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
               COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
-       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
+       JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4 AND a.project_id = ANY($5::int[])
        LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
-      [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
+      [params.artifactId, params.versionA, params.versionB, ctx.organizationId, scoped]
     );
 
     if (versions.rows.length < 2) {
@@ -2699,8 +2803,8 @@ export async function reviewVersionImpact(
     // Load artifact metadata for context
     const artifactResult = await pool.query(
       `SELECT title, ctd_section, status FROM concept2cure_artifacts
-       WHERE id = $1 AND organization_id = $2`,
-      [params.artifactId, ctx.organizationId]
+       WHERE id = $1 AND organization_id = $2 AND project_id = ANY($3::int[])`,
+      [params.artifactId, ctx.organizationId, scoped]
     );
     const artifactMeta = artifactResult.rows[0] || {};
 
@@ -5544,6 +5648,8 @@ export async function executeCommands(
       error: 'COMMAND_CONTEXT_INVALID',
     }));
   }
+  // The project read scope is this dispatch's own, resolved at its first scoped read (dispatchReadScope).
+  dispatchScopes.delete(ctx);
 
   // ── Load per-tenant AnA tool policy once per dispatch ──
   // Stamps ctx.anaToolPolicy from organizations.settings.anaToolPolicy.
@@ -5652,6 +5758,14 @@ export async function executeCommands(
       // neither Part 11 set, so this is the only gate that reaches them.
       if (isProposeOnlyCommand(cmd.command) && ctx.humanConfirmed !== true) {
         results.push(proposalFor(cmd.command, cmd.params as Record<string, unknown> | undefined, ctx));
+        continue;
+      }
+
+      // ── Project read scope (F1-C): an artifact read reads only the projects the person can open, inside an open
+      // project its sponsor's. Resolved once per dispatch, before the read runs; one that cannot be resolved refuses it.
+      const outOfScope = await scopeRefusalBeforeRead(cmd.command, ctx);
+      if (outOfScope) {
+        results.push(outOfScope);
         continue;
       }
 

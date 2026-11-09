@@ -1,0 +1,6 @@
+# Item 1 green: the same test after the one-line fix.
+
+ ✓ server/services/ana/__tests__/advise-device-readiness-filed-copy.test.ts > advise_device_readiness reads the filing, as assemble_device_submission does > a filed copy that is not the document's text: nothing producible, and the section and the remedy named 10ms
+ ✓ server/services/ana/__tests__/advise-device-readiness-filed-copy.test.ts > advise_device_readiness reads the filing, as assemble_device_submission does > when the filing agrees, or was not compared, the advice is unchanged 3ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)

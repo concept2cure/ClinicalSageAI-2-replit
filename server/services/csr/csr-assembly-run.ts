@@ -9,9 +9,11 @@
  * written on the row as the work goes, and the outcome (or the refusal, by
  * code) recorded there for the board to read.
  *
- * The worker acts as the user who asked, under that organization's tenant
- * scope: assembleCsrJob re-checks the user's access to the job and its
- * retained run, exactly as an import into Authoring does.
+ * The worker acts as the user who asked, under that organization's full tenant
+ * scope (its integer id and its uuid: withOrganizationTenantConnection):
+ * assembleCsrJob re-checks the user's access to the job and its retained run,
+ * exactly as an import into Authoring does. An organization with no uuid is
+ * refused by code (CSR_TENANT_SCOPE_UNAVAILABLE) and nothing is read.
  *
  * Every leaf it produces is retained at once through the one seam for
  * server-rendered filing bytes (rendered-leaf-files.ts storeRenderedLeafFile),
@@ -175,8 +177,13 @@ export async function enqueueCsrAssembly(q: Queryable, input: { organizationId: 
 }
 
 export interface CsrAssemblyWorkerDeps {
-  /** Run `fn` on a connection carrying the organization's tenant scope. */
-  withOrganization<T>(organizationId: number, fn: (client: Queryable & RequestSqlClient) => Promise<T>): Promise<T>;
+  /**
+   * Run `fn` on a connection carrying the organization's full tenant scope: its integer id and its uuid, the key the
+   * Vault's row security reads. When the organization has no uuid, `fn` never runs: `refuse` runs instead, on a
+   * connection carrying the integer id alone, which reads none of the organization's Vault.
+   */
+  withOrganization<T>(organizationId: number, fn: (client: Queryable & RequestSqlClient) => Promise<T>,
+    refuse?: (client: Queryable) => Promise<T>): Promise<T>;
   assemble(q: Queryable & RequestSqlClient, input: AssembleCsrJobInput): Promise<AssembledCsrJob>;
   storeLeaf(input: StoreRenderedLeafFileInput): Promise<StoredRenderedLeafFile>;
   materializeSupplied?: typeof materializeSupplied;
@@ -184,12 +191,14 @@ export interface CsrAssemblyWorkerDeps {
 }
 
 async function defaultDeps(): Promise<CsrAssemblyWorkerDeps> {
-  const [{ withTenantConnection }, { assembleCsrJob }, { storeRenderedLeafFile }] = await Promise.all([
+  const [{ withOrganizationTenantConnection }, { assembleCsrJob }, { storeRenderedLeafFile }] = await Promise.all([
     import('../../db/withTenantConnection.js'), import('./csr-assembly-source.js'), import('../ectd/rendered-leaf-files.js'),
   ]);
   return {
-    withOrganization: (organizationId, fn) => withTenantConnection({ tenantId: organizationId, source: 'job', caller: 'csr-assembly-run' },
-      client => fn(client as unknown as Queryable & RequestSqlClient)),
+    // The organization's full scope (B1, 2026-11-05): with the integer id alone, the Vault read as empty and every
+    // assembly ended CSR_SOURCE_DATA_UNAVAILABLE on a database where the runtime role is not the table owner.
+    withOrganization: (organizationId, fn, refuse) => withOrganizationTenantConnection(organizationId, 'csr-assembly-run',
+      client => fn(client as unknown as Queryable & RequestSqlClient), refuse && (client => refuse(client as unknown as Queryable))),
     assemble: assembleCsrJob,
     storeLeaf: storeRenderedLeafFile,
   };
@@ -197,8 +206,21 @@ async function defaultDeps(): Promise<CsrAssemblyWorkerDeps> {
 
 const progressOf = (done: number) => Math.max(1, Math.min(99, Math.round(done)));
 
-async function writeProgress(q: Queryable, id: number, progress: number, stage: string): Promise<void> {
-  await q.query(`UPDATE csr_assembly_runs SET progress = $2, stage = $3, updated_at = now() WHERE id = $1 AND status = 'assembling'`, [id, progressOf(progress), stage]);
+/**
+ * Fence updates to the EXACT worker claim. A startup recovery may requeue a
+ * stalled assembly while an older process still lives. Both workers can see
+ * "assembling" after the replacement claims it; status alone is not a lease.
+ * started_at is already persisted on this row and is refreshed at claim, with
+ * millisecond precision so its ISO representation round-trips through JS.
+ */
+async function writeProgress(q: Queryable, id: number, organizationId: number, startedAt: string, progress: number, stage: string): Promise<void> {
+  const { rows } = await q.query(`UPDATE csr_assembly_runs SET progress = $4, stage = $5, updated_at = now()
+    WHERE id = $1 AND organization_id = $2 AND started_at = $3::timestamptz
+      AND status = 'assembling' RETURNING id`, [id, organizationId, startedAt, progressOf(progress), stage]);
+  if (rows.length !== 1) {
+    throw new CsrAssemblyRunError('CSR_ASSEMBLY_SUPERSEDED', 409,
+      'Another worker owns this CSR assembly. The earlier worker cannot change its progress or result.');
+  }
 }
 
 /** Retain one leaf through storeRenderedLeafFile; the stored digest must be the assembled one. */
@@ -214,10 +236,10 @@ async function retainLeaf(run: { organizationId: number; userId: number }, leaf:
  * shipAs), so the body can link to the name each one ships under; the body is
  * retained last. Each leaf is stored once.
  */
-function retention(q: Queryable, run: { id: number; organizationId: number; userId: number }, deps: CsrAssemblyWorkerDeps) {
+function retention(q: Queryable, run: { id: number; organizationId: number; userId: number; startedAt: string }, deps: CsrAssemblyWorkerDeps) {
   const stored = new Map<string, StoredRenderedLeafFile>();
   const shipAs = async (leaf: AssembledCsrJob['leaves'][number]) => {
-    await writeProgress(q, run.id, 79, `Retaining ${leaf.fileName}`);
+    await writeProgress(q, run.id, run.organizationId, run.startedAt, 79, `Retaining ${leaf.fileName}`);
     const kept = await retainLeaf(run, leaf, deps);
     stored.set(leaf.fileName, kept);
     return renderedLeafPackageName(leaf.fileName, kept.id);
@@ -227,7 +249,7 @@ function retention(q: Queryable, run: { id: number; organizationId: number; user
     for (const leaf of result.leaves) {
       let kept = stored.get(leaf.fileName);
       if (!kept) {
-        await writeProgress(q, run.id, 95, `Retaining ${leaf.fileName}`);
+        await writeProgress(q, run.id, run.organizationId, run.startedAt, 95, `Retaining ${leaf.fileName}`);
         kept = await retainLeaf(run, leaf, deps);
       }
       leaves.push({ appendix: leaf.appendix, title: leaf.title, fileName: leaf.fileName, packageFileName: renderedLeafPackageName(leaf.fileName, kept.id),
@@ -260,7 +282,7 @@ function failure(err: unknown): { code: string; message: string } {
 
 async function claim(q: Queryable, id: number, organizationId: number) {
   const { rows } = await q.query(`UPDATE csr_assembly_runs SET status = 'assembling', progress = 1, stage = 'Reading the build and its retained run',
-      started_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $2 AND status = 'queued' RETURNING id, job_id, status, progress, stage, requested_by, not_applicable, supplied, result, error, placement,
+      started_at = date_trunc('milliseconds', clock_timestamp()), updated_at = now() WHERE id = $1 AND organization_id = $2 AND status = 'queued' RETURNING id, job_id, status, progress, stage, requested_by, not_applicable, supplied, result, error, placement,
   created_at, updated_at, started_at, completed_at`, [id, organizationId]);
   return rows[0] ? toRow(rows[0]) : null;
 }
@@ -272,13 +294,24 @@ async function assembleClaimed(q: Queryable & RequestSqlClient, run: CsrAssembly
   const supplied = await (deps.materializeSupplied ?? materializeSupplied)(q, { organizationId, programId: binding.programId }, run.supplied, path.join(workDir, 'supplied'));
   const outDir = path.join(workDir, 'out');
   await fs.mkdir(outDir, { recursive: true });
-  const kept = retention(q, { id: run.id, organizationId, userId }, deps);
+  if (!run.startedAt) throw new CsrAssemblyRunError('CSR_ASSEMBLY_CLAIM_FAILED', 503, 'Assembly attempt has no recorded start time.');
+  const kept = retention(q, { id: run.id, organizationId, userId, startedAt: run.startedAt }, deps);
   const result = await deps.assemble(q, {
     organizationId, userId, programId: binding.programId, projectId: binding.projectId, jobId: run.jobId, outDir, supplied,
     notApplicable: Object.fromEntries(Object.entries(run.notApplicable).map(([n, d]) => [n, d.reason])),
-    onStage: (stage, done) => writeProgress(q, run.id, 5 + 75 * done, stage), shipAs: kept.shipAs,
+    onStage: (stage, done) => writeProgress(q, run.id, organizationId, run.startedAt!, 5 + 75 * done, stage), shipAs: kept.shipAs,
   });
   return summarise(result, await kept.finish(result), result.leaves[0]?.studyId ?? '');
+}
+
+const TENANT_SCOPE_FAILURE = { code: 'CSR_TENANT_SCOPE_UNAVAILABLE',
+  message: 'This organization has no tenant key, so its Vault sources cannot be read. Nothing was assembled.' };
+
+/** The organization's full scope cannot be opened: the queued assembly is recorded failed, by code, and nothing is read. */
+async function refuseUnscoped(q: Queryable, id: number, organizationId: number): Promise<void> {
+  log.error('CSR assembly refused: the organization has no tenant key', { id, organizationId, code: TENANT_SCOPE_FAILURE.code });
+  await q.query(`UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $3::jsonb, completed_at = now(), updated_at = now()
+    WHERE id = $1 AND organization_id = $2 AND status = 'queued'`, [id, organizationId, JSON.stringify(TENANT_SCOPE_FAILURE)]);
 }
 
 /** The worker: claim a queued assembly, assemble as its requester, retain the leaves, record the outcome. */
@@ -291,23 +324,26 @@ export async function runCsrAssembly(id: number, organizationId: number, injecte
     try {
       const summary = await assembleClaimed(q, run, organizationId, workDir, deps);
       await q.query(`UPDATE csr_assembly_runs SET status = 'assembled', progress = 100, stage = 'Assembled', result = $2::jsonb,
-        completed_at = now(), updated_at = now() WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(summary)]);
+        completed_at = now(), updated_at = now() WHERE id = $1 AND organization_id = $3
+          AND started_at = $4::timestamptz AND status = 'assembling'`,
+      [id, JSON.stringify(summary), organizationId, run.startedAt]);
     } catch (err) {
       const recorded = failure(err);
-      if (recorded.code === 'CSR_ASSEMBLY_FAILED') log.error('CSR assembly failed', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+      if (recorded.code === 'CSR_ASSEMBLY_FAILED') log.error('CSR assembly failed', { id, organizationId, code: 'CSR_ASSEMBLY_FAILED' });
       await q.query(`UPDATE csr_assembly_runs SET status = 'failed', stage = 'Failed', error = $2::jsonb, completed_at = now(), updated_at = now()
-        WHERE id = $1 AND status = 'assembling'`, [id, JSON.stringify(recorded)]);
+        WHERE id = $1 AND organization_id = $3 AND started_at = $4::timestamptz
+          AND status = 'assembling'`, [id, JSON.stringify(recorded), organizationId, run.startedAt]);
     } finally {
       await fs.rm(workDir, { recursive: true, force: true });
     }
-  });
+  }, q => refuseUnscoped(q, id, organizationId));
 }
 
 /** Start the worker off the request thread, as launchCSRBuildAsync starts a build. */
 export function startCsrAssembly(id: number, organizationId: number): void {
   setImmediate(() => {
-    runCsrAssembly(id, organizationId).catch(err => {
-      log.error('runCsrAssembly threw outside its own error handler', { id, organizationId, err: err instanceof Error ? err.message : String(err) });
+    runCsrAssembly(id, organizationId).catch(() => {
+      log.error('runCsrAssembly threw outside its own error handler', { id, organizationId, code: 'CSR_ASSEMBLY_FAILED' });
     });
   });
 }

@@ -18,7 +18,7 @@ describe('template guidance remains separate from authored evidence', () => {
     render(<TemplateGuidance sectionId="section-one" />);
     await screen.findByText('Verify study identity.');
     fireEvent.click(screen.getByText('Template guidance and source requirements'));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/authoring/guidance/section-one');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/authoring/guidance/section-one', undefined, undefined, expect.any(AbortSignal));
     expect(screen.getByText('The worksheet does not replace the original.')).toBeTruthy();
     expect(screen.queryByText('server/private/implementation.ts')).toBeNull();
     expect(document.querySelector('.tiptap')).toBeNull();

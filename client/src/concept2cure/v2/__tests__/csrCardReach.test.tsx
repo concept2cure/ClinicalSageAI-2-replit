@@ -12,7 +12,7 @@
  * Authoring through the canonical intake (SourceImportDialog). SYNTHETIC.
  */
 import React from 'react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
@@ -24,7 +24,6 @@ import { OrchestratorRunControls } from '../surfaces/OrchestratorRunControls';
 import { StudyDataBuild } from '../editor/StudyDataBuild';
 import { BUILD_POLL_MS } from '../surfaces/CsrRunBuilds';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
-import { clearShellProject, publishShellProject } from '../shellProject';
 
 const PROGRAM = '11111111-2222-4333-8444-000000000001';
 const RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b31';
@@ -53,10 +52,16 @@ const headings = [
   { num: '14.3.3', label: 'Narratives of deaths, other serious and certain other significant adverse events', depth: 3, manual: true, state: 'in_review', contentHash: 'e'.repeat(64), reviewerId: 5, decidedAt: null, reason: null },
 ];
 const nav = vi.fn();
+/** §10.1's saved text, as GET /api/csr/jobs/:jobId/sections?sectionNumber= returns it (csr-jobs.ts). */
+const SAVED_10 = '<p>Of 23 randomized participants, 21 completed the study.</p><p>Two withdrew consent.</p>';
+let headingRows: unknown[] = headings;
 
 const RUNS_LIST = `/api/submission-orchestrator/runs?programId=${PROGRAM}`;
 function routes(method: string, path: string) {
   if (path === RUNS_LIST) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
+  if (method === 'GET' && path === '/api/csr/jobs/41/sections?sectionNumber=10.1') {
+    return ok({ sections: [{ sectionNumber: '10.1', contentHash: HASH_10, content: SAVED_10 }] });
+  }
   return jobRoutes(method, path);
 }
 
@@ -66,7 +71,7 @@ function jobRoutes(method: string, path: string) {
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
   if (method === 'GET' && path === BUILDS) return ok({ jobs: builds });
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
-  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings });
+  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings: headingRows });
   if (method === 'POST' && /\/sections\/[\d.]+\/review$/.test(path)) return ok({ review: { state: 'approved' } });
   if (/\/narratives\/status$/.test(path)) return ok({ run: null });
   if (/\/narratives$/.test(path)) return ok({ subjects: [] });
@@ -74,7 +79,7 @@ function jobRoutes(method: string, path: string) {
   return ok({});
 }
 
-beforeEach(() => { builds = [build(41)]; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
+beforeEach(() => { builds = [build(41)]; headingRows = headings; apiRequest.mockImplementation(async (method: string, path: string) => routes(method, path)); });
 afterEach(() => { cleanup(); apiRequest.mockReset(); nav.mockReset(); clearEditorTarget(); });
 /* 2026-10-31 (CLAUDE.md RULE 4): the build lives in the CSR document's editor, not on Submission Center's card.
    These cases are the card's, moved: mount the editor's build and choose the study data. Here it is an earlier
@@ -149,6 +154,22 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
   } finally { vi.useRealTimers(); }
 });
 
+it('says why a failed build stopped, as the list states it, and refuses a list whose reason is not text', async () => {
+  // F10 of the 2026-11-02 demo walk: the build showed only "CSR build N · failed · NN%".
+  const why = 'Not complete: §9.8 still holds a data placeholder (“[…]”) where the study’s data is missing.';
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: why }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByText(/CSR build 44 · failed · 15%/)).toBeTruthy();
+  const reason = await within(region).findByText(why);
+  expect(reason.getAttribute('role')).toBe('alert');
+  cleanup();
+  builds = [{ ...build(44, 'failed'), progress: 15, failure: { stack: 'Error: at Pool.query' } }];
+  await card();
+  expect((await screen.findByText(/The CSR builds of this run could not be listed/)).getAttribute('role')).toBe('alert');
+  expect(screen.queryByText(/Pool\.query/)).toBeNull();
+});
+
 const headingReads = (jobId: number) => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === `/api/csr/jobs/${jobId}/headings`).length;
 
 it('reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash', async () => {
@@ -157,8 +178,16 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
   const review = await within(region).findByLabelText('Section review');
   expect(within(review).getByText('4 of 5 ICH E3 headings drafted · 2 approved')).toBeTruthy();
   const row = within(review).getByText('Disposition of patients').closest('li')!;
+  // Since 2026-11-03 an approval is of the exact saved text: Approve waits until that text has been read (F9).
+  const approve = within(row).getByRole('button', { name: /Approve/ }) as HTMLButtonElement;
+  expect(approve.disabled).toBe(true);
+  fireEvent.click(within(row).getByRole('button', { name: 'Read saved section text' }));
+  expect((await within(row).findByLabelText('Saved text for §10.1')).textContent)
+    .toBe('Of 23 randomized participants, 21 completed the study.\n\nTwo withdrew consent.');
+  expect(apiRequest).toHaveBeenCalledWith('GET', '/api/csr/jobs/41/sections?sectionNumber=10.1', undefined);
+  expect(approve.disabled).toBe(false);
   const before = headingReads(41);
-  fireEvent.click(within(row).getByRole('button', { name: /Approve/ }));
+  fireEvent.click(approve);
   await vi.waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/csr/jobs/41/sections/10.1/review',
     { decision: 'approve', expectedContentHash: HASH_10 }));
   // The decision is re-read from the server, never assumed.
@@ -166,32 +195,131 @@ it('reviews the selected build section by section, with the ICH E3 labels, and a
   expect(apiRequest.mock.calls.some(([, p]) => String(p).startsWith('/api/csr-workflow/board'))).toBe(false);
 });
 
-it('imports exactly the approved sections into Authoring and opens the saved copy there', async () => {
-  await card();
+/* F6 of the 2026-11-02 demo walk (2026-11-05): the CSR document's own panel imports the approved headings into that
+   document, by ICH E3 number (server csr-import-into-document.ts). It no longer opens the working-copy dialog; the
+   copy import stays on the csr-workflow board and every other entry point. */
+const FP = 'f'.repeat(64);
+const into = (preview: boolean, documentId = CSR_DOC) => ok({ success: true, data: { preview, into: { documentId, title: 'SYN-201 Clinical Study Report' },
+  fingerprint: FP, origin: { kind: 'csr' }, gaps: ['CSR section 9 is prepared from source outputs and records.'],
+  warnings: ['Approval and signatures of the build’s headings are not transferred; this document is reviewed and signed as itself.'],
+  sections: [{ code: '11.4.1', title: 'Analysis of efficacy', outcome: preview ? 'will-write' : 'written', placeholder: false },
+    { code: '12.2', title: 'Adverse events', outcome: 'edited', placeholder: true }] } });
+const imports = () => apiRequest.mock.calls.filter(([m, p]) => m === 'POST' && p === '/api/authoring/import/source');
+
+it('imports exactly the approved sections into this document, with this document as the target, and opens no other document', async () => {
+  apiRequest.mockImplementation(async (method: string, path: string, body?: { previewOnly?: boolean }) =>
+    method === 'POST' && path === '/api/authoring/import/source' ? into(body?.previewOnly === true) : routes(method, path));
+  const changed = vi.fn();
+  render(<StudyDataBuild programId={PROGRAM} documentId={CSR_DOC} onNav={nav} onDocumentChanged={changed} />);
+  fireEvent.change(await screen.findByLabelText(/Study data/), { target: { value: RUN } });
   const region = await screen.findByLabelText('CSR builds from this study data');
-  fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
-  const dialog = await screen.findByTestId('csr-import');
-  // No open project in the shell: the dialog names the target by its id (programName absent).
-  expect(JSON.parse(dialog.firstChild!.textContent!)).toEqual({ programId: PROGRAM, source: { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'] } });
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Open confirmed copy' }));
-  expect(nav).toHaveBeenCalledWith('document-authoring');
-  expect(peekEditorTarget()).toMatchObject({ docId: 'saved-csr-copy', programId: PROGRAM, sectionCode: '11.4.1' });
+  expect(within(region).queryByRole('button', { name: /Import approved sections into Authoring/ })).toBeNull();
+  const scrolled = vi.fn();
+  const scrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = scrolled;
+  onTestFinished(() => { Element.prototype.scrollIntoView = scrollIntoView; });
+  fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+  const panel = await within(region).findByLabelText('Import into this document');
+  expect(await within(panel).findByText(/§11\.4\.1 Analysis of efficacy · Will be written/)).toBeTruthy();
+  // R-1 (rehearsal 2026-11-05): the panel opens below the section list, so it is brought into view, and the reason
+  // field takes focus once the preview is shown; on stage the click had looked as though it did nothing.
+  expect(scrolled.mock.contexts).toContain(panel);
+  expect(document.activeElement).toBe(within(panel).getByLabelText(/Reason for importing/));
+  expect(within(panel).getByText(/§12\.2 Adverse events · Edited here since; not replaced · still holds a data placeholder/)).toBeTruthy();
+  const source = { kind: 'csr', jobId: 41, sectionNumbers: ['11.4.1', '12.2'], approvedOnly: true };
+  expect(imports()[0][2]).toEqual({ programId: PROGRAM, source, targetDocumentId: CSR_DOC, previewOnly: true });
+  const importButton = within(panel).getByRole('button', { name: 'Import into this document' }) as HTMLButtonElement;
+  expect(importButton.disabled).toBe(true);
+  fireEvent.change(within(panel).getByLabelText(/Reason for importing/), { target: { value: 'Bring the approved headings into this CSR' } });
+  fireEvent.click(importButton);
+  expect(await within(panel).findByText('Imported. 1 section(s) written into this document.')).toBeTruthy();
+  expect(imports()[1][2]).toEqual({ programId: PROGRAM, source, targetDocumentId: CSR_DOC, expectedFingerprint: FP, reason: 'Bring the approved headings into this CSR' });
+  expect(changed).toHaveBeenCalledTimes(1);
+  // No working copy, no navigation: the document re-reads its own sections in place.
+  expect(screen.queryByTestId('csr-import')).toBeNull();
+  expect(nav).not.toHaveBeenCalled();
+  expect(peekEditorTarget()).toBeFalsy();
 });
 
-it('names the target project in the import dialog when the open project is this program, and only then', async () => {
-  publishShellProject({ id: PROGRAM.toUpperCase(), title: 'SYN-201 IND' });
-  try {
+it('states a refused import by name, and refuses a reply that is not for this document', async () => {
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/authoring/import/source') throw refusal(409, { error: 'IMPORT_TARGET_STUDY_DATA_MISMATCH',
+      message: 'This build was not drafted from the study data this document froze. Nothing was imported.' });
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+  expect((await within(region).findByText(/not drafted from the study data this document froze/)).getAttribute('role')).toBe('alert');
+  expect(within(region).queryByRole('button', { name: 'Import into this document' })).toBeNull();
+  cleanup();
+  apiRequest.mockImplementation(async (method: string, path: string) =>
+    method === 'POST' && path === '/api/authoring/import/source' ? into(true, '11111111-2222-4333-8444-0000000000aa') : routes(method, path));
+  await card();
+  const other = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into this document/ }));
+  expect((await within(other).findByText(/What this import would write could not be read/)).getAttribute('role')).toBe('alert');
+  expect(within(other).queryByText(/Will be written/)).toBeNull();
+});
+
+it.each([
+  ['IMPORT_TARGET_BOUND_TO_OTHER_BUILD', 'preview'], ['IMPORT_TARGET_STUDY_DATA_MISMATCH', 'preview'],
+  ['IMPORT_TARGET_BOUND_TO_OTHER_BUILD', 'write'], ['IMPORT_TARGET_STUDY_DATA_MISMATCH', 'write'],
+])(
+  'explains the existing new-CSR path after %s at %s, while collaborators keep this CSR', async (code, stage) => {
+    const original = code === 'IMPORT_TARGET_BOUND_TO_OTHER_BUILD'
+      ? 'This document holds sections imported from CSR build 40. Nothing was imported.'
+      : 'This build was not drafted from the study data this document froze. Nothing was imported.';
+    apiRequest.mockImplementation(async (method: string, path: string, body?: { previewOnly?: boolean }) => {
+      if (method === 'POST' && path === '/api/authoring/import/source') {
+        if (stage === 'write' && body?.previewOnly === true) return into(true);
+        throw refusal(409, { error: code, message: original });
+      }
+      return routes(method, path);
+    });
     await card();
     const region = await screen.findByLabelText('CSR builds from this study data');
-    fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into Authoring/ }));
-    expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!)).toMatchObject({ programId: PROGRAM, programName: 'SYN-201 IND' });
-    cleanup();
-    publishShellProject({ id: '11111111-2222-4333-8444-0000000000ff', title: 'Another program' });
-    await card();
-    const other = await screen.findByLabelText('CSR builds from this study data');
-    fireEvent.click(await within(other).findByRole('button', { name: /Import approved sections into Authoring/ }));
-    expect(JSON.parse((await screen.findByTestId('csr-import')).firstChild!.textContent!).programName).toBeUndefined();
-  } finally { clearShellProject(); }
+    fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+    const panel = await within(region).findByLabelText('Import into this document');
+    if (stage === 'write') {
+      fireEvent.change(await within(panel).findByLabelText(/Reason for importing/), { target: { value: 'Import the approved headings from this saved cut' } });
+      fireEvent.click(within(panel).getByRole('button', { name: 'Import into this document' }));
+    }
+    const alert = await within(panel).findByRole('alert');
+    expect(alert.textContent).toBe(`${original} For a different data cut, go to Project → New document → Clinical Study Report. ` +
+      'Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR.');
+    if (stage === 'preview') expect(within(panel).queryByRole('button', { name: 'Import into this document' })).toBeNull();
+    expect(screen.queryByTestId('csr-import')).toBeNull();
+    expect(imports()).toHaveLength(stage === 'preview' ? 1 : 2);
+    expect(imports()[0][2]).toMatchObject({ targetDocumentId: CSR_DOC, previewOnly: true });
+    expect(imports().every(([, , body]) => body.targetDocumentId === CSR_DOC)).toBe(true);
+    expect(nav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeFalsy();
+  },
+);
+
+it('does not offer another CSR as recovery for an access refusal', async () => {
+  const original = 'You cannot edit this document with your current permissions. Nothing was imported.';
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/authoring/import/source') throw refusal(403, { error: 'IMPORT_TARGET_PERMISSION_DENIED', message: original });
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+  const panel = await within(region).findByLabelText('Import into this document');
+  expect((await within(panel).findByRole('alert')).textContent).toBe(original);
+  expect(within(panel).queryByText(/Project → New document/)).toBeNull();
+  expect(imports()).toHaveLength(1);
+});
+
+it('refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted', async () => {
+  headingRows = [...headings, { num: '9.8', label: 'Changes in the conduct of the study', depth: 2, manual: false, state: 'draft',
+    placeholder: 'yes', contentHash: 'f'.repeat(64) }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect((await within(region).findByText(/The build’s sections could not be read for review/)).closest('[role="alert"]')).toBeTruthy();
+  expect(within(region).queryByLabelText('Section review')).toBeNull();
 });
 
 it('states a refused headings read as an alert, never an empty review', async () => {

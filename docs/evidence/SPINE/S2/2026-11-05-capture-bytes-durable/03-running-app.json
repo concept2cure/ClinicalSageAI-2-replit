@@ -1,0 +1,53 @@
+{
+  "where": "local dev server (npx tsx server/index.ts), PostgreSQL 16, STORAGE_PROVIDER unset (local provider); dev login jm.smith@concept2cure.pro, org 2",
+  "durable": {
+    "upload": {
+      "fileId": "file_1793858666548_7mnsrn",
+      "message": "File uploaded successfully",
+      "status": "ready",
+      "fileName": "dw1-synopsis.txt",
+      "sourceId": null,
+      "dataRoom": {
+        "recorded": false,
+        "reason": "No project was open, so this file stays in the conversation. Adopt it into a project to add it to that project\u2019s Data Room."
+      },
+      "extractionMethod": "utf8",
+      "extractionWords": 19,
+      "extractionCoverage": null,
+      "retrieval": null
+    },
+    "record": "file_uploads: storage_path uploads/org-2/<fileId>, storage_provider local, storage_object_id 9c9f21f6-\u2026; the working copy at storage_path was then deleted",
+    "adopt": {
+      "status": 201,
+      "body": {
+        "adopted": true,
+        "sourceId": 157,
+        "processed": true,
+        "processing": {
+          "ok": true,
+          "processed": true,
+          "status": "completed"
+        }
+      }
+    }
+  },
+  "legacy_shaped": {
+    "note": "a second upload with storage_provider and storage_object_id set to NULL, as every upload before fbc2a1773 was written, and its working copy deleted",
+    "adopt": {
+      "status": 410,
+      "body": {
+        "error": "The file bytes are no longer available. Upload it again with the project open.",
+        "code": "UPLOAD_BYTES_MISSING"
+      }
+    }
+  },
+  "project_sources_after": [
+    {
+      "id": 157,
+      "title": "dw1-synopsis.txt",
+      "extractionStatus": "extracted",
+      "originalFileAvailable": true,
+      "checksum": "c0bfeeecade8a46b832d246d2cabe4144abacfd1040d7815e4dfd69b31fa6024"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# RED, the client cases against EctdCompile.tsx, EctdModuleReadiness.tsx and EctdFiledState.tsx BEFORE the change, 2026-11-08T22:28:28Z
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2)
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed"
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: what the record cannot say is never shown as empty or complete (F1 review) > a sequence the agency acknowledged with no record of what it carried: not "nothing on file"
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: what the record cannot say is never shown as empty or complete (F1 review) > a send that never settled is not said to be off file: its delivery is not known
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > a project that is not an application and never filed > shows why nothing is on file, not a failed read
+   → Unable to find an element with the text: This project is a clinical study report, authored here and not compiled as an eCTD sequence.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+   → This project is a clinical study report, authored here and not compiled as an eCTD sequence.
+ ✓ client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a program with no sequence: the sentence, and no percentage
+ ✓ client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a module with nothing required reads "none required", never 0% or ready
+ ✓ client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a module with nothing of its required set placed reads "none placed", not "partial"
+ ✓ client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a market with no required set says why, with no figure
+ ✓ client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > eCTD module readiness says what it counted > a 200 without modules is a failed read, never "No module readiness yet"
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > the readiness card says so and gives the reason, never a failed read
+   → Unable to find an element with the text: Not compiled as an eCTD sequence. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > validation says the reason, not an HTTP status
+   → Unable to find an element with the text: Not compiled as an eCTD sequence. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 15 passed (18)

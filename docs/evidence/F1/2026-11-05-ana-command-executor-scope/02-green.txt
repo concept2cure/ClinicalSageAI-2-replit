@@ -1,0 +1,57 @@
+# 02-green: the same tests on the changed sources (2026-11-06 run, final sources)
+#
+# npx vitest run server/services/ana-ri/__tests__/command-executor-project-scope.pglite.test.ts \
+#                server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid)
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id)
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a private project's artifact is answered as a missing one, and nothing is written
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > inside a project, another sponsor's artifact is answered as a missing one, and nothing is written
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a project the person can open but not change is refused, and nothing is written
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > with the project's edit right, the new version is written
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > update_vault_document writes only where the person may change the project > a check that cannot run writes nothing, and says so
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > an open project of the open sponsor assembles
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > a private project, or another sponsor's from inside a project, reads as a project with no such artifacts
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > assemble_ectd_module_from_artifacts assembles only a project the person can open > another organization's project reads as a project with no such artifacts
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > search_all_documents searches only the projects the person can open > no project open: the vault and governed stores of open projects of every sponsor, never a private project
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > search_all_documents searches only the projects the person can open > inside a project: only the open project's sponsor's
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > search_all_documents searches only the projects the person can open > a check that cannot run is an error, and nothing is searched
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > validate_cross_references reads only a document of a project the person can open > a private project's document, or another sponsor's from inside a project, is answered as a missing one
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > validate_cross_references reads only a document of a project the person can open > a document of a project the person can open is checked
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > validate_cross_references reads only a document of a project the person can open > a check that cannot run is an error, and nothing is checked
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > execute_platform_command reads inside the open project's sponsor > inside a v2 project (a program uuid), only that sponsor's artifacts are found
+ ✓ ana-vault-tools-project-scope.pglite.test.ts > execute_platform_command reads inside the open project's sponsor > no project open: every open project of every sponsor, never a private project
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_artifacts and check_dossier_readiness answer a private project as one that does not exist
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > a project the person can open lists and reports its artifacts
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > search_artifacts finds the artifacts of open projects of every sponsor, never a private project
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > search_artifacts with a private project named finds nothing, as with a missing project
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > the artifact reads answer a private artifact as a missing one
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > another organization's artifact is answered as a missing one
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of a project the person can open still reads
+ ✓ command-executor-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > review_version_impact reads only an artifact the person can open
+ ✓ command-executor-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > search_artifacts finds only the open project's sponsor's artifacts (open project as a project id)
+ ✓ command-executor-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > search_artifacts finds only the open project's sponsor's artifacts (open project as a program uuid (the v2 shell))
+ ✓ command-executor-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > another sponsor's project and artifacts are answered as missing ones
+ ✓ command-executor-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the open sponsor's other project still reads, and an omitted projectId means the open project
+ ✓ command-executor-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused exactly as one that does not exist, and nothing is read
+ ✓ command-executor-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every read is refused with a code
+ ✓ command-executor-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member is refused, and nothing is read
+ ✓ command-executor-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the scope is resolved once per dispatch, before the reads run
+ ✓ command-executor-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a command that reads no artifact is not held to the scope
+
+ Test Files  2 passed (2)
+      Tests  49 passed (49)

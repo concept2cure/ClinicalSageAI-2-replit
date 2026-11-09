@@ -5,6 +5,36 @@ import {
   ZERO_RETENTION_FLAGS,
   type ProviderPlacement,
 } from './providers/placement';
+import type { DataSensitivityTier } from './types';
+
+/** Conservative bridge from the Vault's existing classification vocabulary.
+ * Controlled records and unknown classifications stay local until reviewed. */
+export function sensitivityTierForClassification(classification: unknown): DataSensitivityTier {
+  switch (typeof classification === 'string' ? classification.trim().toUpperCase() : '') {
+    case 'PUBLIC': return 0;
+    case 'INTERNAL': return 1;
+    case 'CONFIDENTIAL': return 2;
+    default: return 3;
+  }
+}
+
+/** The maximum is computed by code; malformed/missing entries tier up.
+ * This never declassifies raw inputs. routeDerivative constructs a different
+ * exact, human-attested payload through tenant custody; caller provenance or
+ * derivative-shaped metadata cannot grant that capability or lower this wall. */
+export function decideInputTierPlacement(input: {
+  tiers: readonly DataSensitivityTier[];
+  provider: string;
+  detectedDataClass?: DetectedDataClass;
+}): { allowed: boolean; tierMax: DataSensitivityTier; reasonCode: 'ALLOW_INPUT_TIER' | 'DENY_INPUT_TIER' } {
+  let tierMax: DataSensitivityTier = input.tiers.length === 0 ? 3 : 0;
+  for (const tier of input.tiers) {
+    tierMax = Math.max(tierMax, Number.isInteger(tier) && tier >= 0 && tier <= 3 ? tier : 3) as DataSensitivityTier;
+  }
+  if (input.detectedDataClass && input.detectedDataClass !== 'none') tierMax = 3;
+  const allowed = tierMax < 2 || isSelfHostedProvider(input.provider);
+  return { allowed, tierMax, reasonCode: allowed ? 'ALLOW_INPUT_TIER' : 'DENY_INPUT_TIER' };
+}
 
 export type DetectedDataClass = 'none' | 'pii' | 'phi' | 'unknown';
 export type PlacementReasonCode =

@@ -68,6 +68,7 @@ import {
   SIGNED_REGISTERS,
   type SignedRegister,
   isSigned,
+  resolveSignedOutcome,
   retireSignedRecord,
   signedRegisterEditRefusal,
   withoutSignatureFields,
@@ -127,6 +128,7 @@ import {
   materialSpecBody,
   optionalDate,
   projectOnEdit,
+  refuseUnrecordedFields,
   requiredDate,
   ungovernedQualificationRefusal,
   withoutOrgId,
@@ -198,7 +200,7 @@ function respondWriteError(
     return res.status(400).json({
       success: false,
       error: 'Invalid payload',
-      details: error.errors,
+      details: error.issues,
     });
   }
   /* A governed-state refusal from the register service: the write the caller
@@ -371,6 +373,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(analyticalMethodBody, req.body, 'analytical-methods');
     const validatedData = analyticalMethodBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.analyticalMethod, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Analytical method not found' });
@@ -487,6 +490,7 @@ router.put('/process-validation/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(processValidationBody, req.body, 'process-validation');
     const validatedData = processValidationBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.processValidation, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Process validation record not found' });
@@ -630,6 +634,7 @@ router.put('/stability-studies/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(stabilityStudyBody, req.body, 'stability-studies');
     const validatedData = stabilityStudyBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.stabilityStudy, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Stability study not found' });
@@ -818,6 +823,7 @@ router.put('/qc-testing/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(qcTestingBody, req.body, 'qc-testing');
     const validatedData = qcTestingBody.partial().parse(req.body);
     /* `analyst` is a matter of record, not an edit. `reviewedBy` is the OTHER
        half of the same fact and was accepted from the request body — so a
@@ -918,6 +924,7 @@ router.put('/change-control/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(changeControlBody, req.body, 'change-control');
     const validatedData = changeControlBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.changeControl, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Change-control record not found' });
@@ -982,6 +989,7 @@ router.put('/drug-substances/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(drugSubstanceBody, req.body, 'drug-substances');
     const validatedData = drugSubstanceBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugSubstance, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug substance not found' });
@@ -1052,6 +1060,7 @@ router.put('/drug-products/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(drugProductBody, req.body, 'drug-products');
     const validatedData = drugProductBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugProduct, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug product not found' });
@@ -1224,7 +1233,7 @@ async function qualifyRegisterRecord(
 ): Promise<express.Response> {
   const parsed = governedSignatureSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.errors });
+    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.issues });
   }
   const { reason, meaning, reauth, idempotencyKey } = parsed.data;
 
@@ -1291,11 +1300,19 @@ async function qualifyRegisterRecord(
        never fire — a second close-out answered 200 and re-stamped the signature
        date over the first signer's
        (docs/evidence/CMC-M3-GA/2026-10-19/11-stability-close-out/). */
-    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue.toLowerCase()) {
+    /* Which outcome is being signed (P-110 item 1). The descriptor decides;
+       this handler asks. A register with one outcome answers `signedValue`,
+       which is every register but the analytical-method one. */
+    const outcome = resolveSignedOutcome(spec.register, parsed.data, current.rows[0][signing.statusColumn]);
+    if ('refusal' in outcome) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: outcome.refusal });
+    }
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === outcome.value.toLowerCase()) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: `This ${subject} is already ${signing.signedValue}`,
+        error: `This ${subject} is already ${outcome.value}`,
         qualifiedAt: current.rows[0][signing.signedAtColumn] ?? null,
       });
     }
@@ -1315,15 +1332,18 @@ async function qualifyRegisterRecord(
       : userId;
     /* Every interpolated name here is a literal from this file's own closed
        set — the descriptor table above — never caller input; the values still
-       travel as parameters. */
+       travel as parameters. The STATUS was interpolated too until P-110 made
+       it an outcome the request names: it is resolved against the register's
+       own closed list above and bound as $4, because a value a request can
+       steer does not belong in SQL text whatever validates it. */
     await client.query(
       `UPDATE ${table}
-          SET ${signing.statusColumn} = '${signing.signedValue}',
+          SET ${signing.statusColumn} = $4,
               ${signing.signedByColumn} = $3,
               ${signing.signedAtColumn} = NOW(),
               updated_at = NOW()
         WHERE id = $1 AND organization_id = $2`,
-      [id, orgId, signedBy],
+      [id, orgId, signedBy, outcome.value],
     );
     const governance = await recordGovernedAction(client, {
       orgId,
@@ -1331,7 +1351,7 @@ async function qualifyRegisterRecord(
       command: 'sign',
       target: `${spec.target}:${id}`,
       reason,
-      payload: { meaning },
+      payload: { meaning, outcome: outcome.value, phase: outcome.phase },
       domain: 'biopharma',
       surface: spec.surface,
       idempotencyKey: idempotencyKey ?? null,
@@ -1339,14 +1359,21 @@ async function qualifyRegisterRecord(
     // 21 CFR Part 11 signature row, same transaction as the ledger pair; none
     // was written until 2026-10-01 (P0-10b, DP-02). Factors as verified above.
     await persistGovernedActionSignature(client, {
-      orgId, userId, target: `${spec.target}:${id}`, reason, payload: { meaning },
+      orgId, userId, target: `${spec.target}:${id}`, reason,
+      payload: { meaning, outcome: outcome.value, phase: outcome.phase },
       actionId: governance.actionId, auditId: governance.auditId, sha256Chain: governance.sha256Chain,
       ...verifiedReauthFactors(reauth),
       ipAddress: clientIpOf(req),
       occurredAt: new Date(),
       binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: `No content digest is registered for a ${subject}, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.` },
-      extraManifest: { act: { [signing.statusColumn]: signing.signedValue } },
-      complianceStatement: `${subject} ${act} applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.`,
+      extraManifest: {
+        act: { [signing.statusColumn]: outcome.value },
+        /* WHAT was attested, and for which phase — the half of a §11.50
+           manifestation that a status word alone does not carry. */
+        attests: outcome.attests,
+        ...(outcome.phase ? { phase: outcome.phase } : {}),
+      },
+      complianceStatement: `${subject} ${act} applied under 21 CFR Part 11 §11.50/§11.70/§11.200, attesting ${outcome.attests}; ledger-chained to the audit_logs sha256 chain.`,
     });
     await client.query('COMMIT');
 
@@ -1418,6 +1445,7 @@ router.put('/container-closures/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(containerClosureBody, req.body, 'container-closures');
     const validatedData = containerClosureBody.partial().parse(req.body);
     const stored = await reselectContainerClosure(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1505,6 +1533,7 @@ router.put('/reference-standards/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(referenceStandardBody, req.body, 'reference-standards');
     const validatedData = referenceStandardBody.partial().parse(req.body);
     const stored = await reselectReferenceStandard(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1599,6 +1628,7 @@ router.put('/impurity-profiles/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(impurityProfileBody, req.body, 'impurity-profiles');
     const validatedData = impurityProfileBody.partial().parse(req.body);
     const stored = await reselectImpurityProfile(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1698,6 +1728,7 @@ router.put('/dissolution-profiles/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(dissolutionProfileBody, req.body, 'dissolution-profiles');
     const validatedData = dissolutionProfileBody.partial().parse(req.body);
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
@@ -1754,6 +1785,7 @@ router.put('/material-specs/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(materialSpecBody, req.body, 'material-specs');
     const validatedData = materialSpecBody.partial().parse(req.body);
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
@@ -1811,6 +1843,7 @@ router.put('/formulation-records/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(formulationRecordBody, req.body, 'formulation-records');
     const validatedData = formulationRecordBody.partial().parse(req.body);
     const [storedRow] = await db
       .select({ projectId: cmcFormulationRecords.projectId })
@@ -1903,6 +1936,7 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
       return res.status(400).json({ success: false, error: 'A manufacturing process id must be a uuid' });
     }
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(manufacturingProcessBody, req.body, 'manufacturing-processes');
     const validatedData = manufacturingProcessBody.partial().parse(req.body);
     const stored = await reselectManufacturingProcess(id, orgId);
     if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
@@ -2011,6 +2045,7 @@ router.put('/characterization-studies/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(characterizationStudyBody, req.body, 'characterization-studies');
     const validatedData = characterizationStudyBody.partial().parse(req.body);
     const stored = await reselectCharacterizationStudy(String(id), orgId);
     if (await answeredSignedRecordEdit(

@@ -13,6 +13,7 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { expect } from 'vitest';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
+import { grantDocumentProjectEdit } from '../../../routes/c2c/__tests__/support/document-project-access';
 
 /** Set as process.env.JWT_SECRET and JWT_SECRET_DEV by each test file before it imports a router. */
 export const FILING_JWT_SECRET = 'node-status-follows-work';
@@ -53,9 +54,13 @@ const PREREQ = `
     primary_agency text,
     deleted_at timestamptz
   );
+  -- actor_id is integer, as production has it (20260527_mutation_primitives.sql,
+  -- C-5). Typed text, a chained row read back hashes "42" where its writer
+  -- hashed 42, so no link re-derives, and since b8cee0745c the release gate
+  -- reads every chained row of the document (INDEPENDENT_CHECK_REQUIRED).
   CREATE TABLE audit_logs (
     id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
-    table_name text, record_id text, actor_id text, target text,
+    table_name text, record_id text, actor_id integer, target text,
     target_type text, target_id text, reason text, payload_hash text,
     ana_action_id text, sha256_chain text,
     occurred_at timestamptz DEFAULT now(), hmac_seal text,
@@ -85,6 +90,11 @@ const MIGRATIONS = [
   'migrations/20260908_span_lineage_machine_draft.sql',
   'migrations/20260728_authoring_comments_threading.sql',
   'migrations/20260527_mutation_primitives.sql',
+  // The chain's order key (chain_seq), as the deployed set has it. A signature's
+  // release gate reads the document's chained ledger by it (b8cee0745c,
+  // workflow-import-governance.ts independentLedger); without the column every
+  // signature answered INDEPENDENT_CHECK_REQUIRED.
+  'migrations/20260921_audit_logs_chain_seq.sql',
   // recordGovernedAction's 'approve' verb: the open command vocabulary the
   // deployed set carries (scripts/db/migration-set.mjs).
   'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
@@ -122,6 +132,9 @@ export interface FilingApp {
 /** Builds the database, hands its pool to the caller's `db` mock, and mounts both routers. */
 export async function startFilingApp(bind: (jdb: JourneyDb) => void): Promise<FilingApp> {
   const jdb = await createJourneyDb({ prereqSql: PREREQ, migrations: MIGRATIONS });
+  // The documents router admits a document only of a project its caller can open, and a write only with the
+  // project's edit right (F1, 2026-11-05): the author is given both, through the real sharing policy.
+  await grantDocumentProjectEdit(jdb.pglite, { organizationId: AUTHOR.organizationId, userId: Number(AUTHOR.id), programId: PROJECT });
   bind(jdb);
   const { default: authoringRouter } = await import('../../../routes/authoring.router');
   const { default: documentsRouter } = await import('../../../routes/c2c/documents');

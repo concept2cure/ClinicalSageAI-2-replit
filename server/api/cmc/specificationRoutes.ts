@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request } from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughSpecification } from '../../services/cmc-write-through';
@@ -21,6 +21,7 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { inRefusableTransaction, isRefusal, refuse } from '../../services/vault/vault-refusal.js';
 import { isApprovedSpecification } from '../../services/cmc/signed-record';
+import { loadProjectAnalyticalMethods, specificationMethodVerdict } from '../../services/cmc/analytical-method-source';
 /* The specification register's history, read into the same shape the other
    sixteen registers' history is read into, so the product has one history
    panel (services/cmc/register-history.ts). */
@@ -32,7 +33,7 @@ const router = express.Router();
 
 // Validation schemas
 const createSpecSchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().guid().optional(),
   materialType: z.string().min(1, 'Material type is required'),
   materialName: z.string().min(1, 'Material name is required'),
   testParameters: z.any().optional(),
@@ -49,7 +50,7 @@ const createSpecSchema = z.object({
    */
   approvalStatus: z
     .enum(['draft', 'review'], {
-      errorMap: () => ({
+      error: () => ({
         message: 'A specification is created as draft or review. Approval is an electronic signature: POST /api/cmc/specifications/:id/approve.',
       }),
     })
@@ -201,7 +202,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -298,7 +299,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid input data',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -417,22 +418,135 @@ const LEDGER_BINDING_NOTE =
   'No content digest is registered for a quality specification, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.';
 
 /**
- * Why a specification cannot be approved now, or null. Missing is 404. One
- * approval per revision: a second signature over a specification already
+ * Why a specification cannot be approved now, or null. Missing is 404.
+ *
+ * One approval per revision: a second signature over a specification already
  * approved attested nothing new and stacked a second signature on the record;
  * a revision is an edit, which withdraws the approval first.
+ *
+ * And ICH Q2 — a limit is approved only with a procedure fit to measure it.
+ * The Specifications tab has stated this in two places since the tab was
+ * written and nothing enforced it, so any caller that was not the form (an AnA
+ * tool, a script, curl) approved freely; the form's own check was `!method`
+ * ("no name typed"), which a method still in `development` passes.
+ * `specificationMethodVerdict` refuses only what it KNOWS is unfit — its
+ * header says why an unreadable register and an unrecorded status are not
+ * refusals. The method register is read on the POOL rather than the caller's
+ * transaction: it is a precondition on another table, and the specification
+ * row is already locked FOR UPDATE by the time this is asked.
  */
-function approvalTargetRefusal(spec: Record<string, unknown> | undefined): { status: number; body: Record<string, unknown> } | null {
+/**
+ * The analytical method this specification names, from `test_methods`.
+ *
+ * The column is jsonb and this register writes `{ method }`; a caller that is
+ * not the form may have persisted a bare string. Both are read, exactly as the
+ * client's `specRowFromApi` reads them, so the screen and the gate resolve the
+ * same name.
+ */
+function methodNameOf(spec: Record<string, unknown> | undefined): string {
+  const raw = spec?.test_methods;
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const m = (raw as Record<string, unknown>).method;
+    return typeof m === 'string' ? m : '';
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return '';
+    try {
+      const parsed = JSON.parse(t);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const m = (parsed as Record<string, unknown>).method;
+        return typeof m === 'string' ? m : '';
+      }
+      return typeof parsed === 'string' ? parsed : '';
+    } catch {
+      return t;
+    }
+  }
+  return '';
+}
+
+/**
+ * ICH Q2: a limit is approved only with a procedure fit to measure it.
+ *
+ * The Specifications tab has stated this in two places since the tab was
+ * written and nothing enforced it, so any caller that was not the form — an
+ * AnA tool, a script, curl — approved freely; and the form's own check was
+ * `!method` ("no name typed"), which a method still in `development` passes.
+ *
+ * `specificationMethodVerdict` refuses only what it KNOWS is unfit — its
+ * header says why an unreadable register and an unrecorded status are not
+ * refusals. The method register is read on the POOL rather than the caller's
+ * transaction: it is a precondition on another table, and the specification
+ * row is already locked FOR UPDATE by then.
+ */
+async function approvalTargetRefusal(
+  spec: Record<string, unknown> | undefined,
+  orgId: number,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
   if (!spec) return { status: 404, body: { success: false, error: 'Specification not found' } };
-  if (!isApprovedSpecification(spec)) return null;
-  return {
-    status: 409,
-    body: {
-      success: false,
-      error: 'ALREADY_APPROVED',
-      message: 'This specification is already approved. To revise it, edit it with a reason; that withdraws the approval, and the revision is approved again.',
-    },
-  };
+  if (isApprovedSpecification(spec)) {
+    return {
+      status: 409,
+      body: {
+        success: false,
+        error: 'ALREADY_APPROVED',
+        message: 'This specification is already approved. To revise it, edit it with a reason; that withdraws the approval, and the revision is approved again.',
+      },
+    };
+  }
+  const verdict = specificationMethodVerdict(
+    methodNameOf(spec),
+    await loadProjectAnalyticalMethods(getPool(), orgId, String(spec.project_id ?? '')),
+  );
+  if (verdict.approve) return null;
+  return { status: 409, body: { success: false, error: verdict.code, message: verdict.message } };
+}
+
+/**
+ * Whether this specification is approvable AT ALL, asked before the signer is
+ * asked for their password.
+ *
+ * Nobody signs into a refusal. A limit whose analytical method is unfit, or
+ * one already approved, is turned away without anyone typing their password
+ * over an act that was never going to complete — which is why this read sits
+ * ahead of the re-authentication rather than inside the transaction alone.
+ *
+ * This read is not the authority. The same question is asked again under
+ * FOR UPDATE, and that second answer is the one the write commits against;
+ * this one only decides whether to ask for a password.
+ *
+ * Both ceremony calls — `checkSigningAuthority` and `verifyReauth` — stay IN
+ * the handler, beside the signed write, and only this approvability read is
+ * extracted. `ci:sign-ceremony` reads both there, and it is right to: a
+ * ceremony folded behind a helper is how a later edit removes one without
+ * anybody seeing it go.
+ */
+async function approvalApprovabilityRefusal(
+  id: string,
+  orgId: number,
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const preflight = await getPool().query(
+    `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
+    [id, orgId],
+  );
+  return approvalTargetRefusal(preflight.rows[0], orgId);
+}
+
+/**
+ * The tenant a signature is attributed to, or null when none is attached.
+ *
+ * Number(), not parseInt: a malformed tenant ('7abc') is refused, not read as
+ * 7. `resolveOrgId` (server/types/auth-request) parses a string tenant with
+ * parseInt, which reads that as tenant 7 — so the signing path keeps its own
+ * stricter reading rather than widening the shared one beneath a signature.
+ * (The three read routes above hold the raw value unconverted; converging them
+ * onto this changes what reaches `tenant_id` in their SQL, so it is its own
+ * change, not a rider on a signature fix.)
+ */
+function signingTenantOf(req: Request): number | null {
+  const orgId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
+  return Number.isFinite(orgId) && orgId > 0 ? orgId : null;
 }
 
 // POST /api/cmc/specifications/:id/approve - Governed e-signature approval
@@ -445,14 +559,13 @@ router.post('/:id/approve', async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid input data',
-      details: validationResult.error.errors,
+      details: validationResult.error.issues,
     });
   }
   const { reason, meaning, reauth, idempotencyKey } = validationResult.data;
 
-  // Number(), not parseInt: a malformed tenant ('7abc') is refused, not read as 7.
-  const orgId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
-  if (!Number.isFinite(orgId) || orgId <= 0) {
+  const orgId = signingTenantOf(req);
+  if (!orgId) {
     return res.status(401).json({ error: 'Tenant context required' });
   }
   const userId = resolveActorUserId(req);
@@ -460,11 +573,19 @@ router.post('/:id/approve', async (req, res) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // Signing authority (§11.10(g)), then the re-auth gate, before any write.
-  // Until the P0-10b fix round only the password was checked, so a viewer
-  // could approve.
+  // Signing authority (§11.10(g)) before the password: until P0-10b only the
+  // password was checked, so a viewer could approve.
   const authority = await checkSigningAuthority(userId, orgId);
-  if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+  if (authority) {
+    return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+  }
+
+  // Then whether this limit can be approved at all — before the password, so
+  // nobody re-authenticates into a refusal.
+  const blocked = await approvalApprovabilityRefusal(id, orgId);
+  if (blocked) return res.status(blocked.status).json(blocked.body);
+
+  // The re-auth gate, beside the write it authorises (§11.10, ci:sign-ceremony).
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -481,7 +602,7 @@ router.post('/:id/approve', async (req, res) => {
       `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
       [id, orgId],
     );
-    const notApprovable = approvalTargetRefusal(current.rows[0]);
+    const notApprovable = await approvalTargetRefusal(current.rows[0], orgId);
     if (notApprovable) {
       await client.query('ROLLBACK');
       return res.status(notApprovable.status).json(notApprovable.body);

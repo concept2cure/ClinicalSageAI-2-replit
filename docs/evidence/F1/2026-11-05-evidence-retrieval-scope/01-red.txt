@@ -1,0 +1,43 @@
+# Red: the new suite on HEAD's source files (git show HEAD:<path> for the 7 files below), test file as written.
+# Files restored for this run, then put back and checked with cmp:
+#   server/services/enhancedEmbeddingService.ts server/services/data-room-retrieval.ts server/routes/evidence-ask.ts
+#   server/routes/cortexQueryRoutes.ts server/routes/deep-research.ts server/routes/chat/send-message.ts server/routes/c2c/ai-editing.ts
+# Command: npx vitest run server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts
+
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > searchHybrid ranks only the scope projects' atoms 28ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > an empty scope ranks nothing and does not embed; no scope is refused 9ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > searchSimilar ranks only the scope projects' atoms 5ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > with no project: every project the person can open, never a private one 38ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > a named project the person can open: that project only 15ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > a named private project is answered as a missing one, before any search 21ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > an access check that cannot run is an error, not an empty search 11ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: every project the person can open, never a private one 12ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: context.projectId is honoured when the person can open it 7ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: neither a node nor an edge names an atom of a private project 12ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: a named private project is answered as a missing one 13ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: a named private project is answered as a missing one 28ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: an access check that cannot run is an error 6ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: an access check that cannot run is an error 6ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: generate and advisory read the Vault of the person's programs > generate binds the open projects' programs, and a named project its own 3ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: generate and advisory read the Vault of the person's programs > advisory binds them too, and a private project is refused before the Vault is read 3ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/deep-research/document/generate > grounds sections only in the projects the person can open 27ms
+ × server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/deep-research/document/generate > an access check that cannot run is an error, and nothing is generated 34ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'Contoso device memo', …(4) ] to deeply equal [ 'Contoso device memo', …(1) ]
+AssertionError: expected [ { id: 5, …(7) }, …(4) ] to deeply equal []
+Serialized Error: { length: 147, severity: 'ERROR', code: '22P02', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'unnamed portal parameter $4 = \'...\'', schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'uuid.c', routine: 'string_to_uuid', query: '\n      SELECT\n        a.id,\n        a.content,\n        CASE WHEN TRUE THEN a.title\n          ELSE COALESCE(a.title, \'Untitled source\') || \' [retained data; original file unavailable]\' END AS title,\n        a.atom_type,\n        1 - (a.embedding <=> $1::vector) as similarity\n      FROM lumen_data_atoms a\n      JOIN organizations o ON a.organization_id = o.id\n      WHERE a.embedding IS NOT NULL\n        AND TRUE\n        AND o.uuid = $4\n        AND 1 - (a.embedding <=> $1::vector) > $2\n        \n      ORDER BY a.embedding <=> $1::vector\n      LIMIT $3\n    '
+AssertionError: expected [ 'Contoso device memo', …(4) ] to deeply equal [ 'Contoso device memo', …(2) ]
+AssertionError: expected 200 to be 404 // Object.is equality
+AssertionError: expected 200 to be 503 // Object.is equality
+AssertionError: expected [ 'Contoso device memo', …(4) ] to deeply equal [ 'Contoso device memo', …(2) ]
+AssertionError: expected [ 'Contoso device memo', …(4) ] to deeply equal [ 'Northwind oncology memo' ]
+AssertionError: expected [ 'Contoso device memo', …(2) ] to deeply equal [ 'Contoso device memo', …(1) ]
+AssertionError: expected 200 to be 404 // Object.is equality
+AssertionError: expected 200 to be 503 // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'allowedProgramIds')
+TypeError: Cannot read properties of undefined (reading 'allowedProgramIds')
+AssertionError: expected '[[[{"role":"system","content":"You ar…' to contain 'Northwind oncology memo'
+AssertionError: expected 200 to be 503 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  17 failed | 1 passed (18)
+exit 1

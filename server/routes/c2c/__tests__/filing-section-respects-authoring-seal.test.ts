@@ -53,6 +53,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
 const h = vi.hoisted(() => ({
   writeMutation: vi.fn(),
@@ -99,7 +102,7 @@ vi.mock('../../../db.js', () => {
       return { rows: [{ label: 'Introductory statement', path_order: 5, mandatory: true, parent_key: 'M2' }], rowCount: 1 };
     }
     if (/FROM\s+c2c_documents/i.test(sql)) {
-      return { rows: [{ id: 'doc-1', status: h.filingStatus }], rowCount: 1 };
+      return { rows: [{ id: 'doc-1', project_id: PROGRAM, status: h.filingStatus }], rowCount: 1 };
     }
     /* The section already exists, which is the case that matters: a sealed
        document's sections are written. It also keeps every case on the UPDATE
@@ -129,6 +132,14 @@ vi.mock('../../../db.js', () => {
 });
 /* The governed-action ledger is not under test here; it is exercised against
    real Postgres elsewhere. */
+/* Project access (F1, 2026-11-05) is not under test here: the document's program is one the caller can open and
+   change. The access reads are answered from seats (support/current-member.ts) and the edit right is granted; the rules
+   themselves are proven on PostgreSQL in documents-project-scope.pglite.test.ts. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+vi.mock('../../../services/report-os/project-access', () => ({ canAccessReportProject: async () => true }));
 vi.mock('../actions.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../actions.js')>()),
   writeMutation: (...a: unknown[]) => h.writeMutation(...a),
@@ -162,6 +173,9 @@ const wroteSection = () =>
 const askedTheSeal = () => h.statements.some((s) => /FROM\s+authoring_documents/i.test(s));
 
 beforeEach(() => {
+  clearSeats();
+  seatMember(ORG, USER, 'member');
+  seatProgram(ORG, PROGRAM);
   h.writeMutation.mockReset();
   h.writeMutation.mockResolvedValue({ actionId: 'act_1', auditId: 'aud_1' });
   h.authoring = null;

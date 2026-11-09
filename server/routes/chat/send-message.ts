@@ -17,10 +17,12 @@ import { currentTenantOrgUuid } from '../../db/currentTenant.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  threadHasOwnerPrivateBoundary,
   ThreadAccessError,
   saveChatMessage as saveMessage,
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
+import { readDataRoomProjectScope } from '../../services/data-room-retrieval.js';
 import { getIntelligencePrefix } from '../../services/lumen-context-builder.js';
 import { pendingSignoffFromToolResult, settleActionBlocks } from '../../services/ana-guidance-executor.js';
 import type { CommandResult } from '../../services/ana-ri/command-executor.js';
@@ -160,6 +162,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         });
       }
       throw e;
+    }
+
+    try {
+      if (await threadHasOwnerPrivateBoundary(threadId)) {
+        res.locals.ownerPrivateCapture = true;
+        return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+          error: 'Continue this private conversation through AnA’s protected conversation.' });
+      }
+    } catch {
+      res.locals.ownerPrivateCapture = true;
+      return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+        error: 'The conversation’s privacy boundary could not be verified. No model request was sent.' });
     }
 
     // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
@@ -309,9 +323,6 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       }
     }
 
-    const normalizedProjectId = project_id
-      ? String(project_id).replace(/^proj_/, '')
-      : undefined;
     // The integer project this turn's project names, resolved ONCE (PF-10
     // S10b): an integer as itself, a program UUID through its anchor row,
     // anything else as none. Each step below used to parseInt on its own, and
@@ -330,12 +341,17 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
     try {
       const embeddingService = getEmbeddingService(pool);
+      // The admitted project, or with none every project the person can open
+      // (F1, 2026-11-05): with no project this ranked the whole organization's
+      // atoms. A scope that cannot be read fails this step, as an outage does.
+      const projectIds = turnProjectId !== null ? [turnProjectId]
+        : await readDataRoomProjectScope(getPool(), { organizationId: numericOrgId, userId: numericUserId });
       // RETRIEVAL_THRESHOLD is a floor on semantic similarity, and the one
       // recorded in ai_retrieval_runs below; it used to go in as the ranking weight.
       const searchResults = await embeddingService.searchHybrid(message, {
         limit: RETRIEVAL_TOP_K,
         organizationUuid: orgUuid,
-        projectId: normalizedProjectId,
+        projectIds,
         minSemanticScore: RETRIEVAL_THRESHOLD,
       });
       sources = searchResults.map(r => ({
@@ -703,8 +719,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const snapshotArtifactTitle = clientCtx.artifactTitle;
       const snapshotSection = clientCtx.sectionCode;
       const snapshotUserRole = clientCtx.userRole || 'general';
-      const workingMemoryPresent = atoms.some(a => a.layer === 'working_memory');
-      const semanticMemoryCount = atoms.filter(a => a.layer !== 'working_memory').length;
+      const admittedMemory = memoryResult.read ?? [];
+      const workingMemoryPresent = admittedMemory.some(a => a.layer === 'working_memory');
+      const semanticMemoryCount = admittedMemory.filter(a => a.layer !== 'working_memory').length;
       const contextSnapshot =
         '## CONTEXT SNAPSHOT\n' +
         `- Project: ${

@@ -1,0 +1,11 @@
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > keeps a retained draft filing receipt after the editable source changes 110ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a working draft blocks release on both paths, each naming why 140ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > an ordinary rich-Word PDF files and places through the native Vault path without an HTML engine 97ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > an unavailable strict converter refuses before Vault admission and export recording 101ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > step 4 safety net: refusals agree, and where they do not > a DOCX filing is refused by readiness as well as by the compile, so the Validation tab and freeze agree (gap closed 2026-10-17) 90ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > Authoring refiling preserves submission version pins > new numeric refiling links the successor while the old leaf stays pinned and blocked 82ms
+ × server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts > Authoring refiling preserves submission version pins > new numeric PDF and Word renditions keep separate version families 99ms
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 321ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  8 failed | 20 passed | 6 skipped (34)

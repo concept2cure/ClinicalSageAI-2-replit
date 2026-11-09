@@ -1,95 +1,15 @@
-# eCTD Co-Author Platform - Startup Instructions
+# Concept2Cure — startup instructions
 
-## 🚀 Quick Start
+**Codespaces + Neon + OpenAI:** [current recovery procedure](../operations/CODESPACES_NEON_OPENAI_RECOVERY.md).
 
-To start the application with all dependencies properly installed:
+The old Replit startup/dependency-repair instructions and the statement
+"OpenAI API quota is currently exceeded" are **historical, not a live check**.
 
-```bash
-./start-app.sh
-```
+For `concept2cure-v2` on GitHub Codespaces:
 
-This will:
-1. Check and install all missing dependencies
-2. Clean any corrupted packages
-3. Start the development server
+1. Configure **`APP_DATABASE_URL`** as a repository-accessible Codespaces secret for the non-owner runtime role, pointing to the intended Neon branch/database. Keep `DATABASE_URL` / `DATABASE_OWNER_URL` out of the running app; they are optional and reserved for separate authorized database maintenance.
+2. Use Node.js 22, `npm ci`, then `npm run codespaces:doctor`. Repair its named blockers; do not silently create a replacement local PostgreSQL database.
+3. Start using `npm run dev`. Then run `npm run codespaces:doctor -- --check-app` to verify actual server dependencies and AnA readiness.
+4. `--probe-openai` checks key authentication without a generation charge. `--probe-openai-usage` performs a small, deliberately billable API usage check. Neither allows an unqualified model to write regulated text.
 
-## 📦 Manual Dependency Installation
-
-If you prefer to manually ensure dependencies are installed:
-
-```bash
-./startup-dependencies.sh
-```
-
-Then start the app normally:
-
-```bash
-npm run dev
-```
-
-## 🔧 Troubleshooting
-
-### If the app fails to start:
-
-1. **Complete Clean Install:**
-   ```bash
-   rm -rf node_modules package-lock.json
-   npm install
-   npm run dev
-   ```
-
-2. **If specific packages are missing:**
-   ```bash
-   npm install [package-name] --save
-   ```
-
-3. **Common missing packages:**
-   - bcrypt
-   - cheerio
-   - jsonwebtoken
-   - express-rate-limit
-   - marked
-   - All @tiptap/* packages
-
-### Important Notes:
-
-- The `startup-dependencies.sh` script includes ALL packages from package.json
-- It automatically cleans corrupted packages (especially react-toastify and Vite cache)
-- Critical packages are verified with specific versions to ensure compatibility
-- The script is designed to handle Replit's storage limitations
-
-## 🔄 Daily Startup Routine
-
-Due to Replit's storage limitations, run this at the start of each work session:
-
-```bash
-./start-app.sh
-```
-
-This ensures all dependencies are present and the app starts successfully.
-
-## ⚠️ OpenAI API Configuration
-
-The OpenAI API quota is currently exceeded. To enable AI features:
-1. Visit https://platform.openai.com/billing
-2. Add credits to your OpenAI account
-3. The API key is already configured in the environment
-
-## 📋 Scripts Overview
-
-- **start-app.sh** - Main startup script (runs dependencies + starts app)
-- **startup-dependencies.sh** - Comprehensive dependency installer
-- **install-critical-deps.sh** - Quick install for critical missing packages only
-
-## 🛡️ Platform Stability
-
-These startup scripts ensure:
-- All 100+ npm packages are installed
-- Corrupted packages are cleaned and reinstalled
-- Vite cache is cleared to prevent build issues
-- Critical imports are verified before starting
-- The app starts with full functionality
-
----
-
-**Note:** These scripts were created to address Replit's daily storage cleanup that removes npm packages, ensuring the platform remains stable and fully functional on every startup.
+A green Codespace startup banner, a working chat response, and `200 /healthz` are not evidence of a complete CSR, regulatory approval or successful export. Validate the same deployed project, document, independent review and exported/reopened artifact before another client demonstration.

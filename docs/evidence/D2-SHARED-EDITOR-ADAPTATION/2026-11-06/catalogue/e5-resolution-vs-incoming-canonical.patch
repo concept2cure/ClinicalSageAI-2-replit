@@ -1,0 +1,446 @@
+diff --git a/scripts/ci/lib/approved-sql-predicates.mjs b/scripts/ci/lib/approved-sql-predicates.mjs
+index f535e040c6..a226a04d42 100644
+--- a/scripts/ci/lib/approved-sql-predicates.mjs
++++ b/scripts/ci/lib/approved-sql-predicates.mjs
+@@ -10,6 +10,11 @@ const VAULT_BUILDERS = new Map([
+ const ARTIFACT_BUILDERS = new Map([
+   ['artifactDataEligibleSql', './document-data-disposition/eligibility'],
+ ]);
++// The existing Authoring importer reads the same disposition policy under its
++// source lock. Only this exact imported builder and literal alias receive proof.
++const AUTHORING_ARTIFACT_BUILDERS = new Map([
++  ['artifactDataEligibleSql', '../document-data-disposition/eligibility'],
++]);
+ // Current-source rechecks retain the same canonical disposition policy. These
+ // two exact callers accept only the imported builder and their literal alias;
+ // no request value or other helper receives an allowance.
+@@ -75,6 +80,7 @@ const CALLERS = new Map([
+   ['server/services/figureGenerationService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
+   ['server/services/autoExtractionPipeline.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
+   ['server/services/keywordExtractionService.ts', { alias: 'a', builders: ARTIFACT_BUILDERS }],
++  ['server/services/authoring/artifact-workflow-source.ts', { alias: 'a', builders: AUTHORING_ARTIFACT_BUILDERS }],
+   ['server/services/report-os/report-package-legal.ts', { alias: 'd', builders: REPORT_VAULT_BINARY_BUILDERS }],
+   ['server/services/pathway-engines/estar/estar-attachment-source-access.ts', { alias: 'd', builders: ESTAR_VAULT_BINARY_BUILDERS }],
+ ]);
+diff --git a/server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts b/server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+index f008f71ac1..ff9033f8ae 100644
+--- a/server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
++++ b/server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+@@ -5,6 +5,23 @@ import type { GatewayRequest, GatewayResponse, ModelConfig } from '../types';
+ import type { Semaphore } from '../concurrency';
+ import { AnaProjectScopeError } from '../../ana/project-scope-admission';
+ 
++const wire = vi.hoisted(() => ({
++  availability: vi.fn(), capture: vi.fn(), current: vi.fn(), create: vi.fn(),
++}));
++vi.mock('../../connectors/connector-registry.js', () => ({
++  resolveTenantModelCredentialAvailability: wire.availability,
++  captureCredentialForUse: wire.capture,
++  assertCredentialUseCurrent: wire.current,
++}));
++vi.mock('openai', () => ({ default: class {
++  chat = { completions: { create: (...args: unknown[]) => wire.create('openai', ...args) } };
++  embeddings = { create: (...args: unknown[]) => wire.create('embedding', ...args) };
++} }));
++vi.mock('@anthropic-ai/sdk', () => ({ default: class {
++  messages = { create: (...args: unknown[]) => wire.create('anthropic', ...args) };
++  beta = { messages: { create: (...args: unknown[]) => wire.create('anthropic', ...args) } };
++} }));
++
+ type GuardedRequest = GatewayRequest & { beforeDispatch?: () => Promise<void> };
+ interface GatewayProbe {
+   outboundLimiter: Semaphore;
+@@ -13,6 +30,7 @@ interface GatewayProbe {
+   recordTenantUsage(...args: unknown[]): void;
+   getFallbackModels(...args: unknown[]): ModelConfig[];
+   applyOrgPlacementDefaults(request: GatewayRequest): Promise<GatewayRequest>;
++  tenantProviderClient(provider: ModelConfig['provider'], request: GatewayRequest): Promise<unknown>;
+ }
+ 
+ function deferred() {
+@@ -53,6 +71,146 @@ function request(callerModule: string, extra: Partial<GuardedRequest> = {}): Gua
+ beforeEach(() => {
+   vi.stubEnv('NODE_ENV', 'test');
+   vi.stubEnv('AI_GATEWAY_MAX_CONCURRENCY', '1');
++  wire.availability.mockReset().mockResolvedValue({ mode: 'platform', providers: [] });
++  wire.capture.mockReset().mockImplementation(async (org: number, connector: string) => ({
++    credentials: { apiKey: `SDK-STUB-${org}-${connector}` },
++  }));
++  wire.current.mockReset().mockResolvedValue(undefined);
++  wire.create.mockReset().mockImplementation(async (provider: string, params: { model: string }) => provider === 'anthropic'
++    ? { model: params.model, content: [{ type: 'text', text: 'Actual SDK boundary fixture.' }],
++      usage: { input_tokens: 1, output_tokens: 1 }, stop_reason: 'end_turn' }
++    : { model: params.model, choices: [{ message: { content: 'Actual SDK boundary fixture.' }, finish_reason: 'stop' }],
++      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } });
++});
++
++function heldCredentialBoundary(mode: 'tenant' | 'platform') {
++  const entered = deferred(), held = deferred();
++  let credentialCompleted = false;
++  if (mode === 'tenant') {
++    wire.availability.mockResolvedValue({ mode: 'customer_owned', providers: ['anthropic', 'openai'] });
++    wire.current.mockImplementationOnce(async () => { entered.resolve(); await held.promise; credentialCompleted = true; });
++  } else {
++    let reads = 0;
++    wire.availability.mockImplementation(async () => {
++      if (++reads === 2) { entered.resolve(); await held.promise; credentialCompleted = true; }
++      return { mode: 'platform', providers: [] };
++    });
++  }
++  return { entered, held, credentialCompleted: () => credentialCompleted };
++}
++
++describe('current sources at the actual SDK boundary after credential awaits', () => {
++  const lanes = [
++    ['anthropic', 'tenant'], ['openai', 'tenant'], ['anthropic', 'platform'], ['openai', 'platform'],
++  ] as const;
++
++  it.each(lanes)('%s / %s refuses source revocation after credential work without retry or disclosure', async (provider, mode) => {
++    const { gateway, probe, dispatch } = liveGateway();
++    dispatch.mockRestore(); // Keep the real provider executor, factory and credential-audit path.
++    const sends = vi.spyOn(probe, 'dispatchProvider');
++    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
++    const { entered, held } = heldCredentialBoundary(mode);
++    let current = true;
++    const guard = vi.fn(async () => { if (!current) throw new Error('PRIVATE-SOURCE-REVOCATION'); });
++    const replacement = vi.fn(async () => {});
++    const input = request('test:late-wire-source', { provider, organizationId: 7, userId: 3, beforeDispatch: guard });
++    const outcome = gateway.route(input).catch(error => error);
++    await entered.promise;
++    current = false;
++    input.beforeDispatch = replacement;
++    held.resolve();
++    const error = await outcome;
++    expect(error).toBeInstanceOf(GatewayPolicyError);
++    expect(error).toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
++    expect(`${String(error)}${JSON.stringify(error)}`).not.toContain('PRIVATE-SOURCE-REVOCATION');
++    // Tenant calls also recheck the issued source authority while preparing
++    // the exact SDK body, before the held credential audit begins.
++    expect(guard).toHaveBeenCalledTimes(mode === 'tenant' ? 3 : 2);
++    expect(replacement).not.toHaveBeenCalled();
++    expect(wire.create).not.toHaveBeenCalled();
++    expect(sends).toHaveBeenCalledTimes(1);
++    expect(failures).not.toHaveBeenCalled();
++    expect(fallbacks).not.toHaveBeenCalled();
++  });
++
++  it.each(lanes)('%s / %s cancels during credential work before any SDK call', async (provider, mode) => {
++    const { gateway, probe, dispatch } = liveGateway();
++    dispatch.mockRestore();
++    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
++    const { entered, held } = heldCredentialBoundary(mode);
++    const controller = new AbortController();
++    const outcome = gateway.route(request('test:late-wire-cancel', {
++      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: async () => {},
++    })).catch(error => error);
++    await entered.promise;
++    controller.abort(new Error('PRIVATE-CANCEL-REASON'));
++    held.resolve();
++    const error = await outcome;
++    expect(error).toBeInstanceOf(GatewayAbortedError);
++    expect(error).toMatchObject({ phase: 'pre_call' });
++    expect(wire.create).not.toHaveBeenCalled();
++    expect(failures).not.toHaveBeenCalled();
++    expect(fallbacks).not.toHaveBeenCalled();
++  });
++
++  it.each(lanes)('%s / %s keeps current-source SDK dispatch reachable', async (provider, mode) => {
++    const { gateway, dispatch } = liveGateway();
++    dispatch.mockRestore();
++    const { entered, held } = heldCredentialBoundary(mode);
++    const guard = vi.fn(async () => {});
++    const outcome = gateway.route(request('test:late-wire-current', { provider, organizationId: 7, userId: 3, beforeDispatch: guard }));
++    await entered.promise;
++    expect(wire.create).not.toHaveBeenCalled();
++    held.resolve();
++    expect((await outcome).content).toBe('Actual SDK boundary fixture.');
++    expect(guard).toHaveBeenCalledTimes(3);
++    expect(wire.create).toHaveBeenCalledTimes(1);
++  });
++
++  it.each(lanes)('%s / %s rechecks cancellation after the final source read awaits', async (provider, mode) => {
++    const { gateway, dispatch } = liveGateway();
++    dispatch.mockRestore();
++    const { entered, held, credentialCompleted } = heldCredentialBoundary(mode);
++    const sourceEntered = deferred(), sourceHeld = deferred();
++    // Hold the source read after the credential boundary, independently of
++    // additional legitimate source checks during SDK-body preparation.
++    const guard = async () => { if (credentialCompleted()) { sourceEntered.resolve(); await sourceHeld.promise; } };
++    const controller = new AbortController();
++    const outcome = gateway.route(request('test:late-source-cancel', {
++      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: guard,
++    })).catch(error => error);
++    await entered.promise;
++    held.resolve();
++    await sourceEntered.promise;
++    expect(wire.create).not.toHaveBeenCalled();
++    controller.abort();
++    sourceHeld.resolve();
++    expect(await outcome).toMatchObject({ name: 'GatewayAbortedError', phase: 'pre_call' });
++    expect(wire.create).not.toHaveBeenCalled();
++  });
++
++});
++
++describe('platform-client continuation at the actual SDK boundary', () => {
++  it.each(['anthropic', 'openai'] as const)('%s checks cancellation in the platform-client promise continuation before SDK create', async provider => {
++    const { gateway, probe, dispatch } = liveGateway();
++    dispatch.mockRestore();
++    const controller = new AbortController();
++    const resolveClient = probe.tenantProviderClient.bind(probe);
++    vi.spyOn(probe, 'tenantProviderClient').mockImplementation(async (...args) => {
++      const client = await resolveClient(...args);
++      if (client === null) controller.abort();
++      return client;
++    });
++    const failures = vi.spyOn(probe, 'recordFailure'), fallbacks = vi.spyOn(probe, 'getFallbackModels');
++    const error = await gateway.route(request('test:platform-continuation-cancel', {
++      provider, organizationId: 7, userId: 3, signal: controller.signal, beforeDispatch: async () => {},
++    })).catch(error => error);
++    expect(error).toMatchObject({ name: 'GatewayAbortedError', phase: 'pre_call' });
++    expect(wire.create).not.toHaveBeenCalled();
++    expect(failures).not.toHaveBeenCalled();
++    expect(fallbacks).not.toHaveBeenCalled();
++  });
+ });
+ 
+ afterEach(() => {
+@@ -205,6 +363,7 @@ describe('gateway repeated source checks and cancellation', () => {
+     expect(fallbacks).toHaveBeenCalledTimes(1);
+     expect(failures).toHaveBeenCalledTimes(1);
+     expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
++    expect(failures.mock.calls[0][1]).not.toBe(primaryError);
+   });
+ 
+   it('also rechecks before retrying a fallback provider', async () => {
+@@ -225,6 +384,7 @@ describe('gateway repeated source checks and cancellation', () => {
+     expect(dispatch).toHaveBeenCalledTimes(2);
+     expect(failures).toHaveBeenCalledTimes(1);
+     expect(failures.mock.calls[0][1]).toMatchObject({ status: 400, message: 'Model provider request failed (HTTP 400).' });
++    expect(failures.mock.calls[0][1]).not.toBe(primaryError);
+   });
+ 
+   it('preserves a transient retry when the source remains current', async () => {
+diff --git a/server/services/ai-gateway/gateway.ts b/server/services/ai-gateway/gateway.ts
+index b3e10eb9f9..fe0935c819 100644
+--- a/server/services/ai-gateway/gateway.ts
++++ b/server/services/ai-gateway/gateway.ts
+@@ -1395,6 +1395,8 @@ export class AIGateway {
+   private readonly qualifiedPinEvidenceReader: QualifiedPinEvidenceReader = readQualifiedPinEvidence;
+   /** Tenant availability belongs to one captured request, never to the global registry or SDK cache. */
+   private readonly requestModels = new WeakMap<GatewayRequest, ModelConfig[]>();
++  /** Captured source authority stays private while provider credentials await their own reads. */
++  private readonly finalSourceChecks = new WeakMap<GatewayRequest, () => Promise<void>>();
+   private readonly derivativeSdkPayloads = new WeakMap<GatewayRequest, { params: object; sha256: string }>();
+   private readonly embeddingSourceCheckpoints = new WeakMap<EmbeddingAuthorization, (() => Promise<void>) | null>();
+   private readonly customerOwnedModelSets = new WeakSet<ModelConfig[]>();
+@@ -2227,16 +2229,45 @@ export class AIGateway {
+ 
+   private modelsForRequest(request: GatewayRequest): ModelConfig[] { return this.requestModels.get(request) ?? this.models; }
+ 
++  private assertProviderCreateAllowed(request: GatewayRequest, modelConfig?: ModelConfig): void {
++    if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
++    this.assertQualifiedModel(request, modelConfig);
++  }
++
++  /** The final holder already captured the callback plus private run authority. */
++  private recheckProviderSources(request: GatewayRequest): Promise<void> {
++    return this.finalSourceChecks.get(request)?.() ?? recheckDispatchSources(request);
++  }
++
+   private async tenantProviderClient(provider: ProviderName, request: GatewayRequest): Promise<any | null> {
+     const organizationId = auditOrganizationId(request);
+-    if (!isOrganizationId(organizationId)) return null;
++    if (!isOrganizationId(organizationId)) {
++      await this.recheckProviderSources(request);
++      this.assertProviderCreateAllowed(request);
++      return null;
++    }
+     if (request.userId !== undefined && !isOrganizationId(request.userId)) throw new TenantModelCredentialError();
++    let client: Awaited<ReturnType<typeof createTenantProviderClient>>;
+     try {
+-      return await createTenantProviderClient(provider, Number(organizationId),
++      client = await createTenantProviderClient(provider, Number(organizationId),
+         isOrganizationId(request.userId) ? Number(request.userId) : undefined, 'model_inference',
+-        { beforeCreate: () => { request.signal?.throwIfAborted(); this.assertPinnedDerivativeSdkPayload(request); this.assertQualifiedModel(request); },
+-          recheckBeforeCreate: async () => { await this.assertDerivativeCurrent(request); await recheckDispatchSources(request); } });
+-    } catch (error) { if (error instanceof GatewayPolicyError) throw error; throw new TenantModelCredentialError(); }
++        { beforeCreate: () => {
++          if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
++          this.assertPinnedDerivativeSdkPayload(request); this.assertProviderCreateAllowed(request);
++        },
++          recheckBeforeCreate: async () => { await this.assertDerivativeCurrent(request); await this.recheckProviderSources(request); } });
++    } catch (error) {
++      if (error instanceof GatewayPolicyError || error instanceof GatewayAbortedError) throw error;
++      throw new TenantModelCredentialError();
++    }
++    // A platform-mode lookup also awaited credential state. Keep source/policy
++    // failures outside the credential catch and before the platform SDK path.
++    if (client === null) {
++      await this.assertDerivativeCurrent(request);
++      await this.recheckProviderSources(request);
++      this.assertProviderCreateAllowed(request);
++    }
++    return client;
+   }
+ 
+   /**
+@@ -2274,6 +2305,15 @@ export class AIGateway {
+     const governed = governServerTools(modelConfig.provider, request);
+     // …and in the version this model accepts.
+     governed.request = webToolsForModel(governed.request, modelConfig.webToolVariant);
++    this.finalSourceChecks.set(governed.request, async () => {
++      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
++      try { await beforeDispatch?.(); }
++      catch {
++        if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
++        throw sourceCheckpointRefusal();
++      }
++      if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
++    });
+     if (governed.withheld.length > 0) {
+       log.info('[ai-gateway] server tools withheld for this lane', {
+         requestId,
+@@ -2636,10 +2676,9 @@ export class AIGateway {
+     applyOpenAIToolParams(params, request, modelConfig);
+ 
+     await this.assertDerivativeCurrent(request);
+-    await recheckDispatchSources(request);
+-    request.signal?.throwIfAborted();
++    await this.recheckProviderSources(request);
+     this.pinDerivativeSdkPayload(request, params);
+-    this.assertQualifiedModel(request, modelConfig);
++    this.assertProviderCreateAllowed(request, modelConfig);
+     const completion = await Promise.race([
+       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
+       new Promise<never>((_, reject) =>
+@@ -2909,10 +2948,9 @@ export class AIGateway {
+     if (request.signal) reqOptions.signal = request.signal;
+ 
+     await this.assertDerivativeCurrent(request);
+-    await recheckDispatchSources(request);
+-    request.signal?.throwIfAborted();
++    await this.recheckProviderSources(request);
+     this.pinDerivativeSdkPayload(request, params, true);
+-    this.assertQualifiedModel(request, modelConfig);
++    this.assertProviderCreateAllowed(request, modelConfig);
+     const response = await Promise.race([
+       client.messages.create(params, Object.keys(reqOptions).length > 0 ? reqOptions : undefined),
+       new Promise<never>((_, reject) =>
+@@ -3133,8 +3171,8 @@ export class AIGateway {
+     // a stop only stopped us reading, and the model ran to completion at full
+     // cost — which is what stream.ts's own comment used to say.
+     if (request.signal) streamOptions.signal = request.signal;
+-    await recheckDispatchSources(request);
+-    request.signal?.throwIfAborted();
++    await this.recheckProviderSources(request);
++    this.assertProviderCreateAllowed(request, modelConfig);
+     const stream = await client.messages.create(
+       params,
+       Object.keys(streamOptions).length > 0 ? streamOptions : undefined
+@@ -3375,10 +3413,9 @@ export class AIGateway {
+     applyOpenAIToolParams(params, request, modelConfig);
+ 
+     await this.assertDerivativeCurrent(request);
+-    await recheckDispatchSources(request);
+-    request.signal?.throwIfAborted();
++    await this.recheckProviderSources(request);
+     this.pinDerivativeSdkPayload(request, params);
+-    this.assertQualifiedModel(request, modelConfig);
++    this.assertProviderCreateAllowed(request, modelConfig);
+     const completion = await Promise.race([
+       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
+       new Promise<never>((_, reject) =>
+@@ -3461,8 +3498,8 @@ export class AIGateway {
+     }
+     applyOpenAIToolParams(params, request, modelConfig);
+ 
+-    await recheckDispatchSources(request);
+-    request.signal?.throwIfAborted();
++    await this.recheckProviderSources(request);
++    this.assertProviderCreateAllowed(request, modelConfig);
+     const stream = await client.chat.completions.create(
+       params,
+       request.signal ? { signal: request.signal } : undefined,
+diff --git a/server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts b/server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts
+index 73773daf58..f2ac3e304f 100644
+--- a/server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts
++++ b/server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts
+@@ -245,6 +245,42 @@ describe('customer-owned SDK clients at the deterministic credential boundary',
+   });
+ });
+ 
++describe('final source and qualification checks before customer SDK use', () => {
++  it('composes source and derivative custody checks after credentials with synchronous PQ admission last', async () => {
++    const order: string[] = [];
++    factory.current.mockImplementation(async () => { order.push('credential'); });
++    factory.sdkCreate.mockImplementation(async () => { order.push('sdk'); return {}; });
++    const client = await createTenantProviderClient('openai', 7, 3, 'model_inference', {
++      sourceCheck: async () => { await Promise.resolve(); order.push('source'); },
++      recheckBeforeCreate: async () => { await Promise.resolve(); order.push('custody'); },
++      beforeCreate: () => { order.push('pq'); },
++    });
++    await client.chat.completions.create({ model: 'fixture' });
++    expect(order).toEqual(['credential', 'source', 'custody', 'pq', 'sdk']);
++  });
++
++  it('rechecks qualification after an awaited final source check without sanitizing its policy refusal', async () => {
++    let sourceEntered!: () => void, finishSource!: () => void;
++    const entered = new Promise<void>(resolve => { sourceEntered = resolve; });
++    const held = new Promise<void>(resolve => { finishSource = resolve; });
++    let qualified = true;
++    const policyError = Object.assign(new Error('Qualification revoked during source reads'), { name: 'GatewayPolicyError' });
++    const beforeCreate = vi.fn(() => { if (!qualified) throw policyError; });
++    const sourceCheck = async () => { sourceEntered(); await held; };
++    const client = await createTenantProviderClient('openai', 7, 3, 'model_inference', { beforeCreate, sourceCheck });
++    const outcome = client.chat.completions.create({ model: 'fixture' }).catch((error: unknown) => error);
++    await entered;
++    expect(factory.current).toHaveBeenCalledTimes(1);
++    expect(beforeCreate).not.toHaveBeenCalled();
++    expect(factory.sdkCreate).not.toHaveBeenCalled();
++    qualified = false;
++    finishSource();
++    expect(await outcome).toBe(policyError);
++    expect(beforeCreate).toHaveBeenCalledTimes(1);
++    expect(factory.sdkCreate).not.toHaveBeenCalled();
++  });
++});
++
+ describe('customer-owned SDK failures and embedding authority', () => {
+   it.each([429, 503])('strips arbitrary SDK errors, headers and causes while retaining HTTP %s', async status => {
+     const client = await createTenantProviderClient('openai', 7, 3);
+diff --git a/server/services/ai-gateway/providers/clients.ts b/server/services/ai-gateway/providers/clients.ts
+index 906dab0c96..f0bfebb4f4 100644
+--- a/server/services/ai-gateway/providers/clients.ts
++++ b/server/services/ai-gateway/providers/clients.ts
+@@ -51,10 +51,12 @@ function tenantProviderError(error: unknown): Error & { status?: number } {
+ /** A fresh SDK object per tenant/request; no key enters GatewayRequest and no
+  * client or token cache is shared between tenants. Every create rechecks the
+  * captured revision and records use immediately before calling the SDK. */
+-type TenantProviderAdmission = (() => void) | { beforeCreate?: () => void; recheckBeforeCreate?: () => Promise<void> };
++type TenantProviderAdmission = (() => void) | {
++  beforeCreate?: () => void; sourceCheck?: () => Promise<void>; recheckBeforeCreate?: () => Promise<void>;
++};
+ function tenantAdmissionCallbacks(admission?: TenantProviderAdmission) {
+-  return typeof admission === 'function' ? { beforeCreate: admission, recheckBeforeCreate: undefined }
+-    : { beforeCreate: admission?.beforeCreate, recheckBeforeCreate: admission?.recheckBeforeCreate };
++  return typeof admission === 'function' ? { beforeCreate: admission, sourceCheck: undefined, recheckBeforeCreate: undefined }
++    : { beforeCreate: admission?.beforeCreate, sourceCheck: admission?.sourceCheck, recheckBeforeCreate: admission?.recheckBeforeCreate };
+ }
+ export async function createTenantProviderClient(provider: string, organizationId: number, userId?: number, purpose: 'model_inference' | 'embedding' = 'model_inference', admission?: TenantProviderAdmission): Promise<any | null> {
+   if (!['anthropic', 'openai', 'moonshot'].includes(provider)) return null;
+@@ -70,9 +72,13 @@ export async function createTenantProviderClient(provider: string, organizationI
+       : new OpenAI({ apiKey: captured.credentials.apiKey, maxRetries: 0,
+           ...(provider === 'moonshot' ? { baseURL: 'https://api.moonshot.ai/v1' } : {}) });
+   } catch { throw new TenantCredentialUnavailableError(); }
+-  const { beforeCreate, recheckBeforeCreate } = tenantAdmissionCallbacks(admission);
++  const { beforeCreate, sourceCheck, recheckBeforeCreate } = tenantAdmissionCallbacks(admission);
+   const invoke = (create: (...args: any[]) => any) => async (...args: any[]) => {
+     try { await assertCredentialUseCurrent(captured!, userId); } catch { throw new TenantCredentialUnavailableError(); }
++    // Credential capture/audit can wait after the gateway's capacity check.
++    // Recheck the privately captured source authority before releasing text.
++    // Its terminal refusal must bypass both credential and provider sanitizers.
++    if (sourceCheck) await sourceCheck();
+     // Current derivative custody follows the asynchronous credential audit;
+     // synchronous model/PQ admission remains last, directly before the SDK.
+     // Preserve its policy refusal; it is not a provider failure to sanitize.

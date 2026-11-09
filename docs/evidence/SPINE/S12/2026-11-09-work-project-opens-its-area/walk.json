@@ -1,0 +1,29 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T02:00:01.867Z",
+  "steps": [
+    {
+      "name": "the CMC work project is a door, and the nonclinical one says it has no work area",
+      "title": "Open CMC / Module 3 on this project",
+      "nonclinical": "Nonclinical tox packageNonclinical · JM Smith · No work area for this kind yet"
+    },
+    {
+      "name": "clicking it opens CMC / Module 3 on the same project",
+      "url": "/concept2cure/cmc?program=6065271c-d4b0-4936-aad1-02855423a738"
+    },
+    {
+      "name": "the card at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "nonclinical": {
+        "status": 200,
+        "anchor": 1
+      }
+    }
+  ],
+  "finishedAt": "2026-11-09T02:00:08.792Z"
+}

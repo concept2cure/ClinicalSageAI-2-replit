@@ -45,7 +45,8 @@
  * ── Approval and content (2026-10-08, QA j6) ─────────────────────────────────
  * The same read also answers the two questions the assembler asks next, by its
  * own rules: whether the document may be transmitted (notFinalizedStatus for
- * the authored stores, vaultVersionNotTransmittable for a Vault version — FD5),
+ * the authored stores, vaultVersionNotTransmittable for a Vault version — FD5,
+ * onboardingUploadNotTransmittable for an upload — P-94, P-108 3(a)),
  * and whether it holds any content to build a leaf from. Before, those answers
  * existed only inside the assembly that runs after the e-signature, so the
  * Builder showed "source verified" on a Vault version nobody had reviewed and
@@ -69,7 +70,7 @@ import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText } from '../c2c/section-content';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { documentTableKeyKind, isPlaceableDocumentTable } from './leaf-document-tables';
-import { notFinalizedStatus, renderedLeafNotTransmittable } from './leaf-source-resolver';
+import { notFinalizedStatus, onboardingUploadNotTransmittable, renderedLeafNotTransmittable } from './leaf-source-resolver';
 import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 import type { LegalDocumentContext } from '../../../shared/company-documents';
 import { vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
@@ -213,10 +214,13 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
       buf = null;
     }
     const readable = !!buf && buf.length > 0;
+    const storedSha256 = readable ? sha256Hex(buf as Buffer) : null;
     return {
       found: true,
-      storedSha256: readable ? sha256Hex(buf as Buffer) : null,
+      storedSha256,
       reason: readable ? null : 'the uploaded bytes are not readable at their storage path',
+      // P-94, P-108 3(a): released only when the same bytes are approved in its project's Vault.
+      notTransmittable: (await onboardingUploadNotTransmittable(queryableFromDrizzle(db), organizationId, documentId, storedSha256)) ?? undefined,
     };
   },
 

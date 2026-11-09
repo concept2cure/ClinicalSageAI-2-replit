@@ -1,0 +1,6 @@
+{
+  "scripts/demo/launch-demo/qualify-csr.mjs": "c8618678b5dd283fa7c68b338377b1d89701825d6703cb903d6870187dde0b39",
+  "scripts/demo/launch-demo/qualify-ana-editor.mjs": "2be8408c98aefa0164be60319cc13a8c68a28334355009f54ef09e57b4c557cc",
+  "scripts/demo/launch-demo/qualify-csr.test.mjs": "ef35126d8b60357ec6944398f0637d2043988c08c656a83e9662a8f9ce4aab04",
+  "scripts/demo/launch-demo/qualify-ana-editor.test.mjs": "697be1a3fa0d9f1f8c2a6b4a1b2265ae6c627e9d2df290727d8ade3a907c69ab"
+}

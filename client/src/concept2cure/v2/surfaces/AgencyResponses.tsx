@@ -55,7 +55,7 @@ import { downloadBlob } from '../download';
 import { I } from '../icons';
 import type { CommRow } from './AgencyInbox';
 import { RESPONSE_STATE_LABEL as STATE_LABEL, RESPONSE_STATE_TONE as STATE_TONE, type ResponseState } from './agencyQuestionState';
-import { LetterQuestionProposals } from './LetterQuestionProposals';
+import { LetterCommitmentProposals, LetterQuestionProposals, type LetterCommitmentProposal } from './LetterQuestionProposals';
 
 interface SignatureView {
   signatureId: number;
@@ -365,6 +365,8 @@ interface AgencyResponsesProps {
   projectId: string; letter: CommRow; fire: (m: string, tone?: 'ok' | 'error') => void;
   /** A question another screen linked to (CMC's "Open on its letter"). */
   focusQuestionId?: number | null; onNav?: (id: string) => void;
+  /** A commitment was recorded here (from the letter or a question): the host's register re-reads. */
+  onCommitmentRecorded?: () => void;
 }
 /** Retire all retained questions and action forms before a different visit renders. */
 export function AgencyResponses(props: AgencyResponsesProps) {
@@ -384,6 +386,7 @@ function ScopedAgencyResponses({
   fire: hostFire,
   focusQuestionId = null,
   onNav,
+  onCommitmentRecorded,
   readOwner,
 }: AgencyResponsesProps & { readOwner: DataReadOwner }) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(letter.id)}`;
@@ -397,6 +400,8 @@ function ScopedAgencyResponses({
   /** The Record-a-question form, open; filled with a question the letter's text numbers (G3), or empty. */
   const [adding, setAdding] = React.useState<null | { questionRef: string; questionText: string }>(null);
   const [committing, setCommitting] = React.useState<AgencyQuestionView | null>(null);
+  /** A commitment the letter itself imposes, being recorded from its proposal. */
+  const [fromLetter, setFromLetter] = React.useState<LetterCommitmentProposal | null>(null);
   const [withdrawing, setWithdrawing] = React.useState<AgencyQuestionView | null>(null);
   const [classifying, setClassifying] = React.useState<AgencyQuestionView | null>(null);
   const [assigning, setAssigning] = React.useState<AgencyQuestionView | null>(null);
@@ -459,6 +464,33 @@ function ScopedAgencyResponses({
       fire(`Commitment recorded from ${committing.questionRef}. It is listed under Meetings & commitments.`);
       setCommitting(null);
       reload();
+      onCommitmentRecorded?.();
+    } catch (e) {
+      fire(`Commitment not recorded: ${said(e)}. Nothing was stored.`, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const recordLetterCommitment = async (v: Record<string, string>) => {
+    if (!readOwner.current()) return;
+    if (!fromLetter) return;
+    const ref = fromLetter.ref;
+    setBusy(true);
+    try {
+      const res = await apiRequest('POST', `${base}/commitments`, {
+        commitmentType: v.commitmentType,
+        description: v.description,
+        dueDate: v.dueDate || undefined,
+        regulatoryBasis: v.regulatoryBasis || undefined,
+        reason: v.reason,
+      });
+      if (!res.ok) await assertApiResponseOk(res);
+      if (!readOwner.current()) return;
+      fire(`Commitment ${ref} recorded from the letter. It is listed under Meetings & commitments with its due date.`);
+      setFromLetter(null);
+      reload();
+      onCommitmentRecorded?.();
     } catch (e) {
       fire(`Commitment not recorded: ${said(e)}. Nothing was stored.`, 'error');
     } finally {
@@ -651,13 +683,21 @@ function ScopedAgencyResponses({
 
       {!closed && viewer.canWrite && (
         <LetterQuestionProposals base={base} version={version} readOwner={readOwner} disabled={busy}
+          responseRequired={data?.letter.responseRequired !== false}
           onRecord={(p) => setAdding({ questionRef: p.ref, questionText: p.text })} />
+      )}
+
+      {!closed && viewer.canWrite && (
+        <LetterCommitmentProposals base={base} version={version} readOwner={readOwner} disabled={busy}
+          onRecord={setFromLetter} />
       )}
 
       {questions.length === 0 ? (
         <p className="cc-q-note">
           No questions are recorded on this letter.
-          {!data?.letter.responseRequired && ' Record each question as the agency numbered and worded it; each then takes a response and an approval.'}
+          {data?.letter.responseRequired
+            ? ' Record each question as the agency numbered and worded it; each then takes a response and an approval.'
+            : ' The letter needs no response.'}
         </p>
       ) : (
         <ol className="cc-q-list">
@@ -842,15 +882,37 @@ function ScopedAgencyResponses({
             governed: 'Recorded with your reason in the audit trail.',
             submitLabel: 'Record commitment',
             fields: [
-              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true },
-              { key: 'description', label: 'What was committed', type: 'textarea', required: true },
+              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true, half: true },
               { key: 'dueDate', label: 'Due date', type: 'date', half: true },
-              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', placeholder: 'e.g. 21 CFR 314.81(b)(2)(vii)', half: true },
+              { key: 'description', label: 'What was committed', type: 'textarea', required: true },
+              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', placeholder: 'e.g. 21 CFR 314.81(b)(2)(vii)' },
               { key: 'reason', label: 'Reason', type: 'text', required: true },
             ],
           }}
           onCancel={() => setCommitting(null)}
           onSubmit={(v) => void recordCommitment(v)}
+        />
+      )}
+
+      {fromLetter && (
+        <C2CForm
+          key={`${fromLetter.sourceId}:${fromLetter.start}`}
+          config={{
+            eyebrow: 'Agency letter · commitments',
+            title: 'Record a commitment',
+            sub: `${fromLetter.ref}, as ${letter.communicationType} imposes it (${fromLetter.basis}). Check it against the letter. It is then tracked with its due date under Meetings & commitments.`,
+            governed: 'Recorded with your reason in the audit trail.',
+            submitLabel: 'Record commitment',
+            fields: [
+              { key: 'commitmentType', label: 'Type', type: 'select', options: COMMITMENT_TYPES, required: true, half: true, default: fromLetter.commitmentType },
+              { key: 'dueDate', label: 'Due date', type: 'date', half: true, ...(fromLetter.dueDate ? { default: fromLetter.dueDate } : {}) },
+              { key: 'description', label: 'What the letter requires', type: 'textarea', required: true, default: fromLetter.text.replace(/\s+/g, ' ').trim() },
+              { key: 'regulatoryBasis', label: 'Regulatory basis', type: 'text', default: fromLetter.recordBasis },
+              { key: 'reason', label: 'Reason', type: 'text', placeholder: 'e.g. Recording the approval letter received 2026-10-12', required: true },
+            ],
+          }}
+          onCancel={() => setFromLetter(null)}
+          onSubmit={(v) => void recordLetterCommitment(v)}
         />
       )}
 

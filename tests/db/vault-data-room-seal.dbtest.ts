@@ -272,6 +272,10 @@ describe('sealing a Vault (VR-19)', () => {
     const res = await seals(mine);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.seals).toEqual([expect.objectContaining({ id: sealId, reason: REASON, documentCount: 3, sealedByName: 'Sol Sealer' })]);
+    /* S6 (2026-11-05): what it holds, read back from the stored jsonb record as signed, which still hashes to its value. */
+    const held = res.body.data.seals[0].documents as Array<{ id: string; shortHash: string | null }>;
+    expect(held).toHaveLength(3);
+    for (const d of held) expect(d.shortHash).toMatch(/^[0-9a-f]{12}$/);
   });
 
   it('verifies intact when nothing changed, its stored files included', async () => {

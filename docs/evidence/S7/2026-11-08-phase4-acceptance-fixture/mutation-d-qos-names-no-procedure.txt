@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the QOS and Module 3 share atoms and method references > names the one analytical procedure, under both headings that cite it, with its recorded status 7ms
+   → expected [] to deeply equal [ { …(4) } ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)

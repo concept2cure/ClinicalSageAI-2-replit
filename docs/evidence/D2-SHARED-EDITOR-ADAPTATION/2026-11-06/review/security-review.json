@@ -1,0 +1,161 @@
+{
+  "reviewed_at_utc": "2026-11-06T18:36:12.276548+00:00",
+  "reviewer_task": "/root/editor_context_security_review",
+  "branch": "concept2cure-v2",
+  "coordination_head": "e533082d6386416fce4857a64f5168631c3791e9",
+  "head_note": "The HEAD is a coordination base, not a claim that the uncommitted reviewed bytes are published. The source pins below identify this review.",
+  "status": "passed_no_scoped_blocker",
+  "production_edits_by_reviewer": false,
+  "tests_executed_by_reviewer": false,
+  "evidence_files_written_at_root_request": true,
+  "scope": [
+    "Exact project, actor/session, filing and working-copy identity",
+    "Ambiguity and unavailable-read refusal; held unsaved-navigation currentness",
+    "Actual saved agency and bound-outline selection, including omitted market scope",
+    "Artifact current-version, source/hash/lineage, disposition and actor admission",
+    "Unbound copy creation, retained source verification and immutable-genesis release governance"
+  ],
+  "source_manifest_canonical_sha256": "0edf35527c0a233037528dc33697cf5bb45492cb6c491704806ff96736737df0",
+  "manifest_encoding": "UTF-8 JSON of source_files with sorted object keys and separators comma/colon; no trailing newline",
+  "source_files": [
+    {
+      "path": "client/src/concept2cure/v2/authoringHandoff.ts",
+      "sha256": "66accd6a93a661a928dc844457b07cd454b5d3283f4cfd16a23646eade21eeec",
+      "git_blob": "95f253d3b8fedc3ccfbf842da98737d6e1925824",
+      "bytes": 36948
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+      "sha256": "271983097b158abe3d106763118ea84b78077aa3154d6a787560cd4a60f8373b",
+      "git_blob": "59990bc86cb2db18b9aa3e37323a5f067bf9ef16",
+      "bytes": 347329
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/FilingMarkets.tsx",
+      "sha256": "2d4f0828bca74fec16cc7dc276a58a5e0a0f1bc1a6d96261a826afb5ac132634",
+      "git_blob": "a27515baad925e824e79858475941bce5fd544f9",
+      "bytes": 9296
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceImportDialog.tsx",
+      "sha256": "eaaa4754499bea5971fb18d6f970d24d3fb91aaa000d7da9303024c8a4362b27",
+      "git_blob": "de9eb8271fcdcac0dad279472be7ff693294c9db",
+      "bytes": 13290
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/filingSectionTarget.ts",
+      "sha256": "1522a4ffee3efd492883bb927f348e0fe2fac1097e7f64be7e17be2ddccbe5d8",
+      "git_blob": "0d93ad4994537d3d61b57b935602681c8324895d",
+      "bytes": 10334
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/workbenchLeaveTarget.ts",
+      "sha256": "7d13ca6860c8b3ec0f66637612dafb2417b4f59b4dbf37227851778dbe318e17",
+      "git_blob": "ad21184a4f571c9da62827d2cc6541ad11f98b19",
+      "bytes": 2968
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/writingAgencyPresentation.ts",
+      "sha256": "356cfe02766c57b6c280cad03111e4de33021056600c8fee85a51e08b79024fe",
+      "git_blob": "2287aa3de46733ee04a00359dc491852a9a1c5ff",
+      "bytes": 9062
+    },
+    {
+      "path": "client/src/concept2cure/v2/editorTarget.ts",
+      "sha256": "4bfe12459e379483c7e6656903fc04788c47bb172c6e5cc688b8f4b6db1862cd",
+      "git_blob": "18df1d35a853b2e859886ccdbdd904add82e4537",
+      "bytes": 22691
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/vault-data.ts",
+      "sha256": "22444aa930f258faf2dd0c3cc1ddd6fb6700b29acdef14c2dde431b1a931c165",
+      "git_blob": "ec0461dd84dd061c47baf393933ccba832debb51",
+      "bytes": 8357
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+      "sha256": "cbd1dc2f5db41adf7352dd15ca0dca720fb55f99ca94c5d2c41a1d10b3e6f629",
+      "git_blob": "4751ae6fbf99335b1f844ce11bc3b9a7b36d8fec",
+      "bytes": 157923
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx",
+      "sha256": "a937c317721e136e8821daf992d3a2a713a7c4b0dfc4dae8688d0f2b0413ce0f",
+      "git_blob": "9a46779a7b544fd05b4e9e29778533d84c34df00",
+      "bytes": 16980
+    },
+    {
+      "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+      "sha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "git_blob": "79ccb852e7f4927706aefccf46951ca6803f3694",
+      "bytes": 18816
+    },
+    {
+      "path": "server/routes/artifacts-center-routes.ts",
+      "sha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "git_blob": "7a3fdd4208cfe613150af5fc6049270a81d81df0",
+      "bytes": 23990
+    },
+    {
+      "path": "server/routes/c2c/project-vault.ts",
+      "sha256": "3e1e18d60e6be6333633506455c5bfa92f4d4e1d4499ea6fdc65c646b99cc1e5",
+      "git_blob": "90f3d0b902008f315c81f85df0cfe9cde8a3b534",
+      "bytes": 161318
+    },
+    {
+      "path": "server/services/authoring/artifact-workflow-source.ts",
+      "sha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "git_blob": "604032730af9b8e45d5778cd024ef1b705275810",
+      "bytes": 15210
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-region-projection.ts",
+      "sha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "git_blob": "85dc5cf9b0d0af7899a81e4d8af50bfca8e31440",
+      "bytes": 2141
+    },
+    {
+      "path": "server/services/authoring/authoring-draft-template.ts",
+      "sha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+      "git_blob": "9ee76008c6c2c8ca67f80ff23d9ca34cccf919ba",
+      "bytes": 20897
+    },
+    {
+      "path": "server/services/authoring/authoring-source-import.ts",
+      "sha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "git_blob": "243281b253e2dc164d3be2edc435d2ac3e7f60b5",
+      "bytes": 34919
+    },
+    {
+      "path": "server/services/authoring/import-source-references.ts",
+      "sha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "git_blob": "4e4b63bf13a621f225f7ae6a37c2f018d498362f",
+      "bytes": 7846
+    },
+    {
+      "path": "server/services/authoring/workflow-import-governance.ts",
+      "sha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "git_blob": "68e54a3d7126118135e72ffc2bbfa2486de2ad54",
+      "bytes": 23025
+    },
+    {
+      "path": "server/services/authoring/workflow-source-import.ts",
+      "sha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "git_blob": "8323754eecdf060377a3172233774d8355fc6bfb",
+      "bytes": 33551
+    },
+    {
+      "path": "shared/authoring/source-import.ts",
+      "sha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "git_blob": "04c7a4f70e46222fde18f157f1b97119ff62436b",
+      "bytes": 7198
+    }
+  ],
+  "limits": [
+    "Read-only source review; owner receipts separately report fresh test execution.",
+    "No old environment or October test receipt qualifies the reviewed November source.",
+    "Does not establish live deployment, authenticated client acceptance, model output accuracy or native PostgreSQL concurrency.",
+    "Does not establish full MDX evidence-adapter/scientific-review parity or approval of any generated submission.",
+    "Other repository inputs and changes outside these 22 selected runtime files are not covered by this pin manifest."
+  ]
+}

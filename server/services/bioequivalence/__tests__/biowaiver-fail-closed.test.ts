@@ -24,6 +24,10 @@
  *
  * Reachable as the deterministic AnA tool `assess_biowaiver`
  * (AnaToolExecutor.ts), whose output is reported verbatim.
+ *
+ * Rule 2 S5d (2026-11-09): where an omitted fact could still grant the waiver,
+ * eligible is null and the decision BIOWAIVER_NOT_ASSESSED, no longer false and
+ * CONDITIONAL; the outstanding requirements are unchanged.
  */
 import { describe, it, expect } from 'vitest';
 import { assessBiowaiver } from '../bioequivalence-knowledge';
@@ -40,7 +44,7 @@ describe('assessBiowaiver — BCS Class III excipient criteria must be establish
       // excipientsQualitativelySame / excipientsQuantitativelySimilar omitted
     } as any);
     expect(r.decision).not.toBe('BIOWAIVER_GRANTED');
-    expect(r.eligible).toBe(false);
+    expect(r.eligible).toBeNull();
     // The fabricated sentence must not appear over an unperformed comparison.
     expect(r.rationale.join(' ')).not.toContain('Excipient similarity criteria met');
     expect(r.outstandingRequirements.join(' ')).toMatch(/not provided/i);
@@ -100,7 +104,7 @@ describe('assessBiowaiver — BCS Class I must evaluate the reference product', 
   it('does NOT grant when the RLD was never characterised at all', () => {
     const r = assessBiowaiver({ ...base, bcsClass: 'I', veryRapidlyDissolving: true } as any);
     expect(r.decision).not.toBe('BIOWAIVER_GRANTED');
-    expect(r.eligible).toBe(false);
+    expect(r.eligible).toBeNull();
   });
 
   it('grants when BOTH products are very rapidly dissolving', () => {
@@ -130,7 +134,7 @@ describe('assessBiowaiver — BCS Class I must evaluate the reference product', 
     const conditional = assessBiowaiver({
       ...base, bcsClass: 'I', rapidlyDissolving: true,
     } as any);
-    expect(conditional.decision).toBe('BIOWAIVER_CONDITIONAL');
+    expect(conditional.decision).toBe('BIOWAIVER_NOT_ASSESSED');
     expect(conditional.outstandingRequirements.join(' ')).toMatch(/f2 >= 50/i);
   });
 });

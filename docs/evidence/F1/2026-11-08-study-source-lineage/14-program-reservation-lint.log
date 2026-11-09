@@ -1,0 +1,15 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/clinical-regulatory-evidence/evidence-spine.service.ts
+   387:1  warning  Async function 'insertSource' has a complexity of 33. Maximum allowed is 15         complexity
+   703:1  warning  File has too many lines (888). Maximum allowed is 500                               max-lines
+   805:8  warning  Async function 'upsertStudy' has a complexity of 16. Maximum allowed is 15          complexity
+   854:8  warning  Async function 'createFinding' has a complexity of 23. Maximum allowed is 15        complexity
+  1013:8  warning  Async function 'proposeDesignLesson' has a complexity of 19. Maximum allowed is 15  complexity
+
+✖ 5 problems (0 errors, 5 warnings)
+

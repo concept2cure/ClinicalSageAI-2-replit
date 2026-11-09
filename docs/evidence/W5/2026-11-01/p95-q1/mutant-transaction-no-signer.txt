@@ -1,0 +1,8 @@
+# Mutant: the signing transaction does not pass the signer to the quorum it re-reads
+# in server/services/artifact-signed-act.ts
+# - artifact.version, input.userId);
+# + artifact.version);
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer becomes a reviewer of the round while signing: refused on the signing transaction, nothing written 54ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 166 passed (167)

@@ -43,11 +43,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 /* `permissions` as the session carries them (server sessionPermissions): an
    administrator's include billing:admin, a member's do not (P-68). */
 const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[], permissions: ['governed:write', 'billing:admin'] as string[] }));
+/* One signed-in account, the same object on every render, as the session provides it. The navigation verdicts are
+   read only for an account with an id, once per account visit (navEntitlements.tsx useNavigationReadOwner). */
+const authUser = vi.hoisted(() => ({
+  id: 11, organizationId: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe',
+  get roles() { return auth.roles; }, get permissions() { return auth.permissions; },
+}));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles, permissions: auth.permissions },
-    logout: vi.fn(),
-  }),
+  useAuth: () => ({ user: authUser, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: null }),
@@ -474,7 +477,8 @@ describe('A.1 · /concept2cure/features (section 12)', () => {
     expect(surfaceIdFromLocation(locationForSurface('apps'))).toBe('apps');
     expect(surfaceIdFromLocation(`${UI_V2_BASE}/apps`)).toBe('apps');
     // V2App navigates by writing locationForSurface(id), so every door, menu item and AnA move writes it.
-    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\(locationForSurface\(/);
+    // A saved conversation may supply its own path first (931e287429); the surface's address is the fallback.
+    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\((?:[\w?.]+\s*\?\?\s*)?locationForSurface\(/);
   });
 
   it('no address a client can reach has "app" in it', () => {

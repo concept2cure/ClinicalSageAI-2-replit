@@ -1,0 +1,64 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T03:06:52.399Z",
+  "steps": [
+    {
+      "name": "seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1",
+      "section": {
+        "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+        "code": "2.5.3",
+        "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+      },
+      "org": 2,
+      "documentCode": "S12-WALK-1794193612466",
+      "v1": "f8bbcd39-4d7d-4369-908c-db3adf2c49a1",
+      "v2": "3fe0a001-51d0-4ea4-8eaa-cdda513ba832",
+      "canonical": "s12-walk-1794193612466"
+    },
+    {
+      "name": "while version 2 is in review, the section is not listed",
+      "status": 200,
+      "vaultCount": 1
+    },
+    {
+      "name": "once version 3 is approved, the project lists the section, naming 3.0 and passing over 2.0 in review",
+      "change": {
+        "sectionId": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+        "sectionCode": "2.5.3",
+        "sectionTitle": "Overview of Clinical Pharmacology",
+        "documentId": "79793c98-005d-45bc-8261-0cd0d2208ec7",
+        "documentTitle": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+        "citedVaultId": "f8bbcd39-4d7d-4369-908c-db3adf2c49a1",
+        "citedVersion": "1.0",
+        "vaultTitle": "Drug substance specification",
+        "approvedVaultId": "5a9d375d-b365-46c8-90ed-25607778b00b",
+        "approvedVersion": "3.0",
+        "spans": 1
+      }
+    },
+    {
+      "name": "Evidence's data room names the section, the version it was drafted from and the approved one",
+      "text": "2 sections were drafted from a Vault version that a later approved version has replaced.[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101 · 2.5.3 — drafted from Drug substance specification v1.0; v3.0 is approved[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101 · 2.5.3 — drafted from Drug substance specification v1.0; v3.0 is approvedNothing has been rewritten. Open each section to decide whether the approved version changes what it says."
+    },
+    {
+      "name": "the same at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [],
+  "seed": {
+    "section": {
+      "id": "72ef1025-2818-4903-9ad2-ca0d3f2fdbe6",
+      "code": "2.5.3",
+      "title": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101"
+    },
+    "org": 2,
+    "documentCode": "S12-WALK-1794193612466",
+    "v1": "f8bbcd39-4d7d-4369-908c-db3adf2c49a1",
+    "v2": "3fe0a001-51d0-4ea4-8eaa-cdda513ba832",
+    "canonical": "s12-walk-1794193612466",
+    "v3": "5a9d375d-b365-46c8-90ed-25607778b00b"
+  },
+  "finishedAt": "2026-11-09T03:07:12.126Z"
+}

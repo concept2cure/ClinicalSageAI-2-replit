@@ -207,6 +207,12 @@ describe('numbering in the canvas', () => {
   });
 });
 
+/** Caption sits in row 2, "More formatting" (D4-6, D4.md §D4.D): open it, then press Caption. */
+function captionFromRibbon() {
+  fireEvent.click(screen.getByRole('button', { name: /^more formatting/i }));
+  fireEvent.click(screen.getByRole('button', { name: /caption this table/i }));
+}
+
 describe('writing a caption from the ribbon', () => {
   it('stores the words and mints an identity, and never a number', () => {
     const ref = React.createRef<RichSectionEditorHandle>();
@@ -218,7 +224,7 @@ describe('writing a caption from the ribbon', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /caption this table/i }));
+    captionFromRibbon();
     fireEvent.change(screen.getByLabelText(/caption text/i), {
       target: { value: 'Summary of adverse events' },
     });
@@ -241,7 +247,7 @@ describe('writing a caption from the ribbon', () => {
         value={'<table><tbody><tr><td>Headache</td></tr></tbody></table>'}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: /caption this table/i }));
+    captionFromRibbon();
     // One field, for the words. The bar says where the number comes from.
     const bar = screen.getByRole('group', { name: /caption/i });
     expect(bar.querySelectorAll('input')).toHaveLength(1);

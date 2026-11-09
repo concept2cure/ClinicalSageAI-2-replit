@@ -1081,7 +1081,7 @@ router.put('/projects/:id', projectRecordAdmission(true), async (req: Request, r
     return sendSuccess(res, response, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to update project', { error: error.message, projectId: req.params.id });
     return sendError(res, 500, 'Failed to update project');
@@ -1184,7 +1184,7 @@ router.patch('/projects/:id/ownership-preferences', projectRecordAdmission(true)
     }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to update ownership preferences', { error: error.message });
     return sendError(res, 500, 'Failed to update ownership preferences');
@@ -1350,7 +1350,7 @@ router.put('/projects/:projectId/collaborators', projectRecordAdmission(true, tr
     }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to update project collaborators', {
       error: error.message,
@@ -1544,7 +1544,7 @@ router.post('/projects/:id/transfer', projectRecordAdmission(true, true), async 
     return sendSuccess(res, { id: rawId, transfer: transferRecord }, { auditTrail: auditTrailFromEntry(auditOutcome) });
   } catch (error: any) {
     if (error?.name === 'ZodError') {
-      return sendError(res, 400, 'Invalid payload', error.errors, 'INVALID_INPUT');
+      return sendError(res, 400, 'Invalid payload', error.issues, 'INVALID_INPUT');
     }
     logger.error('Failed to record transfer', { error: error.message });
     return sendError(res, 500, 'Failed to record transfer');
@@ -1594,7 +1594,7 @@ router.post('/errors', async (req: Request, res: Response) => {
     return sendSuccess(res, { logged: true });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return sendError(res, 400, 'Validation failed', error.errors, 'VALIDATION_ERROR');
+      return sendError(res, 400, 'Validation failed', error.issues, 'VALIDATION_ERROR');
     }
     logger.error('Failed to log client error', { error: error.message });
     return sendError(res, 500, 'Failed to log client error');

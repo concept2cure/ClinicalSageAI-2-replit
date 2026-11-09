@@ -168,7 +168,8 @@ export async function commitSignedArtifactAct(
     status: input.status,
   });
   if (input.status === 'approved') {
-    const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version);
+    // The signer did not review this version either (P-95 Q1), re-read here.
+    const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version, input.userId);
     if (!quorum.met) throw new ArtifactActConflictError(`${quorum.message} Nothing was signed.`);
   }
   // This recheck catches decisions that changed since preflight. It does NOT

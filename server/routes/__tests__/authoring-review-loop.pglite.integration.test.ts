@@ -23,11 +23,12 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import request from 'supertest';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
+import type { RequestConnectable } from '../../db/requestDb';
 import { AUTHORING_REVIEW_BINDING_BASIS, authoringReviewReadSchema } from '@shared/authoring/peer-review';
 
 import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from '../../services/ana-ri/__tests__/governed-action-ledger.fixture';
-import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, mint, makeApp, asToken, registerIndependentReviewHttpAcceptance } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, notified: [] as unknown[] }));
 vi.mock('../../db', () => ({
@@ -119,6 +120,22 @@ const ask = (docId: string, people = [REVIEWER]) =>
     route: { reviewDueDate: REVIEW_DUE },
   });
 
+registerIndependentReviewHttpAcceptance({ app: () => app, connection: independentFixtureConnection, create: seedDoc,
+  reviewer: req => reviewer(req), requestReview: ask });
+
+function independentFixtureConnection(): RequestConnectable {
+  const checked = (run: (sql: string, args?: unknown[]) => Promise<{ rows: unknown[] }>) => async (sql: string, args?: unknown[]) => {
+    const result = await run(sql, args);
+    const rows = result.rows.filter((row): row is Record<string, unknown> => typeof row === 'object' && row !== null && !Array.isArray(row));
+    if (rows.length !== result.rows.length) throw new Error('Fixture returned a malformed SQL row');
+    return { rows };
+  };
+  return { query: checked((sql, args) => jdb.pool.query(sql, args)), connect: async () => {
+    const client = await jdb.pool.connect();
+    return { query: checked((sql, args) => client.query(sql, args)), release: () => client.release() };
+  } };
+}
+
 /** A structurally valid expected basis also reaches the old route, which ignores it. */
 async function expectedRead(docId: string, as = reviewer) {
   const read = await as(request(app).get(`/api/authoring/documents/${docId}/reviews`));
@@ -156,6 +173,7 @@ beforeAll(async () => {
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
       // The review route columns the Drizzle model names (RR1a).
       'migrations/20261023_review_routes.sql',
+      'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
     ],
     testOnlySql: `
       ${GOVERNED_ACTION_LEDGER_PGLITE_DDL}

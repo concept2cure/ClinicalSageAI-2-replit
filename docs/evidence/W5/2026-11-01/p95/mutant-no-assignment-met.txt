@@ -1,0 +1,13 @@
+# Mutant: no assignment at all meets the quorum again (the pre-P-95 policy)
+# in server/services/artifact-approval-act.ts
+# -     return { met: false, code: 'REVIEW_REQUIRED', message: `Cannot approve: no one has reviewed this document
+# +     return { met: true }; return { met: false, code: 'REVIEW_REQUIRED', message: `Cannot approve: no one has reviewed this document
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > no reviewer named: refused 409 REVIEW_REQUIRED before the password is verified, nothing written 41ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > the review is gone by the time it is signed: refused on the signing transaction, nothing written 28ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-95: AnA approves an artifact only after its review > no reviewer named: refused REVIEW_REQUIRED, saying where to name one, nothing signed 27ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'no assignments: no one reviewed it, r…' 15ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: no reviewer named is 409 REVIEW_REQUIRED 5ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > no reviewer named refuses the approval 409 REVIEW_REQUIRED (P-95) and records no approved version 13ms
+ Test Files  4 failed (4)
+      Tests  6 failed | 185 passed (191)

@@ -1,0 +1,7 @@
+{
+  "baselineRunId": 5,
+  "rawDescription": "Fictional acceptance check: pH < 6 and temperature > 30 C; impurity <LOQ; review remains pending.",
+  "fullConditionVisible": false,
+  "collapsedConditionObserved": true,
+  "fixture": "Fictional local records; no approval or model call."
+}

@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { DOMParser } from '@xmldom/xmldom';
 import {
   buildRpsMessage,
   validateRpsMessage,
@@ -64,9 +65,15 @@ function sampleMessage(): RpsMessageInput {
 }
 
 describe('RPS message builder', () => {
-  it('emits a well-structured submissionUnit.xml with the FDA Regional IG OID', () => {
+  it('emits the actual message in the official ICH namespace with the FDA Regional IG OID', () => {
     const xml = buildRpsMessage(sampleMessage());
-    expect(xml).toContain('<PORP_IN000001UV xmlns="urn:hl7-org:rps"');
+    // The FDA-linked ICH package's PORP_IN000001UV.xsd declares this namespace.
+    // https://www.fda.gov/media/193873/download?attachment
+    // Its schema hash and the checked FDA IG example are retained in REGULATORY_REVIEW.md.
+    const root = new DOMParser().parseFromString(xml, 'application/xml').documentElement;
+    expect(root?.localName).toBe('PORP_IN000001UV');
+    expect(root?.namespaceURI).toBe('urn:hl7-org:v3');
+    expect(root?.getElementsByTagName('submissionUnit').item(0)?.namespaceURI).toBe('urn:hl7-org:v3');
     expect(xml).toContain(`<interactionId root="${FDA_REGIONAL_IG_OID}"`);
     expect(xml).toContain('<submissionUnit>');
     expect(xml).toContain('<code code="us_submission_unit_type_1" codeSystem="2.16.840.1.113883.3.989.5.1.2.2.1.13.2"/>');

@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > shows nothing and reads nothing when the area was not opened from a work project 16ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > is bound by the door, keeps the binding on its URL, and lists the work project's own tasks 151ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > adds a task to the work project, never as its Deliver task 52ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > says a refused binding and a failed task read, never "no tasks" 9ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > offers no add to a person who may not write, and binds only the areas that show tasks 11ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 17ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 199ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 57ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 119ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a Quality work project on the organisation's Quality area wherever the person may, whatever the track (P-111 item 5) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5) 80ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  09:19:59
+   Duration  2.76s (transform 621ms, setup 146ms, import 894ms, tests 848ms, environment 670ms)
+

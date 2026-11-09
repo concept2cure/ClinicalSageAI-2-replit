@@ -1,0 +1,14 @@
+document_key,filename,category,project,synthetic,proposed_vault_class,expected_link,readiness,validation_note
+DOC-001,07_PROTOCOL_v2.md,Protocol,FBT-201,TRUE,Source Document,CSR sections 8-9,prepared-not-ingested,Fictional protocol v2; no regulatory or IRB approval
+DOC-002,08_SAP_v1.md,Statistical Analysis Plan,FBT-201,TRUE,Source Document,CSR sections 9-11,prepared-not-ingested,Descriptive synthetic SAP only
+DOC-003,01_ADSL_synthetic.csv,Participant-level data,FBT-201,TRUE,Dataset,CSR 10-12,prepared-not-ingested,160 IDs; ADaM-inspired and not conformance-qualified
+DOC-004,02_ADEFF_synthetic.csv,Efficacy analysis data,FBT-201,TRUE,Dataset,CSR 11.4,prepared-not-ingested,320 records with synthetic PASI measures
+DOC-005,03_ADAE_synthetic.csv,Adverse event analysis data,FBT-201,TRUE,Dataset,CSR 12.2-12.3,prepared-not-ingested,79 synthetic AE records; source does not establish causality
+DOC-006,04_ADLB_synthetic.csv,Laboratory analysis data,FBT-201,TRUE,Dataset,CSR 12.4,prepared-not-ingested,320 synthetic ALT records
+DOC-007,05_TLF_11_4_primary_efficacy.csv,Efficacy summary table,FBT-201,TRUE,TLF,CSR 11.4,prepared-not-ingested,Responder fractions 52/80 and 30/80
+DOC-008,06_TLF_12_2_safety.csv,Safety summary table,FBT-201,TRUE,TLF,CSR 12.2,prepared-not-ingested,AE denominators 80 per arm
+DOC-009,09_TLF_SUMMARY.json,Computed summary,FBT-201,TRUE,Analysis Result,CSR 11.4 and 12,prepared-not-ingested,Unadjusted calculations only; independently reconcile
+DOC-010,10_CSR_DRAFT_ICH_E3.md,Medical writing draft,FBT-201,TRUE,Draft Document,Full CSR,prepared-not-ingested,16 headings; no actual governed review or signature
+DOC-011,11_SOURCE_TO_CLAIM_TRACE.csv,Traceability,FBT-201,TRUE,Lineage,CSR numeric assertions,prepared-not-ingested,Source-to-claim pointers are proposed not database lineage
+DOC-012,12_HUMAN_REVIEW_AND_TASKS.csv,Review plan,FBT-201,TRUE,Tasking and Review,CSR review,prepared-not-ingested,CSV does not constitute executed tasks
+DOC-013,00_ORGANIZATION_AND_STUDY.json,Study metadata,FBT-201,TRUE,Project Metadata,All sections,prepared-not-ingested,All participants and identifiers fictional

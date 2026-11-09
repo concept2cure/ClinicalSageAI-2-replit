@@ -1,0 +1,8 @@
+MUTATION 12-gateway-ceiling-inclusive in server/services/ectd/ectd-regional-rules.ts (on the final code and tests, 2026-11-09T01:23:53.949020Z): replaced [  if (sizeBytes <= LAUNCH_SEQUENCE_MAX_BYTES) return null;] with [  if (sizeBytes < LAUNCH_SEQUENCE_MAX_BYTES) return null;]
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > 1 GiB and one byte is refused as a validation error that proves nothing was sent 25ms
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > exactly 1 GiB reaches the AS2 path, recorded as AS2 16ms
+      Tests  1 failed | 1 passed | 31 skipped (33)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FDA ESG refuses a package over 1 GiB before any transmittal row (P-93) > exactly 1 GiB reaches the AS2 path, recorded as AS2
+AssertionError: expected [] to have a length of 1 but got +0
+restored sha256 08ae6cb7ede4befb6e361d5311c171b9962abf04481b2a1a7a69421e5af368d0 (expected 08ae6cb7ede4befb6e361d5311c171b9962abf04481b2a1a7a69421e5af368d0)

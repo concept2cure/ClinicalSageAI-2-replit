@@ -7,6 +7,15 @@
  * or 'rejected', and an acknowledgement to 'acknowledged'. Only 'sent' and
  * 'acknowledged' mean the agency received it.
  *
+ * Only a PRODUCTION send files a sequence (F1, row D7, 2026-11-01). A send to
+ * the agency's test environment ('staging'), and a receipt from it, leave the
+ * sequence 'pending' whatever the test environment answered
+ * (submission-service.ts toDispatchStatus, fda-esg-receipts.ts
+ * resolveReceiptSequence), the package spine's rule reached onto the sequence
+ * spine (governed-transmit.ts recordTransmittedSequence, sweep F14). So no
+ * state below is ever set by a test send, and every reader of this list, an
+ * allow-list, reads a test send as not filed with no change of its own.
+ *
  * Here, in a module of its own, so a reader that only needs the rule does not
  * import the submission service's whole graph. submission-service.ts
  * (resendRefusal's neighbour, isFiled) and the commitment fulfilment evidence

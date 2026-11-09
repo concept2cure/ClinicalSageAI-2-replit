@@ -1,0 +1,16 @@
+{
+  "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "547333bfae34c2f3e4a04a57abcd0742099df5c13dcca73b7cfa3120c844066e",
+  "server/services/ana/AnaDocumentDraftingService.ts": "5c788319d0a59dddbf7f845079b1913726e4ac0675402c1a7d9fadbdc05168c2",
+  "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "7c1c43d63d4c216304615c55ae1a8db8bf2db9515b542964387f78b6b6006e39",
+  "server/services/global-ri/__tests__/clinical-trial-application-requirements.test.ts": "fd4254d3908d6ec8def2b295be0326572094997c547770f1232f7a71c4bd1db0",
+  "server/services/global-ri/clinical-trial-application-requirements.ts": "c10d4afbe7709bf775cda355cb466577d1def79b9c3bd39f7ecf9f915f206719",
+  "server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts": "5e962c2bcedaf10108d45f105ea7b67ef5591db979215bf9ea58ed46351444d5",
+  "server/services/regulatory/registry/__tests__/uk-cta-authoring.test.ts": "146fb3f5b181c0d868753ec90de73bb5973d7e6bed9df5bd562999e4fb8f04a4",
+  "server/services/regulatory/registry/blueprints/ukCtaBlueprint.ts": "e1df128a58e72f1db5a67fe3eade54509c74aaf19f99b542a86a38626e9ed00a",
+  "server/services/regulatory/registry/submittabilityCoverage.ts": "4f640db4cca872ce50ec4b236ad4aca4aaef3589db4386acae0ac16e4ba4c194",
+  "server/services/regulatory/sectionBlueprintCatalog.ts": "785a2045d25de3e62e6100d33cf4130edc4e5f19691b3391a337690acc293ccb",
+  "server/services/regulatory/taskBlueprintCatalog.ts": "9f155d0e6529f97cb6cbc7f2c2b9b84ccb31d92692c06c3883d6997c7a438c4e",
+  "shared/regulatory/global-document-registry.ts": "e6f14800e0d3f8380c37f5ed6014f2bfa7cb34d118b1adea898504db3652dd08",
+  "shared/regulatory/project-bootstrap.ts": "e208cbc6981f9b5c824fab7350f9062daa6016fa4d61df5905564f4e80f6076d",
+  "shared/regulatory/uk-cta-authoring.ts": "d4164c61f97394afcb7182514bc3bacea06bff7a01e5cb24eb4d66c7d35f3d96"
+}

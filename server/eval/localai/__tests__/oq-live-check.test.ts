@@ -7,15 +7,21 @@
  * anything. The live probe (probeLocalEndpoint) is intentionally NOT called
  * here — it only runs against a configured endpoint.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   assertOnPremRoutingInvariants,
   isLocalEndpointConfigured,
   localClientActive,
+  localQualificationReadiness,
+  probeLocalEndpoint,
 } from '../oq-live-check';
 import { resetPlacementRegistry } from '../../../services/ai-gateway/providers/placement';
+import * as providers from '../../../services/ai-gateway/providers/clients';
+import { CLOUD_MODELS } from '../../../services/ai-gateway/providers/cloud-models';
+import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
 
 const ENV_KEYS = [
+  'AI_LOCAL_ENABLED',
   'LOCAL_AI_BASE_URL',
   'LITELLM_BASE_URL',
   'LOCAL_AI_API_KEY',
@@ -36,11 +42,69 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const k of ENV_KEYS) {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
   }
   resetPlacementRegistry();
+});
+
+function localFixture() {
+  const version = `fixture-weights@sha256:${'a'.repeat(64)}`;
+  const row = CLOUD_MODELS.find(model => model.provider === 'local')!;
+  const entry = APPROVED_MODELS.find(model => model.id === row.id)!;
+  return { env: { AI_LOCAL_ENABLED: 'true', LOCAL_AI_BASE_URL: 'http://fixture-local.invalid/v1' },
+    registry: [{ ...row, model: version }], entries: [{ ...entry, pinnedVersion: version,
+      pq: { ...entry.pq, pinKind: 'weights_sha256' as const } }] };
+}
+
+describe('local qualification identity and deployment readiness', () => {
+  it('reports the actual unconfigured placeholder without contacting any provider', () => {
+    const factory = vi.spyOn(providers, 'createLocalClient');
+    const result = localQualificationReadiness();
+    expect(result).toMatchObject({ status: 'blocked', readyToEvaluate: false, qualifiesModel: false,
+      endpointConfigured: false, routingEnabled: false, expectedModel: { immutablePin: false },
+      runtimeIdentity: { status: 'not_probed' }, weightsVerification: 'not_independently_verified' });
+    expect(result.blockers.map(blocker => blocker.code)).toContain('LOCAL_PIN_NOT_CONCRETE');
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it('does not probe a disabled or nominal local lane', async () => {
+    const factory = vi.spyOn(providers, 'createLocalClient');
+    const fixture = localFixture();
+    await expect(probeLocalEndpoint({ ...fixture, env: { ...fixture.env, AI_LOCAL_ENABLED: 'false' } })).resolves.toMatchObject({ ok: false });
+    await expect(probeLocalEndpoint({ env: fixture.env })).resolves.toMatchObject({ ok: false });
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it.each([{ ids: [] }, { ids: ['local-default'] }, { ids: [`other@sha256:${'b'.repeat(64)}`] }])('refuses reachable inventory without the exact immutable identity: %j', async ({ ids }) => {
+    const list = vi.fn().mockResolvedValue({ data: ids.map(id => ({ id })) });
+    vi.spyOn(providers, 'createLocalClient').mockReturnValue({ models: { list } });
+    const result = await probeLocalEndpoint(localFixture());
+    expect(result).toMatchObject({ ok: false, error: 'LOCAL_IDENTITY_NOT_REPORTED', models: [],
+      readiness: { qualifiesModel: false, runtimeIdentity: { status: 'mismatched', reportedModelCount: ids.length } } });
+    expect(list).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an exact runtime identity declaration separate from independently measured weights and PQ', async () => {
+    const fixture = localFixture();
+    const version = fixture.registry[0].model;
+    vi.spyOn(providers, 'createLocalClient').mockReturnValue({ models: { list: vi.fn().mockResolvedValue({ data: [{ id: version }] }) } });
+    const result = await probeLocalEndpoint(fixture);
+    expect(result).toMatchObject({ ok: false, error: 'LOCAL_DEPLOYMENT_EVIDENCE_REQUIRED', models: [version],
+      readiness: { readyToEvaluate: false, qualifiesModel: false, weightsVerification: 'not_independently_verified',
+        runtimeIdentity: { status: 'matched', matchedModel: version } } });
+  });
+
+  it('keeps arbitrary discovery errors and unknown model identifiers out of diagnostic output', async () => {
+    vi.spyOn(providers, 'createLocalClient').mockReturnValue({ models: { list: vi.fn().mockRejectedValue(new Error('PRIVATE_LOCAL_KEY_CANARY')) } });
+    const result = await probeLocalEndpoint(localFixture());
+    expect(result.error).toBe('LOCAL_DISCOVERY_FAILED');
+    expect(JSON.stringify(result)).not.toContain('PRIVATE_LOCAL_KEY_CANARY');
+    const assessment = localQualificationReadiness({ ...localFixture(), reportedModels: ['PRIVATE_LOCAL_KEY_CANARY'] });
+    expect(JSON.stringify(assessment)).not.toContain('PRIVATE_LOCAL_KEY_CANARY');
+  });
 });
 
 describe('assertOnPremRoutingInvariants', () => {

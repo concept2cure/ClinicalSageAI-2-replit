@@ -32,7 +32,7 @@ import { computationEngine, ComputationRefusal } from '../ana-biostats/computati
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
 import type { ComputationResult, JudgmentResult, StatisticalDocumentType, StatisticalInput } from '../ana-biostats/types';
 import { STATS_ENGINE, STATS_ENGINE_VERSION, hashInputs } from '../stats/computation-provenance';
-import { recordComputationRun, reproduceComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import { latestRunFor, recordComputationRun, reproduceComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
 import type { ReproductionResult } from '../stats/computation-runs';
 import {
   isUuid,
@@ -46,6 +46,7 @@ import unifiedTaskService from '../unifiedTaskService';
 import {
   applyPlanPatch,
   computationToPlanPatch,
+  plannedSizeOf,
   statisticalReadiness,
   studyDesignToStatisticalInput,
   type DesignAdapterResult,
@@ -115,7 +116,19 @@ export interface DesignAssessment {
   proposedTasks: TaskBlueprint[];
   /** Blueprint keys already on the board for this design (open, not archived). */
   existingTaskKeys: string[];
+  /** The stored run behind the planned N the design records. */
+  sizingRun: SizingRunRead;
 }
+
+/**
+ * The stored run behind the planned N this design records (stats_computation_runs, S5b), named so a screen can ask
+ * for its reproduction (GET /computation-runs/:runId/reproduce). `plannedSampleSize` is read from the run's stored
+ * outputs, so a design whose N was edited after the run shows two figures, not one. A failed read is said as one.
+ */
+export type SizingRunRead =
+  | { state: 'found'; runId: number; recordedAt: string; plannedSampleSize: number | null }
+  | { state: 'none' }
+  | { state: 'unreadable' };
 
 // ─── Reads ───────────────────────────────────────────────────────────────────
 
@@ -229,6 +242,25 @@ export async function existingBlueprintKeys(organizationId: number, studyId: str
   return keys;
 }
 
+/** What a sizing run's figure is used for, as the run is stored and read back. */
+const SIZING_PURPOSE = 'study-design:planned-sample-size';
+
+/** The stored run behind the design's planned N, or none; a read that fails is `unreadable`, never `none`. */
+export async function sizingRunFor(organizationId: number, studyId: string): Promise<SizingRunRead> {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id FROM cdisc_prm_studies WHERE study_id = $1 AND tenant_id = $2 LIMIT 1',
+      [studyId, organizationId],
+    );
+    if (!rows[0]) return { state: 'none' };
+    const run = await latestRunFor(pool, organizationId, Number(rows[0].id), SIZING_PURPOSE);
+    if (!run) return { state: 'none' };
+    return { state: 'found', runId: run.runId, recordedAt: run.recordedAt, plannedSampleSize: plannedSizeOf(run.outputs) };
+  } catch {
+    return { state: 'unreadable' };
+  }
+}
+
 /**
  * What the engines say about one adapted design — or, when the engine declines
  * to produce a figure, WHY, in the engine's own words.
@@ -294,12 +326,12 @@ export async function reproduceSizingRun(
   organizationId: number,
   runId: number,
 ): Promise<ReproductionResult> {
-  const client = await pool.connect();
-  try {
-    return await reproduceComputationRun(client, organizationId, runId);
-  } finally {
-    client.release();
-  }
+  /* On the pool, not on a checked-out client (R1, 2026-11-06). The pool's scope layer writes the tenant's settings
+     onto a checked-out client only after a BEGIN (poolInstrumentation.ts wrapClientForScope). This read took a client
+     and queried it outside a transaction, so with RLS enforced it ran with no tenant, the policy hid the
+     organization's own run, and the route answered 404. pool.query scopes each statement.
+     __tests__/reproduce-under-tenant-scope.test.ts. */
+  return reproduceComputationRun(pool, organizationId, runId);
 }
 
 export async function assessDesign(organizationId: number, studyId: string): Promise<DesignAssessment | null> {
@@ -311,9 +343,10 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
   const { computation, judgment, inputsSha256, refusal } = computeFor(adapter);
   const review = buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
   const filing = await programFilingContext(organizationId, design.programId);
-  const [existingDeliverables, existingTaskKeys] = await Promise.all([
+  const [existingDeliverables, existingTaskKeys, sizingRun] = await Promise.all([
     existingStatisticalDeliverables(organizationId, filing.projectId),
     existingBlueprintKeys(organizationId, studyId),
+    sizingRunFor(organizationId, studyId),
   ]);
 
   const proposedTasks = tasksFromAssessment({
@@ -342,6 +375,7 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
     existingDeliverables,
     proposedTasks,
     existingTaskKeys,
+    sizingRun,
   };
 }
 
@@ -387,7 +421,7 @@ async function recordSizingRun(
     methodVersion: computation.method,
     inputs: input,
     outputs: computation,
-    purpose: 'study-design:planned-sample-size',
+    purpose: SIZING_PURPOSE,
     userId: args.userId,
   });
 }

@@ -36,7 +36,8 @@ const manifest: AssemblySourceManifest = { version: 1, programId: PROGRAM, finge
   entries: selectors.map((source, index) => ({ source, title: index ? 'Saved Vault report' : 'Retained Data Room source',
     contentHash: index ? 'b'.repeat(64) : 'a'.repeat(64), extractedTextSha256: 'd'.repeat(64), version: '2',
     originalFileAvailable: index === 1, disposition: 'keep_data', span: { start: 11, end: 111, totalChars: 400, sha256: 'e'.repeat(64) } })) };
-const priorDoc = { id: PRIOR, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
+/* Unbound working copies (c2c_document_id null, as authoring-document-read.ts states it); the project has no governed filing. */
+const priorDoc = { id: PRIOR, title: 'Current working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1, c2c_document_id: null };
 const targetDoc = { ...priorDoc, id: TARGET, title: 'Selected assembly target', section_count: 2 };
 const priorSection: AssemblySection = { id: SECTION, doc_id: PRIOR, code: '3.2.S.1', title: 'Saved current section', content: '<p>Existing saved current work.</p>', order_index: 0, updated_at: AT };
 const targetSections: AssemblySection[] = [
@@ -44,6 +45,8 @@ const targetSections: AssemblySection[] = [
   { id: '33333333-3333-4333-8333-333333333283', doc_id: TARGET, code: '3.2.S.2', title: 'Target manufacture', content: '', order_index: 1, updated_at: AT },
 ];
 const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+/** GET /api/c2c/documents[/…] for a project with no governed filing: an empty list (home and market), and no document. */
+const noFiling = (pathname: string) => pathname === '/api/c2c/documents' ? ok({ documents: [] }) : ok({}, 404);
 function deferred<T>() {
   let resolve!: (value: T) => void;
   return { promise: new Promise<T>(done => { resolve = done; }), resolve: (value: T) => resolve(value) };
@@ -82,7 +85,7 @@ beforeEach(async () => {
     if (pathname === `/api/authoring/docs/${TARGET}/sections`) return ok({ success: true, sections: targetSections.map(section => ({
       ...section, draftingRegion: draftRegion, draftingRegionState: draftRegion ? 'recorded' : 'unavailable',
     })) });
-    if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
+    if (url.startsWith('/api/c2c/documents')) return noFiling(pathname);
     return ok({ success: true, sources: [], revisions: [], events: [], comments: [] });
   });
 });

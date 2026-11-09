@@ -1,0 +1,44 @@
+{
+  "source": "Synthetic revision 2; original archive retained; not clinical evidence",
+  "primary": [
+    {
+      "arm": "FBT-201 200 mg",
+      "ITT": 80,
+      "responders": 52,
+      "response_rate_pct": 65.0,
+      "treatment_complete": 74
+    },
+    {
+      "arm": "Placebo",
+      "ITT": 80,
+      "responders": 30,
+      "response_rate_pct": 37.5,
+      "treatment_complete": 76
+    }
+  ],
+  "risk_difference": 0.275,
+  "wald_ci_95": [
+    0.12607304642879452,
+    0.4239269535712055
+  ],
+  "two_sided_fisher_p": 0.0008401840557253169,
+  "safety": [
+    {
+      "arm": "FBT-201 200 mg",
+      "safety_n": 80,
+      "subjects_with_teae": 42,
+      "subjects_with_sae": 3,
+      "subjects_ae_withdrawal": 2,
+      "deaths": 0
+    },
+    {
+      "arm": "Placebo",
+      "safety_n": 80,
+      "subjects_with_teae": 37,
+      "subjects_with_sae": 2,
+      "subjects_ae_withdrawal": 1,
+      "deaths": 0
+    }
+  ],
+  "revision": 2
+}

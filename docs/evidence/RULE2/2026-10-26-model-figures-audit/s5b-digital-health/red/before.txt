@@ -1,0 +1,148 @@
+# S5b digital health red: server/services/ana/__tests__/digital-health-unstated-inputs.test.ts on 4766b5061 (the biomarker commit; the digital-health files are trunk's), in the working tree before the change. 66 of 77 fail; the 11 controls pass.
+
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'classify_samd' reaches its engine with a stated basis 4ms
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'assess_ai_ml_device' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'design_pccp' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'assess_gmlp' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'design_samd_clinical_validation' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six digital-health tools keep their stated results > 'assess_device_cybersecurity' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'classify_samd' keeps each boolean answer as stated > meetsSaMDDefinition reads not_stated when omitted or null, and is refused when malformed 8ms
+   → expected { isSaMD: true, category: 'IV', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'classify_samd' keeps each boolean answer as stated > generalPurposePlatform reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { isSaMD: true, category: 'IV', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > transparencyArtifactsProvided reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > trainingDataRepresentative reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > externalValidationPerformed reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > realWorldMonitoring reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > plannedPostMarketModifications reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_ai_ml_device' keeps each boolean answer as stated > usesGenerativeOrFoundationModel reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { algorithmType: 'locked', …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_pccp' keeps each boolean answer as stated > changesIntendedUse reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { deviceName: 'Detector', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_pccp' keeps each boolean answer as stated > expandsPopulation reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { deviceName: 'Detector', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_pccp' keeps each boolean answer as stated > addsNewInputModality reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { deviceName: 'Detector', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_pccp' keeps each boolean answer as stated > continuousLearningProposed reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { deviceName: 'Detector', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_samd_clinical_validation' keeps each boolean answer as stated > validClinicalAssociationEstablished reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { samdCategory: 'III', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_samd_clinical_validation' keeps each boolean answer as stated > isAIML reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { samdCategory: 'III', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_samd_clinical_validation' keeps each boolean answer as stated > referenceStandardAvailable reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { samdCategory: 'III', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'design_samd_clinical_validation' keeps each boolean answer as stated > prospectiveDataPlanned reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { samdCategory: 'III', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > includesSoftware reads not_stated when omitted or null, and is refused when malformed 5ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > networkConnected reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > submissionUnder524B reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > threatModelProvided reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > sbomProvided reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > securityRiskManagementProvided reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > vulnerabilityHandlingProcess reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > postMarketUpdatePlan reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > 'assess_device_cybersecurity' keeps each boolean answer as stated > handlesSensitiveData reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'classify_samd' refuses 'healthcareSituation' (case 1) 1ms
+   → classify_samd healthcareSituation: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'classify_samd' refuses 'informationSignificance' (case 2) 1ms
+   → classify_samd informationSignificance: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_ai_ml_device' refuses 'algorithmType' (case 3) 1ms
+   → assess_ai_ml_device algorithmType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_ai_ml_device' refuses 'autonomyLevel' (case 4) 1ms
+   → assess_ai_ml_device autonomyLevel: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_ai_ml_device' refuses 'samdCategory' (case 5) 1ms
+   → assess_ai_ml_device samdCategory: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'plannedModifications' (case 6) 1ms
+   → design_pccp plannedModifications: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'plannedModifications' (case 7) 1ms
+   → design_pccp plannedModifications: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'plannedModifications[0].type' (case 8) 1ms
+   → design_pccp plannedModifications[0].type: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'plannedModifications[1].label' (case 9) 1ms
+   → design_pccp plannedModifications[1].label: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'samdCategory' (case 10) 1ms
+   → design_pccp samdCategory: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_pccp' refuses 'deviceName' (case 11) 1ms
+   → design_pccp deviceName: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_device_cybersecurity' refuses 'deviceName' (case 12) 1ms
+   → assess_device_cybersecurity deviceName: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_gmlp' refuses 'principleInputs' (case 13) 1ms
+   → assess_gmlp principleInputs: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_gmlp' refuses 'principleInputs[0].principle' (case 14) 1ms
+   → assess_gmlp principleInputs[0].principle: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_gmlp' refuses 'principleInputs[0].principle' (case 15) 1ms
+   → assess_gmlp principleInputs[0].principle: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_gmlp' refuses 'principleInputs[0].conformity' (case 16) 1ms
+   → assess_gmlp principleInputs[0].conformity: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'assess_gmlp' refuses 'principleInputs[1].principle' (case 17) 1ms
+   → assess_gmlp principleInputs[1].principle: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_samd_clinical_validation' refuses 'samdCategory' (case 18) 1ms
+   → design_samd_clinical_validation samdCategory: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a malformed enum, modification or principle is refused by field, never read > 'design_samd_clinical_validation' refuses 'autonomyLevel' (case 19) 1ms
+   → design_samd_clinical_validation autonomyLevel: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'classify_samd' asks for 'healthcareSituation' 1ms
+   → classify_samd healthcareSituation: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_ai_ml_device' asks for 'autonomyLevel' 1ms
+   → assess_ai_ml_device autonomyLevel: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_pccp' asks for 'plannedModifications' 1ms
+   → design_pccp plannedModifications: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_gmlp' asks for 'principleInputs' 1ms
+   → assess_gmlp principleInputs: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_samd_clinical_validation' asks for 'samdCategory' 1ms
+   → design_samd_clinical_validation samdCategory: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'classify_samd' 1ms
+   → expected 1179 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_ai_ml_device' 0ms
+   → expected 1210 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_pccp' 0ms
+   → expected 1272 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_gmlp' 0ms
+   → expected 1210 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_samd_clinical_validation' 0ms
+   → expected 1240 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_device_cybersecurity' 0ms
+   → expected 1507 to be less than or equal to 1024
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > names the inputs no function reads, and says what a not-assessed principle does to the score 0ms
+   → classify_samd.intendedUse: expected 'The SaMD definition statement / inten…' to match /Not read/
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps the routing words design_pccp is found by 0ms
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > classify_samd does not assume the software is SaMD on a general-purpose platform > leaves isSaMD null and names the facts left out 0ms
+   → expected true to be null
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > classify_samd does not assume the software is SaMD on a general-purpose platform > keeps the stated answers 0ms
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_ai_ml_device passes nothing and recommends nothing from an unstated fact > reports omitted evidence as not stated, never as provided or in place 1ms
+   → [{"topic":"Transparency artifacts","detail":"Transparency documentation is provided. Confirm it covers intended use & population, data provenance, subgroup performance, uncertainty/limitations, and required oversight, consistent with the FDA transparency guiding principles.","severity":"pass","citations":["FDA-TRANSPARENCY-2024","GMLP-2021"]},{"topic":"Autonomy vs. transparency","detail":"For an autonomous function there is no clinician reviewing each output, so transparency must instead support correct deployment-level use: explicit indication boundaries, operating points (sensitivity/specificity at the cleared threshold), and clear failure/abstain behavior.","severity":"attention","citations":["FDA-TRANSPARENCY-2024","GMLP-2021"]}]: expected true to be false // Object.is equality
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_ai_ml_device passes nothing and recommends nothing from an unstated fact > leaves a locked model’s PCCP recommendation null while planned modifications are unstated 0ms
+   → expected false to be null
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_ai_ml_device passes nothing and recommends nothing from an unstated fact > names an unstated generative component and SaMD category 0ms
+   → expected 'A locked algorithm produces the same …' to match /usesGenerativeOrFoundationModel was n…/
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > design_pccp names the scope facts it was not given > names each unstated scope fact, and nothing when all are stated 1ms
+   → expected [] to deep equally contain ObjectContaining{…}
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > design_pccp names the scope facts it was not given > keeps a population expansion outside the envelope 0ms
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_gmlp scores and grades no principle nobody assessed > leaves the score null and the verdict not assessed while a principle is not assessed 1ms
+   → expected { principleResults: [ …(10) ], …(8) } to match object { overallConformityScore: null, …(2) }
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_gmlp scores and grades no principle nobody assessed > gives the verdict a non-conformant principle settles 0ms
+   → expected { principleResults: [ …(10) ], …(8) } to match object { overallConformityScore: null, …(1) }
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_gmlp scores and grades no principle nobody assessed > keeps the stated answers 0ms
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > design_samd_clinical_validation names each unstated fact in the plan > leaves the association rigor not assessed 1ms
+   → expected 'high' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > design_samd_clinical_validation names each unstated fact in the plan > does not read an omitted AI/ML, reference-standard, data-source or autonomy fact as an answer 0ms
+   → expected 'Verify the software correctly meets s…' to match /isAIML is not stated/
+ × server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_device_cybersecurity lists an unstated sensitive-data fact without grading it > adds the data-protection row as not stated, at attention, and still passes 1ms
+   → expected undefined to match object { status: 'not_stated', …(1) }
+ ✓ server/services/ana/__tests__/digital-health-unstated-inputs.test.ts > assess_device_cybersecurity lists an unstated sensitive-data fact without grading it > keeps the stated answers 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 66 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  66 failed | 11 passed (77)

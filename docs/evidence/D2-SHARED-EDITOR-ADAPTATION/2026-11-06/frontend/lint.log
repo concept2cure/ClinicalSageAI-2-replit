@@ -1,0 +1,16 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/authoringHandoff.ts
+  56:1  warning  Async function 'writeHandoffStage' has a complexity of 19. Maximum allowed is 15  complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/vault-data.ts
+  171:1   warning  Function 'd' has too many parameters (10). Maximum allowed is 5  max-params
+  171:10  warning  'd' is defined but never used                                    @typescript-eslint/no-unused-vars
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Vault.tsx
+   679:1   warning  File has too many lines (2624). Maximum allowed is 500                        max-lines
+  1302:1   warning  Function 'VaultForProject' has too many lines (1619). Maximum allowed is 100  max-lines-per-function
+  1302:1   warning  Function 'VaultForProject' has a complexity of 271. Maximum allowed is 15     complexity
+  2013:33  warning  Arrow function has a complexity of 52. Maximum allowed is 15                  complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+

@@ -9,7 +9,7 @@ import { Router, Request, Response } from 'express';
 // Writes run on the request's tenant-scoped connection (RLS session variables
 // set), not the shared pool: ci:requestdb-coverage requires it of a route that
 // touches the database.
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import unifiedTaskService, { MODULE_CONFIG, ModuleSyncUnavailableError } from '../services/unifiedTaskService';
 import { z } from 'zod';
 import { getSecureOrgId } from '../utils/tenantContext';
@@ -33,6 +33,9 @@ import {
 } from '../services/tasking/unified-dashboard-readiness';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { admitTaskCreationActor, admitTaskCreationProject, requireTaskProjectId, retainTaskWorkspace,
+  TaskProjectAdmissionError } from '../services/tasking/task-project';
 
 const router = Router();
 
@@ -52,7 +55,7 @@ const logger = createScopedLogger('unified-tasks');
  *  its text kept in the log). */
 function writeFailed(res: Response, error: unknown, commitInFlight: boolean, what: string, where: string) {
   if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(error.body); // RR1a: before any write
-  if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.errors });
+  if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: error.issues });
   if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, what);
   if (commitInFlight) {
     logger.error(`${where}: COMMIT lost, outcome unknown`, { err: error instanceof Error ? error.message : String(error) });
@@ -61,24 +64,29 @@ function writeFailed(res: Response, error: unknown, commitInFlight: boolean, wha
   return serverError(res, logger, where, error);
 }
 
+/** Creation alone uses current project admission and owns this request lease. */
+async function createFailed(req: Request, res: Response, error: unknown, commitInFlight: boolean) {
+  if (commitInFlight) {
+    try { await requestPgClient(req).discard?.(new Error('Unified task creation COMMIT acknowledgement was not confirmed')); }
+    catch { /* The request owner may already have discarded its ended lease. */ }
+  } else if (error instanceof TaskProjectAdmissionError) {
+    return res.status(error.status).json({ success: false, code: error.code, error: error.message });
+  }
+  return writeFailed(res, error, commitInFlight, 'The task', 'creating the task');
+}
+
 // Request validation schemas
 const createTaskSchema = z.object({
   moduleType: z.enum(['CMC', 'IND', 'MedicalDevice', 'eCTD', 'Vault', 'ProtocolDesign']),
   title: z.string().min(1),
-  description: z.string().optional(),
-  category: z.string().optional(),
-  taskType: z.string().optional(),
-  assigneeId: z.number().optional(),
-  assigneeName: z.string().optional(),
+  description: z.string().optional(), category: z.string().optional(), taskType: z.string().optional(),
+  assigneeId: z.number().optional(), assigneeName: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  dueDate: z.string().optional(),
-  estimatedHours: z.number().optional(),
-  sourceEntityId: z.string().optional(),
-  sourceEntityType: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  metadata: z.any().optional(),
+  dueDate: z.string().optional(), estimatedHours: z.number().optional(),
+  sourceEntityId: z.string().optional(), sourceEntityType: z.string().optional(),
+  tags: z.array(z.string()).optional(), metadata: z.any().optional(),
   organizationId: z.number(),
-  clientWorkspaceId: z.number().optional(),
+  clientWorkspaceId: z.number().int().positive().max(2_147_483_647).optional(),
   projectId: z.number().optional(),
 });
 
@@ -129,47 +137,48 @@ router.post('/unified', requireEditorAccess, async (req: Request, res: Response)
     if (!ctx) return;
     const { organizationId: org, actorUserId } = ctx;
     const validatedData = createTaskSchema.parse(refuseRouteColumnsInInput(req.body, 'task.create')); // RR1a, M9
+    if (validatedData.projectId !== undefined) requireTaskProjectId(validatedData.projectId);
 
     // Convert dueDate string to Date object if present. The org id is the
     // verified one, never the client-supplied body value; the creator is the
     // session actor.
-    const taskData = {
-      ...validatedData,
-      organizationId: org,
-      createdById: actorUserId,
-      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
-    };
+    const taskData = { ...validatedData, organizationId: org, createdById: actorUserId,
+      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined, };
 
     const task = await requestDb(req).transaction(async (tx) => {
-      const row = await unifiedTaskService.createUnifiedTask(taskData, tx);
+      const q = queryableFromDrizzle(tx);
+      let projectId = validatedData.projectId;
+      let clientWorkspaceId = validatedData.clientWorkspaceId;
+      if (projectId !== undefined) {
+        const parent = await admitTaskCreationProject(q, { ...ctx, projectId,
+          clientWorkspaceId: req.tenantContext?.clientWorkspaceId });
+        if (clientWorkspaceId !== undefined) await retainTaskWorkspace(q, org, parent.clientWorkspaceId, clientWorkspaceId);
+        projectId = parent.projectId;
+        clientWorkspaceId = parent.clientWorkspaceId ?? undefined;
+      } else {
+        await admitTaskCreationActor(q, ctx);
+        if (clientWorkspaceId !== undefined) await retainTaskWorkspace(q, org, clientWorkspaceId, req.tenantContext?.clientWorkspaceId);
+      }
+      const row = await unifiedTaskService.createUnifiedTask({ ...taskData, projectId, clientWorkspaceId }, tx);
       await auditTaskActionInTx(tx, {
-        orgId: org,
-        userId: actorUserId,
-        command: 'task.create',
-        taskId: row.taskId,
+        orgId: org, userId: actorUserId,
+        command: 'task.create', taskId: row.taskId,
         payload: {
-          moduleType: validatedData.moduleType,
-          title: validatedData.title,
-          priority: validatedData.priority ?? 'medium',
-          status: 'pending',
+          moduleType: validatedData.moduleType, title: validatedData.title,
+          priority: validatedData.priority ?? 'medium', status: 'pending',
           assigneeId: validatedData.assigneeId ?? null,
-          sourceEntityType: validatedData.sourceEntityType ?? null,
-          sourceEntityId: validatedData.sourceEntityId ?? null,
+          sourceEntityType: validatedData.sourceEntityType ?? null, sourceEntityId: validatedData.sourceEntityId ?? null,
         },
-        reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
-      });
+        reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined, });
       commitInFlight = true;
       return row;
     });
     commitInFlight = false;
 
-    res.status(201).json({
-      success: true,
-      task,
-      message: `Task created successfully in ${validatedData.moduleType} module`,
-    });
+    res.status(201).json({ success: true, task,
+      message: `Task created successfully in ${validatedData.moduleType} module`, });
   } catch (error) {
-    return writeFailed(res, error, commitInFlight, 'The task', 'creating the task');
+    return createFailed(req, res, error, commitInFlight);
   }
 });
 
@@ -181,15 +190,8 @@ router.get('/all', async (req: Request, res: Response) => {
   try {
     const org = requireOrgId(req, res);
     if (org == null) return;
-    const {
-      clientWorkspaceId,
-      projectId,
-      status,
-      moduleType,
-      assigneeId,
-      limit = '50',
-      offset = '0',
-    } = req.query;
+    const { clientWorkspaceId, projectId, status, moduleType, assigneeId,
+      limit = '50', offset = '0', } = req.query;
 
     // Org id is always the verified JWT org — the client-supplied
     // organizationId query param is ignored (was a cross-tenant IDOR where an

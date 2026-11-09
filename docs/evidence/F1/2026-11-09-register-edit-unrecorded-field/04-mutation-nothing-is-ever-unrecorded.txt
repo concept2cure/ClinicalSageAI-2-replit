@@ -1,0 +1,20 @@
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > refuses 400 and names the field — the seeder’s measured case 41ms
+   → expected 200 to be 400 // Object.is equality
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > writes nothing — the refusal is not a partial application 10ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > refuses BEFORE reading the record, so a wrong field never depends on the row 6ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > a field the register has no column for > names the misspelled field — the seeder’s measured case 7ms
+   → expected [] to deeply equal [ 'shelfLifeClaim' ]
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > a field the register has no column for > lists every unrecorded field, sorted, not just the first 1ms
+   → expected [] to deeply equal [ 'molecularWieght', 'shelfLifeClaim' ]
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > the refusal the route answers > refuses with 400 — a wrong field is a wrong request, not a state conflict 1ms
+   → expected undefined to be an instance of RegisterWriteRefusal
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > the refusal the route answers > names the route, the field it could not record, and what it does record 1ms
+   → expected [Function] to throw an error
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > the refusal the route answers > says nothing was written, because an edit is never applied in part 1ms
+   → expected [Function] to throw an error
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > the refusal the route answers > never names a field the register does record 1ms
+   → expected '' to contain '"molecularWieght"'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)

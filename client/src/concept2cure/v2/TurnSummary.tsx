@@ -28,7 +28,7 @@ import React from 'react';
 
 import { getAuthHeaders } from '@/utils/authToken';
 import { serverMessage } from '@/lib/queryClient';
-import { readTimelineEvent, timelineHeader, type TimelineControl, type TimelineEvent } from '@shared/ana/turn-timeline';
+import { readTimelineEvent, timelineHeader, type TimelineControl, type TimelineEvent, type WorkerSnapshot } from '@shared/ana/turn-timeline';
 import type { AnaChatMessage } from '../components/ana/useAnaChat';
 import { formatElapsed } from '../components/ana/anaProgress';
 import { I } from './icons';
@@ -39,6 +39,7 @@ import { useDialog } from './useDialog';
 import { useNow } from './useNow';
 import { footerState, mirrorLines, summaryRows, traceRows, type StepRow, type SummaryRow, type TaskRow } from './turnSummaryRows';
 import { LIVE_RUN_STATUSES } from '../components/ana/anaTurnTimeline';
+import { workerEstimate, workerMeasurement, workerState } from './useAgentActivity';
 
 /* ── The record's Summary, read once per record ───────────────────────────── */
 
@@ -158,6 +159,22 @@ function EndNotes({ notes }: { notes?: string[] }) {
   );
 }
 
+function WorkerSummaryRow({ worker }: { worker: WorkerSnapshot }) {
+  return <Row status={worker.outcome && worker.outcome !== 'completed' ? 'error' : 'success'} glyph={I.users}
+    verb={worker.role === 'verify' ? 'Verification worker' : 'Research worker'} object={workerState(worker)}
+    preview={workerMeasurement(worker).text}
+    detail={<><span>Assignment: {worker.taskCaption ?? (worker.role === 'verify' ? 'Check assigned work' : 'Research assigned work')} · record revision {worker.revision}</span><span>{workerEstimate(worker)}</span>
+      <span>A returned report is a proposal. Human approval and filing gates remain separate.</span>
+      <span>Recorded event {worker.receipt.eventId}</span></>} />;
+}
+
+function WorkingSummaryRow({ startedAt, now }: { startedAt?: number; now: number }) {
+  return <li className="ana-activity-phase">
+    <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span><span>Working…</span>
+    {typeof startedAt === 'number' && <span className="ana-activity-clock">{formatElapsed(now - startedAt)}</span>}
+  </li>;
+}
+
 function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: SummaryRow; checked: boolean; onContinue?: () => void; now: number; startedAt?: number }) {
   switch (row.kind) {
     case 'note':
@@ -173,6 +190,8 @@ function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: Sum
       );
     case 'step':
       return <StepSummaryRow row={row} />;
+    case 'worker':
+      return <WorkerSummaryRow worker={row.worker} />;
     case 'task':
       return (
         <Row
@@ -198,13 +217,7 @@ function SummaryRowView({ row, checked, onContinue, now, startedAt }: { row: Sum
         </li>
       );
     case 'working':
-      return (
-        <li className="ana-activity-phase">
-          <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
-          <span>Working…</span>
-          {typeof startedAt === 'number' && <span className="ana-activity-clock">{formatElapsed(now - startedAt)}</span>}
-        </li>
-      );
+      return <WorkingSummaryRow startedAt={startedAt} now={now} />;
   }
 }
 

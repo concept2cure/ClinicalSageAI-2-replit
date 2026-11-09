@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  Hop, ORG_A, PASSWORD, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
+  Hop, ORG_A, PASSWORD, REVIEWER, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
   sha256, json, asPrincipal, type World,
 } from './founder-path-lineage.world';
 
@@ -99,12 +99,46 @@ export async function hopCapture(w: World): Promise<void> {
     expect(dr.status).toBe(200);
     expect(hit?.checksum).toBe(SHA256_X);
   });
+  /* LX-02. stored_artifact_ref is the upload's tenancy key (its storage_path,
+     which the Data Room processing store pins), so the walk follows it by
+     recorded keys: to the upload, to the provider and object the upload
+     recorded, read from a fresh provider instance. Then the way another API
+     task, or the task after a deploy, reads it: with the serving task's own
+     copy at storage_path gone, through the one tenant-scoped loader. */
   await hop.check('bytes-durable', 'the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum', async (observe) => {
-    const [s] = await q<{ stored_artifact_ref: string }>('SELECT stored_artifact_ref FROM cre_evidence_sources WHERE id = $1', [k.sourceId]);
-    const { getStorageProviderFor } = await import('../../server/services/storage/index');
-    const got = await getStorageProviderFor(null).get(s.stored_artifact_ref, ORG_A);
-    observe(got ? sha256(got.bytes) : null);
+    const [s] = await q<{ file_id: string; storage_path: string; storage_provider: string | null; storage_object_id: string | null }>(
+      `SELECT f.id AS file_id, f.storage_path, f.storage_provider, f.storage_object_id
+         FROM cre_evidence_sources s
+         JOIN file_uploads f ON f.storage_path = s.stored_artifact_ref AND f.organization_id = s.organization_id
+        WHERE s.id = $1`,
+      [k.sourceId],
+    );
+    const { getStorageProviderFor, resetStorageProvider } = await import('../../server/services/storage/index');
+    resetStorageProvider();
+    const got = s?.storage_object_id ? await getStorageProviderFor(s.storage_provider).get(s.storage_object_id, ORG_A) : null;
+    // The handler ran with cwd at `tmp`, so its working copy is there. The read
+    // runs with cwd there too, so a fallback to that copy would find it if the
+    // loader took one; the copy is parked first, so it cannot.
+    const workingCopy = s ? path.resolve(tmp, s.storage_path) : null;
+    const parked = workingCopy ? `${workingCopy}.walk-parked` : null;
+    let loaded: string | null = null;
+    if (workingCopy && parked && fs.existsSync(workingCopy)) {
+      fs.renameSync(workingCopy, parked);
+      const readCwd = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+      try {
+        const { loadUploadedFile } = await import('../../server/services/ana/uploaded-file-access');
+        const file = await loadUploadedFile(s.file_id, ORG_A);
+        loaded = file.integrity === 'verified' ? sha256(file.buffer) : null;
+      } catch {
+        loaded = null;
+      } finally {
+        readCwd.mockRestore();
+        fs.renameSync(parked, workingCopy);
+      }
+    }
+    observe(got && loaded === sha256(got.bytes) ? sha256(got.bytes) : null);
     expect(got && sha256(got.bytes)).toBe(SHA256_X);
+    expect(loaded, 'loadUploadedFile reads the durable copy once the task’s own copy is gone').toBe(SHA256_X);
   });
   hop.verdict();
 }
@@ -296,6 +330,19 @@ export async function hopEditSave(w: World): Promise<void> {
 export async function hopSeal(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('seal');
+  // P-95 (2026-11-09): an approval follows a completed review. The author sends the document for review to the QA
+  // reviewer (POST /documents/:id/request-review opens its RR5 route), and the reviewer signs the review on it.
+  // The request-review writer runs on the request's pinned connection, which the walk attaches from its principal headers.
+  const sent = await w.asAuthor(asPrincipal(ORG_A, 3)(request(w.app).post(`/api/authoring/documents/${k.docId}/request-review`))).send({
+    reviewers: [{ id: Number(REVIEWER.id), name: REVIEWER.name, email: REVIEWER.email }],
+    route: { reviewDueDate: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10) },
+    reason: 'Send the C2C-101 IND section for QA review before approval.',
+  });
+  expect(sent.status, JSON.stringify(sent.body)).toBeLessThan(300);
+  const reviewed = await w.asReviewer(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
+    password: PASSWORD, meaning: 'REVIEWER', intent: 'Reviewed for the C2C-101 IND original sequence',
+  });
+  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
   // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
   const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
     reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,

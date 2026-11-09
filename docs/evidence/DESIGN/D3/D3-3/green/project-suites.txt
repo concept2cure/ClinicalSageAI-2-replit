@@ -1,0 +1,10 @@
+$ npx vitest run <the 81 project-page suites: Project*, project*, foundationsRetiredRatchet, filingLifecyclePlan>
+      Tests  1 failed | 885 passed (886)
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+ Test Files  1 failed | 80 passed (81)
+
+The one failure is projectHomeStageCss's class-clash case, which fails on trunk too (docs/evidence/DESIGN/D3/D3-1/green/project-suites.txt).
+
+Typecheck: [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+Lint: [ci:eslint-warning-ratchet] no file changed its warning count since 17f7fe37b (the D3-1 push).
+Gates: ci:undefined-css-classes, ci:surface-text-ramp, ci:check-phantom-tokens, ci:one-product, ci:check-shell-css-collisions, ci:fixture-fallback, ci:token-contrast: all pass.

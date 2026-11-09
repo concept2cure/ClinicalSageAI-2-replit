@@ -1,0 +1,14 @@
+--- a/client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx
++++ b/client/src/concept2cure/v2/surfaces/CsrBuildProgress.tsx
+@@ -318 +318 @@
+-  const reads = useRef<{ jobId: number; sequence: number; applied: number; live: boolean } | null>(null);
++  const reads = useRef<{ jobId: number; sequence: number; live: boolean } | null>(null);
+@@ -324,3 +324,2 @@
+-    // Apply arrived progress even while later polls wait; never undo an already applied newer reply.
+-    if (!owner.live || reads.current !== owner || sequence <= owner.applied) return;
+-    owner.applied = sequence;
++    // A slower poll must not replace a newer outcome or clear its read error.
++    if (!owner.live || reads.current !== owner || owner.sequence !== sequence) return;
+@@ -331 +330 @@
+-    const owner = { jobId, sequence: 0, applied: 0, live: true };
++    const owner = { jobId, sequence: 0, live: true };

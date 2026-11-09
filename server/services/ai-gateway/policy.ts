@@ -268,6 +268,14 @@ export class GatewayPolicyEngine {
    * allow/deny result so the gateway can audit them.
    */
   evaluate(request: GatewayRequest): PolicyResult {
+    const content = this.evaluateContent(request);
+    if (!content.allowed) return content;
+    const rate = this.checkRateLimit(request);
+    return rate.allowed ? content : { ...rate, findings: content.findings };
+  }
+
+  /** Recheck final SDK content without charging the same request a second time. */
+  evaluateContent(request: GatewayRequest): PolicyResult {
     // 1. Token budget
     const tokenResult = this.checkTokenBudget(request);
     if (!tokenResult.allowed) return tokenResult;
@@ -280,10 +288,6 @@ export class GatewayPolicyEngine {
     // 3. Blocked content patterns
     const contentResult = this.checkBlockedPatterns(request);
     if (!contentResult.allowed) return { ...contentResult, findings };
-
-    // 4. Rate limit (per org)
-    const rateResult = this.checkRateLimit(request);
-    if (!rateResult.allowed) return { ...rateResult, findings };
 
     return { allowed: true, findings };
   }

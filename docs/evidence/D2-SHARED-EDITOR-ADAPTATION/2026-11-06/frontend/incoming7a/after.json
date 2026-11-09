@@ -1,0 +1,146 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+    "bytes": 52426,
+    "sha256": "238e1176fae7ba50e97b6d0f39350878f161d1190a6453ff937cdc90a47e11a8",
+    "gitBlob": "3ea2a79e4f2850d8d830097631722c568c139257"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/RbmIngest.tsx",
+    "bytes": 13868,
+    "sha256": "3ccab8c550c122b7c0754dd2c6f47f5c09c048515238ab5d01c28d05a3ee9026",
+    "gitBlob": "ab9c4ba8967e5cabcc47752c37ffe68bbf33dce2"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/Rbm.tsx",
+    "bytes": 23286,
+    "sha256": "198a73f1ddac236211ee81d849947e6b258806c6e046d301c0ccf74e7c3afe1f",
+    "gitBlob": "9e74280239491f9fdea2691751f72b39985d0ea6"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx",
+    "bytes": 38770,
+    "sha256": "87594c9d3699e363fd7179ff6beb663b6156b08f7ba11d391a297ced0caf30b0",
+    "gitBlob": "6e14afca39a0ac91e5ab4c8920b17003df99f44f"
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/rbmWrites.tsx",
+    "bytes": 7743,
+    "sha256": "e11d649f94003975c304f31b1152d3d112e74a03a496be2ba889c4732a608dbe",
+    "gitBlob": "a2bc73417d463cba2a440391bb0bdc8c98dc50ce"
+  },
+  {
+    "path": "client/src/concept2cure/v2/fixtures/collab-data.ts",
+    "bytes": 9408,
+    "sha256": "3e7c2eb5d4688fba198cc5746ee8a4c1cede5b431688460e6fbabeb53340338f",
+    "gitBlob": "92faa854ef01cd4dd6af2d70e073182f0cca2365"
+  },
+  {
+    "path": "client/src/concept2cure/v2/fixtures/task-board-data.ts",
+    "bytes": 6282,
+    "sha256": "550abe8b93fb90aa64cbd4e299f7ca58a35135fdde1c63ef16f77e4566b4ede4",
+    "gitBlob": "6b5b0e09c2c518029ee21fe41a7ba92c287c27bc"
+  },
+  {
+    "path": "client/src/concept2cure/v2/shellProject.ts",
+    "bytes": 17949,
+    "sha256": "f3eb25c1e08b3fff094c0b7aa468084dd4caa7d0ca48f8f582fbe670f7c7676e",
+    "gitBlob": "909e4cce7ad7c35e430a1679a114c41d107a208e"
+  },
+  {
+    "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+    "bytes": 3869,
+    "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "gitBlob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5"
+  },
+  {
+    "path": "client/src/services/portal/authService.tsx",
+    "bytes": 55628,
+    "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "gitBlob": "50ef15bf0f6fd8684fb0abb8ad3978e2f85dfa70"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx",
+    "bytes": 6432,
+    "sha256": "efe5037749e9c3e32a19f39a101c6a3ce85edc6cb6756a21cd505bec4bbc43d0",
+    "gitBlob": "c8d5628ab15dc308d1297c82e4476037b3557063"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/rbmExtractReadOwnership.test.tsx",
+    "bytes": 11371,
+    "sha256": "ae6dbce7d3c0f452250a877f2de3e33b4d7e2fe870eef06f19f813ac41ce6496",
+    "gitBlob": "9789445089575114b9837af0d934cfcfcf1655a8"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx",
+    "bytes": 6317,
+    "sha256": "214d33d8425d6c3cfd2e914fa7c71bdab706bf5b008112a7ef3224d775c0d113",
+    "gitBlob": "bb7d44f60cea701989a1dddd0ce08c6da12840a1"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx",
+    "bytes": 15658,
+    "sha256": "c343f8f8aaae7d7b6d4d7cb2daf84f19a6964e5c5c0be9d92747c46d094775bf",
+    "gitBlob": "6dd889163f7f1e6124d4ee91fc955a5c482ed6f5"
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/_company-session-fixture.ts",
+    "bytes": 1708,
+    "sha256": "47208860703758afb5a5a25f2f77f590167d4830f88e0945bbc78934c611f212",
+    "gitBlob": "1a1ec9bac1cacc0e6c68131a2a580483827deaa4"
+  },
+  {
+    "path": "scripts/demo/launch-demo/lumen-rbm-completion.test.mjs",
+    "bytes": 6074,
+    "sha256": "b31cd112c2d97a580631145ec656125f8dac24de8ea4485c2dc9b3b2adad436d",
+    "gitBlob": "57197c1d59a384a50feba21d726f2832ad13ae8b"
+  },
+  {
+    "path": "scripts/demo/launch-demo/packs/lumen-rbm.mjs",
+    "bytes": 23783,
+    "sha256": "1fafcd678e2b383bd41b3d2ac85d32c6872397ab21bebd4181db1d7443f5b5e3",
+    "gitBlob": "96c17461436c87113b8dd7fae17c06a5524b34dd"
+  },
+  {
+    "path": "scripts/demo/launch-demo/packs/lumen-rbm-content.mjs",
+    "bytes": 14413,
+    "sha256": "43c1f5b4b00e9f079959b53c11227e3ec68eaffece8e3fb0962a8049d4477736",
+    "gitBlob": "4c605cab9732dbf6554aa6468099019d16f88ff7"
+  },
+  {
+    "path": "scripts/demo/launch-demo/lib.mjs",
+    "bytes": 19287,
+    "sha256": "595e9065f4e2b66e8298b5cd40be0cc04017a1c4b8f319a72c8328be8ed26c34",
+    "gitBlob": "8cb4f605d193eebb3f29da45b04c5c2cf865fce4"
+  },
+  {
+    "path": "scripts/demo/launch-demo/seed.mjs",
+    "bytes": 4843,
+    "sha256": "2e5f36a0919830e31cdd0d21401d823e74d3b1b96a08f716c049999b341689c0",
+    "gitBlob": "f51a38273a12042d80322a5b6071fafb6333ada1"
+  },
+  {
+    "path": "tests/validation/lib/api-client-retry.test.mjs",
+    "bytes": 3884,
+    "sha256": "15b1f7a1194c5138069f51be48f5f745132b9f82e867997756759569d9d8df66",
+    "gitBlob": "851d6b03d28ae703981313e34dc6e86559e791f7"
+  },
+  {
+    "path": "tests/validation/lib/harness.mjs",
+    "bytes": 35025,
+    "sha256": "eb4d7563f86b0fec1a2a7569404c7f6c753c1a52982ac1077b16820e5a8ecf70",
+    "gitBlob": "1085b4a97a8648724cf022621a09ea9d26fc3fc0"
+  },
+  {
+    "path": "tests/setup.ts",
+    "bytes": 17904,
+    "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "gitBlob": "e127691f615afa52ea3d9f2191183247a05c6584"
+  },
+  {
+    "path": "vitest.config.ts",
+    "bytes": 3983,
+    "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+    "gitBlob": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+  }
+]

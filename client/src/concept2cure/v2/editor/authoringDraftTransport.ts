@@ -23,7 +23,16 @@ export interface PendingAiDraft {
   derivedFrom?: AiDraftDerivation;
   /** Present on a replacement for a selected passage: the passage the server drafted it for (slice 4). */
   passage?: DraftPassage;
+  /** The CSR engine figure gate's finding on this draft as generated (slice 2), when the document is a CSR. */
+  csrFigures?: CsrDraftFigures;
 }
+/** Figures no claimed engine cell of the section holds, blocking in a results section; or "not checked" (no receipts). */
+export type CsrDraftFigures =
+  | { status: 'checked'; results: boolean; figures: Array<{ figure: string; blocking: boolean }> }
+  | { status: 'not_checked' };
+/** The option set an accepted text was chosen from (slice 1, decision 3); the server writes its label. */
+export type DraftAlternativeOption = { kind: 'alternative'; position: number; count: number; approach: AiDraftApproach };
+export type DraftOptionSet = DraftAlternativeOption | { kind: 'revision'; revision: number; of: DraftAlternativeOption | { kind: 'draft' } };
 export interface AcceptedAttribution { sourceSpans: number; authorSpans: number; distinctSources: number; coverage: number }
 export interface AiDraftGenerationInputs { tone: string; region: string; context: string; requirements: string }
 /** What one alternative asked the draft route for: the existing tone vocabulary. */
@@ -64,7 +73,7 @@ export interface DraftRequest {
   /** A replacement for one passage of the saved section, never the whole section. */
   passage?: DraftPassage;
 }
-export interface DraftAcceptRequest { sectionId: string; draftId: string; content: string; changeReason?: string; docId?: string }
+export interface DraftAcceptRequest { sectionId: string; draftId: string; content: string; changeReason?: string; docId?: string; optionSet?: DraftOptionSet }
 export interface DraftFailure { ok: false; status: number; code: string | null; message: string; unknown: boolean; stale?: true }
 export type DraftGenerationResult = { ok: true; draft: PendingAiDraft } | DraftFailure;
 export type DraftAcceptResult = { ok: true; section: Record<string, unknown>; attribution: AcceptedAttribution | null } | DraftFailure;
@@ -79,6 +88,14 @@ function passageOf(value: unknown): DraftPassage | undefined {
   const p = record(value);
   return p && text(p.quote) && typeof p.prefix === 'string' && typeof p.suffix === 'string'
     ? { quote: p.quote, prefix: p.prefix, suffix: p.suffix } : undefined;
+}
+function csrFiguresOf(value: unknown): CsrDraftFigures | undefined {
+  const c = record(value);
+  if (c?.status === 'not_checked') return { status: 'not_checked' };
+  if (c?.status !== 'checked' || typeof c.results !== 'boolean' || !Array.isArray(c.figures)) return undefined;
+  const figures = c.figures.map(record).filter((f): f is Record<string, unknown> => !!f && text(f.figure) && typeof f.blocking === 'boolean')
+    .map(f => ({ figure: f.figure as string, blocking: f.blocking as boolean }));
+  return figures.length === c.figures.length ? { status: 'checked', results: c.results, figures } : undefined;
 }
 const stale = (unknown = false): DraftFailure => ({ ok: false, status: 0, code: 'CONTEXT_CHANGED', message: 'The document, project or signed-in account changed. No later action was started.', unknown, stale: true });
 
@@ -113,7 +130,8 @@ function decodeDraft(sectionId: string, body: Record<string, unknown> | null, st
     metadata: (record(draft.metadata) ?? {}) as AiDraftMetadata,
     check: readAnswerCheck(draft.check) ?? null, turnRecord: readTurnRecord(draft.turnRecord),
     ...(derivation(draft.derivedFrom) ? { derivedFrom: derivation(draft.derivedFrom) } : {}),
-    ...(passageOf(draft.passage) ? { passage: passageOf(draft.passage) } : {}) } };
+    ...(passageOf(draft.passage) ? { passage: passageOf(draft.passage) } : {}),
+    ...(csrFiguresOf(draft.csrFigures) ? { csrFigures: csrFiguresOf(draft.csrFigures) } : {}) } };
 }
 function decodeAcceptance(input: DraftAcceptRequest, body: Record<string, unknown> | null, status: number): DraftAcceptResult {
   const section = record(body?.section);
@@ -156,6 +174,7 @@ export async function acceptAuthoringDraft(input: DraftAcceptRequest, isCurrent:
     const response = await apiRequest('POST', `/api/authoring/sections/${encodeURIComponent(input.sectionId)}/ai/draft/accept`, {
       draftId: input.draftId, content: input.content,
       ...(input.changeReason?.trim() ? { changeReason: input.changeReason.trim() } : {}),
+      ...(input.optionSet ? { optionSet: input.optionSet } : {}),
     });
     if (!isCurrent()) return stale(true);
     const body = record(await response.json().catch(() => null));

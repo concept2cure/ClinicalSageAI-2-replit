@@ -161,11 +161,13 @@ describe('New project: Team members leaves the form, and the review says where p
     });
     window.C2C_PROJECT = { id: PID, title: 'Aurora CGM' };
     render(<ProjectHome surface={{ id: 'project-home' } as never} segment="medtech" onNav={vi.fn()} onAsk={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
-    const heading = await screen.findByRole('heading', { name: 'Team' });
-    const section = heading.closest('section') as HTMLElement;
-    expect(await within(section).findByLabelText('Organization member')).toBeTruthy();
-    expect(within(section).getByRole('button', { name: 'Grant sharing' })).toBeTruthy();
+    /* Since D3-3 the Team section is the Team card in Project knowledge, on every step; its "Manage" opens the Team
+       drawer, which holds the sharing controls. */
+    const card = await screen.findByRole('region', { name: 'Team' });
+    fireEvent.click(await within(card).findByRole('button', { name: /^Manage/ }));
+    const drawer = await screen.findByRole('dialog');
+    expect(await within(drawer).findByLabelText('Organization member')).toBeTruthy();
+    expect(within(drawer).getByRole('button', { name: 'Grant sharing' })).toBeTruthy();
   });
 });
 
@@ -256,5 +258,50 @@ describe('New project: the .npw-* block of project-home-v2.css', () => {
     /* ProjectSettings.tsx and DiscoveryQuestions.tsx reuse .npw-fields / .npw-grid. */
     expect(decl('.c2c-v2 .npw .npw-fields')).toMatch(/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
     expect(decl('.c2c-v2 .npw-fields')).toMatch(/auto-fit/);
+  });
+});
+
+/* ── The registry picker, the wizard's filing step (D2-2b; D2.md §2.4 item 9, §2.6 items 1–2) ──────────────── */
+
+const APP = readFileSync(resolve(__dirname, '../styles/app-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+/** Every `.rpk-*` rule in app-v2.css as [selector, declarations], media queries flattened. */
+const RPK: Array<[string, string]> = Array.from(APP.replace(/@media[^{]*\{/g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g))
+  .flatMap(m => m[1].split(/,(?![^(]*\))/).map(s => [s.trim().replace(/\s+/g, ' '), m[2]] as [string, string]))
+  .filter(([s]) => /\.rpk-/.test(s));
+const rpk = (selector: string) => RPK.filter(([s]) => s === selector).map(([, d]) => d).join(';');
+
+describe('New project: the registry picker reads as Claude\'s (D2-2b)', () => {
+  it('draws no orange and no status colour anywhere in the picker', () => {
+    expect(RPK.length).toBeGreaterThan(30);
+    for (const [selector, declarations] of RPK) {
+      expect(`${selector}{${declarations}}`).not.toMatch(/--accent|--ai\b|--success|--warning/);
+    }
+  });
+
+  it('marks the chosen tab with an ink underline, and the chosen card with an ink ring', () => {
+    expect(rpk('.c2c-v2 .rpk-tab[data-on]')).toMatch(/border-bottom-color:\s*var\(--text-100\)/);
+    expect(rpk('.c2c-v2 .rpk-tab[data-on]')).toMatch(/color:\s*var\(--text-100\)/);
+    expect(rpk('.c2c-v2 .rpk-type[data-on]')).toMatch(/box-shadow:\s*inset 0 0 0 1px var\(--text-100\)/);
+    expect(rpk('.c2c-v2 .rpk-type[data-on]')).toMatch(/background:\s*var\(--bg-050\)/);
+    expect(rpk('.c2c-v2 .rpk-fchip.on')).toMatch(/border-color:\s*var\(--text-100\)/);
+  });
+
+  it('gives a document type\'s agency, region, dossier and CTD chips one neutral style: they are facts, not statuses', () => {
+    const neutral = rpk('.c2c-v2 .rpk-chip:is(.rpk-chip-agency,.rpk-chip-region,.rpk-chip-dossier,.rpk-chip-ctd)');
+    expect(neutral).toMatch(/background:\s*var\(--bg-100\)/);
+    expect(neutral).toMatch(/color:\s*var\(--text-200\)/);
+    expect(rpk('.c2c-v2 .rpk-chip')).toMatch(/background:\s*var\(--bg-100\)/);
+  });
+
+  it('sizes no picker text below 12px and uses no muted ink below --text-300', () => {
+    for (const [selector, declarations] of RPK) {
+      for (const m of declarations.matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)) expect(Number(m[1]), selector).toBeGreaterThanOrEqual(12);
+      expect(`${selector}{${declarations}}`).not.toMatch(/--text-(400|500)/);
+    }
+  });
+
+  it('lays the cards in one column at phone width, and the cards at radius 12', () => {
+    expect(rpk('.c2c-v2 .rpk-type')).toMatch(/border-radius:\s*var\(--radius-xl\)/);
+    expect(APP).toMatch(/@media \(max-width:720px\)\{\.c2c-v2 \.rpk-cat-grid\{grid-template-columns:1fr;\}\}/);
   });
 });

@@ -256,3 +256,66 @@ describe("the one editor's outline, page and ribbon (D4-1, .design/claude-conver
     }
   });
 });
+
+/* B5 (demo walk 2026-11-05, 43-390-csr-build-panel.png): at 390 wide the CSR's "Build from the study's data"
+   panel was cut off at the right edge, its paragraph and its Study data select not wrapped. `.ed-source-detail`
+   is a one-column grid with an `auto` track, so its longest unbreakable item (the select, naming the manifest
+   file and version) set the track wider than the panel. Four of its other hosts carried an inline `minWidth: 0`
+   to get round it (AuthoringAssemblyBuild, AssemblySourcesNotice, SavedAssemblySourcesNotice). */
+describe("the editor's source panels at phone width (B5)", () => {
+  it('sizes the one column to the panel, so no item can set it wider', () => {
+    expect(value(AUTH, '.c2c-v2 .ed-source-detail', 'grid-template-columns')).toBe('minmax(0, 1fr)');
+  });
+
+  it('keeps a select inside the panel', () => {
+    expect(value(AUTH, '.c2c-v2 .ed-source-detail select', 'max-width')).toBe('100%');
+  });
+
+  /* Measured in the running app at 390 wide: the CSR build, assembly and review blocks are inline grids whose
+     `auto` track took a sequence select's longest option (458px in a 334px panel). */
+  it("lets the items of the panel's inline grids be as narrow as the panel", () => {
+    expect(value(AUTH, ".c2c-v2 .ed-source-detail [style*='display: grid'] > *", 'min-width')).toBe('0');
+  });
+});
+
+/* D4-5 (D4.md §D4.A, D0 layout grid): beside an open document the conversation keeps 420 to 560 px. It was
+   clamp(340px, 34%, 520px), 400 px at 1440 and 345 px at 1280 (docs/evidence/D4/2026-11-09-composer-beside-canvas/). */
+describe('the conversation beside an open document (D4-5)', () => {
+  it('keeps a 420 to 560 px column', () => {
+    expect(value(AUTH, '.c2c-v2 .ct-main[data-canvas-open] > .ct-conv', 'flex')).toBe('0 0 clamp(420px, 38%, 560px)');
+  });
+});
+
+/* §D4.K "Page": inside the panel, the page's side padding follows the panel's width, not the window's. At 729 px
+   beside the conversation the page kept the full-width 48 px sides, so the text column was 633 px of a 729 px panel;
+   the phone rule (16 px) only ever applied to the window. The variable moves with the padding, because the ribbon
+   spans the padding through it (rich-section-editor.css). */
+describe('the page inside a narrow panel (§D4.K artifact container)', () => {
+  const root = postcss.parse(readFileSync(resolve(STYLES, AUTH), 'utf8'));
+  const inContainer = (params: RegExp, selector: string): Map<string, string> | null => {
+    let found: Map<string, string> | null = null;
+    root.walkAtRules('container', (at) => {
+      if (!params.test(at.params)) return;
+      at.walkRules((rule) => {
+        if (!splitTopLevel(rule.selector).some((s) => norm(s) === norm(selector))) return;
+        const decls = new Map<string, string>();
+        rule.walkDecls((d) => { decls.set(d.prop, d.value.trim()); });
+        found = decls;
+      });
+    });
+    return found;
+  };
+
+  it('gives the page 28 px sides in a panel under 900 px', () => {
+    const d = inContainer(/^artifact \(max-width: 899px\)$/, '.ed-doc-inner');
+    expect(d?.get('--ed-page-pad-x')).toBe('28px');
+    expect(d?.get('padding')).toBe('24px var(--ed-page-pad-x) 96px');
+  });
+
+  it('gives the page 16 px sides, and a 22 px title, in a panel under 560 px', () => {
+    const d = inContainer(/^artifact \(max-width: 560px\)$/, '.ed-doc-inner');
+    expect(d?.get('--ed-page-pad-x')).toBe('16px');
+    expect(d?.get('padding')).toBe('20px var(--ed-page-pad-x) 80px');
+    expect(inContainer(/^artifact \(max-width: 560px\)$/, '.ed-mast-t')?.get('font-size')).toBe('22px');
+  });
+});

@@ -6,7 +6,8 @@
  * study's data enters here too: choose the study's clinical source in the project's Vault, preview it, and freeze
  * it as this document's study data (StudyDataSource). No Submission Center package run and no filing are needed
  * first. Then the build, its section review and import, the patient narratives, and the assembly with eCTD
- * placement (CsrBuildDraftControl, CsrRunBuilds) run on that frozen data. Builds already made on an earlier
+ * placement (CsrBuildDraftControl, CsrRunBuilds) run on that frozen data. The approved sections are imported into
+ * this document itself (F6, 2026-11-05). Builds already made on an earlier
  * package run's tables stay reachable here. The study's pivotal declarations are kept with its data.
  * A failed read is an alert, never an empty list.
  */
@@ -28,19 +29,52 @@ const isRun = (v: unknown): v is SavedRun => {
 
 /** The document's frozen study data, and the project's earlier package runs (whose tables may hold a study). */
 function useStudyDataChoices(programId: string, documentId: string, refresh: number) {
-  const [state, setState] = useState<{ studyData: StudyDataEntry[] | null; runs: SavedRun[] | null; error: string | null }>({ studyData: null, runs: null, error: null });
+  const [state, setState] = useState<{
+    studyData: StudyDataEntry[] | null;
+    runs: SavedRun[] | null;
+    error: string | null;
+    runsError: string | null;
+  }>({ studyData: null, runs: null, error: null, runsError: null });
   useEffect(() => {
     let live = true;
-    setState({ studyData: null, runs: null, error: null });
-    void Promise.all([
+    setState({ studyData: null, runs: null, error: null, runsError: null });
+    // A CSR document belongs to the project; it does NOT require a submission
+    // package run. Failure to read optional older package history must not
+    // hide the document's own source selector or frozen study data.
+    void Promise.allSettled([
       readDocumentStudyData(programId, documentId),
       apiCall<{ runs?: unknown[] }>('GET', `/api/submission-orchestrator/runs?programId=${encodeURIComponent(programId)}`),
-    ]).then(([studyData, runsResult]) => {
+    ]).then(([documentResult, historyResult]) => {
       if (!live) return;
-      const runs = runsResult.body?.runs;
-      if (!runsResult.ok || !Array.isArray(runs) || !runs.every(isRun)) throw new Error(apiErrorText(runsResult, 'The project’s earlier package runs could not be listed.'));
-      setState({ studyData, runs, error: null });
-    }).catch((cause: unknown) => { if (live) setState({ studyData: null, runs: null, error: cause instanceof Error ? cause.message : 'The document’s study data could not be read.' }); });
+      if (documentResult.status !== 'fulfilled') {
+        const cause = documentResult.reason;
+        setState({ studyData: null, runs: null,
+          error: cause instanceof Error ? cause.message : 'The document’s study data could not be read.',
+          runsError: null });
+        return;
+      }
+
+      let runs: SavedRun[] = [];
+      let runsError: string | null = null;
+      if (historyResult.status === 'rejected') {
+        runsError = historyResult.reason instanceof Error
+          ? historyResult.reason.message : 'Earlier package-run history could not be read.';
+      } else {
+        const response = historyResult.value;
+        const rows = response.body?.runs;
+        if (!response.ok) {
+          runsError = apiErrorText(response, 'Earlier package-run history could not be read.');
+        } else if (!Array.isArray(rows) || !rows.every(isRun)) {
+          runsError = 'Earlier package-run history returned an incomplete response.';
+        } else {
+          runs = rows;
+        }
+      }
+      // No historical runs is valid ONLY on a successful history read.
+      // On failure we still display its error and keep this document's
+      // independent, project-scoped clinical-source path available.
+      setState({ studyData: documentResult.value, runs, error: null, runsError });
+    });
     return () => { live = false; };
   }, [programId, documentId, refresh]);
   return state;
@@ -60,7 +94,9 @@ function useRetainedTables(programId: string, retainedId: string) {
 }
 
 /** The build on one frozen study data (a document's, or an earlier package run's: the same id field). */
-function RetainedBuild({ programId, retainedId, onNav }: { programId: string; retainedId: string; onNav?: (surface: string) => void }) {
+function RetainedBuild({ programId, documentId, retainedId, onDocumentChanged }: {
+  programId: string; documentId: string; retainedId: string; onDocumentChanged?: () => void;
+}) {
   const { tables, error } = useRetainedTables(programId, retainedId);
   const [queued, setQueued] = useState<number | null>(null);
   if (error) return <p role="alert">{error}</p>;
@@ -68,17 +104,31 @@ function RetainedBuild({ programId, retainedId, onNav }: { programId: string; re
   if (!tables.studies.length) return <p>This earlier package run holds no study data. Freeze the study’s clinical source for this document instead.</p>;
   return <>
     <CsrBuildDraftControl programId={programId} runId={retainedId} studies={tables.studies} blocked={false} onQueued={setQueued} />
-    <CsrRunBuilds programId={programId} runId={retainedId} focus={queued} onNav={onNav} />
+    <CsrRunBuilds programId={programId} runId={retainedId} documentId={documentId} focus={queued} onDocumentChanged={onDocumentChanged} />
   </>;
 }
 
 const describe = (entry: StudyDataEntry) =>
   `${entry.sources.map(source => `${source.protocolNumber} · ${source.documentTitle} v${source.version}`).join('; ')} · frozen ${new Date(entry.createdAt).toLocaleString()}`;
 
-/** Shown in the editor for a clinical study report only (its recorded template entry). */
-export function StudyDataBuild({ programId, documentId, onNav }: { programId: string; documentId: string; onNav?: (surface: string) => void }) {
+/** The document's clinical source, frozen tables and CSR operations are one
+ * context-bound session. A project or document switch must destroy that
+ * session synchronously during render, not after a useEffect reset. Otherwise
+ * the old project's source picker, preview, or selected build could briefly
+ * remain actionable in the new project's editor.
+ */
+export function StudyDataBuild(props: { programId: string; documentId: string; onNav?: (surface: string) => void;
+  /** The editor re-reads this document's sections after the build's approved sections are imported into it (F6). */
+  onDocumentChanged?: () => void }) {
+  return <StudyDataBuildScoped key={`${props.programId}::${props.documentId}`} {...props} />;
+}
+
+/** Shown only for the recorded clinical-study-report template entry. */
+function StudyDataBuildScoped({ programId, documentId, onNav, onDocumentChanged }: {
+  programId: string; documentId: string; onNav?: (surface: string) => void; onDocumentChanged?: () => void;
+}) {
   const [refresh, setRefresh] = useState(0);
-  const { studyData, runs, error } = useStudyDataChoices(programId, documentId, refresh);
+  const { studyData, runs, error, runsError } = useStudyDataChoices(programId, documentId, refresh);
   const [retainedId, setRetainedId] = useState('');
   const [adding, setAdding] = useState(false);
   useEffect(() => { setRetainedId(''); setAdding(false); }, [programId, documentId]);
@@ -90,12 +140,18 @@ export function StudyDataBuild({ programId, documentId, onNav }: { programId: st
     <div className="ed-source-detail">
       <p>Freeze the study’s clinical source as this document’s study data, then draft this clinical study report from its engine tables, review each section, compose the patient narratives, and assemble and place the report.</p>
       {error && <p role="alert">{error}</p>}
+      {runsError && <p role="alert">Earlier submission-package history is unavailable: {runsError} This document’s own study data remains accessible.</p>}
       {!error && studyData === null && <p role="status">Reading this document’s study data…</p>}
       {studyData && runs && <StudyDataChooser studyData={studyData} runs={runs} value={retainedId} onChange={setRetainedId} />}
       {studyData && (none || adding)
-        ? <StudyDataSource programId={programId} documentId={documentId} onFrozen={frozen} onNav={onNav} />
+        ? <>
+          {adding && <button type="button" className="btn ghost" onClick={() => setAdding(false)}>
+            Return to current frozen study data and CSR build
+          </button>}
+          <StudyDataSource programId={programId} documentId={documentId} onFrozen={frozen} onNav={onNav} />
+        </>
         : studyData && <button type="button" className="btn ghost" onClick={() => setAdding(true)}>Freeze newer study data</button>}
-      {retainedId && !adding && <RetainedBuild key={retainedId} programId={programId} retainedId={retainedId} onNav={onNav} />}
+      {retainedId && <RetainedBuild key={retainedId} programId={programId} documentId={documentId} retainedId={retainedId} onDocumentChanged={onDocumentChanged} />}
       <StudyPivotalDeclarations scope={{ programId }} />
     </div>
   </details>;

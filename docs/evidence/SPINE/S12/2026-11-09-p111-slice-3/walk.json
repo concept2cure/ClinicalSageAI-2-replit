@@ -1,0 +1,31 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T12:21:06.180Z",
+  "steps": [
+    {
+      "name": "CMC opened from the work project's door, bound",
+      "workProject": 20
+    },
+    {
+      "name": "the shell's Task form starts on the work project and files the task there",
+      "projectId": 20,
+      "label": "Drug substance CMC"
+    },
+    {
+      "name": "the task is listed in the work project's band, read back"
+    },
+    {
+      "name": "unbound, the same form starts on the filing project",
+      "projectId": "1"
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks",
+      "status": 200,
+      "projectId": 20
+    }
+  ],
+  "finishedAt": "2026-11-09T12:21:19.814Z"
+}

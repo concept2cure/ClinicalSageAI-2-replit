@@ -482,7 +482,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const shown = owner === 'mine' ? open.filter((c) => c.responseRequired) : comms;
 
   return (
-    <div className="cc" style={{ maxWidth: 1200 }}>
+    <div className="page-inner">
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission · agency communications</div>
@@ -702,7 +702,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             onAdvance={(id) => void triage(id)}
             onAsk={onAsk}
             onOpenTask={() => nav('tasks')}
-            responses={projectId ? { projectId, fire, onNav: nav } : undefined}
+            responses={projectId ? { projectId, fire, onNav: nav, onCommitmentRecorded: () => setCommitVersion((n) => n + 1) } : undefined}
             opening={opening}
           />
         </>

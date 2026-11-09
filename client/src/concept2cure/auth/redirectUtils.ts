@@ -139,6 +139,102 @@ export function parseSsoMfaHandoff(hash: string | null | undefined): {
   };
 }
 
+/**
+ * Existing Demo Access entry: qualify the session and its two most basic
+ * project-management destinations BEFORE persisting a login or navigating.
+ *
+ * This is not a seed, provisioner or a second authentication path. It reads
+ * already-governed endpoints with the JWT the existing dev-login returned.
+ * Normal sign-in is unaffected. A working blank account is valid for ordinary
+ * sign-in, but it is not an honest customer demonstration.
+ */
+export interface DemoAccessReadiness {
+  ready: boolean;
+  message?: string;
+}
+
+const DEMO_READ_TIMEOUT_MS = 12_000;
+
+async function demoRead(path: string, token: string, orgId: string): Promise<unknown> {
+  const abort = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(path, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { Authorization: `Bearer ${token}`, 'x-organization-id': orgId },
+          signal: abort.signal,
+        });
+        if (!response.ok) throw new Error('Demo read refused');
+        return await response.json() as unknown;
+      })(),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          abort.abort();
+          reject(new Error('Demo read timed out'));
+        }, DEMO_READ_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export async function verifyDemoAccessReadiness(
+  token: string,
+  claimedUser: unknown,
+  configuredEmail: string,
+): Promise<DemoAccessReadiness> {
+  const user = claimedUser && typeof claimedUser === 'object' && !Array.isArray(claimedUser)
+    ? claimedUser as Record<string, unknown> : null;
+  const orgId = typeof user?.organizationId === 'string' ? user.organizationId.trim() : '';
+  const accountId = String(user?.id ?? '');
+  const accountEmail = typeof user?.email === 'string' ? user.email.trim().toLowerCase() : '';
+  if (!token || !/^[1-9]\d*$/.test(orgId) || !accountId || !accountEmail ||
+      accountEmail !== configuredEmail.trim().toLowerCase()) {
+    return { ready: false, message: 'Demo Access is not connected to the configured demonstration account and organization.' };
+  }
+
+  try {
+    const session = await demoRead('/api/auth/session', token, orgId) as {
+      authenticated?: boolean;
+      user?: { id?: unknown; email?: string; organizationId?: unknown; organizationName?: string };
+    };
+    if (session?.authenticated !== true ||
+        String(session.user?.id ?? '') !== accountId ||
+        String(session.user?.organizationId ?? '') !== orgId ||
+        session.user?.email?.trim().toLowerCase() !== accountEmail ||
+        !session.user?.organizationName?.trim()) {
+      return { ready: false, message: 'The demo account has no verified organization membership. Demo Access was not opened.' };
+    }
+
+    const projects = await demoRead('/api/c2c/projects?limit=1', token, orgId) as {
+      data?: unknown;
+      meta?: { pendingStore?: boolean; reconciliationRequired?: boolean };
+    };
+    if (!Array.isArray(projects?.data) || projects.meta?.pendingStore === true ||
+        projects.meta?.reconciliationRequired === true) {
+      return { ready: false, message: 'Demo project access or provisioning is incomplete. An administrator must repair it before a demonstration.' };
+    }
+    if (projects.data.length === 0) {
+      return { ready: false, message: 'There is no accessible demo project for this account. Prepare the project and its evidence before using Demo Access.' };
+    }
+
+    const board = await demoRead('/api/task-management/board', token, orgId) as {
+      data?: unknown; meta?: { partial?: boolean; unreadSources?: unknown };
+    };
+    if (!Array.isArray(board?.data) || board.meta?.partial !== false ||
+        !Array.isArray(board.meta?.unreadSources) || board.meta.unreadSources.length > 0) {
+      return { ready: false, message: 'Demo Tasking is not fully available. The application needs attention before a customer demonstration.' };
+    }
+    return { ready: true };
+  } catch {
+    return { ready: false, message: 'The demo environment could not be verified. No demo session was saved; try again after its configuration is checked.' };
+  }
+}
+
 export const computeRedirect = (
   search: string = typeof window !== 'undefined' ? window.location.search : '',
   userArg?: any,

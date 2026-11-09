@@ -21,7 +21,7 @@
 import { Pool } from 'pg';
 import { getPool } from '../runtime';
 import { getDatabaseUrl } from '../getDatabaseUrl';
-import { getSslConfig } from '../ssl';
+import { getSslConfig, verifiedPgConnectionString } from '../ssl';
 import { createScopedLogger } from '../../utils/logger';
 import { seedGaDemoUser } from './seed-default-org';
 
@@ -29,6 +29,16 @@ const logger = createScopedLogger('database');
 
 export async function seedDemoAdminOutsideProduction(): Promise<void> {
   if (process.env.NODE_ENV === 'production') return;
+
+  // A Codespace is a running app environment, not a privileged provisioning
+  // session. Never open a separate owner Pool from this boot or attempt to
+  // mint an administrator via the app_service request role. Existing test
+  // identities can be used; any new account must be created through the
+  // existing authorized maintenance/user-provisioning workflow.
+  if (process.env.C2C_CODESPACE === '1' || process.env.CODESPACES === 'true') {
+    logger.info('Codespaces boot: skipping privileged demo-admin seeding; configure test users separately');
+    return;
+  }
 
   const appDbUrl = process.env.APP_DATABASE_URL;
   const runtimeSplit = !!(appDbUrl && appDbUrl.trim() !== '');
@@ -38,7 +48,7 @@ export async function seedDemoAdminOutsideProduction(): Promise<void> {
   let ownerPool: Pool | null = null;
   if (runtimeSplit && ownerUrl) {
     ownerPool = new Pool({
-      connectionString: ownerUrl,
+      connectionString: verifiedPgConnectionString(ownerUrl),
       ssl: getSslConfig(ownerUrl),
       max: 1,
     });

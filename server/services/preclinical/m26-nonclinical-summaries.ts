@@ -21,9 +21,15 @@
  * @compliance ICH M4S(R2).
  */
 
-import { mapStudyTypeToM24, type NonclinicalStudyInput } from './nonclinical-m24-adapter.js';
+import { toBuilderStudy, type NonclinicalStudyInput } from './nonclinical-m24-adapter.js';
 import { classifyToxFindings, type ToxFindingInput, type ToxFindingsSummary } from './tox-findings-classifier.js';
-import { DRUG_SUBSTANCE_NAME_GAP, DRUG_SUBSTANCE_NAME_NOT_RECORDED } from '../m2-summary-builders.js';
+import {
+  DRUG_SUBSTANCE_NAME_GAP,
+  DRUG_SUBSTANCE_NAME_NOT_RECORDED,
+  isRepeatDoseNonclinicalStudy,
+  nonclinicalStudyRecordGaps,
+  type NonclinicalStudy,
+} from '../m2-summary-builders.js';
 
 export interface GeneratedTable {
   title: string;
@@ -52,127 +58,170 @@ export interface M26Result {
 }
 
 interface NormalizedStudy {
+  record: NonclinicalStudy;
   id: string;
-  category: ReturnType<typeof mapStudyTypeToM24>;
+  category: NonclinicalStudy['studyType'];
+  sourceType: string;
   species: string;
   duration: string;
   glp: string;
   noael: string;
+  noel: string;
   finding: string;
   section: string;
 }
 
 function normalize(s: NonclinicalStudyInput, i: number): NormalizedStudy {
-  const category = mapStudyTypeToM24(s.studyType);
+  const record = toBuilderStudy(s, i);
   return {
-    id: s.studyId ?? s.studyTitle ?? `NC-${i + 1}`,
-    category,
-    species: s.species ?? '—',
-    duration: s.duration ?? (s.durationWeeks != null ? `${s.durationWeeks} wk` : '—'),
-    glp: s.glpStatus ?? (s.glpCompliant == null ? '—' : s.glpCompliant ? 'GLP' : 'non-GLP'),
-    noael: s.noael ?? '—',
-    finding: s.primaryFinding ?? s.keyFindings ?? 'See Module 4 study report.',
-    section: s.reportSection ?? '4.2',
+    record,
+    id: record.studyId.trim() || '[study identifier not recorded]',
+    category: record.studyType,
+    sourceType: recordedCell(record.sourceStudyType),
+    species: recordedCell(record.species),
+    duration: recordedCell(record.duration),
+    glp: recordedCell(record.glpStatus),
+    noael: recordedCell(record.noael),
+    noel: recordedCell(record.noel),
+    finding: recordedCell(record.primaryFinding),
+    section: recordedCell(record.reportSection),
   };
 }
 
-/** Compose the Module 2.6 nonclinical written and tabulated summaries. */
-export function buildM26NonclinicalSummaries(input: M26Input): M26Result {
-  // 2026-10-15: an unrecorded name read 'the drug substance', so the narrative
-  // read as finished prose for a product nobody named; it is now a gap.
-  const ds = input.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
-  const studies = input.studies.map(normalize);
+function recordedCell(value: string | undefined): string {
+  return value?.trim() || '—';
+}
 
-  const pharm = studies.filter(s => s.category === 'pharmacology' || s.category === 'safety_pharmacology');
-  const pk = studies.filter(s => s.category === 'pharmacokinetics');
-  const tox = studies.filter(
-    s => s.category === 'toxicology' || s.category === 'genotoxicity' || s.category === 'carcinogenicity' || s.category === 'reproductive_tox',
-  );
+interface StudyGroups {
+  pharm: NormalizedStudy[];
+  pk: NormalizedStudy[];
+  tox: NormalizedStudy[];
+  unclassified: NormalizedStudy[];
+}
 
-  const gaps: string[] = [];
-  if (!studies.some(s => s.category === 'pharmacology')) gaps.push('primary pharmacology');
-  if (!studies.some(s => s.category === 'safety_pharmacology')) gaps.push('safety pharmacology (ICH S7A)');
-  if (pk.length === 0) gaps.push('pharmacokinetics / ADME');
-  if (!studies.some(s => s.category === 'toxicology')) gaps.push('repeat-dose toxicology');
-  if (!studies.some(s => s.category === 'genotoxicity')) gaps.push('genotoxicity battery (ICH S2(R1))');
-  // Completeness is over the categories above; the name is a gap, not a category.
-  const categoryGapCount = gaps.length;
-  if (ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED) gaps.push(DRUG_SUBSTANCE_NAME_GAP);
+function groupStudies(studies: NormalizedStudy[]): StudyGroups {
+  return {
+    pharm: studies.filter(s => s.category === 'pharmacology' || s.category === 'safety_pharmacology'),
+    pk: studies.filter(s => s.category === 'pharmacokinetics'),
+    tox: studies.filter(s => ['toxicology', 'genotoxicity', 'carcinogenicity', 'reproductive_tox'].includes(s.category)),
+    unclassified: studies.filter(s => s.category === 'unclassified'),
+  };
+}
 
-  let toxProfile: ToxFindingsSummary | null = null;
-  if (input.findings && input.findings.length > 0) {
-    toxProfile = classifyToxFindings(input.findings);
-  }
+function categoryGapsFor(studies: NormalizedStudy[]): string[] {
+  const checked: Array<[string, (study: NormalizedStudy) => boolean]> = [
+    ['primary pharmacology', s => s.category === 'pharmacology'],
+    ['safety pharmacology (ICH S7A)', s => s.category === 'safety_pharmacology'],
+    ['pharmacokinetics / ADME', s => s.category === 'pharmacokinetics'],
+    ['repeat-dose toxicology', s => isRepeatDoseNonclinicalStudy(s.record)],
+    ['genotoxicity battery (ICH S2(R1))', s => s.category === 'genotoxicity'],
+  ];
+  return checked.filter(([, present]) => !studies.some(present)).map(([label]) => label);
+}
 
-  const narrative = [
-    'MODULE 2.6 — NONCLINICAL WRITTEN AND TABULATED SUMMARIES',
-    '',
-    '2.6.1 INTRODUCTION',
-    `This document summarizes the nonclinical pharmacology, pharmacokinetics, and toxicology of ${ds}${input.indication ? ` for ${input.indication}` : ''}, per ICH M4S. ${studies.length} study/ies are summarized; full reports are in Module 4.`,
-    '',
+function observedTypes(studies: NormalizedStudy[]): string {
+  return [...new Set(studies.map(s => s.sourceType))].join(', ');
+}
+
+function pharmacologyNarrative(pharm: NormalizedStudy[]): string[] {
+  return [
     '2.6.2 PHARMACOLOGY WRITTEN SUMMARY',
     pharm.length > 0
-      ? `Primary/secondary pharmacodynamics and safety pharmacology (${pharm.length} study/ies). ${pharm.map(s => `${s.id}: ${s.finding}`).join(' ')}`
+      ? `Recorded pharmacology study types (${pharm.length} study/ies): ${observedTypes(pharm)}. ${pharm.map(s => `${s.id}: ${s.finding}`).join(' ')}`
       : '[No pharmacology studies provided — see gap list]',
-    '',
     '2.6.3 PHARMACOLOGY TABULATED SUMMARY',
-    pharm.length > 0 ? 'See table: Pharmacology study summary.' : '[Not applicable]',
-    '',
+    pharm.length > 0 ? 'See preparation worksheet: Pharmacology study summary.' : '[No pharmacology table composed — applicability is not assessed]',
+  ];
+}
+
+function pharmacokineticsNarrative(pk: NormalizedStudy[]): string[] {
+  return [
     '2.6.4 PHARMACOKINETICS WRITTEN SUMMARY',
     pk.length > 0
-      ? `Absorption, distribution, metabolism, and excretion (${pk.length} study/ies). Species: ${[...new Set(pk.map(s => s.species))].filter(v => v !== '—').join(', ') || '[not specified]'}.`
+      ? `Recorded pharmacokinetic / ADME study entries (${pk.length} study/ies). Species: ${[...new Set(pk.map(s => s.species))].filter(v => v !== '—').join(', ') || '[not recorded]'}.`
       : '[PK / ADME data missing]',
-    '',
     '2.6.5 PHARMACOKINETICS TABULATED SUMMARY',
-    pk.length > 0 ? 'See table: Pharmacokinetic study summary.' : '[Not applicable]',
-    '',
+    pk.length > 0 ? 'See preparation worksheet: Pharmacokinetic study summary.' : '[No pharmacokinetics table composed — applicability is not assessed]',
+  ];
+}
+
+function toxicologyNarrative(tox: NormalizedStudy[], toxProfile: ToxFindingsSummary | null): string[] {
+  return [
     '2.6.6 TOXICOLOGY WRITTEN SUMMARY',
     tox.length > 0
-      ? `Single- and repeat-dose toxicity, genotoxicity, and reproductive/carcinogenicity studies as applicable (${tox.length} study/ies). NOAELs and target-organ findings are tabulated in 2.6.7.`
-      : '[Toxicology data missing — required per ICH M3(R2)]',
+      ? `Recorded toxicology study types (${tox.length} study/ies): ${observedTypes(tox)}. Recorded fields and missing values are tabulated in 2.6.7.`
+      : '[No toxicology studies recorded — applicability requires assessment against the proposed clinical context]',
     toxProfile ? `Target-organ adversity profile: ${toxProfile.overviewParagraph}` : '',
-    '',
     '2.6.7 TOXICOLOGY TABULATED SUMMARY',
-    tox.length > 0 ? 'See table: Toxicology study summary.' : '[Not applicable]',
-    '',
-    gaps.length > 0 ? `IDENTIFIED GAPS: ${gaps.join('; ')}.` : 'No gaps identified against the ICH M4S nonclinical summary set.',
-  ]
-    .filter(line => line !== '')
-    .join('\n');
+    tox.length > 0 ? 'See preparation worksheet: Toxicology study summary.' : '[No toxicology table composed — applicability is not assessed]',
+  ];
+}
 
+function studyTables({ pharm, pk, tox, unclassified }: StudyGroups): GeneratedTable[] {
   const tables: GeneratedTable[] = [];
   if (pharm.length > 0) {
     tables.push({
       title: '2.6.3 Pharmacology Tabulated Summary',
-      headers: ['Study', 'Category', 'Species', 'Key finding', 'Section'],
-      rows: pharm.map(s => [s.id, s.category.replace(/_/g, ' '), s.species, s.finding, s.section]),
+      headers: ['Study', 'Recorded type', 'Species', 'Key finding', 'Proposed section'],
+      rows: pharm.map(s => [s.id, s.sourceType, s.species, s.finding, s.section]),
     });
   }
   if (pk.length > 0) {
     tables.push({
       title: '2.6.5 Pharmacokinetics Tabulated Summary',
-      headers: ['Study', 'Species', 'Key finding', 'Section'],
-      rows: pk.map(s => [s.id, s.species, s.finding, s.section]),
+      headers: ['Study', 'Recorded type', 'Species', 'Key finding', 'Proposed section'],
+      rows: pk.map(s => [s.id, s.sourceType, s.species, s.finding, s.section]),
     });
   }
   if (tox.length > 0) {
     tables.push({
       title: '2.6.7 Toxicology Tabulated Summary',
-      headers: ['Study', 'Category', 'Species', 'Duration', 'GLP', 'NOAEL', 'Key finding'],
-      rows: tox.map(s => [s.id, s.category.replace(/_/g, ' '), s.species, s.duration, s.glp, s.noael, s.finding]),
+      headers: ['Study', 'Recorded type', 'Species', 'Duration', 'GLP declaration', 'NOAEL', 'NOEL', 'Key finding', 'Proposed section'],
+      rows: tox.map(s => [s.id, s.sourceType, s.species, s.duration, s.glp, s.noael, s.noel, s.finding, s.section]),
     });
   }
+  if (unclassified.length > 0) {
+    tables.push({
+      title: 'Unclassified Study Preparation Worksheet',
+      headers: ['Study', 'Recorded type', 'Species', 'Duration', 'GLP declaration', 'NOAEL', 'NOEL', 'Key finding', 'Proposed section'],
+      rows: unclassified.map(s => [s.id, s.sourceType, s.species, s.duration, s.glp, s.noael, s.noel, s.finding, s.section]),
+    });
+  }
+  return tables;
+}
 
-  const expected = 5;
-  const completeness = Math.max(0, Math.round(((expected - categoryGapCount) / expected) * 100));
+/** Compose preparation worksheets from supplied study facts, without assessing program readiness. */
+export function buildM26NonclinicalSummaries(input: M26Input): M26Result {
+  const ds = input.drugSubstanceName?.trim() || DRUG_SUBSTANCE_NAME_NOT_RECORDED;
+  const studies = input.studies.map(normalize);
+  const groups = groupStudies(studies);
+  const categoryGaps = categoryGapsFor(studies);
+  const gaps = [
+    ...categoryGaps,
+    ...studies.flatMap(s => nonclinicalStudyRecordGaps(s.record)),
+  ];
+  if (ds === DRUG_SUBSTANCE_NAME_NOT_RECORDED) gaps.push(DRUG_SUBSTANCE_NAME_GAP);
+
+  const toxProfile = input.findings?.length ? classifyToxFindings(input.findings) : null;
+  const narrative = [
+    'MODULE 2.6 — NONCLINICAL WRITTEN AND TABULATED SUMMARIES',
+    '2.6.1 INTRODUCTION',
+    `This document summarizes the supplied nonclinical study records of ${ds}${input.indication ? ` for ${input.indication}` : ''}, organized using ICH M4S. ${studies.length} study/ies are summarized.`,
+    'Tabulated summaries are preparation worksheets. Verify the source reports, report availability and intended Module 4 placement before use. GLP entries are supplied declarations; GLP compliance is not assessed.',
+    "Completeness measures only the presence of the five checked study categories. Applicability under ICH M3(R2) for the proposed clinical phase and duration and the sponsor's toxicology judgment remain unassessed.",
+    ...pharmacologyNarrative(groups.pharm),
+    ...pharmacokineticsNarrative(groups.pk),
+    ...toxicologyNarrative(groups.tox, toxProfile),
+    gaps.length > 0 ? `IDENTIFIED GAPS: ${gaps.join('; ')}.` : 'Each checked study category is represented; source-report verification and sponsor scientific review remain outstanding.',
+  ].filter(Boolean).join('\n');
 
   return {
     sectionKey: '2.6',
     title: 'Nonclinical Written and Tabulated Summaries',
     narrative,
-    tables,
+    tables: studyTables(groups),
     gaps,
-    completeness,
+    completeness: Math.max(0, Math.round(((5 - categoryGaps.length) / 5) * 100)),
     toxProfile,
     generatedAt: new Date().toISOString(),
   };

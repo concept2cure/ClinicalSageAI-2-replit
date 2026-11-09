@@ -1,0 +1,447 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T18:13:23.379Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:13:23.386Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T18:13:23.387Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source component:performance_evaluation_report 181ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_PER 61ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_IVDR 85ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > validates the complete admitted batch once and returns only section agency/state 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > honors a Japanese assembled section over its US parent and does not affect another section 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > preserves GLOBAL assembled scope instead of inheriting the parent 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > keeps a truly unrecorded template distinct from a failed source read 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > does not promote identity-only source fields into a recorded receiving region 0ms
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T18:13:26.177Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:13:26.182Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T18:13:26.182Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > calls the existing validator for the captured document/project and one saved section without extra SQL 7ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > honors an assembled section’s identity, region and limits over a different/manual parent 15ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps exact Unicode, quotes, newlines and checklist text without shortening the reference 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > preserves null for an unbound document instead of inventing a program sentinel 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps an ad-hoc document available without inventing a template or eligibility record 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"aiDraftable":false} 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"kind":"preparation"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"authoringMode":"manual"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses a selected manual section even when its parent permits drafting 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not infer complete source fields or eligibility from current-reference text 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not treat current E3 reference identity as a retained historical section policy 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > retains historical identity-only source fields without filling missing eligibility 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > still enforces an explicit negative restriction in historical identity-only fields 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > reports canonical validation failure as unavailable instead of using another/current template 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > drafts the component CSR New document offers as a CSR, though its source records no registry id 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > keeps a non-CSR document as it was 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA 166ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA 90ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > keeps the actual IVDR technical-document manual limit ahead of any writing preference 114ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives US writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives CA writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives EU writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives JP writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an explicit region conflicting with the recorded section 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not inherit a receiving region from the parent when the selected section is GLOBAL 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "" 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "unknown" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "GLOBAL" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region null 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region {} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region 7 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_CSR template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_PROTOCOL template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_IB template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > accepts the exact full-block ASCII boundary and refuses the next byte without clipping 20ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > counts multibyte Unicode rather than JavaScript character length 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the one prompt composer retains caller and evidence inputs separately > keeps exact tone/context/requirements and the source-attribution envelope, with a working-draft instruction 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads nothing for a request that is not a revision, and spreads empty parts 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads the named candidate once and refuses before reading when the request is malformed 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > offers one working CSR template and still resolves existing registry IDs 66ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > preserves every IND source object and snapshot without added metadata 267ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > contains exactly the existing IND sources, selected registry rows, components and explicit leaflet gap 89ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PRE_IND' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_AMENDMENT' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA' outline and regional identity 8ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA' outline and regional identity 15ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ANDA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_505B2' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA_SUPP' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_SUPP' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DMF' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_510K' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DE_NOVO' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EUA' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CTA' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MAA' outline and regional identity 9ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ASMF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_IA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_IB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_VARIATION_II' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PIP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ORPHAN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_RMP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PSUR' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_RENEWAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CER' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_CTA' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_CTA_A' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_NDS' outline and regional identity 7ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_SNDS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_ANDS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_SANDS' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_MF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_CTN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MKT_APPROVAL' outline and regional identity 7ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_PARTIAL_CHANGE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_MINOR_CHANGE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_SCIENTIFIC_ADVICE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ORPHAN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BTD' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PRIME' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_FAST_TRACK' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_RMAT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_SR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IND_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EXPANDED_ACCESS_INDIVIDUAL' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EXPANDED_ACCESS_INTERMEDIATE' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EXPANDED_ACCESS_TREATMENT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_DSUR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_PROTOCOL' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_IB' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_ICF' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_SAP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_351K' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ACCEL_APPROVAL' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CMA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ROLLING' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PSP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EUA_THERAPEUTIC' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CBE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_NDA_ANNUAL' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_REMS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMR' outline and regional identity 8ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_SUPAC' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_CBE30' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_CBE0' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_PEDIATRIC_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_PMR_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_DISTRIBUTION' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BPDR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BLA_PAE_REPORT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_ICSR_15DAY' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PADER' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_M3_DS' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_M3_DP' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_QOS' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_COMPARABILITY' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CBER_MASTER_FILE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CBER_LOT_RELEASE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_513G' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_QSUB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_RFD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_BREAKTHROUGH_DEVICE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_HDE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IDE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_TECHDOC' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_SSCP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_DOC' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_MDL' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_SHONIN' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMA_SUPP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_510K_MOD' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMA_ANNUAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_MDR_REPORT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PSUR_DEVICE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PMCF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_FSCA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_RECALL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DHF' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ISO_RMF' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_SAMD_PRESUB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PCCP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'IEC_62304' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CYBERSECURITY' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR_CLASSIFICATION' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IVD_QSUB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CLIA_WAIVER' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_510K_IVD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PMA_IVD' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DE_NOVO_IVD' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_EUA_IVD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_LDT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CDX_PMA' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CDX_510K' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_COMPLEMENTARY_DX' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CDX_CODEV' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PER' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PERF_STUDY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_REF_LAB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_SSCP_IVD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PMPF' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TREND_REPORT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_DEVICE_REG' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVD_REEVAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CTD_M2' outline and regional identity 20ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CTD_M3' outline and regional identity 12ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CTD_M4' outline and regional identity 10ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CTD_M5' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_QUALITY_MANUAL' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_DESIGN_CONTROLS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_DMR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_DHR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_MDSAP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_A_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_B_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_C_MEETING' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_TYPE_D_MEETING' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_INTERACT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_PRESUB_MEETING' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_PRE_CONSULT' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_SAKIGAKE' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_PRIORITY_REVIEW' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_ACCEL_ASSESS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_BIOSIMILAR_MAA' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_BIOSIMILAR' outline and regional identity 4ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_GENERIC_DCP' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CLIN_OVERVIEW' outline and regional identity 3ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_CLIN_SUMMARY' outline and regional identity 6ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_NONCLIN_OVERVIEW' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_NONCLIN_SUMMARY' outline and regional identity 5ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_TABULATED_SUMMARIES' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_LINE_EXTENSION' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_EUDRAVIGILANCE_ICSR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_SUSAR' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CEP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_GMP_CERT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ICH_STABILITY_PROTOCOL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_ART117_NBOP' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR_ART48_CONSULT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_NB_CONSULT' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_CLASS_I' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_CLASS_IIA' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_CLASS_IIB' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MDR_CLASS_III' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_NINTEI' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_TODOKEDE' outline and regional identity 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CLIN_INVESTIGATION' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'ISO_CIP' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_SIG_CHANGE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_MIR' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_TREND_REPORT_DEVICE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR_CLASS_A' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR_CLASS_B' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVDR_CLASS_CD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_CDX_IVDR_D' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_CDX' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVD_CLIN_EVIDENCE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_IVD_ANALYTICAL_VALIDATION' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'JP_IVD_APPROVAL' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'CA_IVD_LICENCE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVD_PMS_PLAN' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_IVD_VIGILANCE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'EU_PSUR_IVD' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'US_CTD_M1_REGIONAL' outline and regional identity 9ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_QSR_820' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'QMS_ISO_13485' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'RI_STRATEGY' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'RI_GAP_ANALYSIS' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'RI_COMPETITIVE' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the exact 'RI_HA_MEETING' outline and regional identity 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'quality_overall_summary' document component with its source context 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'nonclinical_overview' document component with its source context 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_overview' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_summary' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'cover_letter' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'k510_summary' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'smpc' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'gspr_checklist' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'ivdr_gspr_checklist' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'performance_evaluation_report' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'impd' document component with its source context 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'investigators_brochure' document component with its source context 1ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'risk_management_plan' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'pbrer' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'clinical_study_report' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'blank_crf' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'crf_annotation_worksheet' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'protocol' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'statistical_analysis_plan' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'informed_consent' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'drug_substance' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'drug_product' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'dsur' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_pre_ind_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_end_of_phase_2_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_pre_nda_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_pre_bla_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_ind_protocol_amendment' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_ind_information_amendment' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_ind_cmc_amendment' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_ind_response_to_clinical…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_cbe_30' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_cbe_0' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_iss' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_ise' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_type_d_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_interact_meeting' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_expanded_access_individu…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_expanded_access_intermed…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_expanded_access_treatment' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_annual_report' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_pediatric_annual_…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_pmr_status_report' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_distribution_repo…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bpdr' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_periodic_adverse_…' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_pas' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_cbe_30' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_bla_cbe_0' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_cber_master_file' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_cber_lot_release' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_lifecycle_us_eua_therapeutic' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'us_prescribing_information' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > projects the existing 'nonclinical_study_report' document component with its source context 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > does not turn ordinal headings, whole filings or cover letters into a Module 1 placement 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > keeps the leaflet metadata gap explicit and preserves originals instead of copying SmPC headings 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one builtin authoring projection > resolves exact UUIDs case-insensitively, stays deterministic, and never resolves a filing label as a template 215ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for smpc and refuses a conflicting market 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for impd and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for risk_management_plan and refuses a conflicting market 2ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for rmp and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > retains EU scope for pil and refuses a conflicting market 0ms
+ ✓ server/services/authoring/__tests__/builtin-authoring-templates.test.ts > one component regional scope authority > keeps shared documents GLOBAL and allows a confirmed supported target market 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > lists every recorded target with exact filing identity and an editable empty outline 139ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the US_510K source UUID with all source sections 52ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the EU_IVDR source UUID with all source sections 51ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the CA_MDL source UUID with all source sections 48ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the CA_IVD_LICENCE source UUID with all source sections 54ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the JP_SHONIN source UUID with all source sections 60ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the JP_IVD_APPROVAL source UUID with all source sections 48ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > resolves the JP_CDX source UUID with all source sections 62ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > reaches k510_summary with its own regional body 43ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > reaches gspr_checklist with its own regional body 51ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > reaches ivdr_gspr_checklist with its own regional body 62ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > reaches performance_evaluation_report with its own regional body 57ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not require a 510(k) equivalence conclusion for US_PMA 1ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not require a 510(k) equivalence conclusion for US_DE_NOVO 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not require a 510(k) equivalence conclusion for US_HDE 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not require a 510(k) equivalence conclusion for CA_MDL 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not require a 510(k) equivalence conclusion for JP_SHONIN 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as CA_IVD_LICENCE requirements 1ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as JP_SHONIN requirements 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as JP_NINTEI requirements 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as JP_IVD_APPROVAL requirements 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as JP_CDX requirements 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > existing device and diagnostics outlines reach the one editor > does not present EU MDR requirements as EU_IVDR requirements 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > IVDR aliases retain diagnostic document scope > resolves alias IVDR_TD without a CER or FDA PMA deficiency substitution 1ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > IVDR aliases retain diagnostic document scope > resolves alias EU_IVDR_TECHDOC without a CER or FDA PMA deficiency substitution 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > IVDR aliases retain diagnostic document scope > resolves alias EU_IVDR without a CER or FDA PMA deficiency substitution 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > Japanese Class I notification is distinct from approval and certification > reaches Todokede with source-limited notification groups and no approval claim 51ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > preserves explicit narrative eligibility for component:k510_summary 66ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > preserves explicit narrative eligibility for component:performance_evaluation_report 61ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > preserves explicit narrative eligibility for registry:EU_PER 43ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > keeps original-artifact preparation manual for component:gspr_checklist 54ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > keeps original-artifact preparation manual for component:ivdr_gspr_checklist 57ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > keeps original-artifact preparation manual for registry:JP_SHONIN 59ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device narrative eligibility reaches the existing drafting controls > keeps original-artifact preparation manual for registry:US_PMA 62ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > a legacy CDx identifier is not a classification verdict > keeps the existing template ID without claiming every companion diagnostic is Class D 42ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_QUALITY_MANUAL without replacing original quality records 51ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_DESIGN_CONTROLS without replacing original quality records 53ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_DMR without replacing original quality records 51ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_DHR without replacing original quality records 77ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_MDSAP without replacing original quality records 65ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_QSR_820 without replacing original quality records 76ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > loads exact QMS_ISO_13485 without replacing original quality records 68ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > retains QMS_DMR-specific preparation context 1ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > retains QMS_DHR-specific preparation context 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > device quality records reach the same editor as limited preparation > retains QMS_MDSAP-specific preparation context 0ms
+ ✓ server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts > shared device registry scope stays explicit > does not classify general cross-cutting or mixed product rows as device-only 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > preserves all 445 prior builtin objects and their recorded snapshots 121ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_STRATEGY with its exact source, no filing placement and no authored facts 80ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_GAP_ANALYSIS with its exact source, no filing placement and no authored facts 62ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_COMPETITIVE with its exact source, no filing placement and no authored facts 59ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > reaches RI_HA_MEETING with its exact source, no filing placement and no authored facts 42ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > existing internal planning outlines reach the same builtin catalog > includes the same exact internal outlines in existing AnA coverage discovery 3ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_STRATEGY entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_GAP_ANALYSIS entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_COMPETITIVE entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > admits the existing active RI_HA_MEETING entry 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with inactive 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different region 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different segment 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with different category 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with submission format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with dossier format 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > refuses a planning-shaped record with unknown identifier 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GMP_INSPECTION through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GCP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit QMS_GLP_COMPLIANCE through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_CTD_M1 through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/cross-sector-builtin-authoring-templates.test.ts > shared planning admission does not widen other cross-cutting records > does not admit ICH_ICSR through the planning selector 0ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable protocol template 132ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable investigators_brochure template 60ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable statistical_analysis_plan template 94ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable informed_consent template 78ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable dsur template 66ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers exact narrative metadata and an empty editable pbrer template 57ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers clinical working documents for US_IND without using an unknown-type fallback 2ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported clinical document starts > offers clinical working documents for US_NDA without using an unknown-type fallback 1ms
+ ✓ server/services/authoring/__tests__/clinical-template-eligibility.test.ts > source-supported 

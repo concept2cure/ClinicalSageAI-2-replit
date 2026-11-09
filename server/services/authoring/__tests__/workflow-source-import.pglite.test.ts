@@ -182,6 +182,10 @@ describe('stored protocol materialization',()=>{
 });
 
 describe('stored CSR materialization',()=>{
+  it('refuses ambiguous approved-only imports without an exact saved-section selection', async () => {
+    await expect(materializeWorkflowSource(input({ kind: 'csr', jobId: 1, approvedOnly: true }), q))
+      .rejects.toMatchObject({ status: 400, code: 'WORKFLOW_CSR_SELECTION_INVALID' });
+  });
   it('uses exact persisted ICH code/content/hash and retains null model as unknown qualification',async()=>{
     const result=await materializeWorkflowSource(input({kind:'csr',jobId:1,sectionNumbers:['13']}),q);
     expect(result.sections).toEqual([{code:'13',title:'Discussion and Overall Conclusions',content:'Exact saved CSR prose'}]);

@@ -35,6 +35,7 @@ import * as usNda from './registry/blueprints/usNdaBlueprint.js';
 import * as usBla from './registry/blueprints/usBlaBlueprint.js';
 import * as euMaa from './registry/blueprints/euMaaBlueprint.js';
 import * as euCta from './registry/blueprints/euCtaBlueprint.js';
+import * as ukCta from './registry/blueprints/ukCtaBlueprint.js';
 import * as canadaNds from './registry/blueprints/canadaNdsBlueprint.js';
 import * as canadaCta from './registry/blueprints/canadaCtaBlueprint.js';
 import * as japanMaa from './registry/blueprints/japanMaaBlueprint.js';
@@ -72,6 +73,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   US_BLA: usBla.sectionBlueprint,
   EU_MAA: euMaa.sectionBlueprint,
   EU_CTA: euCta.sectionBlueprint,
+  UK_CTA: ukCta.sectionBlueprint,
   CA_NDS: canadaNds.sectionBlueprint,
   CA_CTA: canadaCta.sectionBlueprint,
   CA_CTA_A: canadaCta.amendmentSectionBlueprint,
@@ -129,7 +131,11 @@ export function getResolvedSectionBlueprint(entry: RegulatoryApplicationType): S
   return getExactSectionBlueprint(entry.id) ?? getSectionBlueprintForEntry(entry);
 }
 
-const APPLICABILITY_REVIEW_IDS = new Set(['EU_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'US_IND_AMENDMENT', 'US_IND_SR']);
+const APPLICABILITY_REVIEW_IDS = new Set(['EU_CTA', 'UK_CTA', 'CA_CTA', 'CA_CTA_A', 'JP_CTN', 'US_IND_AMENDMENT', 'US_IND_SR']);
+const REGIONAL_BLUEPRINT_CONTEXTS: Record<string, { basis: RegulatoryBasis; limitations: readonly string[] }> = {
+  JP_CTN: { basis: japanCtn.outlineBasis, limitations: japanCtn.outlineLimitations },
+  UK_CTA: { basis: ukCta.outlineBasis, limitations: ukCta.outlineLimitations },
+};
 
 /** These scaffolds encode conditional branches, but no client applicability decision. */
 export function requiresSectionApplicabilityAssessment(registryId: string): boolean {
@@ -155,7 +161,8 @@ function authoredBlueprintContext(registryId: string): { basis?: RegulatoryBasis
     basis: { ref: 'Platform IND safety-report authoring groups under 21 CFR 312.32; the report subtypes, formats and routes checked against FDA IND Safety Reporting on 2026-10-07', confidence: 'platform-convention', url: 'https://www.fda.gov/drugs/investigational-new-drug-application-ind/ind-application-reporting-ind-safety-reports', checked: '2026-10-07' },
     limitations: [getApplicationType(registryId)?.moduleAuthority ?? 'Confirm the current FDA IND safety-reporting format before package creation.', 'Select the report subtype, commercial status and follow-up scope before deciding the format or delivery route. This authoring scaffold does not create or validate an E2B message or certify reportability, deadlines or transmission.'],
   };
-  if (registryId === 'JP_CTN') return { basis: japanCtn.outlineBasis, limitations: japanCtn.outlineLimitations };
+  const regionalContext = REGIONAL_BLUEPRINT_CONTEXTS[registryId];
+  if (regionalContext) return regionalContext;
   if (registryId === 'US_IND_AMENDMENT') return { basis: usIndAmendment.outlineBasis, limitations: usIndAmendment.outlineLimitations };
   if (registryId === 'ICH_NONCLIN_SUMMARY') return { basis: nonclinicalSummary.outlineBasis, limitations: nonclinicalSummary.outlineLimitations };
   if (registryId === 'EU_CTA') return {

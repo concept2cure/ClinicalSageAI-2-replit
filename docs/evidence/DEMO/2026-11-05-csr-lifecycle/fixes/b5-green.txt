@@ -1,0 +1,29 @@
+B5 green.
+
+1. The CSS test:
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > sizes the one column to the panel, so no item can set it wider 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > keeps a select inside the panel 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorPageCss.test.ts > the editor's source panels at phone width (B5) > lets the items of the panel's inline grids be as narrow as the panel 0ms
+      Tests  14 passed (14)
+
+2. The running app, same page, after the CSS change:
+   {
+    "viewport": 390,
+    "panelRight": 374,
+    "clipRight": 390,
+    "detailWidth": 334,
+    "gridTemplateColumns": "334px",
+    "pageOverflow": 0,
+    "itemsWiderThanVisible": [],
+    "scrollContainersHoldingWiderContent": 1,
+    "beyondCount": 0,
+    "beyond": []
+   }
+   FITS: nothing in the panel extends past its visible right edge; 1 table wrapper(s) scroll their wider content inside the panel
+   The one wider element left is the CSR files table, which scrolls inside its own overflow-x wrapper.
+   Screenshot: b5-green-390-csr-panel.png
+
+3. CSS gates: ci:undefined-css-classes OK; ci:check-css-selector-shadowing OK (0 new); ci:token-cascade PASS;
+   ci:check-shell-css-collisions OK. ci:surface-text-ramp and ci:check-phantom-tokens are red on trunk before
+   this change; the ramp generated with and without this stylesheet change is byte-identical, so no regeneration
+   is due, and the rules use no token.

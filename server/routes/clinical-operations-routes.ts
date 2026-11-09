@@ -37,7 +37,7 @@ const studySchema = z.object({
 });
 
 const siteSchema = z.object({
-  studyId: z.string().uuid(),
+  studyId: z.string().guid(),
   name: z.string().min(1).max(500),
   location: z.string().min(1).max(500),
   principalInvestigator: z.string().min(1).max(200),
@@ -48,8 +48,8 @@ const siteSchema = z.object({
 });
 
 const enrollmentSchema = z.object({
-  studyId: z.string().uuid(),
-  siteId: z.string().uuid().optional(),
+  studyId: z.string().guid(),
+  siteId: z.string().guid().optional(),
   period: z.string().min(1), // e.g. "2025-Q1" or "2025-03"
   targetCount: z.number().int().nonnegative(),
   actualCount: z.number().int().nonnegative(),
@@ -57,8 +57,8 @@ const enrollmentSchema = z.object({
 });
 
 const monitoringVisitSchema = z.object({
-  studyId: z.string().uuid(),
-  siteId: z.string().uuid(),
+  studyId: z.string().guid(),
+  siteId: z.string().guid(),
   visitType: z.enum(['pre_study', 'initiation', 'interim', 'close_out', 'for_cause']),
   scheduledDate: z.string(),
   monitorName: z.string().min(1).max(200),
@@ -66,8 +66,8 @@ const monitoringVisitSchema = z.object({
 });
 
 const deviationSchema = z.object({
-  studyId: z.string().uuid(),
-  siteId: z.string().uuid().optional(),
+  studyId: z.string().guid(),
+  siteId: z.string().guid().optional(),
   subjectId: z.string().optional(),
   category: z.enum(['major', 'minor', 'administrative']),
   description: z.string().min(1).max(5000),
@@ -76,7 +76,7 @@ const deviationSchema = z.object({
 });
 
 const milestoneSchema = z.object({
-  studyId: z.string().uuid(),
+  studyId: z.string().guid(),
   name: z.string().min(1).max(500),
   targetDate: z.string(),
   category: z.enum(['regulatory', 'enrollment', 'data', 'safety', 'operational']).default('operational'),

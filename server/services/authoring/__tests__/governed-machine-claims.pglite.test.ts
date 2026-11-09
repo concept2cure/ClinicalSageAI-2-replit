@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { openTurnRecorder, writeTurnRecordSafely } from '../../ana/turn-record';
-import { MAX_TURN_RECORDS_PER_CHECK } from '../machine-claim-verify';
+import { MAX_TURN_RECORDS_PER_CHECK, verifyMachineText } from '../machine-claim-verify';
 import {
   contributorsOf,
   creditMachineClaims,
@@ -35,6 +35,7 @@ import {
   machineClaimReport,
   recordMayVouch,
   refusedForModel,
+  retainedTurnDeliveryQualified,
 } from '../governed-machine-claims';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -62,17 +63,28 @@ beforeAll(async () => {
 afterAll(async () => { await pg.close(); });
 
 /** A filed turn answering `answer`, served by `served` in order. */
-async function filedTurn(answer: string, served: Array<{ provider: string; model: string }>): Promise<string> {
+async function filedTurn(answer: string, served: Array<{ provider: string; model: string }>, legacyOnly = false): Promise<string> {
   const r = openTurnRecorder({ orgId: ORG, userId: 7, typed: 'Draft the efficacy overview for 2.5.4' })!;
   r.setAnswer({ streamed: answer, stored: answer });
   if (served[0]) r.setModel(served[0]);
-  served.forEach((s, i) => r.addServed(i + 1, s));
+  if (!legacyOnly) served.forEach((s, i) => r.addServed(i + 1, s));
   const status = await writeTurnRecordSafely(pool, r, 'answered');
   if (status.status !== 'recorded') throw new Error('the fixture turn was not filed: ' + status.status);
   return status.id;
 }
 
 const claim = (text: string, turnRecordId: string | null) => ({ authorId: 'ana', text, turnRecordId });
+
+describe('new release requires actual delivered-call evidence', () => {
+  it.each([true, false])('refuses an intact exact-word turn with legacyOnly=%s but no actual gateway delivery reference', async legacyOnly => {
+    const turn = await filedTurn(ANSWER, [OPUS], legacyOnly);
+    const verified = await verifyMachineText(q, ORG, [claim(CLAIM, turn)]);
+    expect(verified.verified).toHaveLength(1);
+    expect(await retainedTurnDeliveryQualified(q, { organizationId: ORG,
+      doc: { id: '10000000-0000-4000-8000-000000000083', client_program_id: '20000000-0000-4000-8000-000000000083' },
+      sections: [] }, verified.verified[0])).toBe(false);
+  });
+});
 
 describe('recordMayVouch — RULE 2 over the models a record names', () => {
   it('admits a record every one of whose models the rule allows', () => {

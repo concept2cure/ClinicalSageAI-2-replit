@@ -30,7 +30,8 @@ import path from 'node:path';
 import { extractTableDdl, REPO_ROOT } from '../../../tests/golden-journeys/harness';
 
 vi.mock('../../db', async () => (await import('./_unified-tasks-pglite-harness')).dbModule());
-vi.mock('../../db/requestDb', async () => (await import('./_unified-tasks-pglite-harness')).requestDbModule());
+vi.mock('../../db/requestDb', async original => ({ ...await original<typeof import('../../db/requestDb')>(),
+  ...(await import('./_unified-tasks-pglite-harness')).requestDbModule() }));
 vi.mock('../c2c/actions', async () => (await import('./_unified-tasks-pglite-harness')).ledgerModule());
 vi.mock('../../services/tasking/task-signoff', async () =>
   (await import('./_unified-tasks-pglite-harness')).signoffModule(),
@@ -86,6 +87,7 @@ const DDL = [
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
     // The review route columns the Drizzle model names (RR1a).
     'migrations/20261023_review_routes.sql',
+    'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
     // stability_studies.project_id — the Drizzle model the CMC sync selects
     // through names it (90b34d33c), so the sync fails without it.
     'migrations/20261005_cmc_core_registers_project.sql',
@@ -373,6 +375,37 @@ describe('T1 — each write commits with its ledger row, or neither commits', ()
     expect(h.log).not.toContain('read:document_approvals');
     expect(h.log.some(l => l.startsWith('insert:') || l.startsWith('ledger:'))).toBe(false);
   });
+});
+
+describe('unified creation retains actual project and workspace admission', () => {
+  it('POST /unified stamps the admitted project workspace and preserves existing module defaults and metadata', async () => {
+    const res = await request(app).post(`${BASE}/unified`).send({ moduleType: 'IND', title: 'Scoped work', organizationId: OTHER_ORG,
+      projectId: 301, assigneeId: 42, assigneeName: 'Sarah', sourceEntityType: 'authoring_document', sourceEntityId: 'doc-1',
+      tags: ['review'], metadata: { section: '2.5' }, reason: 'From the project review' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const row = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', [res.body.task.taskId])).rows[0];
+    expect(row).toMatchObject({ organization_id: ORG, created_by_id: 7, project_id: 301, client_workspace_id: 71,
+      status: 'pending', priority: 'medium', task_type: 'action', assignee_id: 42, assignee_name: 'Sarah',
+      source_entity_type: 'authoring_document', source_entity_id: 'doc-1', tags: ['review'], metadata: { section: '2.5' } });
+    expect(typeof row.module_icon).toBe('string'); expect(typeof row.module_color).toBe('string');
+    expect(await ledger()).toEqual([expect.objectContaining({ reason: 'From the project review', user_id: 7 })]);
+  });
+
+  it('POST /unified preserves a valid workspace-only task', async () => {
+    h.workspaceClaim = 71;
+    const res = await request(app).post(`${BASE}/unified`).send({ moduleType: 'IND', title: 'Workspace work', organizationId: ORG, clientWorkspaceId: 71 });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect((await pg.query('SELECT project_id,client_workspace_id FROM unified_tasks WHERE task_id=$1', [res.body.task.taskId])).rows[0])
+      .toEqual({ project_id: null, client_workspace_id: 71 });
+  });
+
+  it.each([{ projectId: 302 }, { clientWorkspaceId: 81 }])('POST /unified refuses inaccessible scope %j without task or audit changes', async scope => {
+    const before = await snapshot();
+    const res = await request(app).post(`${BASE}/unified`).send({ moduleType: 'IND', title: 'Refused', organizationId: ORG, ...scope });
+    expect(res.status).toBe(403); expect(res.body.code).toBe('TASK_PROJECT_ACCESS_DENIED');
+    expect(await snapshot()).toEqual(before); expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+  });
+
 });
 
 describe('T1 — a completion unblocks its dependents in the SAME transaction, with their ledger rows', () => {

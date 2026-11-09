@@ -58,6 +58,8 @@ export interface SpineOpts {
   history?: unknown[];
   /** The sequence the spine resolves to (default the original, 0000). */
   sequenceNumber?: string;
+  /** The sequence's dispatch status (default none recorded, as a draft has). */
+  dispatchStatus?: string | null;
   /** The organisation's recorded name (default SPONSOR); null for none on record. */
   organizationName?: string | null;
   identity?: Record<string, unknown>;
@@ -69,6 +71,7 @@ export function mockSpineOn(poolQuery: Mock) {
     const leaves = opts.leaves ?? LEAVES;
     const program = opts.program ?? PROGRAM;
     const organizationName = opts.organizationName === undefined ? SPONSOR : opts.organizationName;
+    const dispatchStatus = opts.dispatchStatus ?? null;
     const identityRows = [{
         ...program, name: organizationName, organization_name: organizationName,
         applicant_sponsor_id: organizationName === null ? null : '11111111-1111-4111-8111-111111111111',
@@ -96,7 +99,7 @@ export function mockSpineOn(poolQuery: Mock) {
       // submission's project and market from this row (P-44).
       if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind', anchored: true, program_id: program.id, primary_region: 'fda' }] };
       if (/FROM ectd_sequences/i.test(sql)) {
-        return { rows: [{ id: 9, sequence_number: opts.sequenceNumber ?? '0000', region: 'fda' }] };
+        return { rows: [{ id: 9, sequence_number: opts.sequenceNumber ?? '0000', region: 'fda', dispatch_status: dispatchStatus }] };
       }
       if (/count\(\*\)::int AS n FROM submission_leaves/i.test(sql)) {
         return { rows: [{ n: leaves.length }] };

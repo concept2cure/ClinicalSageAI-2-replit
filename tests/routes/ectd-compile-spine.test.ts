@@ -205,7 +205,7 @@ describe('GET /:projectIdent/status — spine leaf state drives the blockers', (
     expect(blockers).toMatch(/2 document\(s\) are placed/);
     expect(blockers).toMatch(/Run Compile/);
     // A program WITH placed leaves is not hit with the unlinked-store blocker.
-    expect(blockers).not.toMatch(/no linked section-tracking store/);
+    expect(blockers).not.toMatch(/No document has been placed in a sequence/);
   });
 });
 
@@ -569,5 +569,87 @@ describe('POST /:projectIdent/compile — recorded regional release identity', (
     const body = res.json.mock.calls[0][0];
     expect(body.submissionReady).not.toBe(true);
     expect(JSON.stringify(body)).toMatch(/region/i);
+  });
+});
+
+/* B3 (demo walk 2026-11-05, 21-compile-refused.png): a project made with New
+   project, sequence 0000 started, nothing placed. The first error read "This
+   program has no linked section-tracking store: … legacy numeric project id …
+   (pending the document-identity contract)", and the reasons the package is
+   refused for, the application number, the bound sponsor and its D-U-N-S,
+   never appeared. Each is now its own error, first, in plain words, with where
+   to record it; the compile still refuses. */
+describe('POST /:projectIdent/compile — nothing placed yet, said plainly', () => {
+  const INTERNAL = /legacy|numeric project|section-tracking store|section store|document-identity contract|sectioned project|submissions →|submission spine/i;
+  const NOTHING_RECORDED = { application_number: null, applicant_sponsor_id: null, sponsor_id: null, duns: null,
+    contact_name: null, contact_phone: null, contact_email: null };
+  const compileNothingPlaced = async (identity?: Record<string, unknown>) => {
+    mockSpine({ leaves: [], pack: [{ key: '1.1', mandatory: true }, { key: '2.5', mandatory: true }], identity });
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ region: 'FDA', submissionType: 'initial' }), res);
+    return res.json.mock.calls[0][0];
+  };
+
+  it('names the application number, the bound sponsor and its D-U-N-S first, and where to record them', async () => {
+    const body = await compileNothingPlaced(NOTHING_RECORDED);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ status: 'failed', submissionReady: false });
+    const [first, second, third] = body.errors as string[];
+    expect(first).toMatch(/application number/i);
+    expect(second).toMatch(/sponsor/i);
+    expect(third).toMatch(/D-U-N-S/);
+    for (const line of [first, second, third]) expect(line).toMatch(/Forms and letters \(1571, cover letter, LOA\)/);
+    // Nothing is loosened: every required section is still an error after them.
+    expect(body.errors).toEqual(expect.arrayContaining(['Required section 1.1 is missing', 'Required section 2.5 is missing']));
+  });
+
+  it('says nothing internal: no store, id-space or contract wording in any error, finding or blocker', async () => {
+    const body = await compileNothingPlaced(NOTHING_RECORDED);
+    expect(JSON.stringify(body.errors)).not.toMatch(INTERNAL);
+    expect(JSON.stringify(body.validationResults)).not.toMatch(INTERNAL);
+    expect(JSON.stringify(body.submissionBlockers)).not.toMatch(INTERNAL);
+  });
+
+  it('with the application and the applicant recorded, the first error says nothing is placed and where to place it', async () => {
+    const body = await compileNothingPlaced();
+    expect(body).toMatchObject({ status: 'failed', submissionReady: false });
+    expect(body.errors[0]).toMatch(/No document has been placed/);
+    expect(body.errors[0]).toMatch(/Submission Center/);
+    expect(body.errors.join(' ')).not.toMatch(/application number|D-U-N-S/i);
+  });
+});
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): with documents placed,
+   the compile led with one run-on refusal ("… (select the recorded applicant in
+   Module 1 forms); and … (record its nine digits in the sponsor registry) …..")
+   that names no screen in the product, and Validate said nothing of the identity
+   at all. B3's per-gap findings, with where a US IND records each, now lead both. */
+describe('documents placed, applicant identity missing: the same actionable lines as with nothing placed', () => {
+  const NOTHING_RECORDED = { application_number: null, applicant_sponsor_id: null, sponsor_id: null, duns: null,
+    contact_name: null, contact_phone: null, contact_email: null };
+  const noNumber = { program: { ...PROGRAM, application_number: null }, identity: NOTHING_RECORDED };
+
+  it('compile: the application number, the bound sponsor and its D-U-N-S lead, each saying where to record it', async () => {
+    mockSpine(noNumber);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ region: 'FDA', submissionType: 'initial' }), res);
+    const body = res.json.mock.calls[0][0];
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ status: 'failed', submissionReady: false });
+    const [first, second, third] = body.errors as string[];
+    expect(first).toMatch(/application number/i);
+    expect(second).toMatch(/sponsor/i);
+    expect(third).toMatch(/D-U-N-S/);
+    for (const line of [first, second, third]) expect(line).toMatch(/Forms and letters \(1571, cover letter, LOA\)/);
+    expect(JSON.stringify(body.errors)).not.toMatch(/\.\./);
+  });
+
+  it('validate: the identity gaps are errors too, so Validate never reads cleaner than Compile', async () => {
+    mockSpine(noNumber);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/validate', 'post')(makeReq({ region: 'FDA' }), res);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.results[0]).toMatchObject({ rule: 'PACKAGE_IDENTITY_MISSING', severity: 'error' });
+    expect(payload.valid).toBe(false);
   });
 });

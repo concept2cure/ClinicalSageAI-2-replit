@@ -67,6 +67,8 @@ const UPLOAD_REFUSAL_STATUS: Record<UploadedFileError['code'], number> = {
   UPLOAD_NOT_FOUND: 404,
   UPLOAD_BYTES_MISSING: 410,
   UPLOAD_INTEGRITY_FAILED: 409,
+  // The byte store holding the upload could not be read now (LX-02); a retry may succeed.
+  UPLOAD_STORE_UNAVAILABLE: 503,
 };
 
 /** Load the upload's bytes, turning the reader's coded errors into refusals. */

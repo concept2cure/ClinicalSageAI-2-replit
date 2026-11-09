@@ -1,0 +1,13 @@
+D3-3's tests run against the D3-1 source (git stash of client/src/concept2cure/v2/surfaces/ProjectHome.tsx client/src/concept2cure/v2/surfaces/ProjectPlan.tsx client/src/concept2cure/v2/surfaces/ProjectSettings.tsx client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx client/src/concept2cure/v2/surfaces/ProjectTeamSharing.tsx client/src/concept2cure/v2/styles/app-v2.css), tests kept:
+      Tests  10 failed | 46 passed (56)
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > a request opens the drawer on the field it names, once; a request already seen at mount opens nothing
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectTeamResponsibilities.test.tsx > project responsibility panel > states the authority note by default, and not when the drawer says it (showNote false)
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses server capability instead of a displayed project owner fact
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > uses the admitted numeric anchor and offers only human Use/Edit choices
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > ProjectHome reaches its existing sharing controls > waits for a verified team anchor and retains the roster when sharing is unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'account' changes on the same selected UUID
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > team anchors belong to the current authenticated scope > waits for a fresh team anchor after 'organization' changes on the same selected UUID
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > "Manage" opens the Team drawer with the roster, the note once and sharing; Escape closes it, focus returns
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > a team that could not be read says so on the card, with its retry, and "Manage" still opens
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx > the team on the project page (D3-3, D3.md §4.8 item 3 and §4.9) > is a card in Project knowledge, on every step, and no longer a section of Plan
+ Test Files  3 failed (3)

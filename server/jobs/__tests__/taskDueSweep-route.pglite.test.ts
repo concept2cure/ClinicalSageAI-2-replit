@@ -37,6 +37,7 @@ beforeAll(async () => {
   await pg.exec(SQL('db/migrations/20260727_unified_tasks_mdx_metadata.sql'));
   await pg.exec(SQL('db/migrations/20260807_unified_tasks_soft_delete.sql'));
   await pg.exec(SQL('migrations/20261023_review_routes.sql'));
+  await pg.exec(SQL('migrations/20261109_unified_tasks_parent_task.sql')); // P-111: unified_tasks.parent_task_id, which the Drizzle model names
   await pg.exec(`
     INSERT INTO organizations (id, name, slug) VALUES (1, 'Sponsor', 'sponsor');
     INSERT INTO users (id, email, name, password_hash) VALUES (3, 'rita@example.test', 'Rita', 'x'), (4, 'sam@example.test', 'Sam', 'x');

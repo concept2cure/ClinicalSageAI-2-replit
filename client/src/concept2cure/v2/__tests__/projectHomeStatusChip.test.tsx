@@ -18,7 +18,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -82,20 +82,34 @@ describe('ProjectHome — the status chip reflects its value, not a fixed green'
     expect(chip.className).toMatch(/tone-idle/);
   });
 
-  it('an ACTIVE program still reads green — the good state stays reachable', () => {
-    // Over-correction guard.
-    const chip = mountWithStatus('active');
-    expect(chip.className).toMatch(/tone-ok/);
+  /* D3-1 (2026-11-06, D3.md §4.2): the byline says the status only when it says something. "Active" is the
+     ordinary state, so it is a fact in Project knowledge, never a chip that could read as an alert. */
+  it('an ACTIVE program is the ordinary state: no status chip in the byline, nothing reads as an alert', async () => {
+    (window as any).C2C_PROJECT = { id: PID, title: 'BX-301', status: 'active' };
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async () => ok({}));
+    render(<ProjectHome {...props()} />);
+    await waitFor(() => expect(document.querySelector('.pj-title')?.textContent).toBe('BX-301'));
+    const byline = document.querySelector('.pj-byline');
+    expect(byline?.textContent ?? '').not.toMatch(/Active/);
+    expect(document.querySelector('.pj-top .rd-chip.tone-warn, .pj-top .rd-chip.tone-err')).toBeNull();
   });
 });
 
 describe('ProjectHome — the priority chip reflects its value, not a fixed warn', () => {
   /* Same defect one chip over: `<span className="rd-chip tone-warn">priority:
      {priority}</span>` wore an amber warning for "priority: low". */
-  it('a LOW priority is not rendered as a warning', async () => {
-    const chip = await mountWithPriority('low');
-    expect(chip.className, 'low must not read as a warning').not.toMatch(/tone-warn/);
-    expect(chip.className).toMatch(/tone-idle/);
+  /* D3-1: an ordinary priority is a fact in Project knowledge, not a byline chip, so it can never read as a warning. */
+  it('a LOW priority is not in the byline, and reads as a plain fact in Project knowledge', async () => {
+    (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url === `/api/c2c/projects/${PID}` ? ok({ id: PID, priority: 'low' }) : ok({}));
+    render(<ProjectHome {...props()} />);
+    const facts = await screen.findByRole('region', { name: /project identity/i });
+    const priority = Array.from(facts.querySelectorAll('dl.pj-fact')).find((dl) => dl.querySelector('dt')?.textContent === 'Priority');
+    expect(priority?.querySelector('dd')?.textContent).toBe('Low');
+    expect(document.querySelector('.pj-byline')?.textContent ?? '').not.toMatch(/priority/i);
   });
 
   it('a CRITICAL priority still warns — the alert stays reachable', async () => {

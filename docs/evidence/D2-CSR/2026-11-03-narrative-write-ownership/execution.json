@@ -1,0 +1,58 @@
+{
+  "baselineCommit": "0441fa1bec707cfb4d61d448dd2b49195199c280",
+  "runner": "Node 22 node:test with TypeScript transpilation and explicitly declared test doubles; NOT native Vitest or PostgreSQL",
+  "results": {
+    "red": {
+      "tests": 17,
+      "passed": 2,
+      "failed": 15,
+      "skipped": 0,
+      "cases": [
+        {"number":1,"passed":false,"name":"saves an owned narrative and its exact hash while holding both row locks until commit"},
+        {"number":2,"passed":false,"name":"does not overwrite a replacement attempt narrative with a late old model response"},
+        {"number":3,"passed":false,"name":"rejects an older run even when it has the same numeric attempt as a new run"},
+        {"number":4,"passed":false,"name":"refuses a requeued run before the replacement has claimed it"},
+        {"number":5,"passed":false,"name":"checks recovery at the locked write boundary, not only an earlier progress heartbeat"},
+        {"number":6,"passed":false,"name":"rejects an invalid supplied attempt identity rather than treating it as legacy direct-store work"},
+        {"number":7,"passed":false,"name":"blocks final section landing when the attempt is superseded after its last progress update"},
+        {"number":8,"passed":false,"name":"cancellation after progress prevents final narratives and cross-reference from landing"},
+        {"number":9,"passed":false,"name":"streams and hashes the owned narrative section, preserving a separately authored cross-reference"},
+        {"number":10,"passed":true,"name":"rolls back partial streamed text and leaves both previous sections intact on stream failure"},
+        {"number":11,"passed":false,"name":"rolls a narrative save back on commit failure without replacing earlier text"},
+        {"number":12,"passed":false,"name":"keeps non-queued direct-store compatibility but locks the parent and honors cancellation"},
+        {"number":13,"passed":false,"name":"refuses foreign-tenant section landing before reading or altering its stored clinical text"},
+        {"number":14,"passed":false,"name":"worker forwards the exact claimed attempt to every narrative store created by its build"},
+        {"number":15,"passed":false,"name":"a late worker neither saves old narrative bytes nor finishes the replacement run"},
+        {"number":16,"passed":false,"name":"carries claimed attempt through the actual evidence-loading build function into persistence"},
+        {"number":17,"passed":true,"name":"releases the write transaction and preserves content if the subject insert fails"}
+      ],
+      "rawLogSha256": "62238dad35b089ce4bf3daaad9bb4e00680c015f85967d011110e542b9f6adf0"
+    },
+    "green": {
+      "tests": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "cases": [
+        {"number":1,"passed":true,"name":"saves an owned narrative and its exact hash while holding both row locks until commit"},
+        {"number":2,"passed":true,"name":"does not overwrite a replacement attempt narrative with a late old model response"},
+        {"number":3,"passed":true,"name":"rejects an older run even when it has the same numeric attempt as a new run"},
+        {"number":4,"passed":true,"name":"refuses a requeued run before the replacement has claimed it"},
+        {"number":5,"passed":true,"name":"checks recovery at the locked write boundary, not only an earlier progress heartbeat"},
+        {"number":6,"passed":true,"name":"rejects an invalid supplied attempt identity rather than treating it as legacy direct-store work"},
+        {"number":7,"passed":true,"name":"blocks final section landing when the attempt is superseded after its last progress update"},
+        {"number":8,"passed":true,"name":"cancellation after progress prevents final narratives and cross-reference from landing"},
+        {"number":9,"passed":true,"name":"streams and hashes the owned narrative section, preserving a separately authored cross-reference"},
+        {"number":10,"passed":true,"name":"rolls back partial streamed text and leaves both previous sections intact on stream failure"},
+        {"number":11,"passed":true,"name":"rolls a narrative save back on commit failure without replacing earlier text"},
+        {"number":12,"passed":true,"name":"keeps non-queued direct-store compatibility but locks the parent and honors cancellation"},
+        {"number":13,"passed":true,"name":"refuses foreign-tenant section landing before reading or altering its stored clinical text"},
+        {"number":14,"passed":true,"name":"worker forwards the exact claimed attempt to every narrative store created by its build"},
+        {"number":15,"passed":true,"name":"a late worker neither saves old narrative bytes nor finishes the replacement run"},
+        {"number":16,"passed":true,"name":"carries claimed attempt through the actual evidence-loading build function into persistence"},
+        {"number":17,"passed":true,"name":"releases the write transaction and preserves content if the subject insert fails"}
+      ],
+      "rawLogSha256": "e8409fbf398c77479dd9f13444a1d8e793bdd4f34a77869860e0c05669d6ad1b"
+    }
+  }
+}

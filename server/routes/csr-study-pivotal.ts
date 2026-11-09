@@ -18,7 +18,7 @@
  * access alone let a member with use but not edit declare (D6, 1446214b8).
  */
 import { Router, type Request, type Response } from 'express';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { createScopedLogger } from '../utils/logger';
@@ -45,8 +45,8 @@ function userOf(req: Request): number | null {
 
 /** The project the request names, under the CSR scope; null when it names none. */
 async function projectOf(req: Request, source: Record<string, unknown>, forWrite: boolean, organizationId: number, userId: number): Promise<number | null> {
-  if (!db) throw new Error('database not initialized');
-  const scope = await resolveCsrScope(db, organizationId,
+  // The request's pinned, tenant-scoped connection, not the shared pool (ci:requestdb-coverage, 2026-11-09).
+  const scope = await resolveCsrScope(requestDb(req), organizationId,
     { projectId: source.projectId, programId: source.programId }, { forWrite, actorUserId: userId });
   return scope.projectId ?? null;
 }
@@ -75,7 +75,7 @@ export default function csrStudyPivotalRouter(): Router {
     try {
       const projectId = await projectOf(req, req.query as Record<string, unknown>, false, organizationId, userId);
       if (projectId === null) return res.status(400).json({ error: 'Name the project.', code: 'PROJECT_REQUIRED' });
-      const studies = await readProjectStudyPivotal(queryableFromDrizzle(db!), organizationId, projectId);
+      const studies = await readProjectStudyPivotal(queryableFromDrizzle(requestDb(req)), organizationId, projectId);
       res.setHeader('Cache-Control', 'private, no-store');
       return res.json({ projectId, studies });
     } catch (err) {
@@ -92,7 +92,7 @@ export default function csrStudyPivotalRouter(): Router {
       const projectId = await projectOf(req, body, true, organizationId, userId);
       if (projectId === null) return res.status(400).json({ error: 'Name the project. Nothing was recorded.', code: 'PROJECT_REQUIRED' });
       await requireProjectAdmission(req, String(projectId), true);
-      const declaration = await declareStudyPivotal(queryableFromDrizzle(db!), {
+      const declaration = await declareStudyPivotal(queryableFromDrizzle(requestDb(req)), {
         organizationId, projectId, studyId: body.studyId, pivotal: body.pivotal, reason: body.reason, declaredBy: userId,
       });
       return res.status(201).json({ projectId, declaration });

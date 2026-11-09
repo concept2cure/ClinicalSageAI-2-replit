@@ -44,8 +44,13 @@
      than one protocol in development. */
   .pde-picker{display:flex;align-items:center;gap:8px;padding:10px 16px 0;}
   .pde-picker label,.pde-picker-count{font-size:12px;color:var(--text-300);}
+  /* The select shrinks inside its label (min-width, max-width, flex): see the 390 px note below. */
   .pde-picker select{font:inherit;font-size:13px;padding:4px 8px;border-radius:var(--radius-md);
-    border:1px solid var(--border-control);background:var(--bg-000);color:var(--text-100);}
+    border:1px solid var(--border-control);background:var(--bg-000);color:var(--text-100);
+    min-width:0;max-width:100%;flex:0 1 auto;}
+  /* A protocol's full title can be wider than a phone (390 px, R1 2026-11-06): the select ran past the bar's edge.
+     Each label is a row that may shrink, and its select shrinks inside it; the option text clips in the control. */
+  .pde-picker label{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;}
 
   /* The refusal a write came back with. Assertive, and never an empty
      result standing in for an error. */
@@ -98,6 +103,13 @@
      screen. Each container that owns a scroller is allowed to shrink; the
      scroller inside it does the scrolling, which is what it is for. */
   .pd-wrap,.pd-head,.pd-head-l,.pd-grid,.pd-grid > .pd-work{min-width:0;}
+
+  /* The workspace's one root (R1, 2026-11-06). The shell's .page-full is a flex ROW and each full surface gives it
+     one child. This surface gave it two, the protocol selection bar and the protocol, so they sat side by side at
+     1440: the bar took 819 px and the protocol 325, with its tabs and panes clipped. They now stack in one column
+     that claims the row; the protocol takes the height left under the bar. */
+  .pde-shell{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;min-height:0;}
+  .pde-shell > .pd-wrap{flex:1 1 auto;height:auto;min-height:0;}
   .pd-grid > .pd-work > .pd-pane{max-width:920px;}
 
   /* ── cover page ─────────────────────────────────────────────────── */

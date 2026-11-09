@@ -145,6 +145,55 @@ describe('POST /api/csr/jobs/:jobId/sections/:sectionNumber/review', () => {
   });
 });
 
+describe('GET /api/csr/jobs/:jobId/sections — inspect exact persisted CSR text before approval', () => {
+  it('accepts a valid dotted ICH E3 section code and returns the saved bytes for human inspection', async () => {
+    const result = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.1');
+    expect(result.status).toBe(200);
+    expect(result.body.sections).toHaveLength(1);
+    expect(result.body.sections[0]).toMatchObject({
+      sectionNumber: '11.4.1', content: TEXT, contentHash: sha(TEXT),
+    });
+    expect(result.body.sections[0].review.integrityFailure).not.toBe(true);
+  });
+
+  it.each([
+    'abc', '11-4-1', '11.4.', '11.4.1x', '11.4.1\\\\x',
+  ])('refuses malformed section code %s instead of reading the wrong section', async code => {
+    const result = await request(app).get('/api/csr/jobs/1/sections')
+      .query({ sectionNumber: code });
+    expect(result.status).toBe(400);
+    expect(result.body.code).toBe('CSR_SECTION_NUMBER_INVALID');
+  });
+
+  it('refuses a missing selected heading and a foreign-tenant build', async () => {
+    const missing = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.99');
+    expect(missing.status).toBe(404);
+    expect(missing.body.code).toBe('CSR_SECTION_NOT_SAVED');
+    const foreign = await request(app).get('/api/csr/jobs/3/sections?sectionNumber=11.4.1');
+    expect(foreign.status).toBe(404);
+    expect(foreign.body).not.toHaveProperty('sections');
+  });
+
+  it('blocks inspection of corrupted saved text, even if its approval hash still matches the stored hash', async () => {
+    await pg.query(`UPDATE csr_section_outputs SET content = $1
+      WHERE job_id = 1 AND section_number = '11.4.1'`, ['Tampered bytes without a new hash']);
+    try {
+      const result = await request(app).get('/api/csr/jobs/1/sections?sectionNumber=11.4.1');
+      expect(result.status).toBe(409);
+      expect(result.body.code).toBe('CSR_SECTION_INTEGRITY_FAILED');
+      expect(result.body).not.toHaveProperty('sections');
+      const completeList = await request(app).get('/api/csr/jobs/1/sections');
+      expect(completeList.status).toBe(200);
+      expect(completeList.body.sections[0].review).toMatchObject({
+        state: 'draft', integrityFailure: true,
+      });
+    } finally {
+      await pg.query(`UPDATE csr_section_outputs SET content = $1
+        WHERE job_id = 1 AND section_number = '11.4.1'`, [TEXT]);
+    }
+  });
+});
+
 describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30)', () => {
   it('lists only this organization\'s builds bound to the run, newest first', async () => {
     const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${RUN}`);
@@ -153,6 +202,42 @@ describe('GET /api/csr/jobs?programId&runId — the builds bound to one retained
     expect(res.body.jobs).toEqual([expect.objectContaining({ jobId: 4, status: 'drafting' }),
       expect.objectContaining({ jobId: 1, studyId: 'NCT05330182', status: 'complete' })]);
     expect(typeof res.body.jobs[0].updatedAt).toBe('string');
+  });
+
+  // F10 of the 2026-11-02 demo walk: a failed build showed only "CSR build N · failed · NN%". The list now carries
+  // the recorded reason, in plain words read from the receipt's typed reason or code, never its stored message text.
+  describe('a failed build names why it stopped', () => {
+    const FAILED_RUN = '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6bf0';
+    const bound = JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: FAILED_RUN, studyId: 'LMN-201-201' } });
+    const failures: Array<[number, string, unknown]> = [
+      [21, 'failed', { reason: 'unresolved_placeholders', sections: ['2', '5.1', '9.8'], at: '2026-11-02T03:10:00Z',
+        message: 'CSR section(s) 2, 5.1, 9.8 still contain unresolved template placeholders (AI drafting fell back to template text); these sections are not submission-ready.' }],
+      // A receipt written before the 2026-11-03 redaction: its message is a raw driver error with a path.
+      [22, 'failed', { message: 'relation "csr_section_outputs" does not exist at Pool.query (/app/node_modules/pg/lib/client.js:526:17)', section: '11.4.1' }],
+      [23, 'failed', { code: 'CSR_EVIDENCE_CHANGED', message: 'CSR_EVIDENCE_CHANGED', section: '12.2.1' }],
+      [24, 'failed', { reason: 'missing_section_outputs', sections: ['10.1'] }],
+      [25, 'complete', null],
+    ];
+    beforeAll(async () => {
+      for (const [id, status, error] of failures) {
+        await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by, error, updated_at)
+          VALUES ($1, 7, 11, 'NCT05330182', $2, $3, 5, $4, now() - $5::interval)`,
+        [id, status, bound, error === null ? null : JSON.stringify(error), `${id} minutes`]);
+      }
+    });
+
+    it('returns each failed build’s reason in plain words, and none for a build that did not fail', async () => {
+      const res = await request(app).get(`/api/csr/jobs?programId=${PROGRAM}&runId=${FAILED_RUN}`);
+      expect(res.status).toBe(200);
+      const failure = new Map(res.body.jobs.map((j: { jobId: number; failure?: string | null }) => [j.jobId, j.failure ?? null]));
+      expect(failure.get(21)).toBe('Not complete: §2, §5.1 and §9.8 still hold a data placeholder (“[…]”) where the study’s data is missing.');
+      expect(failure.get(22)).toBe('The build stopped while drafting §11.4.1. The sections already saved are kept.');
+      expect(failure.get(23)).toMatch(/^The retained evidence changed while this CSR section was drafted\..*start a new CSR build\.$/);
+      expect(failure.get(24)).toBe('Not complete: §10.1 has no saved text. The sections already saved are kept.');
+      expect(failure.get(25)).toBeNull();
+      // Never the stored message text, a driver error or a path.
+      expect(JSON.stringify(res.body)).not.toMatch(/relation|node_modules|Pool\.query|AI drafting fell back/);
+    });
   });
 
   it('refuses a missing or malformed run and a missing program, never an empty list', async () => {
@@ -182,6 +267,34 @@ describe('GET /api/csr/jobs/:jobId/headings — the build\'s ICH E3 tree for rev
     expect(byNum.get('9.1')).toEqual(expect.objectContaining({ state: 'not_drafted' }));
     expect(byNum.get('9.1')).not.toHaveProperty('contentHash');
     expect(byNum.get('16.1.1')).toMatchObject({ manual: true, depth: 3 });
+  });
+
+  it('marks a template row, whose saved text still holds a data placeholder, as template text, not a draft (F2)', async () => {
+    // What the builder's template fallback saves for §9.8 when no model drafted it (ai_generated = false).
+    const TEMPLATE = '[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment].';
+    await pg.query(`INSERT INTO csr_section_outputs (organization_id, project_id, job_id, section_number, content, content_hash, ai_generated)
+      VALUES (7, 11, 4, '9.8', $1, $2, false)`, [TEMPLATE, sha(TEMPLATE)]);
+    try {
+      const byNum = new Map((await request(app).get('/api/csr/jobs/4/headings')).body.headings.map((x: { num: string }) => [x.num, x]));
+      expect(byNum.get('9.8')).toMatchObject({ state: 'draft', placeholder: true, contentHash: sha(TEMPLATE) });
+      expect(byNum.get('12.2')).not.toHaveProperty('placeholder');
+      // The same rule refuses it for review on the server (csr-section-review.ts).
+      const submit = await request(app).post('/api/csr/jobs/4/sections/9.8/review').set('x-test-user', '6')
+        .send({ decision: 'submit', expectedContentHash: sha(TEMPLATE) });
+      expect(submit.status).toBe(409);
+      expect(submit.body.code).toBe('CSR_SECTION_DATA_PLACEHOLDER');
+    } finally {
+      await pg.query(`DELETE FROM csr_section_outputs WHERE job_id = 4 AND section_number = '9.8'`);
+    }
+  });
+
+  it('serves, for a heading, the saved text whose content hash the heading carries (F9: read before approving)', async () => {
+    const heading = (await request(app).get('/api/csr/jobs/4/headings')).body.headings.find((x: { num: string }) => x.num === '12.2');
+    const read = await request(app).get('/api/csr/jobs/4/sections?sectionNumber=12.2');
+    expect(read.status).toBe(200);
+    expect(read.body.sections).toHaveLength(1);
+    expect(read.body.sections[0]).toMatchObject({ sectionNumber: '12.2', content: DRAFT, contentHash: heading.contentHash });
+    expect(sha(read.body.sections[0].content)).toBe(heading.contentHash);
   });
 
   it('refuses another organization\'s build as not found, never its headings', async () => {

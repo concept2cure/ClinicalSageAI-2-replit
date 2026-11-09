@@ -1,0 +1,5 @@
+not ok 26 - the Module 3 build runs after the registers it compiles from
+  error: 'the build ran before the registers: ensureAuthoring → ensureProtocol → ensureStudyDesign → ensureSubmission → ensureQms → ensureCmc → ensureModule3Build → ensureCmc → ensureTasks → ensurePlanDocuments → ensureAgencyLetter'
+# tests 37
+# pass 36
+# fail 1

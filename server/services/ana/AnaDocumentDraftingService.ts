@@ -14,6 +14,7 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+import { createHash } from 'node:crypto';
 import { isTruncated } from '../ai-gateway/finish-reason';
 import { BATCH_CONCURRENCY_MESSAGE, resolveBatchConcurrency } from './batch-draft-concurrency';
 import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
@@ -26,10 +27,7 @@ import type {
   AnaGatewayResponse,
   StreamCallback,
   ImageBlock,
-  ExtendedThinkingConfig,
-  AnaTool,
-  AnaToolResult,
-  TaskType,
+  QualifiedModelPin,
 } from '../ai-gateway/types';
 import {
   DOCUMENT_DRAFTING_TOOLS,
@@ -54,11 +52,13 @@ import { lifecycleOutlineParts, lifecycleRecordOutlineFor, type LifecycleOutline
 import { ICH_M11_PROTOCOL_OUTLINE } from '../ind/ctd/protocol-m11-guidance.js';
 import { renderOutlineBrief } from '../ind/ctd/section-brief.js';
 import { ICH_M11_PROTOCOL_LIMITATIONS } from '../../../shared/regulatory/protocol-m11.js';
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis.js';
+import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage.js';
 import { getLifecycleDocumentTypeForRegistry } from '../ind/ctd/index.js';
 import { IND_SAFETY_REPORT_ROUTE_LIMITS, IND_SAFETY_REPORT_TIMING } from '../ind/ctd/lifecycle-document-types.js';
 import { renderDraftProductAdvisory } from './draft-product-advisory.js';
 import { loadRecordedDraftProductContext } from './draft-product-context.js';
-import { AnaProjectScopeError } from './project-scope-admission';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import type { RequestSqlClient } from '../../db/requestDb';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,6 +174,13 @@ const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
 };
 
 function preparationRoute(entry: RegulatoryApplicationType | null) {
+  if (entry?.id === 'UK_CTA') {
+    const route = submissionChannelFor(entry);
+    return {
+      channel: route.kind === 'unconnected' ? route.channel : 'UK CTA delivery route unassessed',
+      scope: `${route.kind === 'unconnected' ? route.applicantStep : 'Confirm the applicable delivery route.'} Content preparation only; no IRAS field schema is supplied. Complete and validate actual forms in IRAS.`,
+    };
+  }
   if (!entry || (entry.segment !== 'pharma_biotech' && !isDeviceDocumentScope({ entry })) || !['US', 'EU', 'CA', 'JP'].includes(entry.region)) return null;
   return buildDocumentPreparation({ registryId: entry.id }).regionalRoute;
 }
@@ -347,15 +354,27 @@ function recordRequirements(
 }
 
 function blueprintLines(entry: RegulatoryApplicationType, section: SectionBlueprint['sections'][number]): string {
+  const context = getSectionBlueprintContext(entry.id);
   const lines = [
     `SECTION REQUIREMENTS (from the ${entry.displayName} authoring blueprint):`,
     `- Section: ${section.code} — ${section.title}`,
     `- Content type: ${section.contentType}`,
     `- ${section.required ? 'Expected in the selected platform scaffold; confirm agency and client applicability' : 'Conditional or optional scaffold branch; applicability is unresolved, not waived'}`,
   ];
+  if (context.basis) {
+    lines.push(`- Authoring basis: ${basisLabel(context.basis)}`);
+    if (context.basis.url) lines.push(`- Basis source: ${context.basis.url}`);
+    if (context.basis.checked) lines.push(`- Basis source checked: ${context.basis.checked}`);
+  }
   if (section.guidance) lines.push(`- Recorded authoring guidance: ${section.guidance}`);
-  lines.push(...getSectionBlueprintContext(entry.id).limitations.map(s => `- Scope limitation: ${s}`));
+  lines.push(...context.limitations.map(s => `- Scope limitation: ${s}`));
   return lines.join('\n');
+}
+
+/** Exact regional row identity also reaches the existing editor advisory path. */
+function blueprintSource(entry: RegulatoryApplicationType, section: BlueprintRow, fallback: string): string {
+  return ['UK_CTA', 'EU_CTA', 'CA_CTA', 'CA_CTA_A'].includes(entry.id)
+    ? `blueprint:regional:${entry.id}:${section.code}` : fallback;
 }
 
 type BlueprintRow = SectionBlueprint['sections'][number];
@@ -623,7 +642,7 @@ function blueprintRequirements(
     const component = componentRequirements(entry, sectionType);
     if (component) return component;
     const section = blueprint.sections.find(matchRow);
-    return section ? { requirements: blueprintLines(entry, section), requirementsSource: 'blueprint' } : none;
+    return section ? { requirements: blueprintLines(entry, section), requirementsSource: blueprintSource(entry, section, 'blueprint') } : none;
   }
 
   // The blueprint's Module 1 rows are not a brief for a CTD entry: CTD_SECTIONS
@@ -794,7 +813,7 @@ function scopedCtdRequirements(ctx: CtdDraftContext, lead: ReturnType<typeof lea
   // replace their Module 1 with FDA guidance or their quality alternatives
   // with an unconditional marketing dossier requirement.
   const local = entry.region === 'CA' ? blueprint.sections.find(matchRow) : undefined;
-  return local ? { requirements: blueprintLines(entry, local), requirementsSource: 'blueprint:regional' } : null;
+  return local ? { requirements: blueprintLines(entry, local), requirementsSource: blueprintSource(entry, local, 'blueprint:regional') } : null;
 }
 
 /** The requirements block alone; resolveDraftingRequirements also names its source. */
@@ -838,6 +857,10 @@ export function resolveSystemPrompt(submissionType: string): string {
 export type RegulatoryFramework = 'fda_510k' | 'fda_pma' | 'eu_mdr' | 'ich_clinical' | 'cer_clinical_evaluation' | 'general_regulatory';
 
 export interface DocumentDraftRequest {
+  /** Approved tenant custody reference; its stored residual supplies all model context. */
+  derivativeId?: string;
+  /** Exact qualified model/evidence choice for nonstreaming drafting. */
+  qualifiedModelPin?: QualifiedModelPin;
   /** Backend-loaded project evidence; never copied from tool arguments. */
   sourceContext?: import('./draft-project-sources.js').DraftSourceContext;
   /** Regulatory framework context */
@@ -891,6 +914,13 @@ export interface DocumentDraftRequest {
 }
 
 export interface DocumentDraftResponse {
+  /** Identifies the actual nested generation; authoritative use must verify its immutable gateway row. */
+  derivativeGeneration?: {
+    requestId: string; provider: GatewayResponse['provider']; model: string;
+    resolvedModel?: string; contentSha256: string; derivativeId: string; payloadSha256: string;
+  };
+  /** Local token/source round-trip proof, never a claim of semantic verification. */
+  derivativeVerification?: GatewayResponse['derivativeVerification'];
   /** Generated document content */
   content: string;
   /** Extended thinking output (reasoning chain) */
@@ -961,6 +991,7 @@ export interface BatchDocumentRequest {
  * The selected-source object itself must retain its private issuer identity. */
 function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftRequest {
   const pinned = { ...request };
+  if (pinned.qualifiedModelPin !== undefined) pinned.qualifiedModelPin = Object.freeze({ ...pinned.qualifiedModelPin });
   const signal = trustedSignal(pinned.signal);
   if (signal) pinned.signal = signal;
   else delete pinned.signal;
@@ -971,12 +1002,13 @@ function snapshotDraftRequest(request: DocumentDraftRequest): DocumentDraftReque
 /** Keep source authority and its guarded outbound callback on the server. */
 async function draftSourceCheckpoint(req: DocumentDraftRequest) {
   const identity = Object.freeze({ organizationId: req.organizationId, userId: req.userId, projectId: req.projectId });
-  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit } = await import('./draft-project-sources.js');
+  const { assertDraftSourceContextCurrent, draftSourcePrompt, draftSourceAudit, draftSourceSensitivityTiers } = await import('./draft-project-sources.js');
   const assertCurrent = () => assertDraftSourceContextCurrent(req.sourceContext, identity, req.signal);
   await assertCurrent();
   const selectedSources = req.sourceContext?.status === 'loaded';
   if (selectedSources && (req.onStream || req.enableTools)) throw new Error('SOURCE_CONTEXT_REQUIRES_NONSTREAMING_DRAFT');
   return { assertCurrent, prompt: draftSourcePrompt(req.sourceContext), audit: draftSourceAudit(req.sourceContext),
+    inputSensitivityTiers: draftSourceSensitivityTiers(req.sourceContext),
     dispatch: selectedSources ? { beforeDispatch: assertCurrent } : {} };
 }
 
@@ -1058,6 +1090,7 @@ export class AnaDocumentDraftingService {
     req = snapshotDraftRequest(req);
     const { signal } = req;
     throwIfDraftCancelled(signal);
+    if (req.derivativeId !== undefined) return this.draftApprovedDerivative(req);
     const sourceCheckpoint = await draftSourceCheckpoint(req);
     const product = await draftProductInputs(req);
     const { productRead, recordedSubmissionType, submissionType } = product;
@@ -1076,12 +1109,13 @@ export class AnaDocumentDraftingService {
     // Build gateway request
     const gatewayRequest: GatewayRequest = {
       taskType: 'document_drafting',
+      inputSensitivityTiers: sourceCheckpoint.inputSensitivityTiers,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      provider: 'anthropic',
-      model: 'claude-opus-4', // Use Opus for document drafting (registry alias, not a wire version)
+      ...(req.qualifiedModelPin !== undefined ? { qualifiedModelPin: req.qualifiedModelPin }
+        : { provider: 'anthropic' as const, model: 'claude-opus-4' }),
       maxTokens: 8192,
       // Enable prompt caching for regulatory system prompts
       promptCache: { enabled: true, type: 'ephemeral' },
@@ -1154,6 +1188,40 @@ export class AnaDocumentDraftingService {
       finishReason: response.finishReason,
       truncated: isTruncated(response.finishReason),
     };
+  }
+
+  /** The approved residual is the entire input; caller prose and raw project facts are excluded. */
+  private async draftApprovedDerivative(req: DocumentDraftRequest): Promise<DocumentDraftResponse> {
+    const positiveIdentity = (raw: unknown): number | null => {
+      if (typeof raw !== 'number' && !(typeof raw === 'string' && /^[1-9]\d*$/.test(raw))) return null;
+      const value = Number(raw);
+      return Number.isSafeInteger(value) && value > 0 ? value : null;
+    };
+    const organizationId = positiveIdentity(req.organizationId);
+    const userId = positiveIdentity(req.userId);
+    if (organizationId === null || userId === null || typeof req.derivativeId !== 'string' ||
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(req.derivativeId) || req.onStream) {
+      throw new AnaProjectScopeError(400, 'DERIVATIVE_DRAFT_SCOPE_REQUIRED', 'Choose an approved derivative and its current project for nonstreaming drafting.');
+    }
+    const sql = req.contextSqlClient ?? (await import('../../db/runtime.js')).getPool();
+    const scope = await admitAnaProjectScope(sql, { organizationId, userId, projectRef: req.projectId });
+    if (scope.projectId === null) throw new AnaProjectScopeError(400, 'DERIVATIVE_DRAFT_SCOPE_REQUIRED', 'An approved derivative requires its current project.');
+    throwIfDraftCancelled(req.signal);
+    const response = await getGateway().routeDerivative({
+      organizationId, userId, projectId: scope.projectId, derivativeId: req.derivativeId,
+      taskType: 'document_drafting', qualifiedModelPin: req.qualifiedModelPin, maxTokens: 8192, signal: req.signal,
+    });
+    throwIfDraftCancelled(req.signal);
+    if (response.derivativeVerification?.kind !== 'deterministic_token_roundtrip' ||
+        response.derivativeVerification.derivativeId !== req.derivativeId) {
+      throw new AnaProjectScopeError(409, 'DERIVATIVE_VERIFICATION_REQUIRED', 'The derivative result did not include its local round-trip verification. No draft was released.');
+    }
+    return { content: response.content, model: response.model, usage: response.usage,
+      cacheHit: response.cached, latencyMs: response.latencyMs, finishReason: response.finishReason,
+      truncated: isTruncated(response.finishReason), derivativeVerification: response.derivativeVerification,
+      derivativeGeneration: { requestId: response.requestId, provider: response.provider, model: response.model,
+        resolvedModel: response.resolvedModel, contentSha256: createHash('sha256').update(response.content).digest('hex'),
+        derivativeId: req.derivativeId, payloadSha256: response.derivativeVerification.payloadSha256 } };
   }
 
   /**

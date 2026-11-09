@@ -1,0 +1,126 @@
+{
+  "observedAt": "2026-11-06T21:43:34.452453+00:00",
+  "baselineHead": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "baselineTree": "650876f533e14b79de46069c014fc7697af3a9f8",
+  "headAtReceipt": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "state": "Production and tests frozen after focused GREEN and lint. Independent review and catalogue rerun requested. No commit, compiler, build or provider API call by this agent.",
+  "problem": "The selected native Quality source text was admitted and inserted into the AnA stream, but neither gateway request supplied the existing final-dispatch checkpoint. A later access, current-fact, snapshot or disposition change could therefore leave stale native context in a provider request.",
+  "repair": [
+    "Existing retained-source-context owner exports a native-only dispatch guard that privately copies authenticated organization/user/program scalars, exact IDs of originally supplied native contexts, and stable full/text digests, representation identity and supplied text facts.",
+    "Every invocation rereads those same IDs through the canonical current native reader and compares the exact supplied identity set. Missing/superseded/changed sources and failed/denied rereads refuse; empty native rereads cannot succeed.",
+    "The existing stream captures the guard once beside initial context and passes that same callback to both initial and follow-up gateway requests. The existing gateway owns terminal SOURCE_CONTEXT_UNAVAILABLE classification and SDK/capacity/credential checkpoints.",
+    "Retained-only and zero-native selections return no callback and perform no new reread. SDK implementation, model qualification, cancellation, API mounts and stores are unchanged."
+  ],
+  "frozenSourceAndTestPins": {
+    "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+    "server/routes/ana-ri/stream.ts": "c110b04b96dbbc723d608dd47d9dac1989e18f545abf73b20250609955c4547e",
+    "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts": "492b3c19bca7ba52aef011b2f6fdd6023c983a7b4f8276df04d7149010018cd1",
+    "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts": "851b20e4386b9a64c5065258920a8e4ef4fb78b1b3969aa1bd44738a781f5ea2"
+  },
+  "red": {
+    "exitCode": 1,
+    "suites": 2,
+    "passedTests": 8,
+    "failedTests": 14,
+    "durationSeconds": 23.82,
+    "log": "native-quality-dispatch-red.txt.gz",
+    "actualStreamFailures": [
+      "Missing checkpoint on initial/follow-up model requests.",
+      "Initial provider dispatch still occurred after the selected-source checkpoint would refuse.",
+      "Follow-up provider dispatch still occurred after the selected-source checkpoint would refuse."
+    ]
+  },
+  "green": {
+    "exitCode": 0,
+    "suites": 2,
+    "passedTests": 22,
+    "durationSeconds": 24.0,
+    "log": "native-quality-dispatch-green.txt.gz",
+    "cases": {
+      "native-selected-context.test.ts": 18,
+      "stream-native-quality-context.test.ts": 4
+    }
+  },
+  "coverage": [
+    "Stable successive dispatches",
+    "Immutable scope and supplied identity despite caller object mutation",
+    "Zero-native legacy selection",
+    "Mixed native/retained selection only rechecks admitted native IDs",
+    "Stable bounded UTF-8 excerpt",
+    "Originally supplied ID disappears",
+    "Newer valid snapshot is not silently adopted",
+    "Late access/current-fact/disposition/query failure",
+    "Actual HTTP stream passes the same checkpoint to both gateway requests",
+    "Initial and follow-up refusal suppress subsequent scripted provider work"
+  ],
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "newWarnings": 0,
+    "existingStreamWarnings": 25,
+    "otherThreeFileWarnings": 0,
+    "perSiteComparison": {
+      "baselineErrors": 0,
+      "baselineWarnings": 25,
+      "currentErrors": 0,
+      "currentWarnings": 25,
+      "newSites": [],
+      "removedSites": []
+    },
+    "comparisonMethod": "Compare exact baseline and current source-line/rule/message sites, normalizing numeric metric values; no new or removed warning site. Not merely equal total counts."
+  },
+  "runner": {
+    "node": "22",
+    "PATHPrefix": "/workspace/scratch/mdx-node-runtime/node_modules/.bin",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "vitestArgs": [
+      "run",
+      "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts",
+      "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts",
+      "--maxWorkers=1"
+    ]
+  },
+  "logs": {
+    "native-quality-dispatch-red.txt.gz": {
+      "uncompressedSha256": "a18be28e89edcabc975f4d13772e52b1d2ecd5553f1262755bd48de1707e7353",
+      "uncompressedBytes": 16763,
+      "compressedSha256": "eeca334b9722d43ee591f44b191b34d8e4c62594ea6db733456d12c7472e425a",
+      "compressedBytes": 2806
+    },
+    "native-quality-dispatch-green.txt.gz": {
+      "uncompressedSha256": "f2ccdfe1835af093ca046ee2a6eb045c23cca3a96514fc85f7d4acc350c08989",
+      "uncompressedBytes": 7374,
+      "compressedSha256": "8df3933641c983b24886fd499fb99e4d3503dd2cead69d97d9e4118242bcc752",
+      "compressedBytes": 1432
+    },
+    "native-quality-dispatch-eslint.json.gz": {
+      "originalOutputSha256": "98cdfa2c7d082e23681ff4b8a37dfcd7eb4e1dfdcf12e6ad8dd728312a8c2056",
+      "originalOutputBytes": 245878,
+      "archivedOutputSha256": "3a6bc0f8936d3724110a7e1b43c9d6b932bef173e45844d6720fe1d5785b767e",
+      "archivedOutputBytes": 8406,
+      "compressedSha256": "0f73535de981259bf52c8a939ca1a5064a16ffb655ac8c2b985306799baade0d",
+      "compressedBytes": 948,
+      "qualification": "ESLint embedded full source text omitted to keep evidence bounded; all diagnostic fields retained. Original exact stdout remains at the recorded scratch basename.",
+      "originalScratchBasename": "shared-editor-native-quality-dispatch-eslint.json"
+    },
+    "native-quality-dispatch-eslint-baseline.json.gz": {
+      "originalOutputSha256": "5a018d35a55c482d4953e481e3b1d5ebd4bc54d1b36eeb4ba23177bf94b44856",
+      "originalOutputBytes": 244532,
+      "archivedOutputSha256": "55ccb14b66f09a61af865a61d7e9bae59c60310a0abae2627e388e97e3fcc814",
+      "archivedOutputBytes": 7365,
+      "compressedSha256": "701a48bfcdaa74a4cd28a7aa6b381d05b79f2bcd4ca0620a70531e98c07b8702",
+      "compressedBytes": 866,
+      "qualification": "ESLint embedded full source text omitted to keep evidence bounded; all diagnostic fields retained. Original exact stdout remains at the recorded scratch basename.",
+      "originalScratchBasename": "shared-editor-native-quality-stream-eslint-baseline.json"
+    }
+  },
+  "limits": [
+    "Native reader cases use the actual service with mocked canonical access/disposition and database seams. Stream cases use the actual HTTP route and loop with scripted gateway/source-admission seams; they do not qualify an AI provider or native PostgreSQL concurrency.",
+    "Existing SDK-boundary checkpoint and broader source/report companions are independently owned checks, not claimed as rerun here.",
+    "No broad stream refactor, legacy source-resolution behavior change, new production file, route, service, table, storage or external grant."
+  ],
+  "independentReview": {
+    "agent": "editor_context_security_review",
+    "result": "Frozen source passes within the selected-native dispatch scope. No edits or tests by reviewer."
+  }
+}

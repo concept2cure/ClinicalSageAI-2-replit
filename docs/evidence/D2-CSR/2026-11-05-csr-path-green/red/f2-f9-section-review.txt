@@ -1,0 +1,16 @@
+# F2 and F9, section review, before the fixes
+   × reads a template row as template text with data missing: not drafted, not counted, not offered for review 80ms
+   × shows the saved text as saved, with its lines and paragraphs, before an approval 249ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > reads a template row as template text with data missing: not drafted, not counted, not offered for review
+TestingLibraryElementError: Unable to find an element with the text: 2 of 4 ICH E3 headings drafted · 2 are template text with data missing · 1 approved. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the saved text as saved, with its lines and paragraphs, before an approval
+- Expected
++ Received
+- The secondary objectives were:
+- 1. To evaluate cure
+- 2. To evaluate recurrence
+- The sponsor’s table: AE rate &lt;5%.
+- Second paragraph.
++ The secondary objectives were: 1. To evaluate cure 2. To evaluate recurrence The sponsor&#8217;s table: AE rate <5%. Second paragraph.
+      Tests  2 failed | 14 skipped (16)

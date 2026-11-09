@@ -1,0 +1,16 @@
+B8 red: the new tests in client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx against trunk's Vault.tsx,
+VaultVersions.tsx and VaultLifecycle.tsx (an export of HEAD at 0b33248bad; unchanged on trunk since).
+
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Sign review" stands outside the collapsed list, named as the next step for the current version 1231ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Approve" stands outside the collapsed list, named as the next step for the current version 735ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Send for review" stands outside the collapsed list, named as the next step for the current version 801ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > when no step is the person's, nothing is shown above the list 117ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > reads the versions once for the step and the list together 695ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed | 13 skipped (18)
+
+On trunk each step button is inside the collapsed Versions disclosure (list.contains(button) is true). The last two
+cases are guards that hold before and after: no step, nothing shown; one versions read per open.

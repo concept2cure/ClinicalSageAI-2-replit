@@ -1,0 +1,12 @@
+{
+  "pid": 28810,
+  "startedAt": "2026-11-06T21:27:58.920848+00:00",
+  "entrypoint": "npm run dev",
+  "port": 5100,
+  "codespacesFlags": true,
+  "runtimeRole": "app_service",
+  "ownerCredentialInApp": false,
+  "providerConfigured": false,
+  "status": "serving; AnA no_provider",
+  "stoppedAt": "2026-11-06T21:34:37.730826+00:00"
+}

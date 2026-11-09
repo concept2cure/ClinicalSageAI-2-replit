@@ -1,0 +1,227 @@
+/**
+ * Read the native completed narrative run, then inject client-side GET response-order faults.
+ * No CSR/model/agency or authoring write is allowed; ordinary editor presence is retained.
+ * Root starts the existing app and runs this file.
+ * Usage: node <this-file> <existing-job-id> [frozen-run-id] [base-url] [prepared-state-path]
+ * The injected running/503 responses are browser faults, never evidence of server progress/failure.
+ */
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+
+const jobId = Number(process.argv[2]);
+const frozenRunId = process.argv[3] || '';
+const base = process.argv[4] || 'http://127.0.0.1:5100';
+const statePath = process.argv[5] || '/workspace/scratch/demo-cdisc-pilot/csr-demo-state.json';
+assert.ok(Number.isSafeInteger(jobId) && jobId > 0, 'Supply an existing bound CSR job ID.');
+assert.ok(/^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.test(base), 'Use the root-owned local application.');
+const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+const statusPath = `/api/csr/jobs/${jobId}/narratives/status`;
+const result = { status: 'running', startedAt: new Date().toISOString(), jobId,
+  programId: state.programId, documentId: state.documentId, cases: [], blockedWrites: [], allowedPresenceRequests: [],
+  scope: 'Native GET baseline plus explicitly injected browser response-order faults; no narrative generation or model/agency request.' };
+const terminalPrefix = native => `${native.result.composed} of ${native.result.selected} narratives composed from the ADaM rows;`;
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function until(predicate, label, timeout = 20_000) {
+  const deadline = Date.now() + timeout;
+  while (!await predicate()) {
+    assert.ok(Date.now() < deadline, `Timed out waiting for ${label}.`);
+    await delay(40);
+  }
+}
+
+async function session(browser, fault) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  let readOnly = false;
+  await context.route('**/*', async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (['http:', 'https:'].includes(url.protocol) && url.origin !== base) return route.abort();
+    // These endpoints only join/leave the viewer's room or publish that viewer's awareness.
+    // Section locks, document updates, build actions and all other writes remain blocked.
+    const presenceOnly = (request.method() === 'POST' && url.pathname === '/api/realtime-collab/rooms'
+      && request.postDataJSON()?.documentId === state.documentId)
+      || (request.method() === 'DELETE' && url.pathname === `/api/realtime-collab/rooms/${state.documentId}/users/me`)
+      || (request.method() === 'PUT' && url.pathname === `/api/realtime-collab/rooms/${state.documentId}/awareness`);
+    if (presenceOnly) result.allowedPresenceRequests.push({ method: request.method(), path: url.pathname });
+    if (request.method() !== 'GET' && (
+      /\/ai\/draft|\/api\/claude|\/api\/ana(?:\/|-)|\/api\/csr\/jobs|\/(?:dispatch|transmit)(?:\/|$)/.test(url.pathname)
+      || (readOnly && url.pathname.startsWith('/api/') && !presenceOnly))) {
+      result.blockedWrites.push({ method: request.method(), path: url.pathname });
+      return route.abort();
+    }
+    if (request.method() === 'GET' && url.pathname === statusPath && fault?.armed) {
+      try { return await fault.respond(route); }
+      catch (error) {
+        fault.routeErrors.push({ elapsedMs: Date.now() - fault.startedAt, message: error.message.split('\n')[0] });
+        return route.abort().catch(() => {});
+      }
+    }
+    return route.continue();
+  });
+  const page = await context.newPage();
+  page.setDefaultTimeout(30_000);
+  await page.goto(base + '/concept2cure/login');
+  await page.getByRole('button', { name: /demo access/i }).click();
+  await page.getByRole('button', { name: /^Projects$/ }).waitFor({ timeout: 60_000 });
+  readOnly = true;
+  return { context, page };
+}
+
+async function nativeStatus(page) {
+  const response = await page.evaluate(async endpoint => {
+    const response = await fetch(endpoint, { headers: {
+      Authorization: `Bearer ${localStorage.getItem('trialsage_access_token') || ''}`,
+    } });
+    return { status: response.status, body: await response.json() };
+  }, statusPath);
+  assert.equal(response.status, 200, 'The actual bound narrative status must be readable.');
+  const native = response.body.run;
+  assert.equal(native?.status, 'complete', 'Prerequisite: compose the real deterministic narratives before this read-only walk.');
+  assert.ok(native.result && native.result.status === 'complete' && Array.isArray(native.result.sections?.written),
+    'The native completed run must contain its actual recorded outcome.');
+  return native;
+}
+
+async function openNarratives(page) {
+  await page.goto(`${base}/concept2cure/project-home?program=${encodeURIComponent(state.programId)}`);
+  await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click();
+  await page.getByRole('button', { name: 'Open CDISCPILOT01 Clinical Study Report' }).click();
+  await page.waitForURL(/document-authoring/);
+  const data = page.locator('details[aria-label="Build from the study’s data"]');
+  await data.waitFor();
+  if (!await data.evaluate(element => element.open)) await data.locator('summary').click();
+  if (frozenRunId) await data.getByLabel('Study data', { exact: true }).selectOption(frozenRunId);
+  const builds = data.getByRole('region', { name: 'CSR builds from this study data' });
+  await builds.waitFor();
+  await until(async () => (await builds.locator('select[aria-label="CSR build"]').count()) > 0
+    || (await builds.getByRole('status').filter({ hasText: `CSR build ${jobId} ·` }).count()) > 0,
+  'the existing bound CSR build');
+  const picker = builds.getByRole('combobox', { name: 'CSR build', exact: true });
+  if (await picker.count()) await picker.selectOption(String(jobId));
+  await builds.getByRole('status').filter({ hasText: `CSR build ${jobId} ·` }).waitFor();
+  const panel = builds.getByRole('region', { name: 'Patient safety narratives' });
+  await panel.waitFor();
+  return panel;
+}
+
+function reorderedFault(native, newerFailure) {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const fault = { armed: true, phase: 'prime', newerFailure, startedAt: Date.now(), requests: 0,
+    held: false, heldSequence: null, released: false, newerReturned: false,
+    requestOrder: [], responseOrder: [], routeErrors: [],
+    release: () => { fault.released = true; release(); } };
+  const delivered = (sequence, value) => fault.responseOrder.push({ sequence, delivered: value,
+    elapsedMs: Date.now() - fault.startedAt });
+  const running = { ...native, status: 'running', stalled: false, subjectsDone: 0,
+    subjectsTotal: native.subjectsTotal ?? native.result.selected, result: null, error: null,
+    updatedAt: new Date(Date.parse(native.updatedAt) - 1000).toISOString(), completedAt: null };
+  fault.respond = async route => {
+    const sequence = ++fault.requests;
+    const phase = fault.phase;
+    fault.requestOrder.push({ sequence, phase, elapsedMs: Date.now() - fault.startedAt });
+    // The running development app uses React.StrictMode. Fulfill ALL initial reads until the
+    // actually mounted owner displays running; an abandoned first effect cannot start its timer.
+    if (phase === 'prime') {
+      await route.fulfill({ status: 200, json: { run: running } });
+      delivered(sequence, 'injected-running-prime');
+      return;
+    }
+    if (phase === 'hold-next') {
+      fault.phase = 'newer';
+      fault.held = true;
+      fault.heldSequence = sequence;
+      await gate;
+      await route.fulfill({ status: 200, json: { run: running } });
+      delivered(sequence, 'injected-older-running');
+      return;
+    }
+    if (phase === 'newer') fault.phase = 'native';
+    if (phase === 'newer' && newerFailure) {
+      await route.fulfill({ status: 503, json: { error: 'The narrative build status could not be read.' } });
+      delivered(sequence, 'injected-newer-read-failure');
+      fault.newerReturned = true;
+      return;
+    }
+    // Newer completion is fetched from the running application, not invented by this walk.
+    const response = await route.fetch();
+    assert.equal(response.status(), 200, 'The live narrative status read must still succeed.');
+    const body = await response.json();
+    assert.equal(body.run?.status, 'complete', 'The native run must remain complete throughout the client fault.');
+    await route.fulfill({ response });
+    delivered(sequence, 'native-complete');
+    if (phase === 'newer') fault.newerReturned = true;
+  };
+  return fault;
+}
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: '/usr/bin/chromium' });
+  const contexts = [];
+  const faults = [];
+  try {
+    const baseline = await session(browser);
+    contexts.push(baseline.context);
+    const native = await nativeStatus(baseline.page);
+    const panel = await openNarratives(baseline.page);
+    await panel.getByRole('status').filter({ hasText: terminalPrefix(native) }).waitFor();
+    assert.equal(await panel.getByRole('progressbar', { name: 'Narrative progress' }).count(), 0);
+    result.native = { runId: native.id, status: native.status, composed: native.result.composed,
+      selected: native.result.selected, sectionsWritten: native.result.sections.written };
+    result.cases.push({ name: 'Actual completed run is visible inside the existing CSR editor', status: 'passed', injected: false });
+    await baseline.context.close();
+
+    for (const newerFailure of [false, true]) {
+      const fault = reorderedFault(native, newerFailure);
+      faults.push(fault);
+      const current = await session(browser, fault);
+      contexts.push(current.context);
+      const currentPanel = await openNarratives(current.page);
+      await currentPanel.getByRole('progressbar', { name: 'Narrative progress' }).waitFor();
+      fault.phase = 'hold-next';
+      await until(() => fault.held && fault.newerReturned, 'deliberately reordered status reads');
+      const latest = newerFailure
+        ? currentPanel.getByRole('alert').filter({ hasText: 'The narrative build status could not be read.' })
+        : currentPanel.getByRole('status').filter({ hasText: terminalPrefix(native) });
+      await latest.waitFor();
+      fault.release();
+      await until(() => fault.responseOrder.some(reply => reply.sequence === fault.heldSequence), 'the older response release');
+      // The error case remains mounted; stale success must not erase the latest error before the next poll.
+      await current.page.waitForTimeout(350);
+      assert.ok(await latest.isVisible(), 'The older running response must not replace the latest outcome/read error.');
+      await currentPanel.getByRole('status').filter({ hasText: terminalPrefix(native) }).waitFor({ timeout: 15_000 });
+      await current.page.waitForTimeout(500);
+      const settledRequests = fault.requests;
+      // Completion rereads section headings and may remount this panel once; allow it before proving polling stopped.
+      await current.page.waitForTimeout(4500);
+      assert.equal(fault.requests, settledRequests, 'A stale running response must not restart status polling.');
+      assert.equal(await currentPanel.getByRole('progressbar', { name: 'Narrative progress' }).count(), 0);
+      result.cases.push({ name: newerFailure
+        ? 'Newer status-read error survives an older success, then native completion settles'
+        : 'Newer native completion survives an older running response', status: 'passed', injected: true,
+        responseOrder: fault.responseOrder, statusRequests: fault.requests,
+        limitation: newerFailure ? 'Read-error assertion precedes the next native poll.'
+          : 'End-to-end check; editor headings refresh can remount this panel. Hook RED/GREEN is the causal unit proof.' });
+      await current.context.close();
+    }
+    assert.equal(result.blockedWrites.length, 0, 'This read-only walk must not attempt any application write after sign-in.');
+    result.status = 'passed';
+  } catch (error) {
+    result.status = 'failed';
+    result.error = error.message.split('\n')[0];
+    process.exitCode = 1;
+  } finally {
+    for (const fault of faults) fault.release();
+    for (const context of contexts) await context.close().catch(() => {});
+    // Retain diagnostics even when a deliberate fault cannot be delivered; do not turn a timeout into a product claim.
+    result.faults = faults.map(fault => ({ newerFailure: fault.newerFailure, phase: fault.phase,
+      requests: fault.requests, held: fault.held, heldSequence: fault.heldSequence, released: fault.released,
+      newerReturned: fault.newerReturned, requestOrder: fault.requestOrder, responseOrder: fault.responseOrder,
+      routeErrors: fault.routeErrors }));
+    result.finishedAt = new Date().toISOString();
+    fs.writeFileSync(path.join(__dirname, 'browser-narrative-order-result.json'), JSON.stringify(result, null, 2) + '\n');
+    await browser.close();
+  }
+})();

@@ -25,6 +25,7 @@ import { pool } from '../../db.js';
 import { sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
+import { discardUploadObject, durableOrganizationId, putUploadObject, type UploadObject } from '../../services/ana/upload-object-store';
 import { programInOrganization } from '../../services/c2c/program-access.js';
 import { resolveUploadCaptureScope } from '../../services/chat-uploads/capture-scope.js';
 import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
@@ -161,11 +162,26 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // Store the original bytes before metadata, extraction or Data Room
     // capture. A failed write must not leave a record claiming usable evidence
     // at a dangling storage_path. Missing/empty buffers were refused above.
+    //
+    // DURABLY (LX-02, 2026-11-05). The only copy used to be the file at
+    // storagePath, on the serving task's own container disk: production runs
+    // two API tasks with no volume there, so the other task could not read it
+    // and every deploy erased it, while the rows below kept its checksum
+    // (DR-ANA-11). An organization's upload now goes first to the one byte
+    // store (STORAGE_PROVIDER, s3 in production), which loadUploadedFile reads.
+    // The file at storagePath stays as the task's working copy for AnA's
+    // path-based tools, and is the only copy of an upload with no organization.
+    // Only an organization that resolves to a numeric id owns a durable copy,
+    // the same rule the source identity below applies (numericOrgId).
+    const durableOrgId = durableOrganizationId(orgId);
+    let durable: UploadObject | null = null;
     try {
+      if (durableOrgId != null) durable = await putUploadObject(durableOrgId, fileId, mimeType, fileBuffer);
       const resolved = path.resolve(process.cwd(), storagePath);
       await fs.mkdir(path.dirname(resolved), { recursive: true });
       await fs.writeFile(resolved, fileBuffer);
     } catch (err) {
+      if (durable && durableOrgId != null) await discardUploadObject(durable, durableOrgId);
       logger.warn('Upload rejected — original bytes could not be stored', {
         fileId,
         reason: err instanceof Error ? err.message : 'unknown',
@@ -184,8 +200,9 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // INSERT previously did — made every `WHERE organization_id = $n` lookup in
     // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at,
+                                 storage_provider, storage_object_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW(), $9, $10)`,
       [
         fileId,
         userId,
@@ -200,6 +217,9 @@ export const uploadHandler = async (req: Request, res: Response) => {
         // after the fact (GA ledger L25). Null only if this route ever runs
         // without a buffer — the checksum must describe real bytes or nothing.
         fileBuffer ? sha256Hex(fileBuffer) : null,
+        // Where the durable copy is (LX-02); null for an upload with no organization.
+        durable?.provider ?? null,
+        durable?.objectId ?? null,
       ]
     );
 
@@ -301,144 +321,92 @@ export const uploadHandler = async (req: Request, res: Response) => {
         // handler now refuses byte-less uploads outright, so this is
         // unconditional.
         const checksum = sha256Bytes(fileBuffer);
-        const { createSource, createSupersedingSource, findSourceByChecksum, findSupersededCandidate } =
+        const { captureClientSource } =
           await import('../../services/clinical-regulatory-evidence/evidence-spine.service.js');
+        // The platform has two project id-spaces and an upload may arrive
+        // with either: a `regulatory_programs` UUID (what the project
+        // management module selects) or the numeric workspace id. Stamp
+        // whichever we actually got rather than assuming one.
+        const scope = captureScope;
 
-        const existing = await findSourceByChecksum(numericOrgId, checksum, {
-          sourceType: 'client_document',
-          clientProgramId: captureScope.programId,
-          clientWorkspaceId: captureScope.workspaceId,
+        // ── Dossier classification (capture → classify) and declared version ──
+        // The same deterministic classifier the Vault ingest runs, stamped
+        // into the source's metadata so the Data Room can show WHAT this is
+        // and WHERE it likely belongs the moment it lands. A proposal, never a
+        // commitment: filing into the vault stays a governed act. The version
+        // is only ever one the document DECLARES (ledger L21), never a count
+        // of uploads. Both live in data-room-processing.ts, shared with adopt
+        // and the spreadsheet edit.
+        const { dossier, versionDetermination } = await describeCapture(numericOrgId, scope.programId ?? null, {
+          fileName,
+          mimeType,
+          // The filename placeholder built when extraction fails is metadata,
+          // not document text.
+          text: extractionMethod ? extractedText : null,
         });
-        if (existing) {
-          sourceId = existing.id;
-          logger.info('Upload resolved to an existing source identity', {
-            fileId,
-            sourceId,
-            checksum,
-          });
-        } else {
-          // The platform has two project id-spaces and an upload may arrive
-          // with either: a `regulatory_programs` UUID (what the project
-          // management module selects) or the numeric workspace id. Stamp
-          // whichever we actually got rather than assuming one.
-          const scope = captureScope;
-
-          // ── Dossier classification (capture → classify) and declared version ──
-          // The same deterministic classifier the Vault ingest runs, stamped
-          // into the source's metadata so the Data Room can show WHAT this is
-          // and WHERE it likely belongs the moment it lands. A proposal, never a
-          // commitment: filing into the vault stays a governed act. The version
-          // is only ever one the document DECLARES (ledger L21), never a count
-          // of uploads. Both live in data-room-processing.ts, shared with adopt
-          // and the spreadsheet edit.
-          const { dossier, versionDetermination } = await describeCapture(numericOrgId, scope.programId ?? null, {
-            fileName,
+        // Typed against the capture writer's parameter so pulling the literal out of
+        // the call keeps its string-union fields (sourceType, visibilityClass,
+        // the two statuses) instead of widening them to string.
+        const sourceParams: Parameters<typeof captureClientSource>[1] = {
+          sourceType: 'client_document',
+          // A Data Room source belongs to its project (only project-scoped
+          // uploads reach here).
+          visibilityClass: 'project_private',
+          clientProgramId: scope.programId,
+          clientWorkspaceId: scope.workspaceId,
+          title: fileName,
+          // The stored blob these bytes live at.
+          storedArtifactRef: storagePath,
+          checksum,
+          // Null unless the document actually declares one; the determination
+          // travels in provenance either way.
+          version: versionDetermination.version,
+          // Capture is durable; derived text/facts are still pending until
+          // the bound processor commits them on this source.
+          ingestionStatus: 'ingested',
+          extractionStatus: 'pending',
+          provenance: {
+            origin: 'chat_upload',
+            fileUploadId: fileId,
+            storagePath,
+            extractionMethod,
+            extractionWords,
+            uploadedByUserId: userId,
+            // How the version above was arrived at — including when it could
+            // not be. Its ABSENCE on a row means no determination was ever
+            // made, which is not the same fact as `declared: false`.
+            versionDeclaration: {
+              ...versionDetermination.declaration,
+              determinedBy: 'chat_upload ingest',
+            },
+          },
+          metadata: {
+            originalName: fileName,
             mimeType,
-            // The filename placeholder built when extraction fails is metadata,
-            // not document text.
-            text: extractionMethod ? extractedText : null,
-          });
-          // Is this a REVISION of a document this project already holds?
-          //
-          // A new checksum means new bytes, and until now that was the end of
-          // it: the revision became an unrelated source row, and every citation
-          // of the old one went on reporting "content unchanged since cited"
-          // forever, because a source's checksum is never rewritten. Linking the
-          // two is what makes a superseded citation visible at all.
-          //
-          // The lookup is deliberately narrow and declines to decide when two
-          // documents in the project share a filename — see
-          // findSupersededCandidate. It is also best-effort: on a database
-          // without the versioning migration it throws, and "no predecessor
-          // known" is the honest fallback rather than a failed upload.
-          let supersedes: { id: number } | null = null;
-          try {
-            supersedes = await findSupersededCandidate(numericOrgId, {
-              title: fileName,
-              sourceType: 'client_document',
-              programId: scope.programId,
-              workspaceId: scope.workspaceId,
-            });
-          } catch (verErr: any) {
-            logger.warn('Source version lookup unavailable — treating upload as a new document', {
-              fileId,
-              err: verErr?.message,
-            });
-          }
+            fileSize,
+            ...(dossier ? { dossier } : {}),
+          },
+        };
 
-          // Typed against createSource's parameter so pulling the literal out of
-          // the call keeps its string-union fields (sourceType, visibilityClass,
-          // the two statuses) instead of widening them to string.
-          const sourceParams: Parameters<typeof createSource>[1] = {
-            sourceType: 'client_document',
-            // A Data Room source belongs to its project (only project-scoped
-            // uploads reach here).
-            visibilityClass: 'project_private',
-            clientProgramId: scope.programId,
-            clientWorkspaceId: scope.workspaceId,
-            title: fileName,
-            // The stored blob these bytes live at.
-            storedArtifactRef: storagePath,
-            checksum,
-            // Null unless the document actually declares one; the determination
-            // travels in provenance either way.
-            version: versionDetermination.version,
-            // Capture is durable; derived text/facts are still pending until
-            // the bound processor commits them on this source.
-            ingestionStatus: 'ingested',
-            extractionStatus: 'pending',
-            provenance: {
-              origin: 'chat_upload',
-              fileUploadId: fileId,
-              storagePath,
-              extractionMethod,
-              extractionWords,
-              uploadedByUserId: userId,
-              // How the version above was arrived at — including when it could
-              // not be. Its ABSENCE on a row means no determination was ever
-              // made, which is not the same fact as `declared: false`.
-              versionDeclaration: {
-                ...versionDetermination.declaration,
-                determinedBy: 'chat_upload ingest',
-              },
-            },
-            metadata: {
-              originalName: fileName,
-              mimeType,
-              fileSize,
-              ...(dossier ? { dossier } : {}),
-            },
-          };
-
-          // How the link was established travels WITH the record. A reviewer
-          // asking "why does this say my source was superseded" gets the answer
-          // from the row, not from this file.
-          const created = supersedes
-            ? (await createSupersedingSource(
-                numericOrgId,
-                {
-                  ...sourceParams,
-                  provenance: {
-                    ...sourceParams.provenance,
-                    supersedes: {
-                      sourceId: supersedes.id,
-                      matchedOn: 'title+projectScope+sourceType',
-                      decidedBy: 'chat_upload ingest',
-                    },
-                  },
-                },
-                supersedes.id,
-              )).source
-            : await createSource(numericOrgId, sourceParams);
-          sourceId = created.id;
-          logger.info(
-            supersedes
-              ? 'Upload superseded an existing source identity'
+        // The source writer matches study scope before selecting a revision,
+        // then resolves duplicate bytes and records capture/audit/retirement
+        // under one reservation and transaction. An unavailable decision
+        // fails the capture; it is never treated as an unrelated new source.
+        const captured = await captureClientSource(numericOrgId, sourceParams, {
+          text: extractionMethod ? extractedText : null,
+        });
+        sourceId = captured.source.id;
+        logger.info(
+          captured.reused ? 'Upload resolved to an existing source identity'
+            : captured.supersededId ? 'Upload superseded an existing source identity'
               : 'Upload created a canonical source identity',
-            { fileId, sourceId, supersededId: supersedes?.id ?? null },
-          );
-        }
+          { fileId, sourceId, supersededId: captured.supersededId },
+        );
       } catch (sourceErr: any) {
+        if (sourceErr?.name === 'SourceCaptureError') {
+          return res.status(sourceErr.status).json({ error: sourceErr.message, code: sourceErr.code,
+            fileId, ...(sourceErr.sourceId != null ? { sourceId: sourceErr.sourceId } : {}) });
+        }
         sourceWriteFailed = true;
         logger.error('Canonical source identity not created for upload', {
           err: sourceErr?.message,

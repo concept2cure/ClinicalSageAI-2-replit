@@ -31,7 +31,7 @@ export function subscriptionRunUuid(sub: Pick<ReportSubscriptionRow, 'id' | 'org
 /** Only the actual worker supplies this internal source context. */
 function scheduledSourceOptions(sub: ReportSubscriptionRow, programProjectIds?: number[]): Pick<ComputeRunInput, 'recordContext' | 'programProjectIds'> {
   return {
-    ...(sub.reportTypeId === 'lifecycle.obligation_calendar' ? { recordContext: { executor: getPool(), userId: sub.createdBy ?? undefined } } : {}),
+    ...(['lifecycle.obligation_calendar', 'compliance.audit_assurance_pack'].includes(sub.reportTypeId) ? { recordContext: { executor: getPool(), userId: sub.createdBy ?? undefined } } : {}),
     ...(programProjectIds ? { programProjectIds } : {}),
   };
 }

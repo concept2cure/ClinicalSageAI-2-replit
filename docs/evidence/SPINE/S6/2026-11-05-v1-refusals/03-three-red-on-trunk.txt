@@ -1,0 +1,18 @@
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 244ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 262ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 168ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 145ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens the existing Submission Center to check a lost placement reply 389ms
+ × client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > leaves a suggested filing's section for the person to enter 97ms
+ × client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > an earlier version compares with the current one: bytes, details and the changed lines 211ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > the current version offers no comparison with itself 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > a comparison that could not be read is an error, not an empty difference 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > text that could not be compared says why; a capped comparison says so 1ms
+ FAIL  client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx > Place into filing from the Vault > opens with a confirmed filing's section filled in, and reads this version's stage
+ FAIL  client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > an earlier version compares with the current one: bytes, details and the changed lines
+      Tests  3 failed | 11 passed (14)

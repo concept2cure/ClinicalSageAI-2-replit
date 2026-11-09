@@ -67,12 +67,13 @@ import { requestPgClient, requestConnectable } from '../db/requestDb';
 import { seedRbmAssessment } from '../services/rbm/rbm-assessment-seed';
 import {
   scoreRisk, kriStatus, qtlStatus, qtlRangeError,
-  DEFAULT_KRIS, DEFAULT_QTLS, QTL_DIRECTIONS,
+  DEFAULT_KRIS, DEFAULT_QTLS, QTL_DIRECTIONS, DEFAULT_SEED_MARK_KEYS,
   type KriDirection, type QtlDirection,
 } from '../services/rbm/rbm-engine';
 import {
-  generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan,
+  generatePlanFromAssessment, RBM_PLAN_REFUSAL, amendAssessment, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, createAction, requireDraftAssessment, RbmAssessmentEditError,
+  addCtqFactor, CTQ_CATEGORY, CTQ_ITEM_STATUS,
 } from '../services/rbm/rbm-actuator';
 import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
@@ -113,8 +114,6 @@ function getUserId(req: Request): number | null {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SCALE_1_5 = z.number().int().min(1).max(5);
-const CATEGORY = ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'] as const;
-const ITEM_STATUS = ['open', 'mitigating', 'accepted', 'closed'] as const;
 const FRAMEWORK = ['ich_e6r3', 'transcelerate_ract'] as const;
 const ASSESS_STATUS = ['draft', 'active', 'archived'] as const;
 const KRI_DIRECTION = ['higher_worse', 'lower_worse'] as const;
@@ -221,7 +220,11 @@ router.post('/rbm-assessments/seed', async (req, res) => {
   try {
     const assessment = await seedRbmAssessment(requestPgClient(req), { organizationId: orgId, userId: getUserId(req)! }, parsed.data, 'owned');
     return created(res, assessment);
-  } catch (err) { return serverError(res, log, 'seed-assessment', err); }
+  } catch (err) {
+    // A study that already has an assessment: 409 RBM_ASSESSMENT_EXISTS, checked in the seed's transaction.
+    if (err instanceof RbmAssessmentEditError) return clientError(res, err.status, err.message, { code: err.code });
+    return serverError(res, log, 'seed-assessment', err);
+  }
 
 });
 
@@ -302,7 +305,7 @@ router.patch('/rbm-assessments/:id', async (req, res) => {
 const itemListQuery = z.object({
   program_id: z.string().regex(UUID_RE).optional(),
   assessment_id: z.string().regex(/^\d+$/).optional(),
-  status: z.enum(ITEM_STATUS).optional(),
+  status: z.enum(CTQ_ITEM_STATUS).optional(),
 });
 
 router.get('/rbm-risk-items', async (req, res) => {
@@ -329,7 +332,7 @@ const createItemBody = z.object({
   assessmentId: z.number().int().positive().optional().nullable(),
   programId: z.string().regex(UUID_RE).optional().nullable(),
   refCode: z.string().max(40).optional().nullable(),
-  category: z.enum(CATEGORY).optional(),
+  category: z.enum(CTQ_CATEGORY).optional(),
   ctqFactor: z.string().min(1).max(2000),
   riskDescription: z.string().max(4000).optional().nullable(),
   likelihood: SCALE_1_5,
@@ -337,38 +340,35 @@ const createItemBody = z.object({
   detectability: SCALE_1_5.optional().nullable(),
   isCritical: z.boolean().optional(),
   mitigation: z.string().max(4000).optional().nullable(),
-  status: z.enum(ITEM_STATUS).optional(),
+  status: z.enum(CTQ_ITEM_STATUS).optional(),
   assignedTo: z.number().int().positive().optional().nullable(),
 });
 
-function createItemValues(orgId: number, p: z.infer<typeof createItemBody>, score: number): unknown[] {
-  return [orgId, p.assessmentId ?? null, p.programId ?? null, p.refCode ?? null, p.category ?? 'operational',
-    p.ctqFactor, p.riskDescription ?? null, p.likelihood, p.impact, p.detectability ?? null, score,
-    p.isCritical ?? false, p.mitigation ?? null, p.status ?? 'open', p.assignedTo ?? null];
-}
-
+// The schema is the HTTP contract (types, lengths, ids) and its 422 shape. The
+// row is written by addCtqFactor, the insert AnA's add_ctq_factor also uses, so
+// the score and the criticality a caller leaves out are inferred one way.
 router.post('/rbm-risk-items', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = createItemBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
-  const { score } = scoreRisk(p.likelihood, p.impact);
+  // A factor with no assessment is on no assessment page, in no signed content,
+  // and dropped from the RACT screen once an assessment exists. Refused before
+  // any connection, as AnA's add_ctq_factor refuses it.
+  if (p.assessmentId == null) {
+    return clientError(res, 422, 'A critical-to-quality factor must belong to a risk assessment, and none was named. ' +
+      'Start the study\'s risk assessment first, then add the factor to it. Nothing was saved.', { code: 'RBM_ASSESSMENT_REQUIRED' });
+  }
+  const assessmentId = p.assessmentId;
   const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await recheckRbmWrite(req, client);
-    if (p.assessmentId != null) await requireDraftAssessment(client, orgId, p.assessmentId, p.programId ?? undefined);
-    const { rows } = await client.query(
-      `INSERT INTO rbm_risk_items (
-         organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
-         risk_description, likelihood, impact, detectability, risk_score, is_critical,
-         mitigation, status, assigned_to
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
-      createItemValues(orgId, p, score),
-    );
+    await requireDraftAssessment(client, orgId, assessmentId, p.programId ?? undefined);
+    const { item } = await addCtqFactor(client, orgId, { ...p, programId: p.programId ?? null, assessmentId });
     await client.query('COMMIT');
-    return created(res, rows[0]);
+    return created(res, item);
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     if (err instanceof RbmAssessmentEditError) return clientError(res, err.status, err.message, { code: err.code });
@@ -388,6 +388,35 @@ const ITEM_COL: Record<string, string> = {
   residualLikelihood: 'residual_likelihood', residualImpact: 'residual_impact',
 };
 
+/**
+ * What a factor edit derives beside the fields it sets: the scores, recomputed
+ * when their components change, and, when a person changes the likelihood or
+ * the impact, the end of the seed's library-default mark (defaultCtqSeedMark).
+ * The test is a change, not presence: the RACT form (RbmRact.saveItem) always
+ * sends both ratings, filled in from the stored row, so an edit of mitigation or
+ * status alone carries them unchanged and must leave the mark. The comparison
+ * reads the stored values, because the right-hand side of SET sees the row as it
+ * was before the UPDATE.
+ */
+function deriveItemPatch(patch: { setSql: string; args: unknown[] }, d: z.infer<typeof patchItemBody>): void {
+  if (d.likelihood != null && d.impact != null) {
+    patch.args.push(scoreRisk(d.likelihood, d.impact).score);
+    patch.setSql += `, risk_score = $${patch.args.length}`;
+  }
+  if (d.residualLikelihood != null && d.residualImpact != null) {
+    patch.args.push(scoreRisk(d.residualLikelihood, d.residualImpact).score);
+    patch.setSql += `, residual_score = $${patch.args.length}`;
+  }
+  const changed = (['likelihood', 'impact'] as const).filter(k => d[k] != null).map(k => {
+    patch.args.push(d[k]);
+    return `${ITEM_COL[k]} IS DISTINCT FROM $${patch.args.length}::integer`;
+  });
+  if (changed.length > 0) {
+    const cleared = `COALESCE(metadata, '{}'::jsonb)${DEFAULT_SEED_MARK_KEYS.map(k => ` - '${k}'`).join('')}`;
+    patch.setSql += `, metadata = CASE WHEN ${changed.join(' OR ')} THEN ${cleared} ELSE metadata END`;
+  }
+}
+
 router.patch('/rbm-risk-items/:id', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -397,15 +426,7 @@ router.patch('/rbm-risk-items/:id', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const patch = buildPatch(parsed.data, ITEM_COL);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  // Recompute scores when components change.
-  if (parsed.data.likelihood != null && parsed.data.impact != null) {
-    patch.args.push(scoreRisk(parsed.data.likelihood, parsed.data.impact).score);
-    patch.setSql += `, risk_score = $${patch.args.length}`;
-  }
-  if (parsed.data.residualLikelihood != null && parsed.data.residualImpact != null) {
-    patch.args.push(scoreRisk(parsed.data.residualLikelihood, parsed.data.residualImpact).score);
-    patch.setSql += `, residual_score = $${patch.args.length}`;
-  }
+  deriveItemPatch(patch, parsed.data);
   patch.args.push(id, orgId);
   const client = await requestConnectable(req).connect();
   try {
@@ -825,7 +846,7 @@ const createSignalBody = z.object({
   severity: z.enum(SEVERITY).optional(),
   title: z.string().min(1).max(400),
   detail: z.string().max(4000).optional().nullable(),
-  statistic: z.record(z.unknown()).optional().nullable(),
+  statistic: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 router.post('/rbm-signals', async (req, res) => {
@@ -1343,20 +1364,17 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
   const parsed = generatePlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
 
-  const client = await pool.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
     await recheckRbmWrite(req, client);
-    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
+    const result = await generatePlanFromAssessment(client, orgId, { ...parsed.data, createdBy: getUserId(req)! });
     if (!result.generated) {
       await client.query('ROLLBACK');
-      if (result.reason === 'draft_already_open') {
-        return clientError(res, 409,
-          'A draft monitoring plan version is already open for this study — approve or archive it before generating another.');
-      }
-      return clientError(res, 409, result.reason === 'assessment_not_approved'
-        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
-        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
+      // Each refusal answers with its own sentence; a reason with none is a defect, not "no assessment".
+      const reason = result.reason;
+      if (!reason) throw new Error('generatePlanFromAssessment saved nothing and gave no reason.');
+      return clientError(res, reason === 'actor_required' ? 403 : 409, RBM_PLAN_REFUSAL[reason]);
     }
     await client.query('COMMIT');
     return created(res, { ...result.plan, actions: result.actions }, {

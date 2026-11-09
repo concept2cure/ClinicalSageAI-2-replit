@@ -47,14 +47,14 @@ import {
   isActiveAccountStatus,
   isPendingVerificationStatus,
   accountIdOfClaims,
-  endEverySessionOf,
   endingStampOf,
   organizationIdOfClaims,
   readAccountStanding,
   sessionEndedByStanding,
-  stopPersonsRuns,
   untilStampHasBegun,
 } from '../services/account-standing';
+// Ending sessions stops the runs they started; both live with run control (2026-11-08).
+import { endEverySessionOf, stopPersonsRuns } from '../services/ana/run-session-end';
 import {
   EMAIL_UNVERIFIED_MESSAGE,
   VERIFICATION_LINK_INVALID_MESSAGE,
@@ -791,20 +791,29 @@ router.post('/dev-login', async (req: Request, res: Response) => {
       });
     }
 
-    // Look up organization membership
-    const [membership] = await db
-      .select({
-        organizationId: organizationUsers.organizationId,
-        role: organizationUsers.role,
-      })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, userData.id))
-      .limit(1);
+    // A development session still needs an active, verified account and a
+    // real tenant membership. Skipping MFA does not bypass account standing.
+    if (isPendingVerificationStatus(userData.status)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_EMAIL_UNVERIFIED', message: EMAIL_UNVERIFIED_MESSAGE },
+      });
+    }
+    if (!isActiveAccountStatus(userData.status)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
 
-    const organizationId = userData.defaultOrganizationId || membership?.organizationId || null;
-    const jwtRole = membership?.role || 'user';
+    // Match normal /login: a default organization is only a preference.
+    // Never use that preference in the token with the role from a different
+    // membership. Use the organization and role from ONE verified membership.
+    const membership = signInMembership(await membershipsOf(userData.id), userData.defaultOrganizationId);
+    const organizationId = membership?.organizationId ?? null;
+    const jwtRole = membership?.role ?? null;
 
-    if (!organizationId) {
+    if (!organizationId || !jwtRole) {
       return res.status(403).json({
         success: false,
         error: { code: 'AUTH_011', message: 'No organization assigned' },
@@ -816,6 +825,15 @@ router.post('/dev-login', async (req: Request, res: Response) => {
       .from(organizations)
       .where(eq(organizations.id, organizationId))
       .limit(1);
+
+    // A deleted or unprovisioned organization is not a working demo.
+    // Refuse before recording a login or minting any access/refresh token.
+    if (!organization?.id || !organization.name?.trim()) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'The assigned organization is not configured.' },
+      });
+    }
 
     // Update last login timestamp
     await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userData.id));
@@ -892,7 +910,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.errors },
+        error: { code: 'AUTH_001', message: 'Invalid signup data', details: parsed.error.issues },
       });
     }
 

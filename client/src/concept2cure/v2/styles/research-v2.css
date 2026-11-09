@@ -102,7 +102,9 @@
 
   /* ════ Protocol editor hub ════ */
   .pd-wrap{display:flex;flex-direction:column;height:100%;background:var(--bg-000);}
-  .pd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:18px 24px 14px;}
+  /* flex-wrap and row-gap: see the narrow-column note below. row-gap stays after gap, which it narrows. */
+  .pd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:18px 24px 14px;
+    flex-wrap:wrap;row-gap:12px;}
   .pd-kind{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
   .pd-titrow{display:flex;align-items:baseline;gap:10px;margin:4px 0 5px;flex-wrap:wrap;}
   .pd-title{font-size:19px;font-weight:600;color:var(--text-100);margin:0;line-height:1.25;}
@@ -110,6 +112,12 @@
   .pd-subrow{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text-400);}
   .pd-dot{width:3px;height:3px;border-radius:50%;background:var(--bg-400);}
   .pd-head-r{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+  /* A narrow column wraps the head, never squeezes it (2026-11-06, reported by R1 at 390 px). The actions did not
+     shrink, so the title got 120 px beside them and broke one word per line, and the version line ran into the kind
+     label. The title now keeps at least 22rem before the actions drop beneath it, and the actions wrap among
+     themselves. */
+  .pd-head > .pd-head-l{flex:1 1 22rem;}
+  .pd-head > .pd-head-r{flex-shrink:1;flex-wrap:wrap;min-width:0;}
   .pd-autosave{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text-400);}
   .pd-autosave-dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
 

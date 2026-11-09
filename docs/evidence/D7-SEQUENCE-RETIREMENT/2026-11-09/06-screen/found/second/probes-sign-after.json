@@ -1,0 +1,287 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "dana.signer@concept2cure.pro",
+  "signer": "ana.author@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "browser": "141.0.7390.37",
+  "screens": {
+    "s6-signed-1440-light": {
+      "file": "s6-signed-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": {
+        "text": "Signature appliedResponsibility signature recorded against Sequence 0000 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionRetire sequenceStatedSequence 0000 has not been filed with the agency by any route: not by a send from this sequence, not as a package sent from this platform, not from an export, and not by courier or any other route.Signed byAna Author · ana.author@concept2cure.proMeaningResponsibilityReasonSequence 0000 was started with the wrong leaves; a corrected 0000 replaces it.When2026-11-09 11:28:36 UTCNov 09, 2026, 11:28 · UTCChain8bf0e153f5688eeb4a68f8b9aa079d0f1049b9f53bd1dc57bd13268e3018d007Done",
+        "meanings": [],
+        "statement": null,
+        "quoteMarks": null
+      },
+      "notice": "Sequence 0000 is retired, signed by Ana Author (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.es-btn-primary \"Done\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "s8-retired-1440-light": {
+      "file": "s8-retired-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": "Sequence 0000 is retired, signed by Ana Author (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-1440-light": {
+      "file": "after-dispatch-no-sequence-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-1440-light": {
+      "file": "after-sequences-start-0000-1440-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-1440-dark": {
+      "file": "after-dispatch-no-sequence-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-1440-dark": {
+      "file": "after-sequences-start-0000-1440-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-390-light": {
+      "file": "after-dispatch-no-sequence-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-390-light": {
+      "file": "after-sequences-start-0000-390-light.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-dispatch-no-sequence-390-dark": {
+      "file": "after-dispatch-no-sequence-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch (selected)"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "after-sequences-start-0000-390-dark": {
+      "file": "after-sequences-start-0000-390-dark.png",
+      "who": "signer",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "verdict": null,
+      "disclosure": null,
+      "dialog": null,
+      "notice": null,
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0000\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    }
+  },
+  "checks": {
+    "notice": {
+      "text": "Sequence 0000 is retired, signed by Ana Author (responsibility). Its number is free: start sequence 0000 again from the Sequences tab.",
+      "recordKey": false,
+      "signatureId": false
+    },
+    "pageHtmlHasSignatureId": false
+  }
+}

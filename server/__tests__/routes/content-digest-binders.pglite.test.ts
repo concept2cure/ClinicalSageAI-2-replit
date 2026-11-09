@@ -90,6 +90,10 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: SIGNER, organizationId: ORG, role: 'member' };
+    // The request's one connection, as the scope installer pins it: risk writes
+    // open their transaction through requestConnectable (withRiskWrite,
+    // ed5c910584), which reads it here, not through the module mock above.
+    Object.assign(req, { dbClient: conn });
     next();
   });
   a.use('/api/mdx', labelingRouter);
@@ -224,21 +228,35 @@ const getRisk = (id: number) => request(app()).get(`/api/mdx/risk-items/${id}`);
 beforeAll(async () => {
   const pg = new PGlite();
   h.pg = pg as unknown as typeof h.pg;
-  await pg.exec(`CREATE TABLE organizations (id int PRIMARY KEY);
-    CREATE TABLE users (id int PRIMARY KEY, name text, email text, title text);
-    CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id int NOT NULL, user_id int NOT NULL);
+  // Current actor and project admission run on the request's connection before
+  // a risk record is read or written (mdx-risk-access.ts, ed5c910584): status and
+  // role admit an active member with a write role (the signer is an approver, the
+  // role resolveSignerOrgRole answers above), and projects, visibility and
+  // members are what an organization-scope read enumerates. The same tables
+  // ed5c910584 gave risk-acceptance-locked.pglite.test.ts. No project exists, so
+  // every hazard here is organization-scoped, as before.
+  await pg.exec(`CREATE TABLE organizations (id int PRIMARY KEY, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE users (id int PRIMARY KEY, name text, email text, title text, status text NOT NULL DEFAULT 'active');
+    CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id int NOT NULL, user_id int NOT NULL, role text NOT NULL);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer, regulatory_program_id uuid,
+      owner_id integer, created_by_id integer, settings jsonb, status text, client_workspace_id integer);
+    CREATE TABLE project_visibility_settings (project_id integer, organization_id integer, visibility text);
+    CREATE TABLE project_members (project_id integer, organization_id integer, user_id integer, role text, status text);
     CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL REFERENCES organizations(id), deleted_at timestamptz);
     CREATE TABLE q_submissions (id uuid PRIMARY KEY);
     CREATE TABLE ectd_templates (id serial PRIMARY KEY, organization_id int, granule_id text, is_default boolean);
     INSERT INTO organizations VALUES (${ORG}), (8);
     INSERT INTO users VALUES (${AUTHOR}, 'Ana Author', 'author@example.com', NULL), (${SIGNER}, 'Sam Signer', 'signer@example.com', 'Head of RA');
-    INSERT INTO organization_users (organization_id, user_id) VALUES (${ORG}, ${AUTHOR}), (${ORG}, ${SIGNER});`);
+    INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${AUTHOR}, 'member'), (${ORG}, ${SIGNER}, 'approver');`);
   await pg.exec(read('migrations/20260511_qms_and_labeling.sql'));
   await pg.exec(read('migrations/20261029b_labeling_approval_stamps_and_creators.sql'));
   await pg.exec(read('migrations/20260507_mdx_beta_surfaces.sql'));
   // The Authoring artifact a label may name (push-provisioned in production; the columns the binder reads).
+  // project_id and review assignments: an organization-scope risk read lists the
+  // projects the actor reviews artifacts in, as in risk-acceptance-locked.pglite.
   await pg.exec(`CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, artifact_id text, organization_id int NOT NULL,
-    content text NOT NULL, version int NOT NULL DEFAULT 1, ctd_section text)`);
+    content text NOT NULL, version int NOT NULL DEFAULT 1, ctd_section text, project_id integer);
+    CREATE TABLE concept2cure_review_assignments (artifact_id integer, reviewer_id integer, organization_id integer, status text)`);
   // electronic_signatures as the governed-sign PGlite suite shapes it after 20260813d: the columns the one INSERT writes.
   await pg.exec(`CREATE TABLE electronic_signatures (
     id serial PRIMARY KEY, document_id integer, version_id integer, signed_target text, binding_basis text,

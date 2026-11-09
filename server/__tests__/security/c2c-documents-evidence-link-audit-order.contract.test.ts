@@ -17,6 +17,7 @@ vi.hoisted(() => {
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
+import { clearSeats, seatMember, seatProgram } from '../../routes/c2c/__tests__/support/current-member';
 
 const { order, poolQuery, clientQuery, recordGovernedActionMock, state } = vi.hoisted(() => ({
   order: [] as string[],
@@ -37,15 +38,29 @@ vi.mock('../../routes/c2c/actions', () => ({
   recordGovernedAction: recordGovernedActionMock,
 }));
 
+/* Project access (F1, 2026-11-05) is not under test here: the document's program is one the caller can open and
+   change. The access reads are answered from seats (support/current-member.ts) and the edit right is granted; the rules
+   themselves are proven on PostgreSQL in documents-project-scope.pglite.test.ts. */
+vi.mock('../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('../../routes/c2c/__tests__/support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+vi.mock('../../services/report-os/project-access', () => ({ canAccessReportProject: async () => true }));
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+
 let app: express.Express;
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  clearSeats();
+  seatMember(7, 1, 'member');
+  seatProgram(7, PROGRAM);
   order.length = 0;
   state.auditShouldThrow = false;
 
   // Section lookup (returns the section id).
-  poolQuery.mockImplementation(async () => ({ rows: [{ section_id: 5 }] }));
+  poolQuery.mockImplementation(async () => ({ rows: [{ section_id: 5, project_id: PROGRAM }] }));
 
   clientQuery.mockImplementation(async (sql: string) => {
     if (/^\s*BEGIN/i.test(sql)) return { rows: [] };

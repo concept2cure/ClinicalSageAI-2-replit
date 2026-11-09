@@ -1,0 +1,118 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:09:55.575Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:09:55.577Z","pid":38,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:09:55.577Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > two overlapping initial captures of identical bytes commit one identity and one capture audit 131ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > overlapping distinct revisions form one chain without losing captured bytes or audit history 167ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > same-named files for two studies remain current and unrelated under contention 95ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > rechecks the current actor after a real lock wait 35ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > an active organization member without the private project grant cannot capture or resolve its source 43ms
+(node:60) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:09:57.425Z","pid":60,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:09:57.426Z","pid":60,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:09:57.426Z","pid":60,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/data-room-capture-provenance.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":40,"time":"2026-11-08T17:10:10.905Z","pid":60,"hostname":"8e30f1e3f944","context":{"filename":"vr16b-stability-note.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T17:10:11.048Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157810906_1hbts9",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T17:10:11.144Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157810906_1hbts9",
+    "sourceId": 164,
+    "supersededId": null
+  }
+}
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 4ms org=10 user=- caller=embedding-provider req=6651de02-ac3f-454c-b122-084909659060
+
+{"level":40,"time":"2026-11-08T17:10:11.239Z","pid":60,"hostname":"8e30f1e3f944","context":{"sourceId":"cre_source:164","atomId":1,"err":"Model provider request failed."},"msg":"[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T17:10:11.239Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157810906_1hbts9",
+    "sourceId": 164,
+    "atomId": 1,
+    "programId": "e77a3235-b0f5-4dcb-b74d-d2bcb13af0a8",
+    "embeddedChars": 56,
+    "extractedChars": 56,
+    "truncated": false
+  }
+}
+
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 361ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 18ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 4ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 7ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 3ms
+(node:86) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:10:12.215Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:10:12.216Z","pid":86,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:10:12.216Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/qms-project-records.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-11-08T17:10:14.095Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.103Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.107Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.112Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.116Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.120Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.123Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.127Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+{"level":30,"time":"2026-11-08T17:10:14.131Z","pid":86,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 13f16c28-1d94-47ac-8ab7-32c401f39e6f by unknown"}
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the change controls filed under the project, and only those 39ms
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the nonconforming product filed under the project, and only that 31ms
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > lists the controlled documents authored in the project, and no inline register entry 29ms
+ ✓ tests/db/qms-project-records.dbtest.ts > a project’s quality records, by project > answers another organization’s project as not found, and a malformed id as refused, on every list 37ms
+ ✓ tests/db/qms-project-records.dbtest.ts > native change closure and concurrent work > a waiting closure cannot overwrite a concurrent content change 56ms
+ ✓ tests/db/qms-project-records.dbtest.ts > native change closure and concurrent work > a waiting closure cannot overwrite a concurrent requirement change 50ms
+ ✓ tests/db/qms-project-records.dbtest.ts > native change closure and concurrent work > a queued link cannot append a requirement after the authenticated closure wins the parent lock 81ms
+
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+   Start at  09:09:54
+   Duration  20.35s (transform 11.50s, setup 93ms, import 1.72s, tests 18.01s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

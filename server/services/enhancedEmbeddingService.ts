@@ -38,12 +38,42 @@ import crypto from 'crypto';
  * (default 0.7); `minSemanticScore` is the floor on cosine similarity, and the
  * only value a caller may record as ai_retrieval_runs.threshold.
  */
-export interface HybridSearchOptions {
+export type HybridSearchOptions = {
   limit: number;
   organizationUuid: string; // the session's key (server/db/currentTenant.ts)
-  projectId?: string;
   semanticWeight?: number;
   minSemanticScore?: number;
+} & AtomSearchProjectScope;
+
+/**
+ * The projects whose atoms a search may rank (F1, 2026-11-05). Required. With
+ * no project, searchHybrid and searchSimilar ranked every atom in the
+ * organization; with one, they trusted it. So a private project's evidence, and
+ * inside one sponsor's project a CRO's other sponsors', grounded an answer.
+ *
+ * The caller computes it from the person: the projects the sharing policy lets
+ * them open (getAccessibleReportProjectIds, canAccessReportProject in
+ * services/report-os/project-access.ts; readDataRoomProjectScope in
+ * services/data-room-retrieval.ts). [] is an evaluated "no project can be
+ * opened" and ranks nothing. A scope the caller could not read is its error,
+ * never [].
+ */
+export type AtomSearchProjectScope =
+  | { projectIds: readonly number[]; projectId?: undefined }
+  /**
+   * @deprecated One project its caller has admitted. Kept for the one caller
+   * that still passes it, advancedRAGPipeline's project-atom search
+   * (artifactScope). Use projectIds.
+   */
+  | { projectId: string; projectIds?: undefined };
+
+/** The scope's project ids. A missing or malformed scope refuses the search; it never means every project. */
+function atomSearchProjectIds(scope: AtomSearchProjectScope): number[] {
+  const ids = scope.projectIds ?? (scope.projectId === undefined ? undefined : [Number(scope.projectId)]);
+  if (!Array.isArray(ids) || !ids.every(id => Number.isSafeInteger(id) && id > 0)) {
+    throw new Error('atom search refused: no project scope');
+  }
+  return [...ids];
 }
 
 export type EmbeddingModel =
@@ -421,11 +451,12 @@ export class EnhancedEmbeddingService {
     });
   }
 
+  /** Atoms of the scope's projects only (AtomSearchProjectScope); an empty scope ranks nothing. */
   async searchSimilar(
     query: string,
-    limit = 10,
-    threshold = 0.7,
-    organizationUuid?: string,
+    limit: number,
+    threshold: number,
+    scope: { organizationUuid: string | undefined; projectIds: readonly number[] },
     filters?: {
       atomType?: string;
       domain?: string;
@@ -442,12 +473,15 @@ export class EnhancedEmbeddingService {
       sourceType: string | null;
     }>
   > {
+    const { organizationUuid } = scope;
     if (!organizationUuid) {
       console.warn(
         '[enhancedEmbeddingService] searchSimilar called without organizationUuid; refusing to search cross-tenant.'
       );
       return [];
     }
+    const projectIds = atomSearchProjectIds({ projectIds: scope.projectIds });
+    if (projectIds.length === 0) return [];
 
     const queryResult = await this.embed(query, this.defaultModel);
 
@@ -457,8 +491,9 @@ export class EnhancedEmbeddingService {
       threshold,
       limit,
       organizationUuid,
+      projectIds,
     ];
-    let paramIndex = 5;
+    let paramIndex = 6;
 
     if (filters?.atomType) {
       filterSql += ` AND a.atom_type = $${paramIndex++}`;
@@ -487,6 +522,8 @@ export class EnhancedEmbeddingService {
       WHERE a.embedding IS NOT NULL
         AND ${atomDataEligibleSql('a')}
         AND o.uuid = $4
+        AND a.source_type IN ('artifact', 'data_room_upload')
+        AND a.source_id IN (SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = ANY($5::int[]))
         AND 1 - (a.embedding <=> $1::vector) > $2
         ${filterSql}
       ORDER BY a.embedding <=> $1::vector
@@ -507,9 +544,8 @@ export class EnhancedEmbeddingService {
   }
 
   /**
-   * Hybrid search combining semantic and keyword search.
-   * When organizationUuid is provided, results are filtered to that org
-   * (defense-in-depth multi-tenant isolation).
+   * Hybrid search combining semantic and keyword search, over the atoms of the
+   * organization's artifacts in the scope's projects (AtomSearchProjectScope).
    */
   async searchHybrid(
     query: string,
@@ -533,11 +569,15 @@ export class EnhancedEmbeddingService {
     // routes built from the client's x-org-uuid header when the scope had none.
     // Both refusals come before the embedding call, so a refused search costs
     // nothing. docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
-    const { limit, organizationUuid, projectId, semanticWeight = 0.7, minSemanticScore } = options;
+    const { limit, organizationUuid, semanticWeight = 0.7, minSemanticScore } = options;
     if (!isTenantUuid(organizationUuid)) {
       throw new TenantKeyRequiredError('atom search refused: no tenant key');
     }
+    // The projects too (F1, 2026-11-05): no scope is a refusal, and an empty
+    // one ranks nothing. Both before the embedding call, as above.
+    const projectIds = atomSearchProjectIds(options);
     await assertTenantIsCurrent(this.pool, { organizationUuid });
+    if (projectIds.length === 0) return [];
 
     // Generate query embedding
     const queryResult = await this.embed(query, this.defaultModel);
@@ -561,11 +601,7 @@ export class EnhancedEmbeddingService {
     // the COMBINED score, so atoms below the floor can outrank ones above it,
     // and filtering only the top `limit` would drop evidence that qualifies.
     const fetchCount = minSemanticScore === undefined ? limit : limit * 3;
-    const projectFilterClause = projectId
-      ? `AND a.source_type IN ('artifact', 'data_room_upload') AND a.source_id IN (
-           SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = $7
-         )`
-      : '';
+    // The project filter is written out, and binds the scope as one array.
     const { rows } = await this.pool.query(
       `
       WITH org_atoms AS (
@@ -574,7 +610,10 @@ export class EnhancedEmbeddingService {
         JOIN organizations o ON a.organization_id = o.id
         WHERE o.uuid = $6
           AND ${atomDataEligibleSql('a')}
-          ${projectFilterClause}
+          AND a.source_type IN ('artifact', 'data_room_upload')
+          AND a.source_id IN (
+            SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = ANY($7::int[])
+          )
       )
       SELECT h.*, CASE WHEN ${atomOriginalFileAvailableSql('a')} THEN h.title
           ELSE COALESCE(h.title, 'Untitled source') || ' [retained data; original file unavailable]' END AS title
@@ -583,9 +622,7 @@ export class EnhancedEmbeddingService {
       WHERE ${atomDataEligibleSql('a')}
       ORDER BY h.combined_score DESC
       `,
-      projectId
-        ? [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid, Number(projectId)]
-        : [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid]
+      [query, embeddingLiteral, semanticWeight, keywordWeight, fetchCount, organizationUuid, projectIds]
     );
 
     const hits = rows.map((row: any) => ({

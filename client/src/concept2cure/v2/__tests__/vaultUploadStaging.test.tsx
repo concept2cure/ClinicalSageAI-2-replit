@@ -58,7 +58,43 @@ async function choose(files: File[]) {
   return screen.findByTestId('vault-upload-staging');
 }
 
+/* S6 V9 (2026-11-05): the project's settings select the words. A device project's row offers its own evidence kinds
+   and no CTD section, which the Vault would refuse for its filing; a pharma row is as before. */
+describe("a device project's upload row offers the device's own vocabulary", () => {
+  const kinds = (row: HTMLElement) => [...(within(row).getByLabelText('Evidence kind (optional)') as HTMLSelectElement).options].map((o) => o.textContent);
+  it('device: no CMC, batch-record or nonclinical kind, a software kind, and no CTD section field', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload({ tree: cabinetTree(), standard: 'device', spine: '510(k) · 21 CFR 807' }));
+      return ok({ success: true, data: {} });
+    });
+    const panel = await choose([new File(['a'], 'risk-file.pdf')]);
+    const row = within(panel).getByTestId('vault-stage-row');
+    fireEvent.change(within(row).getByLabelText('Folder'), { target: { value: 'module-3' } });
+    const offered = kinds(row);
+    for (const pharmaOnly of ['CMC document', 'Batch record', 'Nonclinical study document', 'Protocol']) expect(offered).not.toContain(pharmaOnly);
+    expect(offered).toContain('Software artifact');
+    expect(within(row).queryByLabelText('CTD section (optional)')).toBeNull();
+  });
+  it('pharma: the CMC kind and the CTD section field, as before', async () => {
+    const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
+    const row = within(panel).getByTestId('vault-stage-row');
+    fireEvent.change(within(row).getByLabelText('Folder'), { target: { value: 'module-3' } });
+    expect(kinds(row)).toContain('CMC document');
+    expect(kinds(row)).not.toContain('Software artifact');
+    expect(within(row).getByLabelText('CTD section (optional)')).toBeTruthy();
+  });
+});
+
 describe('the Vault uploader stages each file with its own fields (gap 7.1)', () => {
+  it('shows confidential as the default while keeping explicit internal classification available', async () => {
+    const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
+    const row = within(panel).getByTestId('vault-stage-row');
+    const classification = within(row).getByLabelText('Classification') as HTMLSelectElement;
+    expect(classification.value).toBe('');
+    expect(within(classification).getByRole('option', { name: 'Confidential (default)' })).toBeTruthy();
+    fireEvent.change(classification, { target: { value: 'INTERNAL' } });
+    expect(classification.value).toBe('INTERNAL');
+  });
   it('lists chosen files as rows and sends nothing until asked', async () => {
     const sent = stubIngest([]);
     const panel = await choose([new File(['a'], 'stability-24m.pdf'), new File(['b'], 'tool.exe'), new File(['c'], '.DS_Store')]);
@@ -176,7 +212,7 @@ describe('the staged list is usable without sight or a pointer (accessibility re
     const group = within(panel).getByRole('group', { name: 'cover-letter.pdf' });
     const folder = within(group).getByLabelText('Folder') as HTMLSelectElement;
     expect([...folder.options].map((o) => o.value)).not.toContain('other-view');
-    expect(within(group).queryByText('Internal')).toBeNull();
+    expect(within(group).getByRole('option', { name: 'Confidential (default)' })).toBeTruthy();
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('button', { name: 'Close' })));
   });

@@ -1,0 +1,11 @@
+# ci:purge-coverage at HEAD 25fbffb614, on a blank PostgreSQL 16 built by install-fresh then deploy-migrate
+❌ purge-coverage: 1 foreign key(s) stop a tenant purge part-way:
+  ✗ public.document_folders (program_id) → public.regulatory_programs, NO ACTION [document_folders_program_id_fkey]: the purge never deletes it
+The purge deletes the list in order in one transaction. For a tenant holding one such row, the
+referenced DELETE fails (23503, or 23502 for SET NULL on a NOT NULL column) and the WHOLE erasure
+--
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - report_bundle_projects
+  - report_bundle_runs
+  - report_bundles
+exit: 1

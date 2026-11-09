@@ -31,6 +31,8 @@
 
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
+import { errorCodeOf } from '@/lib/apiErrorCode';
+import { readFailureFor } from '../mdx/hooks/useFetchJson';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultClassification, VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 import { vaultDocumentCodeForFile } from '@shared/constants/domain/vault-document-code';
@@ -71,7 +73,7 @@ export interface VaultUploadOutcome {
  * What the person said about one file, row by row, before it was sent (gap 7.1,
  * docs/design/VEEVA_GAP_2026-10-22.md). Every field is one POST /api/vault/ingest
  * already validates: a blank one is not sent, and the server's default applies
- * (the title from the file name, classification INTERNAL, and a placement the
+ * (the title from the file name, classification CONFIDENTIAL, and a placement the
  * classifier suggests). A folder named here is recorded as a person's filing
  * ('confirmed'), and only with a folder are the evidence kind and CTD section
  * written, so they are sent only with one.
@@ -273,7 +275,10 @@ async function uploadOne(
     (typeof err === 'object' && err ? err.message : undefined) ??
     body?.message ??
     (typeof err === 'string' ? err : undefined);
-  const code = typeof err === 'object' && err && typeof err.code === 'string' ? err.code : null;
+  /* Every envelope's code, the module gate's top-level `code` among them (S6 V1): read only from an object `error`,
+     a plan without the Vault came through as its bare "Module access denied". */
+  const code = errorCodeOf(body) ?? null;
+  const notEnabled = res.status === 403 && readFailureFor(403, code) === 'not-enabled';
   // Body-size/type refusals precede admission. An explicit unknown result
   // still takes precedence; gateways and server failures cannot prove rollback.
   const unknown = code === 'OUTCOME_UNKNOWN' || (![413, 415].includes(res.status) && mutationUnconfirmed(res.status, code ?? undefined));
@@ -283,7 +288,8 @@ async function uploadOne(
      string is rendered verbatim. */
   return {
     ok: false,
-    reason: redactInternals(raw, unknown
+    /* The gate's own reason names a module id ("vault: Not included in this plan"); the person is told what it means. */
+    reason: notEnabled ? 'the Vault is not enabled for your organization' : redactInternals(raw, unknown
       ? `the server reply did not confirm whether it was recorded (HTTP ${res.status})`
       : `the server refused it (HTTP ${res.status})`),
     code,

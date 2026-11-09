@@ -1,0 +1,133 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "creator": "ana.author@concept2cure.pro",
+  "signer": "dana.signer@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "submission": "18",
+  "sequences": {
+    "proof": "31",
+    "document": "32"
+  },
+  "browser": "141.0.7390.37",
+  "screens": {
+    "s2a-release-proof-stated-1440-light": {
+      "file": "s2a-release-proof-stated-1440-light.png",
+      "who": "signer",
+      "door": {
+        "open": true,
+        "className": "pj-more sc-mt",
+        "summary": "Settle the held send…",
+        "summaryHit": "hit",
+        "text": "Settle the held send…Sequence 0001's send of 7 November 2026 at 14:12 UTC is held: the platform holds no verified answer from FDA to it.The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. Nothing was changed.Release as not receivedOn the platform's own record that this send never left. Sequence 0001 can then be sent again, under a new signature.By signing, you would state:The platform's own record shows that the send of sequence 0001 on 7 November 2026 at 14:12 UTC never left this platform: no AS2 message was formed for it, and this platform forms that message before any byte is sent. FDA cannot confirm a send it never received, so no FDA document is cited. Releasing the send lets sequence 0001 be sent again, under a new signature. If this record is wrong and FDA did receive the first send, sending sequence 0001 again files it twice: FDA would hold two copies of sequence 0001, and may refuse the second or require it to be corrected.Sign: release sequence 0001's send",
+        "buttons": [
+          {
+            "text": "Release as not received",
+            "className": "btn ghost small",
+            "hit": "hit"
+          },
+          {
+            "text": "Sign: release sequence 0001's send",
+            "className": "btn ghost small",
+            "hit": "hit"
+          }
+        ]
+      },
+      "dialog": null,
+      "notice": null,
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signed-release-1440-light": {
+      "file": "s6-signed-release-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": {
+        "text": "Signature appliedResponsibility signature recorded against Sequence 0001 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionRelease sequence 0001's held sendStatedThe platform's own record shows that the send of sequence 0001 on 7 November 2026 at 14:12 UTC never left this platform: no AS2 message was formed for it, and this platform forms that message before any byte is sent. FDA cannot confirm a send it never received, so no FDA document is cited. Releasing the send lets sequence 0001 be sent again, under a new signature. If this record is wrong and FDA did receive the first send, sending sequence 0001 again files it twice: FDA would hold two copies of sequence 0001, and may refuse the second or require it to be corrected.Signed byDana Signer · dana.signer@concept2cure.proMeaningResponsibilityReasonOur record shows no AS2 message was formed; nothing reached FDA.When2026-11-09 14:17:10 UTCNov 09, 2026, 14:17 · UTCChain1a84fceb903bf10e32f884d766a85a4a1f6feaeb416b720a6189113bcb9fbd77Done",
+        "meanings": [],
+        "statement": null,
+        "buttons": [
+          {
+            "text": "Done",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": "Sequence 0001's held send is released as not received, on the platform's own record that it never left, signed by Dana Signer (responsibility). It can be sent again, under a new signature.",
+      "recordKeyOnScreen": true,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s8-released-1440-light": {
+      "file": "s8-released-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0001's held send is released as not received, on the platform's own record that it never left, signed by Dana Signer (responsibility). It can be sent again, under a new signature.",
+      "recordKeyOnScreen": true,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s6-signed-received-1440-light": {
+      "file": "s6-signed-received-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": {
+        "text": "Signature appliedResponsibility signature recorded against Sequence 0002 · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND). The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.ActionRecord sequence 0002 as receivedFDA documentWalk stand-in for FDA Ack2, sequence 0002 (not an FDA document), version 1StatedFDA's Ack2 for the send of sequence 0002 on 7 November 2026 at 14:12 UTC (AS2 message ID <walk-p92-0002@sponsor.example>) is the document chosen from this project's Vault. It shows that FDA unpacked sequence 0002 and delivered it to the center. Sequence 0002 is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence 0002, it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.Signed byDana Signer · dana.signer@concept2cure.proMeaningResponsibilityReasonThe Ack2 shows FDA unpacked sequence 0002 and delivered it to the center.When2026-11-09 14:17:18 UTCNov 09, 2026, 14:17 · UTCChainef18d08691d719b416e615581cc8133777d454e794ad088684f5a798a1b88661Done",
+        "meanings": [],
+        "statement": null,
+        "buttons": [
+          {
+            "text": "Done",
+            "className": "es-btn-primary",
+            "hit": "hit"
+          }
+        ]
+      },
+      "notice": "Sequence 0002 is recorded as received by FDA, on its Ack2 kept in the Vault, signed by Dana Signer (responsibility).",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "s8-received-1440-light": {
+      "file": "s8-received-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0002 is recorded as received by FDA, on its Ack2 kept in the Vault, signed by Dana Signer (responsibility).",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  },
+  "checks": {
+    "release": {
+      "file": "s8-released-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0001's held send is released as not received, on the platform's own record that it never left, signed by Dana Signer (responsibility). It can be sent again, under a new signature.",
+      "recordKeyOnScreen": true,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    },
+    "received": {
+      "file": "s8-received-1440-light.png",
+      "who": "signer",
+      "door": null,
+      "dialog": null,
+      "notice": "Sequence 0002 is recorded as received by FDA, on its Ack2 kept in the Vault, signed by Dana Signer (responsibility).",
+      "recordKeyOnScreen": false,
+      "signatureIdInPage": false,
+      "overflowX": false,
+      "pageErrors": []
+    }
+  }
+}

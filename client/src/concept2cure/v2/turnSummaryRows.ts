@@ -41,6 +41,7 @@ import {
   type TaskEvent,
   type TimelineControl,
   type TimelineEvent,
+  type WorkerSnapshot,
 } from '@shared/ana/turn-timeline';
 import { isContinuable, stopLineText } from './anaWorkModel';
 import { notAuthorisedLine } from '@shared/ana/stop-lines';
@@ -123,6 +124,7 @@ export interface StepRow {
 
 export type SummaryRow =
   | { kind: 'note'; key: string; text: string }
+  | { kind: 'worker'; key: string; worker: WorkerSnapshot }
   | StepRow
   | TaskRow
   | { kind: 'control'; key: string; text: string; message?: string }
@@ -350,6 +352,7 @@ function itemRow(item: ReturnType<typeof orderTimeline>[number], ctx: RowContext
   if (e.kind === 'note') return { kind: 'note', key: `n-${e.seq}`, text: e.text.trim() };
   if (e.kind === 'task') return taskRow(e, ctx);
   if (e.kind === 'end') return endRow(e.outcome, e.stoppedReason, `e-${e.seq}`, endNotes(ctx.states, ctx.opts));
+  if (e.kind === 'worker') return { kind: 'worker', key: `w-${e.seq}-${e.receipt.eventId}`, worker: e };
   const s = ctx.states.get(e.step);
   // One row per step, where it first appeared. Her plan updates are the task
   // rows; a plan update that did not go through stays a row, never folded away.

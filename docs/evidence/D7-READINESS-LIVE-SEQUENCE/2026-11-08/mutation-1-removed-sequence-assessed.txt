@@ -1,0 +1,11 @@
+MUTATION 1-removed-sequence-assessed in server/services/ectd/assess-dispatch-readiness.ts (on the final code and tests, 2026-11-09T00:13:05.488013Z): replaced [    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId), isNull(ectdSequences.deletedAt)))
+    .limit(1);
+  if (!sequence) throw await sequenceNotFound] with [    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId)))
+    .limit(1);
+  if (!sequence) throw await sequenceNotFound]
+ × server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > a removed sequence has no dispatch readiness (F1 repair B) > a complete amendment, once removed, is answered as not found, by its number, never as ready 68ms
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.ind-program.pglite.test.ts > a removed sequence has no dispatch readiness (F1 repair B) > a complete amendment, once removed, is answered as not found, by its number, never as ready
+AssertionError: promise resolved "{ sequenceId: 1, region: 'fda', …(18) }" instead of rejecting
+restored sha256 2bdff944d06a5157aa354564766602f6df0fb5187e9ab933e58d53d01c019264 (expected 2bdff944d06a5157aa354564766602f6df0fb5187e9ab933e58d53d01c019264)

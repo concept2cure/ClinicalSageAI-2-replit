@@ -112,13 +112,12 @@
    page's size never reached a paragraph. Paragraphs, list items and quotes inherit from the page instead.
    (Document view's `.ed-full-sec-body` takes the same inheritance in authoring-v2.css, beside its type.)
 
-   Insets. Until D4-6, the section's text still sits in DocumentWorkbench's bordered box, an inline
-   style. So the ribbon, the text, the empty-state call and the review strip keep a side inset here, and
-   nothing sits on the box's border. D4-6 replaces the box with the borderless `.ed-page` and takes these
-   insets to 0, as §D4.K writes them. */
+   Insets. The section's text sits on the borderless `.ed-page` (§D4.D item 3, completed 2026-11-09), so the
+   text, the empty-state call and the review strip (which has its own border) take the column's edge, as §D4.K
+   writes them (0); the ribbon spans the page (below). */
 .ed .rse-root { background: transparent; border-radius: 0; }
 .ed .rse-body { overflow: visible; }
-.ed .rse-body .tiptap { min-height: 360px; padding: 20px 20px 40px; font-family: var(--font-serif); font-size: var(--fs-prose, 16px); line-height: 1.7; color: var(--text-100); }
+.ed .rse-body .tiptap { min-height: 360px; padding: 20px 0 40px; font-family: var(--font-serif); font-size: var(--fs-prose, 16px); line-height: 1.7; color: var(--text-100); }
 .ed .rse-body .tiptap :is(p, li, blockquote) { font-family: inherit; font-size: inherit; line-height: inherit; color: inherit; }
 .ed .rse-body .tiptap > :is(p, h1, h2, h3, ul, ol, blockquote) { max-width: none; }
 .ed .rse-body .tiptap :is(h1, h2, h3) { font-family: var(--font-serif); font-weight: 600; color: var(--text-100); }
@@ -133,25 +132,35 @@
 .ed .rse-root:focus-within .rse-ribbon { border-bottom-color: var(--border-focus); }
 
 /* The ribbon: one quiet row that scrolls inside itself. Each control keeps its own width, so a labelled
-   one ("Ask for a source", "Track changes") never shrinks and wraps inside itself. The scrollbar stays
-   (thin) while the row holds more than the page is wide: until D4-6 moves the second group under "More
-   formatting" and the AnA actions become icons, the end of the row is past the edge at 1440 px, and a
-   pointer must be able to see that and reach it. Every control is also in the Tab order. */
-.ed .rse-ribbon { position: sticky; top: 0; z-index: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 2px; padding: 6px 8px; background: var(--bg-000); border-bottom: 1px solid var(--border); transition: border-color var(--dur) var(--ease); }
+   one ("Ask for a source", "Track changes") never shrinks and wraps inside itself. D4-6 (D4.md §D4.D,
+   J3 R1, 2026-11-09) moved the second group under "More formatting" and made the AnA actions icons, so the
+   whole row fits at 1440 px. The scrollbar stays (thin) for narrower panels, where the row still scrolls
+   inside itself and a pointer must see that and reach the end. Every control is also in the Tab order. */
+.ed .rse-ribbon { position: sticky; top: 0; z-index: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 2px; padding: 6px 4px; background: var(--bg-000); border-bottom: 1px solid var(--border); transition: border-color var(--dur) var(--ease); }
 .ed .rse-ribbon > * { flex-shrink: 0; }
+/* Row 2, "More formatting", shows only when asked (the base .rse-ribbon is display:flex, which would beat
+   the hidden attribute). The AnA actions, the suggestions chip and Track changes close row 1, pushed right. */
+.rse-ribbon-more[hidden] { display: none; }
+.rse-ribbon-end { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding-left: 4px; flex-shrink: 0; }
+.ed .rse-ribbon-more { position: static; z-index: auto; border-bottom: 1px solid var(--border-subtle); }
+/* The ribbon is the page's toolbar, so it spans the page (816px), not the text column inside it (720px): the
+   running-app walk of 2026-11-09 found row 1 given 718px for 813px of controls, with Track changes 91px past the
+   edge at 1440 (the D4-6 probe had measured it at the page's full width). The negative margin is the page's own
+   side padding (--ed-page-pad-x, authoring-v2.css), so the two cannot drift apart at either width. */
+.ed .ed-doc-inner .rse-ribbon { margin-inline: calc(-1 * var(--ed-page-pad-x, 0px)); }
 .ed .rse-rb { min-width: 28px; height: 28px; padding: 0 6px; border: 0; border-radius: 6px; font-size: var(--fs-small, 13px); color: var(--text-300); transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
 .ed .rse-rb:hover { background: var(--bg-100); color: var(--text-100); }
 .ed .rse-rb[data-active] { background: var(--bg-200); color: var(--text-100); }
 .ed .rse-sel { height: 28px; border: 0; border-radius: 6px; background: transparent; font-size: var(--fs-small, 13px); color: var(--text-200); }
 .ed .rse-sel:hover { background: var(--bg-100); }
-.ed .rse-sep { height: 16px; background: var(--border); }
-.ed .rse-track { gap: 6px; margin-left: 4px; font-size: var(--fs-small, 13px); color: var(--text-300); white-space: nowrap; }
+.ed .rse-sep { height: 16px; margin: 0 1px; background: var(--border); }
+.ed .rse-track { gap: 6px; margin-left: 2px; font-size: var(--fs-small, 13px); color: var(--text-300); white-space: nowrap; }
 .ed .rse-track input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--text-100); }
 .ed .rse-link { font-size: var(--fs-small, 13px); color: var(--text-300); }
 .ed .rse-link:hover:not(:disabled) { color: var(--text-100); text-decoration: underline; }
 .ed .rse-link:disabled { color: var(--text-400); }
-.ed .rse-empty-cta { padding: 16px 20px 0; }
-.ed .rse-review { margin: 12px 20px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: none; max-height: 240px; }
+.ed .rse-empty-cta { padding: 16px 0 0; }
+.ed .rse-review { margin: 12px 0; border: 1px solid var(--border); border-radius: var(--radius-xl); background: none; max-height: 240px; }
 .ed .rse-review-h { font-size: var(--fs-small, 13px); font-weight: 600; color: var(--text-200); }
 .ed .rse-review-kind { font-size: var(--fs-caption, 12px); font-weight: 500; letter-spacing: 0; text-transform: none; }
 .ed .rse-gate, .ed .rse-find { background: var(--bg-050); font-size: var(--fs-small, 13px); }

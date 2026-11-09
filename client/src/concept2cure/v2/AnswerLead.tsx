@@ -12,6 +12,8 @@ import { I } from './icons';
 export interface AnswerLeadAction {
   label: string;
   onClick: () => void;
+  /** None by default. An action that asks AnA (`ask()`) passes `I.sparkles`; one that changes local state
+   *  passes nothing. A spark on an action AnA does not take is a false signal (D0.md §8.1). */
   icon?: React.ReactNode;
   alt?: { label: string; onClick: () => void };
 }
@@ -99,7 +101,7 @@ export function AnswerLead({
         <div className="al-act">
           {action && (
             <button type="button" className="btn ghost al-btn" onClick={action.onClick}>
-              {action.icon ?? I.sparkles} {action.label}
+              {action.icon ?? null} {action.label}
             </button>
           )}
           {action?.alt && (

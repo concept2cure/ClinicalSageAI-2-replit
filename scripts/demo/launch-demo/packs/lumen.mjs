@@ -10,7 +10,9 @@
  *   Projects   LMN-201, LMN-801, LMN-301, LMN-401 (one per program)
  *   LMN-201    program overview and the SYNTHETIC LMN-201-like CSR source in
  *              the Vault, the RePreve study design in Biostatistics, CMC
- *              specifications, stability and batches, and tasks
+ *              specifications, stability and batches, tasks, and a FICTIONAL
+ *              FDA approval letter in the data room and the agency inbox, whose
+ *              postmarketing requirements and commitment the inbox extracts
  *   Others     program overview and tasks
  *
  * Same rules as the other packs: through the product's own API as the
@@ -18,10 +20,12 @@
  * server's answer. Content and its provenance are in lumen-content.mjs.
  */
 import fs from 'node:fs';
-import { makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
-import { makeTally } from './biotech-shared.mjs';
-import { CLIENT, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
-import { ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
+import { asArray, makeTally } from './biotech-shared.mjs';
+import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { ensureLumenQms } from './lumen-qms.mjs';
+import { ensureLumenRbm } from './lumen-rbm.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -131,7 +135,9 @@ async function ensureCsrSource({ api, run, tally }, project) {
 export async function seed(ctx) {
   const { api, run } = ctx;
   const tally = makeTally(run);
-  const c = { api, run, tally };
+  // The second person (lib.mjs connectSigner: OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD). Two-person steps run only with one.
+  const signer = await connectSigner({ baseUrl: ctx.baseUrl, authorEmail: ctx.identity?.email });
+  const c = { api, run, tally, signer, identity: ctx.identity };
   run.note('Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.');
 
   const clientWorkspaceId = await ensureClient(c);
@@ -148,18 +154,130 @@ export async function seed(ctx) {
   const lmn201 = projects['LMN-201'];
   await ensureCsrSource(c, lmn201);
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
+  await ensureObjective(c, lmn201, LMN201_DESIGN);
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
   await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
+  // The inbox's "extract commitments" (P-81, P-84) on a fictional approval letter.
+  run.record('approvalLetter', await ensureAgencyLetter(c, lmn201, APPROVAL_LETTER, 'LMN-201'));
+  run.note('The LMN-201 approval letter (BLA 761901) is FICTIONAL: not issued by FDA, LMN-201 is not approved, and no Lumen Bioscience authorization is represented. It is addressed to the demonstration\'s fictional sponsor.');
+
+  // A letter that needs an answer: the inbox's questions and Respond (fictional, like the approval letter).
+  run.record('informationRequest', await ensureAgencyLetter(c, lmn201, INFORMATION_REQUEST, 'LMN-201'));
+  await ensureIbReview(c, lmn201);
+  // Quality: deviations, CAPA, suppliers, nonconformances, audits, change control, management reviews (lumen-qms.mjs).
+  await ensureLumenQms(c, { lmn201 }, 'LMN-201');
+  // Risk-based monitoring: RACT, KRIs and QTLs over six monthly extracts, signals, the plan and site actions (lumen-rbm.mjs).
+  await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
+  await ensureLumenSequence(c, lmn201);
+  // Last, so the reports read everything above (Run history, the report canvas).
+  await ensureLumenReports(c, lmn201);
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
   console.info(`  ⇒ lumen pack: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}`);
 }
 
+/**
+ * The project's objective, from the public trial listing the design already cites
+ * (LMN201_DESIGN, NCT05330182), through the route the About card writes
+ * (PUT /api/charters/by-project/:ref/objectives). Without it the CSR rehearsal's
+ * project home said "No objective is recorded for this project yet" and the
+ * presenter set it by hand (R1 rehearsal, 2026-11-06). A recorded objective is
+ * left as it is: a person may have changed it.
+ */
+async function ensureObjective({ api, run, tally }, project, design) {
+  await run.step(`Objective: ${design.acronym}`, async () => {
+    const path = `/api/charters/by-project/${encodeURIComponent(project.id)}/objectives`;
+    const read = must(await api('GET', path), 200, 'read the project objective');
+    if (read.data?.current) { tally.found('objective'); return 'found'; }
+    const primary = design.objectives.find((o) => o.level === 'primary') ?? design.objectives[0];
+    must(await api('PUT', path, {
+      objective: primary.text,
+      successCriteria: `Primary endpoint: ${primary.endpointName}.`,
+      sources: [{ kind: 'registry', title: 'ClinicalTrials.gov NCT05330182', url: 'https://clinicaltrials.gov/study/NCT05330182' }],
+      reason: 'Demo seed: the objective the public trial listing states.',
+    }), 200, 'record the project objective');
+    tally.created('objective');
+    return 'created';
+  });
+}
+
 /** Nothing this pack creates has a delete route the seed may use; say so rather than reach for SQL. */
 export async function purge({ run }) {
   await run.step('Purge: Lumen demo records', async () => {
-    run.note('The Lumen projects, Vault documents, study design and CMC records have no delete or archive route the seed uses; archive the projects from Project settings. Nothing was removed.');
+    run.note('The Lumen projects, Vault documents, data-room letter, agency communication, study design and CMC records have no delete or archive route the seed uses; archive the projects from Project settings. Nothing was removed.');
     return 'nothing removed — see notes';
+  });
+}
+
+/**
+ * LMN-201's Investigator's Brochure (a Plan deliverable started above) sent to the second person for review, so the
+ * project's Review step and that person's review list are not empty (2026-11-06, the founder: "full story in data").
+ * The reviewer is the second signer: the server refuses the author as their own reviewer (REVIEWER_IS_AUTHOR), so
+ * without one nothing is requested and the step says so. Through the editor's own route.
+ */
+async function ensureIbReview({ api, run, tally, signer }, program) {
+  await run.step("Review: LMN-201 Investigator's Brochure sent for review", async () => {
+    if (!signer) return 'not executed: no second signer (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)';
+    const docs = asArray(must(await api('GET', `/api/authoring/docs?status=all&programId=${encodeURIComponent(program.id)}`), 200, 'list LMN-201 documents'), 'documents', 'data', 'rows');
+    const ib = docs.find((d) => /Investigator.s Brochure/.test(d.title ?? ''));
+    if (!ib) throw new Error("LMN-201 has no Investigator's Brochure document to send for review");
+    const reviewer = { id: Number(signer.session.user.id), name: signer.session.user.displayName ?? signer.email, email: signer.email };
+    const reviews = asArray(must(await api('GET', `/api/authoring/documents/${ib.id}/reviews`), 200, 'read IB reviews'), 'reviews', 'data');
+    if (reviews.some((r) => r.reviewer_email === reviewer.email)) { tally.found('authoring-review-request'); return `already with ${reviewer.email}`; }
+    const j = must(await api('POST', `/api/authoring/documents/${ib.id}/request-review`, {
+      reviewers: [reviewer], route: { reviewDueDate: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10) },
+      reason: "Demo seed: send the LMN-201 Investigator's Brochure update for scientific review",
+    }), [200, 201], 'request review of the IB');
+    if (!(j.reviews ?? []).some((r) => r.reviewer_email === reviewer.email)) throw new Error(`request-review: ${reviewer.email} was not recorded as reviewer`);
+    tally.created('authoring-review-request');
+    return `sent to ${reviewer.email}`;
+  });
+}
+
+/**
+ * Sequence 0000 (original) on LMN-201's canonical submission, the one intake records for the project (matched as
+ * biotech-submission.mjs matches it: productName or title). Without a sequence Submission Center read "0 eCTD
+ * sequences tracked yet" and the CSR's "Place into filing" asked for a sequence first (2026-11-06). Through Submission
+ * Center's own route; nothing is placed, frozen or dispatched.
+ */
+async function ensureLumenSequence({ api, run, tally }, program) {
+  await run.step('Submission Center: LMN-201 sequence 0000 (original)', async () => {
+    const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
+    const keys = [program.code, program.title].filter(Boolean).map((k) => k.toLowerCase());
+    const sub = list.find((x) => keys.includes(String(x.productName ?? '').toLowerCase()) || keys.includes(String(x.title ?? '').toLowerCase()));
+    if (!sub) throw new Error('LMN-201 has no canonical submission; intake records one with the project');
+    const seqs = asArray(must(await api('GET', `/api/submissions/${sub.id}/sequences`), 200, 'list LMN-201 sequences'), 'data');
+    if (seqs.some((q) => String(q.sequenceNumber ?? q.sequence_number) === '0000')) { tally.found('sequence'); return `found on submission #${sub.id}`; }
+    const seq = must(await api('POST', `/api/submissions/${sub.id}/sequences`, { region: 'fda', sequenceNumber: '0000', type: 'original' }), 201, 'create LMN-201 sequence 0000');
+    tally.created('sequence');
+    return `#${seq.id} on submission #${sub.id} (${seq.status})`;
+  });
+}
+
+/** Reports run for LMN-201, from the governed record, so Reporting's Run history is not empty (2026-11-06). */
+const LMN201_REPORTS = ['readiness.executive_digest', 'ha.commitment_register', 'usa_fda.ind_safety_readiness', 'etmf.completeness_pack'];
+
+/**
+ * Each report in LMN201_REPORTS run once at the project's scope, through the route Reporting's "Run" uses
+ * (POST /api/report-os/runs, Insights.tsx requestRun). A report already run for this project is left as it is.
+ * A run the engine reports as partial is a real answer about the record, not a failure.
+ */
+async function ensureLumenReports({ api, run, tally, identity }, program) {
+  await run.step(`Reporting: ${LMN201_REPORTS.length} reports run for LMN-201`, async () => {
+    const runs = asArray(must(await api('GET', '/api/report-os/runs?limit=100'), 200, 'list report runs'), 'data');
+    const out = [];
+    for (const reportTypeId of LMN201_REPORTS) {
+      const prior = runs.find((r) => r.reportTypeId === reportTypeId && r.scopeType === 'project');
+      if (prior) { tally.found('report-run'); out.push(`${reportTypeId}: found #${prior.id}`); continue; }
+      const j = must(await api('POST', '/api/report-os/runs', {
+        organizationId: Number(identity?.organizationId) || 0, scopeType: 'project', programId: program.id, reportTypeId,
+      }), 201, `run ${reportTypeId}`);
+      const r = j.data?.run;
+      if (!Number.isSafeInteger(r?.id)) throw new Error(`run ${reportTypeId}: no run id returned`);
+      tally.created('report-run');
+      out.push(`${reportTypeId}: #${r.id} ${r.status}`);
+    }
+    return out.join('; ');
   });
 }

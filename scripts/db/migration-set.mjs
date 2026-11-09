@@ -3779,6 +3779,32 @@ export const C2C_MIGRATION_FILES = [
   // the CSR document, without a package run. Public with organization_id INTEGER NOT NULL, so
   // the sweep below gives it its tenant policy. After regulatory_programs and organizations.
   'migrations/20261031_csr_study_data.sql',
+  // Where an upload's bytes are durably kept (LX-02, 2026-11-05): two nullable
+  // columns on file_uploads naming the storage provider and the object version.
+  // After file_uploads' creators (20260726, 20260828). Additive, IF NOT EXISTS;
+  // no table, no constraint, no DROP.
+  'migrations/20261105_file_uploads_durable_object.sql',
+  // Folders a person makes in a project's Vault (S6, 2026-11-06): public.document_folders
+  // gains its project (program_id) and its place under a binder or preset folder
+  // (parent_key). After regulatory_programs and organizations. Additive, IF NOT EXISTS; the
+  // table's guarded CREATE is its existing shape. Public with organization_id INTEGER NOT
+  // NULL, so the sweep below gives it a tenant policy when it has none. No DROP.
+  'migrations/20261106_document_folders_project_scope.sql',
+  // The report-pack register's own tables (P-91, C-3, 2026-11-08). Public with
+  // organization_id INTEGER NOT NULL, so the sweep below policies them; its backfill
+  // carries every legacy bundle:<uuid> memory pack once, ON CONFLICT DO NOTHING, and
+  // fails the deploy if one was neither carried nor reported. Drops nothing.
+  'migrations/20261108_report_bundle_register.sql',
+  // P-86 (founder, 2026-11-01): a sequence leaves the live set only by a signed
+  // retirement or the filed-elsewhere declaration's signed removal of drafts.
+  // Triggers only, replay-safe (CREATE OR REPLACE; its own two triggers are
+  // dropped and created again by name). A future backfill of ectd_sequences
+  // must carry WHERE deleted_at IS NULL: a removed row refuses every change.
+  'migrations/20261109_ectd_sequence_removal_guard.sql',
+  // P-111 item 4 (founder, 2026-11-09): one level of subtasks in unified_tasks. A nullable integer
+  // parent_task_id with its FK, a not-self check (each added only when absent, by name) and an index. Additive,
+  // replay-safe, drops nothing; no new table, so the sweeps below have nothing new to policy.
+  'migrations/20261109_unified_tasks_parent_task.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

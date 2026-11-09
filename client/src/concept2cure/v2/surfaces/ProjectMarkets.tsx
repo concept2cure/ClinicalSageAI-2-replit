@@ -284,7 +284,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
         <span className="pj-mkt-verdict-ic" aria-hidden="true">{v.icon}</span>
         <span><span className="pj-sr">{name}: </span>{v.text}</span>
         {v.failed && (
-          <button type="button" className="btn ghost pj-mkt-btn" onClick={retry} aria-label={`Retry the verdict for ${name}`}>
+          <button type="button" className="btn small" onClick={retry} aria-label={`Retry the verdict for ${name}`}>
             Retry
           </button>
         )}
@@ -297,7 +297,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
           "Open", with the market only in its accessible name). */}
       {onOpen && (
         <div className="pj-mkt-acts">
-          <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)}>
+          <button type="button" className="btn small" onClick={() => onOpen(m)}>
             {STEP_DOORS.marketSequence(name)} {I.right}
           </button>
         </div>
@@ -328,10 +328,12 @@ const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this
 /** The project's markets as a list, with its loading, refused, failed and
  *  empty states. The Submit tab and Submission Readiness (F18) both draw it,
  *  each with MarketGateDetail under every row (F10). */
-export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
+export function MarketsBody({ markets, onOpen, center, startHint, empty, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
   startHint?: string;
+  /** The empty state's own words, where "no market" is not true of the project (a device filing). */
+  empty?: { title: string; hint: string };
   detail?: (m: ProgramMarket) => React.ReactNode;
   /** Each market's own application number (P-44); drawn by the project's Submit tab. */
   number?: (m: ProgramMarket) => React.ReactNode;
@@ -353,8 +355,8 @@ export function MarketsBody({ markets, onOpen, center, startHint, detail, number
   if (markets.markets.length === 0) {
     const start = startHint ?? (center ? ' Add a market to start one.' : '');
     return (
-      <EmptyState icon={I.rocket} title="No market for this project yet"
-        hint={`A market is one submission: an application to one agency.${start}${others ? ` ${others}` : ''}`} />
+      <EmptyState icon={I.rocket} title={empty?.title ?? 'No market for this project yet'}
+        hint={`${empty?.hint ?? `A market is one submission: an application to one agency.${start}`}${others ? ` ${others}` : ''}`} />
     );
   }
   return (
@@ -403,7 +405,7 @@ function FeatureDoor({ surface, label, unavailable, onNav, available }: {
 }) {
   if (!available(surface)) return unavailable ? <span className="sec-sub" data-testid="pj-mkt-door-unavailable">{unavailable}</span> : null;
   return (
-    <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav(surface)}>
+    <button type="button" className="btn small" onClick={() => onNav(surface)}>
       {label} {I.right}
     </button>
   );
@@ -478,25 +480,11 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               below shows its sequence's readiness itself, and its acts open
               that sequence (F10, P-33). Slice 24's door opened a second screen
               that drew this same list. */}
-          {/* eCTD compile, opened from the project, compiles the submission
-              of the project's own application type; each sequence's Dispatch
-              tab opens it on that sequence (F14), which is how another
-              market's sequence is compiled. It builds an FDA/EMA eCTD
-              backbone only, which is not how a 510(k), De Novo or PMA is
-              filed, so a device or diagnostic project, or one not yet read,
-              is not offered it. */}
-          {ectdFiling && available('ectd-compile') && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('ectd-compile')}>
-              Compile and download {I.right}
-            </button>
-          )}
-          {featureDoors(usInd, project, deviceFiling).map((door) => (
-            <FeatureDoor key={door.surface} {...door} onNav={onNav} available={available} />
-          ))}
+          {/* First and ghost: on the project page orange is for send only (D3-4, D3.md §4.7 Submit item 1). */}
           {center && ectdFiling && !deviceFiling && (
             <>
               {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
-              <button type="button" className="btn primary pj-mkt-btn" disabled={canChange === false}
+              <button type="button" className="btn ghost small" disabled={canChange === false}
                 aria-describedby={canChange === false ? 'pj-mkt-add-why' : undefined}
                 onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
                 {I.plus} Add a market
@@ -506,9 +494,24 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               )}
             </>
           )}
+          {/* eCTD compile, opened from the project, compiles the submission
+              of the project's own application type; each sequence's Dispatch
+              tab opens it on that sequence (F14), which is how another
+              market's sequence is compiled. It builds an FDA/EMA eCTD
+              backbone only, which is not how a 510(k), De Novo or PMA is
+              filed, so a device or diagnostic project, or one not yet read,
+              is not offered it. */}
+          {ectdFiling && available('ectd-compile') && (
+            <button type="button" className="btn small" onClick={() => onNav('ectd-compile')}>
+              Compile and download {I.right}
+            </button>
+          )}
+          {featureDoors(usInd, project, deviceFiling).map((door) => (
+            <FeatureDoor key={door.surface} {...door} onNav={onNav} available={available} />
+          ))}
           {/* The Submission Center reads the open project, so it opens on this one. */}
           {center && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio' })}>
+            <button type="button" className="btn small" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio' })}>
               {STEP_DOORS.everySequence} {I.right}
             </button>
           )}
@@ -516,13 +519,22 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       </div>
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
-        startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
+        /* A 510(k) to FDA is this project's filing, so "No market for this project yet" told a device tester it had
+           none (human test J1, 2026-11-06). Its documents are assembled with the action above; what is missing is a
+           submission record, which only the Submission Center records. */
+        empty={deviceFiling ? DEVICE_NO_SUBMISSION : undefined}
         detail={(m) => <MarketBlockers m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
   );
 }
+
+/** A device or diagnostic project's empty Submit list, in words true of it. */
+export const DEVICE_NO_SUBMISSION = {
+  title: 'No submission recorded to this project yet',
+  hint: 'This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.',
+};
 
 /** The board read the Review tab makes, as the header line counts it. */
 export interface ReviewCountRead {
@@ -543,7 +555,7 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
     return (
       <span className="pj-status-item" data-tone="warn" role="alert">
         <span aria-hidden="true">{I.alertTriangle}</span> Reviews could not be read
-        <button type="button" className="btn ghost pj-mkt-btn" onClick={retry(r.retry)} aria-label="Retry reading the reviews">Retry</button>
+        <button type="button" className="btn small" onClick={retry(r.retry)} aria-label="Retry reading the reviews">Retry</button>
       </span>
     );
   }
@@ -600,7 +612,7 @@ export function ProjectStatusLine({ markets, reviews, documentClass = null, regi
     marketItems = (
       <span className="pj-status-item" data-tone="warn" role="alert">
         <span aria-hidden="true">{I.alertTriangle}</span> Markets could not be read
-        <button type="button" className="btn ghost pj-mkt-btn" onClick={retry(markets.retryList)} aria-label="Retry reading the markets">Retry</button>
+        <button type="button" className="btn small" onClick={retry(markets.retryList)} aria-label="Retry reading the markets">Retry</button>
       </span>
     );
   } else if (markets.markets.length === 0) {

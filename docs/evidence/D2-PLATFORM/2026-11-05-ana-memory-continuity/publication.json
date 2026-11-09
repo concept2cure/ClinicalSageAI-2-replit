@@ -1,0 +1,197 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "remote_parent": "36169f21f2ce6e9486c8f521bca307dd5ebf8943",
+  "candidates": [
+    {
+      "local_commit": "b0d0f10472aa93b924250237843c85765dca96f2",
+      "remote_candidate": "0b4c636614a5ea8218b47a4c15b19c8b369ad955",
+      "tree": "0314f8e9c41077a6e60e256718eec38e5bc3e8c7",
+      "tree_matches": true,
+      "parent": "36169f21f2ce6e9486c8f521bca307dd5ebf8943"
+    },
+    {
+      "local_commit": "76f1cdfa8101d7e0eab35e1d954f3013572c159c",
+      "remote_candidate": "0a4d34219f21ae0efad2877874947bee01972915",
+      "tree": "5beb7ae685f81f3038ede1d7bc7ea272e10e3348",
+      "tree_matches": true,
+      "parent": "0b4c636614a5ea8218b47a4c15b19c8b369ad955"
+    }
+  ],
+  "method": "The complete unchanged .husky/pre-push was executed locally on the exact committed candidate. GitHub app publication used identical verified Git trees and a non-force expected-head update. CLI Git lacked write credentials and stopped before hooks.",
+  "verification": {
+    "behavioral_cases": 119,
+    "vitest_cases": 79,
+    "distinct_cases": 198,
+    "build_exit_code": 0,
+    "pre_push_status": "passed",
+    "typecheck_files_per_process": 500,
+    "typecheck_heap_mb": 7168,
+    "source_file_count": 15379,
+    "pre_push_exit_code": 0,
+    "typecheck_errors": 0,
+    "typecheck_workers": 33,
+    "source_snapshot": "dd3c739264b7dd5b1ea0901d03a5703c9e1365e500c9fe67f69bd7646ddf0ea3",
+    "snapshot_unchanged": true,
+    "pre_push_command": "TYPECHECK_FILES_PER_PROCESS=500 TYPECHECK_HEAP_MB=7168 sh .husky/pre-push origin https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+    "pre_push_stdin": "refs/heads/concept2cure-v2 76f1cdfa8101d7e0eab35e1d954f3013572c159c refs/heads/concept2cure-v2 36169f21f2ce6e9486c8f521bca307dd5ebf8943\n",
+    "runtime": {
+      "node": "22.23.4",
+      "typescript": "5.6.3",
+      "install": "npm ci --no-audit --no-fund",
+      "locked_dependencies": true
+    }
+  },
+  "limitations": [
+    "Existing 400-character per-record and overall prompt budgets remain.",
+    "Acceptance maximum candidate length remains 5000 characters.",
+    "No historical memory backfill or automatic activation.",
+    "PGlite SQL tests mock tenant acquisition and embedding; no native multi-connection RLS or live-provider qualification.",
+    "Remote CI and hosted acceptance must be reported separately."
+  ],
+  "runtime_failures": [
+    {
+      "kind": "CLI Git authentication",
+      "log": "cli-push-auth-failure.txt",
+      "note": "No branch write and hook not reached."
+    },
+    {
+      "kind": "tsx CLI Unix socket EPERM",
+      "log": "pre-push-launcher-failure.txt",
+      "note": "Corrected two package.json launch scripts to existing node --import tsx pattern; checker and refusal selftest passed."
+    },
+    {
+      "kind": "TypeScript heap ceiling",
+      "log": "pre-push-memory-failure.txt",
+      "note": "1000-target workers at 6144 MB heap stopped after 1000/15379 source files. Incomplete gate, not a pass. The subsequent unchanged full hook completed with 500-target workers and 7168 MB heap: 15379/15379 files, 33 workers, unchanged snapshot, zero errors.",
+      "gate_exit_code": 1
+    }
+  ],
+  "publication": {
+    "published_head": "0a4d34219f21ae0efad2877874947bee01972915",
+    "published_tree": "5beb7ae685f81f3038ede1d7bc7ea272e10e3348",
+    "verified_at_utc": "2026-11-06 04:10:07 UTC",
+    "force": false,
+    "expected_previous_head": "36169f21f2ce6e9486c8f521bca307dd5ebf8943",
+    "remote_readback_matches": true,
+    "commit_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/commit/0a4d34219f21ae0efad2877874947bee01972915"
+  },
+  "remote_ci": {
+    "observed_at_utc": "2026-11-06 04:10:30 UTC",
+    "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+    "total_count": 7,
+    "runs": [
+      {
+        "id": 42160851399,
+        "name": "Cortex CSR Evidence",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "queued",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:57Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851399"
+      },
+      {
+        "id": 42160851433,
+        "name": "CI",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "queued",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:57Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851433"
+      },
+      {
+        "id": 42160851505,
+        "name": "CodeQL",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "queued",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:57Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851505"
+      },
+      {
+        "id": 42160851287,
+        "name": "Semgrep",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "queued",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:57Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851287"
+      },
+      {
+        "id": 42160851368,
+        "name": "Repo Health Baseline Refresh",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "pending",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:58Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851368"
+      },
+      {
+        "id": 42160851522,
+        "name": "C2C Agent — Validate & Audit",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "completed",
+        "conclusion": "skipped",
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:58Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851522"
+      },
+      {
+        "id": 42160851437,
+        "name": "Tier 5 Browser Smoke",
+        "head_sha": "0a4d34219f21ae0efad2877874947bee01972915",
+        "status": "queued",
+        "conclusion": null,
+        "run_attempt": 1,
+        "created_at": "2026-11-06T04:09:57Z",
+        "updated_at": "2026-11-06T04:09:57Z",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42160851437"
+      }
+    ]
+  },
+  "logs": {
+    "pre-push.txt": {
+      "sha256": "2c7b102bc5ba1ea3ea4a10731c443afe1d15d85e5e01791052bb81ef7e198b46",
+      "bytes": 35215
+    },
+    "pre-push-memory-failure.txt": {
+      "sha256": "493b014f7ecc6d17caed08f9d33526ef47c01b4131db0537aab42ddf6f85f4cd",
+      "bytes": 32794,
+      "capture_sha256": "97bddcb501cbed2eb01b21b8608ed0ac9607346cc564a33eb4760053f33af5bf",
+      "capture_bytes": 32795,
+      "normalization": "Extra blank lines at EOF removed for the repository whitespace check; all preceding bytes unchanged."
+    },
+    "pre-push-launcher-failure.txt": {
+      "sha256": "d95386842c12870d78b3b6a9ad2172d43f35b88c5126cc909004f80ed42bbb9b",
+      "bytes": 6567,
+      "capture_sha256": "704722e23c003ec416f381884e971e8a798c67183d107f72306aec9ce5cf4f17",
+      "capture_bytes": 6568,
+      "normalization": "Extra blank lines at EOF removed for the repository whitespace check; all preceding bytes unchanged."
+    },
+    "one-product-selftest.txt": {
+      "sha256": "80a227b8ca3c0576594c1da924147d5e8072153a8fdf010e72c6d15ceb1171b8",
+      "bytes": 631
+    },
+    "cli-push-auth-failure.txt": {
+      "sha256": "e7453c6dc500aaaa1021f84f9211ae0f9d8c309ea7dae88221bcde70770438f7",
+      "bytes": 83
+    }
+  },
+  "local_alignment": {
+    "from_local_candidate": "76f1cdfa8101d7e0eab35e1d954f3013572c159c",
+    "to_published_commit": "0a4d34219f21ae0efad2877874947bee01972915",
+    "method": "Compare clean worktree and complete identical Git trees, then local compare-and-swap update-ref; no file reset.",
+    "tree": "5beb7ae685f81f3038ede1d7bc7ea272e10e3348"
+  }
+}

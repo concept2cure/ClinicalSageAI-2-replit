@@ -1,0 +1,28 @@
+{
+  "exitCode": 1,
+  "sourcesBefore": {
+    "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+    "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "tests/db/workflow-project-admission.dbtest.ts": "3d67d142f085daa9cf6c7e9b7a85e2682e8e41968597fd17407d726b80aee4f7"
+  },
+  "sourcesAfter": {
+    "server/routes/taskManagement.routes.ts": "36d2e39885c4d09bfe34bf38325062bc7c1e6a18cf235238ef5e3bd470e1cde7",
+    "server/services/tasking/task-project.ts": "75aa5c80b70ad433a6327077a0e6d403e3e983d1d2994ef633f5e0528aadf8c9",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "tests/db/workflow-project-admission.dbtest.ts": "3d67d142f085daa9cf6c7e9b7a85e2682e8e41968597fd17407d726b80aee4f7"
+  },
+  "sourcesUnchanged": true,
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.db.config.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "--testNamePattern",
+    "ordinary task project admission counterexamples",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 4.22
+}

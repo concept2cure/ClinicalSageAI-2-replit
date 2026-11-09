@@ -59,12 +59,13 @@ describe('planDeviceSubmission — eSTAR pathways do not ask for the retired cov
   it('an IVD 510(k) is planned against the IVD eSTAR, which asks for analytical performance', () => {
     const ids = plan({ usPathway: '510(k)', isIVD: true }).usSections.map((s) => s.sectionId);
     expect(ids).toContain('ivd-analytical-performance');
-    const nonIvd = plan({ usPathway: '510(k)' }).usSections.map((s) => s.sectionId);
+    // 2026-11-08: an unstated isIVD keeps the IVD questions on the plan, undetermined; a stated false drops them.
+    const nonIvd = plan({ usPathway: '510(k)', isIVD: false }).usSections.map((s) => s.sectionId);
     expect(nonIvd).not.toContain('ivd-analytical-performance');
   });
 
   it('the plan names exactly the eSTAR sections — no parallel hand-written list beside them', () => {
-    const sections = plan({ usPathway: '510(k)', sterile: true, hasSoftware: true, clinicalDataIncluded: true }).usSections;
+    const sections = plan({ usPathway: '510(k)', isIVD: false, sterile: true, hasSoftware: true, clinicalDataIncluded: true }).usSections;
     const registry = new Set(estarSlots('510k').map((s) => s.id));
     expect(sections.map((s) => s.sectionId).filter((id) => !registry.has(id))).toEqual([]);
   });

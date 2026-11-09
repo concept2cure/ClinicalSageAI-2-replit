@@ -416,7 +416,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
               tone={lead.tone}
               headline={lead.head}
               body={lead.body}
-              action={{ label: lead.next, onClick: () => ask(lead.next) }}
+              action={{ label: lead.next, icon: I.sparkles, onClick: () => ask(lead.next) }}
             />
           )}
 

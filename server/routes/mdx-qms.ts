@@ -102,6 +102,7 @@ import {
   type ChangeState,
 } from '../services/qms/changeControl.service';
 import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { governedReason } from './governed-reason';
@@ -638,11 +639,20 @@ const approveBody = z.object({
   password: z.string().min(1, 'Password re-authentication is required (21 CFR Part 11 §11.200)'),
   mfaToken: z.string().optional(),
   meaning: z.literal(QMS_DOCUMENT_APPROVAL_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
 });
+const changeApproveBody = approveBody.extend({ learningReview: z.object({
+  expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/), invariantAccepted: z.literal(true),
+}).strict().optional() });
+const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
+function learningApprovalFailure(res: Response, error: AggregateLearningRefusedError) {
+  const message = 'Reviewed learning approval could not be verified. Re-read its current status before retrying.';
+  if (error.status === 503) return res.status(503).json({ error: message, details: { code: error.code } });
+  return clientError(res, error.status, message, { code: error.code });
+}
 
 /* Retirement = the same electronic signature (P1-29 / DP-32, security review
    2026-09-24): the approve body without effectiveDate, which a retirement does
@@ -652,7 +662,7 @@ const approveBody = z.object({
    meaning is retirement's own (P-51): 'APPROVED' is refused here. */
 const retireBody = approveBody.omit({ effectiveDate: true }).extend({
   meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: governedReason,
 });
@@ -956,8 +966,8 @@ const mrCreate = z.object({
   reviewDate:        z.string().date(),
   period:            z.string().min(1).max(40),
   attendees:         z.array(z.number().int().positive()).optional().nullable(),
-  inputs:            z.record(z.unknown()).optional().nullable(),
-  outputs:           z.record(z.unknown()).optional().nullable(),
+  inputs:            z.record(z.string(), z.unknown()).optional().nullable(),
+  outputs:           z.record(z.string(), z.unknown()).optional().nullable(),
   minutesArtifactId: z.number().int().positive().optional().nullable(),
 });
 
@@ -1118,7 +1128,7 @@ const changeCreate = z.object({
   implementationPlan:       z.string().max(8000).optional().nullable(),
   targetImplementationDate: z.string().date().optional().nullable(),
   qmsDocumentId:            z.number().int().positive().optional().nullable(),
-  metadata:                 z.record(z.unknown()).optional().nullable(),
+  metadata:                 z.record(z.string(), z.unknown()).optional().nullable(),
 });
 const changePatch = z.object({
   title:                    z.string().min(1).max(300).optional(),
@@ -1342,7 +1352,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
 
-  const parsed = approveBody.safeParse(req.body ?? {});
+  const parsed = changeApproveBody.safeParse(req.body ?? {});
   if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
   const body = parsed.data;
 
@@ -1365,6 +1375,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
+      ...learningReviewOption(body),
     });
     commitAttempted = true;
     await client.query('COMMIT');
@@ -1381,6 +1392,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       });
     }
     await client?.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof AggregateLearningRefusedError) return learningApprovalFailure(res, err);
     return signedQmsFailure(res, err, 'change-approve', 'Change');
   } finally {
     client?.release(discardReason);

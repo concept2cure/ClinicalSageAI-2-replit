@@ -23,8 +23,8 @@ import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import {
   getOrCreateThread,
-  getThreadMessages,
   getWindowedMessages,
+  threadHasOwnerPrivateBoundary,
   ThreadAccessError,
   saveChatMessage,
   deleteConversation,
@@ -37,8 +37,6 @@ import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
 import {
   orchestrate,
-  detectIntent,
-  detectSubmissionType,
 } from '../services/ana-ri/orchestrator.js';
 import type { UserRole } from '../services/ana-ri/persona.js';
 import { planKernelExecution } from '../services/kernel-router.js';
@@ -48,9 +46,6 @@ import {
 } from '../services/shared-memory-contract.js';
 import { executeGovernedAnaOperation } from '../services/governed-ana-execution.js';
 import { summarizeAndStoreWorkingMemoryForThread } from '../services/working-memory.js';
-
-// Legacy helper removed; no-op stub keeps fire-and-forget call sites compiling.
-const generateWorkingMemorySummary: any = async (..._args: unknown[]) => undefined;
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -345,6 +340,18 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         });
       }
       throw e;
+    }
+
+    try {
+      if (await threadHasOwnerPrivateBoundary(threadId)) {
+        res.locals.ownerPrivateCapture = true;
+        return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+          error: 'Continue this private conversation through AnA’s protected conversation.' });
+      }
+    } catch {
+      res.locals.ownerPrivateCapture = true;
+      return res.status(409).json({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE',
+        error: 'The conversation’s privacy boundary could not be verified. No model request was sent.' });
     }
 
     // Token budget: model max (128k for gpt-4o-mini) minus system prompt, new message, and response buffer
@@ -1042,13 +1049,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         meta: orchestratorResult.orchestrationMeta,
       },
     });
-  } catch (error: any) {
-    logger.error(`[Chat] Error: ${error.message}`);
-    res.status(500).json({
-      error: 'Failed to process message',
-      code: 'CHAT_ERROR',
-      message: error.message,
-    });
+  } catch {
+    logger.error('[Chat] Message processing failed');
+    res.status(500).json({ error: 'Failed to process message', code: 'CHAT_ERROR' });
   }
 });
 

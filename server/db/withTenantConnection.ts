@@ -43,6 +43,7 @@ import { getPool } from './runtime';
 import { runWithTenantScope, type TenantScope, type TenantScopeSource } from './tenantStore';
 import { createScopedLogger } from '../utils/logger';
 import { applySessionScope, clearSessionScope } from './sessionScope';
+import { currentTenantOrgUuid } from './currentTenant';
 
 const logger = createScopedLogger('with-tenant-connection');
 
@@ -57,6 +58,8 @@ export interface WithTenantConnectionOptions {
   role?: string | null;
   source?: TenantScopeSource;
   caller?: string;
+  /** Explicit trusted target owner; never inherited or used as the human audit actor. */
+  accountId?: number | null;
 }
 
 export async function withTenantConnection<T>(
@@ -74,6 +77,7 @@ export async function withTenantConnection<T>(
     role: opts.role ?? null,
     source: opts.source ?? 'job',
     caller: opts.caller,
+    accountId: opts.accountId ?? null,
   };
 
   // The scope is entered BEFORE the checkout, and everything — connect,
@@ -93,6 +97,74 @@ export async function withTenantConnection<T>(
   return runWithTenantScope(scope, () => runOnScopedClient(opts, tenantId, fn));
 }
 
+/**
+ * The organization has no uuid, so its full tenant scope cannot be opened. Its
+ * Vault (and every uuid-keyed schema) reads through `app.current_org_id`
+ * (`identity.current_org_id()`), so work on its behalf is refused rather than
+ * run in the integer scope alone, where those rows read as absent.
+ */
+export class TenantScopeUnavailableError extends Error {
+  readonly code = 'TENANT_SCOPE_UNAVAILABLE';
+  constructor(readonly organizationId: number, caller: string) {
+    super(`${caller}: organization ${organizationId} has no uuid, so its tenant scope cannot be established`);
+    this.name = 'TenantScopeUnavailableError';
+  }
+}
+
+function requireOrganizationId(organizationId: number, where: string): void {
+  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) {
+    throw new Error(`${where}: a positive integer organization id is required (got ${organizationId})`);
+  }
+}
+
+/**
+ * One organization's uuid, for work done on its behalf outside a request (a
+ * queued worker, the boot sweep). Read on a connection in that organization's
+ * own integer scope, through currentTenantOrgUuid (db/currentTenant.ts), the
+ * one derivation of a scope's organization uuid. Throws
+ * TenantScopeUnavailableError when the organization has none.
+ */
+export async function readOrganizationTenantUuid(organizationId: number, caller: string): Promise<string> {
+  requireOrganizationId(organizationId, 'readOrganizationTenantUuid');
+  const orgUuid = await withTenantConnection({ tenantId: organizationId, source: 'job', caller }, client => currentTenantOrgUuid(client));
+  if (!orgUuid) throw new TenantScopeUnavailableError(organizationId, caller);
+  return orgUuid;
+}
+
+/**
+ * Run `fn` on a dedicated connection in ONE organization's full tenant scope:
+ * its integer id and its uuid, no role. This is the scope a request of that
+ * organization carries (establishRequestTenantScope: organizations.uuid from
+ * the membership lookup), opened for a job that acts for it. The integer id
+ * alone is not enough: the Vault's row security admits a program through the
+ * organization's uuid only, so a worker opened with the id alone reads the
+ * Vault as empty (B1, docs/evidence/D2-CSR/2026-11-05-worker-tenant-scope/).
+ *
+ * When the organization has no uuid, `fn` never runs. If `unavailable` is
+ * given, it runs instead, on the lookup's connection (the organization's
+ * integer scope, which admits its own public rows and none of its Vault), so
+ * the caller can record the refusal on its own job row; otherwise
+ * TenantScopeUnavailableError is thrown.
+ */
+export async function withOrganizationTenantConnection<T>(
+  organizationId: number,
+  caller: string,
+  fn: (client: PoolClient) => Promise<T>,
+  unavailable?: (client: PoolClient, error: TenantScopeUnavailableError) => Promise<T>,
+): Promise<T> {
+  requireOrganizationId(organizationId, 'withOrganizationTenantConnection');
+  type Lookup = { scoped: true; orgUuid: string } | { scoped: false; refused: T };
+  const lookup = await withTenantConnection({ tenantId: organizationId, source: 'job', caller }, async (client): Promise<Lookup> => {
+    const orgUuid = await currentTenantOrgUuid(client);
+    if (orgUuid) return { scoped: true, orgUuid };
+    const error = new TenantScopeUnavailableError(organizationId, caller);
+    if (!unavailable) throw error;
+    return { scoped: false, refused: await unavailable(client, error) };
+  });
+  if (!lookup.scoped) return lookup.refused;
+  return withTenantConnection({ tenantId: organizationId, orgUuid: lookup.orgUuid, role: null, source: 'job', caller }, fn);
+}
+
 async function runOnScopedClient<T>(
   opts: WithTenantConnectionOptions,
   tenantId: string,
@@ -108,7 +180,7 @@ async function runOnScopedClient<T>(
     // pattern in tenantContext middleware. They are cleared in the
     // `finally` below to be safe in case the connection comes back into
     // the pool (it does — release() returns it).
-    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '' });
+    await applySessionScope(client, { tenantId, orgUuid: opts.orgUuid ?? '', role: opts.role ?? '', accountId: opts.accountId ?? null });
 
     return await fn(client);
   } catch (error) {

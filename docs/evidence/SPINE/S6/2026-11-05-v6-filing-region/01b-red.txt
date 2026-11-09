@@ -1,0 +1,251 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-11-05T14:10:13.834Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:10:13.838Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-11-05T14:10:13.839Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > every rule target folder exists in the view preset it names 7ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > classifier output folder is always renderable for the input view 25ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > a meaningless filename lands in the Unfiled queue, not a guessed folder 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > an empty name with no text is unfiled everywhere 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > a name the TMF classifier leaves unclassified stays unfiled in the service view 4ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > labeling: pharma → Module 1, device → udi 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > CTD content: stability → Module 3, toxicology → Module 4, CSR → Module 5 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > device engineering: risk file → eng with a rationale 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > an SOP in a pharma dossier vault is honestly not placeable 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > service view files by TMF zone on a keyword match 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > correspondence and templates file in every view 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > uses bounded text only when the name says nothing 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > a name match wins over body text 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > folderLabel > labels a real folder and never invents one 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a word inside another word is not a section: "Permission" is not ISS, "Otherwise" is not ISE 2ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > an Integrated Summary of Safety is proposed at 5.3.5.3, not the generic 5.3.5 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a safety data sheet is not a clinical safety study 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > "Item2" is not Module 2, and a bare module is never proposed as a section 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > clinical pharmacology is Module 5, not the nonclinical pharmacology of Module 4 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > positive controls stay put 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared PROTOCOL on a neutral filename is a protocol 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that contradicts the filename is flagged for review naming both, not overridden 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that agrees with the filename keeps the placement and the more specific kind 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > OTHER, or no declared type, changes nothing 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > US: labeling at 1.14 and the IB at 1.14.4.1, exactly as before 2ms
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > EU: an EMA project's labeling is proposed at 1.3.1, the SmPC heading 17ms
+   → expected '1.14' to be '1.3.1' // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > JP: a PMDA project's package insert is proposed at 1.8, Package Insert (Draft) 4ms
+   → expected '1.14' to be '1.8' // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > EU and JP: the record holds no Module 1 heading for an IB, so none is proposed and a person places it 2ms
+   → EU: expected '1.14.4.1' to be null
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > an application the regional tree does not model gets no heading: an EU CTA is not an MAA 1ms
+   → expected '1.14' to be null
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > a US-only rule gives no other region a heading: an FDA form in an EU project 1ms
+   → expected '1.1' to be null
+ × server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > CA, AU, or an agency that names no region: Module 1, no section, needs review, and the rationale says why 1ms
+   → CA: expected '1.14' to be null
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > Modules 2 to 5 and the device views do not depend on the region 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > a module-only proposal names no US heading, so it is left as it is 1ms
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-11-05T14:10:14.446Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-11-05T14:10:14.447Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveOrgVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > reads the program's product type 2ms
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before 2ms
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > lets any other failure through instead of filing against the wrong taxonomy 2ms
+ × server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > reads the program's agency and program type in the view's own query 3ms
+   → resolveVaultFilingContext is not a function
+ × server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > resolves the wizard's agency values, and an agency that names no region as null 1ms
+   → resolveVaultFilingContext is not a function
+ × server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > a missing programs table degrades to the service view with no region 0ms
+   → resolveVaultFilingContext is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > EU: an EMA project's labeling is proposed at 1.3.1, the SmPC heading
+AssertionError: expected '1.14' to be '1.3.1' // Object.is equality
+
+Expected: "1.3.1"
+Received: "1.14"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:295:26
+    293|     const c = classifyForFiling({ fileName: 'SmPC-draft-labelling-v2.d…
+    294|     expect(c.folderId).toBe('module-1');
+    295|     expect(c.ctdSection).toBe('1.3.1');
+       |                          ^
+    296|     expect(c.needsReview).toBe(false);
+    297|     expect(c.rationale).toMatch(/EU 1\.3\.1, SmPC, Labelling and Packa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > JP: a PMDA project's package insert is proposed at 1.8, Package Insert (Draft)
+AssertionError: expected '1.14' to be '1.8' // Object.is equality
+
+Expected: "1.8"
+Received: "1.14"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:305:26
+    303|     const c = classifyForFiling({ fileName: 'package-insert-draft-ja.d…
+    304|     expect(c.folderId).toBe('module-1');
+    305|     expect(c.ctdSection).toBe('1.8');
+       |                          ^
+    306|     expect(c.needsReview).toBe(false);
+    307|     expect(c.rationale).toMatch(/JP 1\.8, Package Insert \(Draft\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > EU and JP: the record holds no Module 1 heading for an IB, so none is proposed and a person places it
+AssertionError: EU: expected '1.14.4.1' to be null
+
+- Expected:
+null
+
++ Received:
+"1.14.4.1"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:314:31
+    312|       const c = ib(j, j === 'EU' ? 'maa' : 'jnda');
+    313|       expect(c.folderId, j).toBe('module-1');
+    314|       expect(c.ctdSection, j).toBeNull();
+       |                               ^
+    315|       expect(c.needsReview, j).toBe(true);
+    316|       expect(c.rationale, j).toMatch(new RegExp(`The ${j} Module 1 hol…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > an application the regional tree does not model gets no heading: an EU CTA is not an MAA
+AssertionError: expected '1.14' to be null
+
+- Expected:
+null
+
++ Received:
+"1.14"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:322:26
+    320|   it('an application the regional tree does not model gets no heading:…
+    321|     const c = classifyForFiling({ fileName: 'SmPC-draft-labelling-v2.d…
+    322|     expect(c.ctdSection).toBeNull();
+       |                          ^
+    323|     expect(c.needsReview).toBe(true);
+    324|     expect(c.rationale).toMatch(/in this application \(CTA\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > a US-only rule gives no other region a heading: an FDA form in an EU project
+AssertionError: expected '1.1' to be null
+
+- Expected:
+null
+
++ Received:
+"1.1"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:330:26
+    328|     const c = classifyForFiling({ fileName: 'form-fda-1571.pdf', view:…
+    329|     expect(c.folderId).toBe('module-1');
+    330|     expect(c.ctdSection).toBeNull();
+       |                          ^
+    331|     expect(c.needsReview).toBe(true);
+    332|     // A cover letter named by the CTD filename detector is a US headi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > Module 1 proposals follow the project's region (S6) > CA, AU, or an agency that names no region: Module 1, no section, needs review, and the rationale says why
+AssertionError: CA: expected '1.14' to be null
+
+- Expected:
+null
+
++ Received:
+"1.14"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:340:31
+    338|       const c = classifyForFiling({ fileName: 'product-monograph-label…
+    339|       expect(c.folderId, j).toBe('module-1');
+    340|       expect(c.ctdSection, j).toBeNull();
+       |                               ^
+    341|       expect(c.needsReview, j).toBe(true);
+    342|       expect(c.confidence, j).toBe('medium');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > reads the program's agency and program type in the view's own query
+TypeError: resolveVaultFilingContext is not a function
+ ❯ server/services/vault/__tests__/vault-view-resolution.test.ts:49:18
+     47|     query.mockReset();
+     48|     query.mockImplementation(async () => ({ rows: [{ product_type: 'dr…
+     49|     expect(await resolveVaultFilingContext(PROGRAM, 7)).toEqual({ view…
+       |                  ^
+     50|     expect(query).toHaveBeenCalledTimes(1);
+     51|     expect(String(query.mock.calls[0][0])).toMatch(/SELECT product_typ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > resolves the wizard's agency values, and an agency that names no region as null
+TypeError: resolveVaultFilingContext is not a function
+ ❯ server/services/vault/__tests__/vault-view-resolution.test.ts:58:21
+     56|     for (const [agency, jurisdiction] of [['FDA', 'US'], ['PMDA', 'JP'…
+     57|       query.mockImplementation(async () => ({ rows: [{ product_type: '…
+     58|       expect((await resolveVaultFilingContext(PROGRAM, 7)).jurisdictio…
+       |                     ^
+     59|     }
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultFilingContext > a missing programs table degrades to the service view with no region
+TypeError: resolveVaultFilingContext is not a function
+ ❯ server/services/vault/__tests__/vault-view-resolution.test.ts:66:18
+     64|       throw pgError('42P01', 'relation "regulatory_programs" does not …
+     65|     });
+     66|     expect(await resolveVaultFilingContext(PROGRAM, 7)).toEqual({ view…
+       |                  ^
+     67|   });
+     68| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 30 passed (39)
+   Start at  14:10:11
+   Duration  2.70s (transform 1.02s, setup 99ms, import 1.99s, tests 107ms, environment 0ms)
+

@@ -99,6 +99,11 @@ const MIGRATIONS = [
   'db/migrations/20260725_authoring_audit_trail.sql',
   'migrations/20260728_authoring_comments_threading.sql',
   'migrations/20260814d_document_alias_map.sql',
+  // The chain's order key, as the deployed set has it: since b8cee0745c the
+  // placement's release gate reads the source's chained ledger ordered by
+  // chain_seq (workflow-import-governance.ts independentLedger), and without
+  // the column every placement answered INDEPENDENT_CHECK_REQUIRED.
+  'migrations/20260921_audit_logs_chain_seq.sql',
 ];
 
 /** A node-postgres-shaped client over PGlite: what the seed runner hands a seed. */

@@ -97,8 +97,10 @@ function sourceLine(src: RequiredSectionSource): string {
   return `Required sections are the generic ICH baseline, not this project's outline. ${src.reason ?? ''}`.trim();
 }
 
-function ModuleRow({ m }: { m: ModuleReadiness }) {
+function ModuleRow({ m, basis }: { m: ModuleReadiness; basis?: ReadinessBasis }) {
   const nothingRequired = m.completionPct == null;
+  /* Nothing of the required set counted is not "partial" (J4 human test, 2026-11-06). */
+  const chip = m.ready ? 'ready' : m.completedRequired === 0 ? (basis === 'approved' ? 'none approved' : 'none placed') : 'partial';
   return (
     <tr>
       <td style={{ fontWeight: 600 }}>{m.moduleName}</td>
@@ -115,14 +117,21 @@ function ModuleRow({ m }: { m: ModuleReadiness }) {
         )}
       </td>
       <td style={{ textAlign: 'right' }}>
-        {m.ready != null && <span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span>}
+        {m.ready != null && <span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{chip}</span>}
       </td>
     </tr>
   );
 }
 
-function ReadinessBody({ status, state }: { status: StatusView | null; state: 'idle' | 'loading' | 'ready' | 'error' }) {
+/** What the readiness read answered; 'not_applicable' is a project the server
+ *  does not compile as an eCTD sequence (3b slice 3 (c)), never a failed read. */
+type ReadinessState = 'idle' | 'loading' | 'ready' | 'error' | 'not_applicable';
+
+function ReadinessBody({ status, state, reason }: { status: StatusView | null; state: ReadinessState; reason?: string | null }) {
   if (state === 'loading' || state === 'idle') return <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>;
+  if (state === 'not_applicable') {
+    return <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Not compiled as an eCTD sequence" hint={reason ?? undefined} /></div>;
+  }
   if (state === 'error' || !status) {
     return (
       <div style={{ padding: 16 }}>
@@ -152,7 +161,7 @@ function ReadinessBody({ status, state }: { status: StatusView | null; state: 'i
         </div>
       )}
       <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
-        <tbody>{status.modules.map((m) => <ModuleRow key={m.moduleCode} m={m} />)}</tbody></table>
+        <tbody>{status.modules.map((m) => <ModuleRow key={m.moduleCode} m={m} basis={status.readinessBasis} />)}</tbody></table>
     </>
   );
 }
@@ -160,7 +169,7 @@ function ReadinessBody({ status, state }: { status: StatusView | null; state: 'i
 /** The module readiness card. The chip reports what was counted: placement in
  *  a sequence, or content completeness for a project's section store; never
  *  "submission-ready", which the blockers panel decides. */
-export function EctdModuleReadiness({ status, state }: { status: StatusView | null; state: 'idle' | 'loading' | 'ready' | 'error' }) {
+export function EctdModuleReadiness({ status, state, reason }: { status: StatusView | null; state: ReadinessState; reason?: string | null }) {
   return (
     <div className="pj-card">
       <div className="pj-card-h">
@@ -168,7 +177,7 @@ export function EctdModuleReadiness({ status, state }: { status: StatusView | nu
         {status && <StatusChip status={status} />}
       </div>
       <div className="pj-card-b" style={{ padding: 0 }}>
-        <ReadinessBody status={status} state={state} />
+        <ReadinessBody status={status} state={state} reason={reason} />
       </div>
     </div>
   );

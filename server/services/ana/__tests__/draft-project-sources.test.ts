@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn(), sourceRecheck: 
 vi.mock('../catalog-scope', async () => ({ catalogScope: mocks.scope, sourceReadInput: (await import('./support/source-read-tool-fixture.js')).syntheticInput }));
 vi.mock('../../vault/document-catalog.service', () => ({ revalidateActorSourceScope: mocks.sourceRecheck, loadDocumentForActor: mocks.load }));
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: mocks.programRecheck }));
-import { loadDraftProjectSources, draftSourcePrompt, draftSourceAudit } from '../draft-project-sources';
+import { loadDraftProjectSources, draftSourcePrompt, draftSourceAudit, draftSourceSensitivityTiers } from '../draft-project-sources';
 const id = '10000000-0000-4000-8000-000000000001';
 const program = '20000000-0000-4000-8000-000000000001';
 const executor = { query: vi.fn() };
@@ -20,6 +20,18 @@ beforeEach(() => { vi.resetAllMocks(); mocks.scope.mockResolvedValue({ programId
   admittedScope: { organizationId: 7, userId: 3, programId: program, role: 'viewer', accessibleProgramIds: [program] },
   accessibleScope: { actor: { userId: 3, role: 'viewer' }, programIds: [program] } }); mocks.load.mockResolvedValue(doc()); });
 describe('processed project sources for regulatory drafting', () => {
+  it('issues routing tiers from saved metadata and rejects copied authority', async () => {
+    mocks.load.mockResolvedValue({ ...doc(), classification: 'CONFIDENTIAL' });
+    const context = await loadDraftProjectSources([id], ctx);
+    expect(draftSourceSensitivityTiers(context)).toEqual([2]);
+    expect(() => draftSourceSensitivityTiers({ ...context })).toThrow('SOURCE_CONTEXT_UNTRUSTED');
+    expect(draftSourceSensitivityTiers()).toBeUndefined();
+  });
+  it('fails closed when source sensitivity changes while content is unchanged', async () => {
+    mocks.load.mockResolvedValueOnce({ ...doc(), classification: 'PUBLIC' })
+      .mockResolvedValueOnce({ ...doc(), classification: 'CONTROLLED' });
+    await expect(loadDraftProjectSources([id], ctx)).rejects.toThrow('SOURCE_UNAVAILABLE');
+  });
   it('loads saved text, binds source identity/version/span, and deduplicates IDs', async () => {
     const result = await loadDraftProjectSources([id, id], ctx);
     expect(mocks.load).toHaveBeenCalledTimes(3);

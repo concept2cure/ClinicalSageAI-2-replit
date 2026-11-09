@@ -1,0 +1,56 @@
+# S5d-0b red: s5-three-valued-helpers-have-one-home.test.ts, as extended, on a private copy of f75de861e (trunk before this change). 4 of 41 fail. The guard fails on an assertion naming 4 module-level copies (biomarker-knowledge.ts listed, oneOfInput, textInput; digital-health-knowledge.ts oneOfInput), and 'the home defines all ten' on an assertion. The two adapter pins fail because the shared exports do not exist yet; for a verbatim move, the engines' own suites (green/after.txt) are the behaviour proof. The 37 S5d-0 cases pass.
+
+ × server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > no other module under server/services defines one of them by name 1244ms
+   → expected [ …(4) ] to deeply equal []
+ × server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > the home defines all ten 3ms
+   → expected [ 'unstated', 'anyOf', 'allOf', …(4) ] to deeply equal [ 'unstated', 'anyOf', 'allOf', …(7) ]
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > unstated is true only for an omitted or null value 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, false) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, undefined) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, null) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, true) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, undefined) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, null) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf of nothing is false and allOf of nothing is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > uniqueStrings keeps first-seen order 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > everyAnswer keeps each stated fact and tries both answers for each unstated one 1ms
+ × server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > listed joins prose as "a", "a and b", "a, b and c" 1ms
+   → listed is not a function
+ × server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > oneOfInput and textInput are refuseUnlessStated checks for a vocabulary and for non-empty text 2ms
+   → oneOfInput is not a function
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 37 passed (41)
+
+# the guard's list on trunk:
++   "biomarkers/biomarker-knowledge.ts: listed",
++   "biomarkers/biomarker-knowledge.ts: oneOfInput",
++   "biomarkers/biomarker-knowledge.ts: textInput",
++   "digital-health/digital-health-knowledge.ts: oneOfInput",

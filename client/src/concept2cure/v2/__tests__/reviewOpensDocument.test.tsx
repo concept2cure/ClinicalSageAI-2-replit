@@ -69,6 +69,11 @@ const board = (row = item()) => ({
   meta: { scope: 'all', programId: null, total: 1, threadItemId: DOC, threadDocumentId: DOC, generatedAt: '2026-10-08T00:00:00Z' },
 });
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 let BOARD = board();
 function mockApi() {
@@ -77,10 +82,10 @@ function mockApi() {
     if (url.startsWith('/api/review/board')) return ok({ success: true, data: BOARD });
     if (url.startsWith('/api/authoring/docs?')) {
       // The document under review is NOT the editor's default (first) row.
-      return ok({ documents: [
+      return ok(scopedList(url, { documents: [
         { id: OTHER_DOC, title: 'Nonclinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 },
         { id: DOC, title: 'Clinical Overview §2.5', module: 'M2', product_code: null, status: 'IN_REVIEW', updated_at: null, section_count: 1 },
-      ] });
+      ] }));
     }
     if (url.split('?')[0] === `/api/authoring/docs/${OTHER_DOC}/sections`) {
       return ok({ sections: [{ id: 'S-OTHER', doc_id: OTHER_DOC, code: '2.4', title: 'Nonclinical', content: '<p>Default document.</p>', order_index: 0, comment_count: 0, revision_count: 0, citation_count: 0, updated_at: null }] });

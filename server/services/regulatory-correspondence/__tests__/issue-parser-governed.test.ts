@@ -1,4 +1,49 @@
-import { runGovernedIssueParser, resolveIssueParserGovernanceConfig } from '../issue-parser';
+import { runGovernedIssueParser, resolveIssueParserGovernanceConfig, hasCurrentIssueSource } from '../issue-parser';
+
+describe('issue evidence identifies the actual letter span and inference register', () => {
+  it('anchors each late-letter issue to its own exact text, including UTF-16 offsets', () => {
+    const text = `${'Cover note 🧪 without a regulatory request.\n'.repeat(30)}Missing stability data for the proposed shelf life.\neCTD validation failed because mandatory metadata is absent.`;
+    const parsed = runGovernedIssueParser(text, 'late-letter');
+    const cmc = parsed.issues.find(issue => issue.category === 'cmc_quality_issue')!;
+    const format = parsed.issues.find(issue => issue.category === 'ectd_technical_formatting')!;
+    expect(cmc.sourceExcerpt).toBe('Missing stability data for the proposed shelf life.');
+    expect(format.sourceExcerpt).toBe('eCTD validation failed because mandatory metadata is absent.');
+    for (const issue of [cmc, format]) {
+      const span = issue.structuredExtraction!.evidenceSpan!;
+      expect(span.start).toBeGreaterThan(280);
+      expect(text.slice(span.start, span.end)).toBe(issue.sourceExcerpt);
+      expect(hasCurrentIssueSource(issue, text)).toBe(true);
+      expect(issue.structuredExtraction!.feedbackCoding!.humanConfirmed).toBe(false);
+    }
+    expect(cmc.structuredExtraction!.feedbackCoding).toMatchObject({ register: 'objective', deficiencyClass: 'missing_required_information' });
+    expect(format.structuredExtraction!.feedbackCoding).toMatchObject({ register: 'objective', deficiencyClass: 'format_validation_failure' });
+  });
+  it('keeps presentation expectations separate from objective failures', () => {
+    const text = 'Please improve the clarity and risk framing of the safety presentation.';
+    const issue = runGovernedIssueParser(text, 'subjective').issues[0];
+    expect(issue.structuredExtraction!.feedbackCoding).toMatchObject({ register: 'subjective', humanConfirmed: false });
+    expect(hasCurrentIssueSource(issue, text)).toBe(true);
+  });
+  it('a topic mention alone does not become an objective deficiency', () => {
+    for (const issue of runGovernedIssueParser('We discuss stability results and safety risks.', 'topics').issues) {
+      expect(issue.structuredExtraction!.feedbackCoding!.register).toBe('unclassified');
+    }
+    for (const text of ['No missing stability data remain.', 'All required safety data were provided.']) {
+      expect(runGovernedIssueParser(text, 'negated').issues[0].structuredExtraction!.feedbackCoding!.register).toBe('unclassified');
+    }
+  });
+  it('rejects changed letters, altered quotes and promoted unsupported classifications', () => {
+    const text = 'Missing CMC stability data.';
+    const issue = runGovernedIssueParser(text, 'tampered').issues[0];
+    expect(hasCurrentIssueSource(issue, `${text} Revised.`)).toBe(false);
+    const altered = globalThis.structuredClone(issue);
+    altered.structuredExtraction!.evidenceSpan!.text = 'An invented agency statement';
+    expect(hasCurrentIssueSource(altered, text)).toBe(false);
+    const promoted = globalThis.structuredClone(issue);
+    promoted.structuredExtraction!.feedbackCoding!.deficiencyClass = 'presentation_expectation';
+    expect(hasCurrentIssueSource(promoted, text)).toBe(false);
+  });
+});
 
 describe('governed issue parser', () => {
   it('returns structured operating extraction data', () => {

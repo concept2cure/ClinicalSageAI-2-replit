@@ -51,10 +51,10 @@ describe('withTenantConnection', () => {
     // (server/db/sessionScope.ts), with the values we passed.
     expect(queriesAtCallbackTime).toHaveLength(1);
     const [sql, values] = queriesAtCallbackTime[0];
-    for (const v of ['app.current_tenant_id', 'app.current_user_role', 'app.current_org_id', 'app.rls_enforce', 'app.bypass_rls', 'app.is_admin']) {
+    for (const v of ['app.current_tenant_id', 'app.current_user_role', 'app.current_org_id', 'app.current_account_id', 'app.rls_enforce', 'app.bypass_rls', 'app.is_admin']) {
       expect(sql).toContain(`set_config('${v}'`);
     }
-    expect(values).toEqual(['42', 'member', 'uuid-x']);
+    expect(values).toEqual(['42', 'member', 'uuid-x', '']);
   });
 
   it('makes the tenant scope visible to getTenantScope inside the callback', async () => {

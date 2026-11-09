@@ -186,12 +186,20 @@ export function findRouteRegistrations(text, file) {
   return sites;
 }
 
+/** A route as Express matches it: any parameter name (and pattern or `?`) is one `:`, a trailing
+    slash is dropped and case is ignored, so a renamed parameter is still the retired route. */
+export function routeShape(routePath) {
+  const shape = routePath.replace(/:[A-Za-z_$][\w$]*(?:\([^)]*\))?\??/g, ':').replace(/\/+$/, '').toLowerCase();
+  return shape || '/';
+}
+
 /** The workspace creator wrote other stores, so a PM-only insert scan is insufficient. */
 export function findRetiredCreatorRegistrations(text, file) {
   const paths = RETIRED_CREATORS.get(file);
   if (!paths) return [];
+  const shapes = new Set(paths.map(routeShape));
   return findRouteRegistrations(text, file)
-    .filter(site => site.method === 'post' && paths.includes(site.path))
+    .filter(site => (site.method === 'post' || site.method === 'all') && shapes.has(routeShape(site.path)))
     .map(site => `${file}:${site.line}: retired POST ${site.path}; use Projects -> POST /api/c2c/projects.`);
 }
 
@@ -249,6 +257,22 @@ export function projectCreationOwnerSelfTest() {
     if (findRetiredCreatorRegistrations(source, file).length !== 1) throw new Error('Missed retired workspace creator.');
   }
   if (findRetiredCreatorRegistrations("app.get('/api/workspace/projects', h); app.post('/api/unrelated', h)", file).length) throw new Error('Flagged retained GET or unrelated POST.');
+  /* A retired creator is one route to Express whatever its parameters are called, and with or
+     without a trailing slash or a capital letter. Renaming `:projectId` to `:parentId` would have
+     brought the retired child-project door back unseen (P-109, 2026-11-08). `all` answers a POST too. */
+  const hierarchy = 'server/routes/project-hierarchy.ts';
+  for (const source of [
+    "router.post('/:parentId/children', h)",
+    "router.post('/:projectId/children/', h)",
+    "router.post('/:id(\\d+)/Children', h)",
+    "router.all('/:anchor/children', h)",
+    "router.route('/:parentId/children').post(h)",
+  ]) {
+    if (findRetiredCreatorRegistrations(source, hierarchy).length !== 1) throw new Error(`Missed a renamed retired creator: ${source}`);
+  }
+  for (const source of ["router.get('/:parentId/children', h)", "router.post('/:parentId/children/:childId/move', h)", "router.post('/:parentId/child', h)"]) {
+    if (findRetiredCreatorRegistrations(source, hierarchy).length) throw new Error(`Flagged a retained route: ${source}`);
+  }
   return { planted: bad.length, readsAndComments: good.length, owners: sites.length };
 }
 

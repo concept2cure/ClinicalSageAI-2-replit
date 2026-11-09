@@ -1,0 +1,12 @@
+      8       "code": "INDEPENDENT_CHECK_REQUIRED",
+      3 AssertionError: {"success":false,"error":{"code":"REVIEW_DOCUMENT_FORBIDDEN","message":"Current full-document permission is required."}}: expected 403 to be 200 // Object.is equality
+      3    → {"success":false,"error":{"code":"REVIEW_DOCUMENT_FORBIDDEN","message":"Current full-document permission is required."}}: expected 403 to be 200 // Object.is equality
+      2 AssertionError: {"success":false,"error":{"code":"REVIEW_UNAVAILABLE","message":"The review could not be verified. Reload before trying again."}}: expected 503 to be 200 // Object.is equality
+      2    → {"success":false,"error":{"code":"REVIEW_UNAVAILABLE","message":"The review could not be verified. Reload before trying again."}}: expected 503 to be 200 // Object.is equality
+      2    → expected 503 to be 200 // Object.is equality
+      1 stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+      1 stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+      1 stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+      1  × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off 34ms
+      1  × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > refuses foreign and missing documents on read, request and verdict 27ms
+      1  × server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > peer review uses the tenant document and an atomic audit > records the request audit with its batch and rolls back when that audit fails 219ms

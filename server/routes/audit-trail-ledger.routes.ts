@@ -225,6 +225,13 @@ function userRef(id: number | null): string | null {
   return id != null && Number.isInteger(id) && id > 0 ? `user:${id}` : null;
 }
 
+/** A row's own description first; then the act's name; a title only when the act has none (a title names the
+ *  record, not what was done to it); else the action as recorded. */
+function auditLogEvent(action: unknown, payload: unknown): string {
+  return metaString(payload, ['description', 'summary']) ?? ACTION_EVENT[String(action ?? '')]
+    ?? metaString(payload, ['title', 'message']) ?? humanizeEventType(action);
+}
+
 function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
   const payload = row.new_values;
   const actorId = row.actor_id == null ? null : Number(row.actor_id);
@@ -237,7 +244,7 @@ function auditLogEntry(row: Record<string, unknown>): AuditLedgerEntry {
       nonEmpty(row.user_email) ??
       (actorId != null && Number.isFinite(actorId) ? `user ${actorId}` : 'System'),
     actorRef: userRef(actorId),
-    event: metaString(payload, ['description', 'summary', 'title', 'message']) ?? humanizeEventType(row.action),
+    event: auditLogEvent(row.action, payload),
     target:
       nonEmpty(row.target) ??
       `${nonEmpty(row.table_name) ?? 'system'}${nonEmpty(row.record_id) ? ` ${String(row.record_id).trim()}` : ''}`,
@@ -301,6 +308,31 @@ const SIGNED_EVENT: Record<string, string> = {
   'qms-document-retirement': 'Controlled document retired (e-signature)',
 };
 const AUTHORING_SIGNED_EVENT = 'Document e-signed';
+/** A Vault version's lifecycle signature, by its declared meaning (an interim approval is named below). */
+const LIFECYCLE_SIGNED_EVENT: Record<string, string> = {
+  REVIEWED: 'Version review signed (e-signature)', APPROVED: 'Version approved (e-signature)' };
+
+/** Acts whose rows carry no description, as a reader names them (J2 human test, 2026-11-06: the trail read
+ *  "C2c Work Sign"). Only actions a writer mints; any other is shown as the chain recorded it. */
+const ACTION_EVENT: Record<string, string> = {
+  'c2c.work.review-route.send': 'Sent for review', 'c2c.work.review-route.withdraw': 'Review withdrawn',
+  'c2c.work.review-route.return': 'Returned from review', 'c2c.work.review-route.reassign': 'Reviewer reassigned',
+  'c2c.work.review-route.add': 'Reviewer added', 'vault.document.ingest': 'Uploaded to the Vault',
+  'vault.document.file': 'Filing recorded', 'vault.document.download': 'Downloaded',
+  'vault.document.exported': 'Exported', 'vault.document.extracted': 'Text extracted',
+  'vault.document.text.read': 'Text read', 'vault.document.filed': 'Filed',
+  'vault.document.metadata_edit': 'Details edited', 'vault.document.relate': 'Related document recorded',
+  'vault.document.annotate': 'Annotation added', 'vault.document.annotation.reply': 'Annotation replied to',
+  'vault.document.annotation.resolve': 'Annotation resolved',
+  'vault.document.annotation.retract': 'Annotation retracted',
+  'vault.document.catalog_suggest': 'Catalog description suggested',
+  'vault.document.retention_soft_delete': 'Removed under the retention process',
+  'regulated_document.registered': 'Registered as a controlled document',
+  'regulated_document.created': 'Version entered review and approval',
+  'regulated_document.authoring': 'Version returned to Not sent for review',
+  'regulated_document.in_review': 'Version in review', 'regulated_document.approved': 'Version approved',
+  'regulated_document.superseded': 'Version superseded', 'regulated_document.withdrawn': 'Version withdrawn',
+};
 
 /**
  * An approval that was not the last one its route required (RR2 records,
@@ -320,7 +352,8 @@ const INTERIM_SUBJECT: Record<string, { act: string; subject: string }> = {
 function signedEvent(es: Record<string, unknown>): string | null {
   const type = String(es.signature_type);
   const interim = es.interim_approval === true ? INTERIM_SUBJECT[type] : undefined;
-  if (!interim) return SIGNED_EVENT[type] ?? null;
+  const lifecycle = type === LIFECYCLE_SIGNATURE_TYPE ? LIFECYCLE_SIGNED_EVENT[String(es.signature_meaning ?? '').toUpperCase()] : undefined;
+  if (!interim) return lifecycle ?? SIGNED_EVENT[type] ?? null;
   const recorded = Number(es.approvals_recorded);
   const required = Number(es.approvals_required);
   const share = Number.isInteger(recorded) && Number.isInteger(required) && required > 0

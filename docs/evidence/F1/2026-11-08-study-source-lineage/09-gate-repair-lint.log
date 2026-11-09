@@ -1,0 +1,26 @@
+Scoped ESLint after SQL/validation helper refactoring. Exit 0.
+Remaining warning counts match the pre-existing per-file counts; no rule suppression or baseline edit by this lane.
+
+client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx: 0 errors, 0 warnings
+client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx: 0 errors, 0 warnings
+client/src/concept2cure/v2/authoringHandoff.ts: 0 errors, 1 warnings
+  106:1 complexity Async function 'writeHandoffStage' has a complexity of 20. Maximum allowed is 15.
+client/src/concept2cure/v2/surfaces/Biostatistics.tsx: 0 errors, 4 warnings
+  523:8 max-lines-per-function Function 'Biostatistics' has too many lines (580). Maximum allowed is 100.
+  523:8 complexity Function 'Biostatistics' has a complexity of 112. Maximum allowed is 15.
+  778:1 max-lines File has too many lines (908). Maximum allowed is 500.
+  831:33 complexity Arrow function has a complexity of 25. Maximum allowed is 15.
+server/routes/__tests__/ana-biostats-refusal-is-422.test.ts: 0 errors, 0 warnings
+server/routes/ana-biostats.ts: 0 errors, 0 warnings
+server/services/ana-biostats/workflow-integrator.ts: 0 errors, 0 warnings
+server/services/authoring/authoring-from-draft.ts: 0 errors, 0 warnings
+server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts: 0 errors, 0 warnings
+server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts: 0 errors, 0 warnings
+server/services/clinical-regulatory-evidence/evidence-spine.service.ts: 0 errors, 5 warnings
+  376:1 complexity Async function 'insertSource' has a complexity of 33. Maximum allowed is 15.
+  703:1 max-lines File has too many lines (878). Maximum allowed is 500.
+  794:8 complexity Async function 'upsertStudy' has a complexity of 16. Maximum allowed is 15.
+  843:8 complexity Async function 'createFinding' has a complexity of 23. Maximum allowed is 15.
+  1002:8 complexity Async function 'proposeDesignLesson' has a complexity of 19. Maximum allowed is 15.
+tests/db/source-capture-study-concurrency.dbtest.ts: 0 errors, 0 warnings

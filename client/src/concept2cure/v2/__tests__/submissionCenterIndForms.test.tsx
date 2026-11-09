@@ -42,7 +42,8 @@ beforeEach(() => {
   });
 });
 
-const FORMS = /Forms and letters \(1571, cover letter, LOA\)/;
+// D7-A1 (2026-11-09): the door moved from a note under the title to the header's actions; its title names the forms.
+const FORMS = /^Forms and letters$/;
 
 describe('Submission Center — the IND forms screen, from the US IND', () => {
   it('a US IND opens the IND forms screen scoped to that submission', async () => {

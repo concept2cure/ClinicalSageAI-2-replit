@@ -387,6 +387,39 @@ export async function getUserRole(userId: number, organizationId: number): Promi
 }
 `;
 
+/**
+ * NEAR-MISS, the server/services/ai-gateway/providers/clients.ts shape (2026-11-08):
+ * resolver-named, the org id a parameter, and the word "request" only in a
+ * comment and in an error message's template text. Neither is a read of the
+ * request; the gate matched them until it read code only.
+ */
+const ORG_ID_PARAMETER_REQUEST_ONLY_IN_TEXT = `import { readTenantModelCredentials } from '../connectors/connector-registry';
+
+export class TenantCredentialUnavailableError extends Error {
+  constructor() { super('The model credential no longer authorizes this request.'); }
+}
+export async function resolveTenantModelCredentialAvailability(organizationId: number) {
+  try { return await readTenantModelCredentials(organizationId); } catch { throw new TenantCredentialUnavailableError(); }
+}
+function providerError(status?: number): Error {
+  return new Error(\`The customer-owned model request failed\${status ? \` (HTTP \${status})\` : ''}.\`);
+}
+/** A fresh SDK object per tenant/request; no client is shared between tenants. */
+export const created = providerError;
+`;
+
+/** A resolver whose only raw read sits inside a template literal's interpolation: still code, still a read. */
+const READ_INSIDE_TEMPLATE_INTERPOLATION = `${IMPORTS}
+/** The org's storage prefix, from the raw request. */
+function resolveOrgPrefix(req: Request): string {
+  return \`orgs/\${(req as any).organizationId ?? req.user?.organizationId}/files\`;
+}
+
+router.get('/prefix', (req: Request, res: Response) => { res.json({ prefix: resolveOrgPrefix(req) }); });
+
+export default router;
+`;
+
 // ── Cases ─────────────────────────────────────────────────────────────────────
 
 const FAIL_HEAD = 'FAIL: 1 new local tenant resolver(s)';
@@ -467,6 +500,18 @@ const cases = [
     files: { 'server/services/membership-roles.ts': ORG_ID_AS_PARAMETER },
     expectExit: 0,
     expectIn: ['Local tenant resolvers: 0 (baseline 0)', 'OK: no new local tenant resolvers.'],
+  },
+  {
+    name: 'quiet — NEAR-MISS: the org id is a parameter and "request" is only in a comment and an error message (ai-gateway clients)',
+    files: { 'server/services/ai-gateway/providers/clients.ts': ORG_ID_PARAMETER_REQUEST_ONLY_IN_TEXT },
+    expectExit: 0,
+    expectIn: ['Local tenant resolvers: 0 (baseline 0)', 'OK: no new local tenant resolvers.'],
+  },
+  {
+    name: 'FAILS on a raw read inside a template interpolation — text is ignored, interpolated code is not',
+    files: { 'server/routes/org-prefix.ts': READ_INSIDE_TEMPLATE_INTERPOLATION },
+    expectExit: 1,
+    expectIn: [FAIL_HEAD, '  - server/routes/org-prefix.ts'],
   },
   {
     name: 'quiet — test files and declaration files are out of scope',

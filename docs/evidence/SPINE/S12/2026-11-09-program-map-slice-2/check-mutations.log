@@ -1,0 +1,21 @@
+## Withdrawn data still counts (no vaultDataEligibleSql)
+ ✓ names the family's current version, not a superseded one 10ms
+ ✓ says the same nothing for an unknown family, another program's, and another organisation's 6ms
+ × says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 21ms
+ ✓ refuses a malformed program or code without reading 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+## A superseded version counts (no supersededSql)
+ ✓ names the family's current version, not a superseded one 8ms
+ ✓ says the same nothing for an unknown family, another program's, and another organisation's 6ms
+ × says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 14ms
+ ✓ refuses a malformed program or code without reading 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+## Not held to the organisation and program
+ ✓ names the family's current version, not a superseded one 8ms
+ × says the same nothing for an unknown family, another program's, and another organisation's 8ms
+ ✓ says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 11ms
+ ✓ refuses a malformed program or code without reading 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

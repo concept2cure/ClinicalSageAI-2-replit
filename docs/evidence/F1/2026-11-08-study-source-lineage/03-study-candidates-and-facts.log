@@ -1,0 +1,33 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 12ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > finds every labelled fact on a title page, with the offset it matched at 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > reads the date shapes regulatory documents use 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > takes nothing without its label: a bare date, number or code is not a fact 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > declines an impossible date rather than recording a plausible one 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > nothing to read is no facts, not an error 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > does not discard a later unmatched protocol because the first matched 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > passes all distinct protocols to the scoped matcher, retaining a repeated single protocol 0ms
+(node:50) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > uses the caller transaction without changing historical identity or filters 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > retains the existing pool fallback and empty-checksum no-query behavior 1ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  08:56:55
+   Duration  4.15s (transform 761ms, setup 78ms, import 1.87s, tests 1.75s, environment 0ms)
+

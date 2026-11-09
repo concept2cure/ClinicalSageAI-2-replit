@@ -129,17 +129,28 @@ describe('DeepResearch — AnA switches tabs, and only tabs', () => {
     expect(out).toEqual({ status: 'applied', detail: 'Opened the research tab' });
   });
 
-  it('refuses to switch tabs under an open credential drawer', async () => {
+  /* The tab switch's one refusal. Until 2026-11-06 there were two: the other refused under an open credential
+     drawer, and e6a7c391cc removed that drawer when credentials moved to client administration
+     (deepResearchJobContract.test.tsx pins the Settings hand-off). What is left is a running job: switching
+     away would hide a live, credit-metered spend. */
+  it('refuses to switch away from a running research job, and the run stays on screen', async () => {
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (path === '/api/deep-research/board') return ok({ data: BOARD });
+      if (method === 'POST' && path === '/api/deep-research/jobs') return ok({ id: 7, status: 'queued', progress: 0 });
+      if (method === 'GET' && path === '/api/deep-research/jobs/7') return ok({ id: 7, status: 'running', progress: 30 });
+      return ok({ data: {} });
+    });
     render(<DeepResearch {...props()} />);
     await waitFor(() => expect(registeredSurfaceId()).toBe('deep-research'));
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Research question' }), { target: { value: 'ORR precedents' } });
+    fireEvent.click(screen.getByRole('button', { name: /Launch deep research/ }));
+    expect(await screen.findByRole('button', { name: /Stop research/ })).toBeTruthy();
 
-    apply('deep-research.open-tab', { tab: 'connectors' });
-    fireEvent.click(await screen.findByText(/Configure$/));
-    expect(await screen.findByText('Configure Embase')).toBeTruthy();
-
-    const out = apply('deep-research.open-tab', { tab: 'research' });
+    const out = apply('deep-research.open-tab', { tab: 'connectors' });
     expect(out.status).toBe('failed');
-    expect(out.reason).toContain('credential drawer');
+    expect(out.reason).toContain('research run is in progress');
+    expect(screen.getByRole('button', { name: /Stop research/ })).toBeTruthy();
+    expect(screen.queryByText('Embase')).toBeNull();
   });
 });
 

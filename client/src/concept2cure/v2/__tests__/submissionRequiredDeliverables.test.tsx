@@ -30,7 +30,9 @@ describe('required deliverables — native coverage and scope', () => {
     const url = new URL(String(calls[0][1]), 'https://fixture.invalid');
     expect(url.pathname).toBe('/api/submissions/sequences/21/pathway-manifest');
     expect(Object.fromEntries(url.searchParams)).toEqual({ programId: PROGRAM_A, submissionId: '41' });
-    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([['POST', '/api/510k/estar/assemble', { pathway: '510k', variant: 'device' }]]);
+    // Program A's record names no device or diagnostic filing, so no eSTAR
+    // assembly verdict is asked for (B4, 2026-11-05): nothing but reads.
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([]);
   });
 
   it('shows all five structural states and keeps coverage separate from governed dispatch', async () => {
@@ -42,7 +44,8 @@ describe('required deliverables — native coverage and scope', () => {
     expect(within(screen.getByText('Optional unplaced material').closest('tr')!).getByText('Optional absent')).toBeTruthy();
     expect(within(screen.getByText('Known excluded requirement').closest('tr')!).getByText('Not applicable')).toBeTruthy();
     expect(screen.getByText(/does not approve.*clear.*dispatch/i)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /freeze|dispatch|transmit/i })).toBeNull();
+    // No governed act here. AnA's starters ("What blocks dispatch?") are questions, not acts, so they are left out.
+    expect(screen.queryAllByRole('button', { name: /freeze|dispatch|transmit/i }).filter((b) => !b.closest('[aria-label="Ask AnA"]'))).toEqual([]);
     expect(document.body.textContent).not.toMatch(/full CTD complete|100%|filing ready/i);
   });
 
@@ -204,7 +207,8 @@ describe('required deliverables — admitted optional display labels', () => {
 
 describe('Builder source evidence — current admitted pointer outcomes', () => {
   it.each([
-    ['undetermined', 'Source evidence undetermined'],
+    // D7-A2 step 9: undetermined is said quietly on the leaf and counted once above the table, not chipped.
+    ['undetermined', /not yet determined$/],
     ['missing', 'not found in this organization'],
     ['content_changed', 'content changed since filing'],
   ] as const)('displays the actual %s result without converting it into another source verdict', async (status, label) => {
@@ -215,6 +219,11 @@ describe('Builder source evidence — current admitted pointer outcomes', () => 
     fireEvent.click(screen.getByRole('tab', { name: 'Builder' }));
     expect(await screen.findByText(label)).toBeTruthy();
     expect(document.body.textContent).not.toContain('source verified');
+    if (status === 'undetermined') {
+      expect(screen.getByTestId('sc-source-undetermined').textContent).toBe('Source evidence not yet determined for 1 leaf.');
+    } else {
+      expect(screen.queryByTestId('sc-source-undetermined')).toBeNull();
+    }
   });
 });
 

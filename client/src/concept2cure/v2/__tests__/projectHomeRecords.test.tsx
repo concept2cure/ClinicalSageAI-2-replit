@@ -56,7 +56,8 @@ describe('ProjectHome — records in this project', () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     mockApi();
     render(<ProjectHome {...props()} />);
-    expect(screen.getByRole('region', { name: 'Records in this project' })).toBeTruthy();
+    /* D3-2a: the Records card in Project knowledge, on every step (it was a section of Author). */
+    expect(screen.getByRole('region', { name: 'Records' }).closest('.pj-side')).toBeTruthy();
     expect(await screen.findByText('Module 2.5 Clinical Overview')).toBeTruthy();
     const recordReads = apiRequest.mock.calls.map((c: unknown[]) => String(c[1])).filter((u) => u.endsWith('/records'));
     expect(recordReads).toEqual([`/api/c2c/projects/${PID}/records`]);
@@ -65,7 +66,7 @@ describe('ProjectHome — records in this project', () => {
   it('with no project open, there is no records panel and no records read', () => {
     mockApi();
     render(<ProjectHome {...props()} />);
-    expect(screen.queryByRole('region', { name: 'Records in this project' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Records' })).toBeNull();
     expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).endsWith('/records'))).toBe(false);
   });
 });

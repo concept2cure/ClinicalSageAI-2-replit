@@ -1,0 +1,111 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T22:14:10.814Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:14:10.820Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T22:14:10.820Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T22:14:11.168Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable
+{
+  "timestamp": "2026-11-06T22:14:11.787Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant refuses source revocation after credential work without retry or disclosure 14ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant refuses source revocation after credential work without retry or disclosure 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform refuses source revocation after credential work without retry or disclosure 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform refuses source revocation after credential work without retry or disclosure 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant cancels during credential work before any SDK call 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant cancels during credential work before any SDK call 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform cancels during credential work before any SDK call 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant keeps current-source SDK dispatch reachable 25ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant keeps current-source SDK dispatch reachable 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform keeps current-source SDK dispatch reachable 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform keeps current-source SDK dispatch reachable 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / tenant rechecks cancellation after the final source read awaits 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / tenant rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > anthropic / platform rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > current sources at the actual SDK boundary after credential awaits > openai / platform rechecks cancellation after the final source read awaits 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > platform-client continuation at the actual SDK boundary > anthropic checks cancellation in the platform-client promise continuation before SDK create 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > platform-client continuation at the actual SDK boundary > openai checks cancellation in the platform-client promise continuation before SDK create 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > leaves ordinary no-source calls on the existing path 1ms
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback
+{
+  "timestamp": "2026-11-06T22:14:11.879Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider
+{
+  "timestamp": "2026-11-06T22:14:11.882Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > runs the guard after capacity is granted, refuses queued revocation, and releases the permit 54ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > captures the original guard before the first route await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a synchronous guard refusal terminal and safe without provider-health accounting 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a asynchronous guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway current-source dispatch checkpoint > makes a typed source access guard refusal terminal and safe without provider-health accounting 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback null before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback "pretend guard" before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback 7 before placement or dispatch 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > rejects malformed callback {} before placement or dispatch 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway guard validation and repeated dispatch > sanitizes a callback getter failure before any await 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > rechecks before a primary retry and never dispatches revoked retry work 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > uses the captured guard on fallback even if the caller replaces the callback 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > also rechecks before retrying a fallback provider 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > preserves a transient retry when the source remains current 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (resolve), releases capacity and never dispatches canceled work 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts > gateway repeated source checks and cancellation > honors cancellation during a guard wait (reject), releases capacity and never dispatches canceled work 2ms
+
+ Test Files  1 passed (1)
+      Tests  35 passed (35)
+   Start at  22:14:07
+   Duration  4.29s (transform 2.03s, setup 121ms, import 3.60s, tests 166ms, environment 0ms)
+

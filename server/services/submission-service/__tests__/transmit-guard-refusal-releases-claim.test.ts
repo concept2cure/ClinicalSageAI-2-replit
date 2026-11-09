@@ -19,13 +19,12 @@
  * guard passed must leave 'transmitting'. Both are pinned below; the negative
  * cases fail against a refusedBeforeWire that answers true for everything.
  *
- * 2026-09-23 (W5/D7, round-3 skeptic): the FDA SFTP branch still stranded the
- * claim deterministically. isConfigured checks only the AS2 credentials, so a
- * sequence over 1 GiB is claimed, passes the guard, and is refused by
- * transmitViaSftp before connect() with a CredentialError when no SFTP
- * credentials are provisioned. refusedBeforeWire now recognises CredentialError
- * (every site raises it from a credential check before any request); the case
- * below runs the real gateway on a >1 GiB descriptor.
+ * 2026-09-23 (W5/D7, round-3 skeptic): the FDA SFTP branch stranded the claim
+ * for a sequence over 1 GiB (a CredentialError before connect()); refusedBefore-
+ * Wire learned to recognise CredentialError. 2026-11-09 (P-93): an FDA package
+ * over 1 GiB is out of scope for launch. Transmit's own package re-check refuses
+ * it on the bytes it assembled, before the guard, the archive or the gateway, and
+ * releases the claim; the case that replaced the SFTP ones pins that.
  *
  * 2026-09-23 (W5/D7, MDN close): three more cases, each through the real
  * FdaEsgGateway.
@@ -37,10 +36,6 @@
  *     carries the proof and the claim is released.
  *   - NEGATIVE: a 502 after the server read the whole bundle is
  *     DELIVERED_UNCONFIRMED ('in_transit' inside the lock): the claim stays.
- *   - SFTP credentials set but the 'ssh2-sftp-client' module absent: refused
- *     before any connection, now with the proof; the claim is released. The
- *     SFTP CredentialError now names the environment the credentials were
- *     resolved for (staging here), not 'production'.
  *
  * 2026-09-23 (W5/D7, MDN close, repair): NEGATIVE, from a separate-process
  * server while this process is busy. The classifier briefly read Node's
@@ -48,6 +43,14 @@
  * a reset after it, was NOT_DELIVERED whenever 'finish' had not yet been
  * delivered — and with the proof above, the claim was released while FDA
  * held the bundle. Both keep the claim now.
+ *
+ * F1 (row D7, 2026-11-01): a send to the agency's TEST environment is not a
+ * filing, so nothing the test environment holds is a held send. The NEGATIVE
+ * cases above are production sends (FDA_ESG_*): a production failure after the
+ * wire keeps the claim, as it always did (founder decision P-92 will settle such
+ * a hold by a signed act). Each has a staging copy (FDA_ESG_STAGING_*) in which
+ * the same failure releases the claim and voids the signature it was given, so
+ * that signature, given for a test send, never files the sequence.
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import JSZip from 'jszip';
@@ -60,7 +63,9 @@ const poolCalls: Array<{ text: string; params?: unknown[] }> = [];
 const recordedIdentity = () => ({ programId: 'p-1', applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
   applicantSponsorId: '22222222-2222-4222-8222-222222222222', applicantId: '123456789',
   contact: { name: 'Regulatory Contact', phone: '+1 617 555 0100', email: 'regulatory@example.test' } });
-const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false };
+const state = { dispatchStatus: 'pending' as string, signatureActionId: null as string | null, attemptId: null as string | null, signatureSpent: false, spendAfterLock: false, signatureVoided: false,
+  /** The environment the signature names: the send's own unless a case says otherwise (F1, row D7). */
+  signedEnvironment: 'staging' as 'staging' | 'production' };
 
 vi.mock('../../../db', () => {
   const rowsFor = (tableName: string) => {
@@ -82,7 +87,8 @@ vi.mock('../../../db', () => {
   const textOf = (q: any): string => (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : '?')).join('');
   const execute = async (q: any) => {
     const t = textOf(q);
-    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release' } }] };
+    // The signature names the environment of the send it was given for (F1, row D7, 2026-11-08).
+    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release', environment: state.signedEnvironment } }] };
     if (t.includes('audit_logs')) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
     if (t.includes('electronic_signatures')) return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
     return { rows: [] };
@@ -106,10 +112,12 @@ vi.mock('../../../db', () => {
       if (/FROM audit_logs/.test(text)) return { rows: state.signatureSpent ? [{ action: 'ECTD_TRANSMITTED' }] : [] };
       const mutation = applyDispatchMutation(text, params);
       if (mutation) return mutation;
+      // A refused step's signature taken out of force (voidSignatureForRefusedAct, P-23).
+      if (/UPDATE electronic_signatures/.test(text)) { state.signatureVoided = true; return { rowCount: 1, rows: [{ id: 5 }] }; }
       // New AS2 proof metadata commits before the network; this fixture is not
       // an intentional missing-row/persistence-failure scenario.
       if (/UPDATE submission_transmittals SET metadata = jsonb_set/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
-      // The FDA gateway's transmittal row (only the SFTP case reaches it).
+      // The FDA gateway's transmittal row (the AS2 cases reach it).
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 99 }] };
       // What the package names, from the record (package-identity.ts, QA j6).
       // The project's home market is FDA's (P-44): a package names the number only for a market it resolves.
@@ -127,19 +135,16 @@ vi.mock('../../../db', () => {
   };
   return { db: { select, execute }, pool };
 });
-// The guarded transmit keeps the sent package before the wire (sent-package-archive.ts), in memory here.
-// A >1 GiB descriptor over a small real bundle (integrity.ignoreSize) is kept at the size it declares, so the
-// archive's own size check passes and the SFTP branch is what refuses.
+// The guarded transmit keeps the sent package before the wire (sent-package-archive.ts), in memory here,
+// counting what it stores so a refusal before the guard can show nothing was kept.
+const archived = { puts: 0 };
 vi.mock('../../storage', async () => {
   const { storageModule } = await import('../../submission-gateways/__tests__/sent-package-storage-stub');
   const provider = storageModule.getStorageProvider();
   return {
     getStorageProvider: () => ({
       ...provider,
-      put: async (o: { bytes: Buffer }) => {
-        const stored = await provider.put(o);
-        return integrity.ignoreSize ? { ...stored, sizeBytes: bundle.sizeBytes } : stored;
-      },
+      put: async (o: { bytes: Buffer }) => { archived.puts += 1; return provider.put(o); },
     }),
   };
 });
@@ -152,23 +157,6 @@ vi.mock('../../part11/signature-persistence', async (orig) => ({
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({ gate: { cleared: true, blockers: [] } }),
 }));
-
-// Off by default. On, the byte check still verifies the sha256 but not the
-// size, so a small real bundle can carry a >1 GiB descriptor (the SFTP case);
-// what it guards is unchanged and still runs before transmitViaSftp.
-const integrity = { ignoreSize: false };
-vi.mock('../../submission-gateways/bundle-integrity', async (orig) => {
-  const real = await orig<typeof import('../../submission-gateways/bundle-integrity')>();
-  return {
-    ...real,
-    readVerifiedBundle: async (b: { path: string; sha256: string; sizeBytes: number }) => {
-      if (!integrity.ignoreSize) return real.readVerifiedBundle(b);
-      const buf = await fs.readFile(b.path);
-      if (createHash('sha256').update(buf).digest('hex') !== b.sha256) throw new Error('sha256 mismatch');
-      return buf;
-    },
-  };
-});
 
 // The leaf manifest every assembled bundle carries (regional-packager.ts packageEctdSubmission
 // always sets it); a sequence transmit without one is refused by the guard before these cases.
@@ -212,8 +200,7 @@ const REST_ENV = {
   FDA_ESG_STAGING_REST_SUBMITTER_ID: 'sub',
 };
 
-// AS2 staging credentials only — what FdaEsgGateway.isConfigured checks. No
-// FDA_ESG_STAGING_SFTP_* is set. The PEM paths are filled in beforeAll.
+// AS2 staging credentials — what FdaEsgGateway.isConfigured checks. The PEM paths are filled in beforeAll.
 const AS2_ENV: Record<string, string> = {
   FDA_ESG_STAGING_URL: 'https://esg.example.invalid',
   FDA_ESG_STAGING_AS2_FROM: 'SPONSOR',
@@ -234,18 +221,25 @@ beforeEach(() => {
   state.attemptId = null;
   state.signatureSpent = false;
   state.spendAfterLock = false;
+  state.signatureVoided = false;
   poolCalls.length = 0;
 });
 afterEach(() => {
   vi.restoreAllMocks();
-  integrity.ignoreSize = false;
+  archived.puts = 0;
   for (const k of [...Object.keys(REST_ENV), ...Object.keys(AS2_ENV), 'FDA_ESG_STAGING_TLS_CA_PATH']) delete process.env[k];
+  for (const k of Object.keys(process.env)) if (/^FDA_ESG_(?!STAGING_)/.test(k)) delete process.env[k];
 });
 
-const transmit = () => transmitSequence({
-  sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
-  environment: 'staging', applicationId: '123456',
-}).catch((e) => e);
+const transmit = (environment: 'staging' | 'production' = 'staging') => {
+  state.signedEnvironment = environment;
+  return transmitSequence({
+    sequenceId: 1, ctx: { organizationId: 7, userId: 11 }, signatureActionId: 'sig-1',
+    environment, applicationId: '123456',
+  }).catch((e) => e);
+};
+/** What a person is told when a test send failed after the wire. */
+const TEST_SEND_RELEASED = /agency's test environment, which files nothing/;
 
 describe('transmit guard refusal before the wire', () => {
   it('refuses a signature consumed by verified receipt settlement before taking another claim', async () => {
@@ -327,55 +321,27 @@ describe('a refusal inside the gateway that proves nothing was sent', () => {
   });
 });
 
-describe('the FDA SFTP branch refusing before connect (round-3 skeptic)', () => {
-  it('releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError)', async () => {
-    // Real isConfigured (AS2 credentials only -> true, so the claim is taken)
-    // and real transmit: the size routes to SFTP, and transmitViaSftp refuses
-    // on the missing FDA_ESG_STAGING_SFTP_* before any connection is opened.
+describe('an FDA package over 1 GiB is refused at the act, on the bytes it assembled (P-93, site c)', () => {
+  it('refuses with DISPATCH_BLOCKED before the guard, the archive or the gateway, and releases the claim', async () => {
+    // The input the retired SFTP cases used: a configured AS2 route, a claim
+    // taken, and a package of 1 GiB and one byte. Transmit's package re-check
+    // reads the size itself; nothing downstream is reached.
     Object.assign(bundle, bundles.clean, { sizeBytes: 1_073_741_825 });
     Object.assign(process.env, AS2_ENV);
-    for (const k of ['FDA_ESG_STAGING_SFTP_HOST', 'FDA_ESG_STAGING_SFTP_USER', 'FDA_ESG_STAGING_SFTP_KEY_PATH']) delete process.env[k];
-    integrity.ignoreSize = true;
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit');
     const err = await transmit();
-    expect(err?.name).toBe('CredentialError');
-    expect(String(err?.message)).toMatch(/SFTP_HOST/);
-    // 2026-09-23 (W5/D7, MDN close): the environment the credentials were
-    // resolved for, and its variable names — this used to say 'production'
-    // and FDA_ESG_SFTP_HOST for a staging transmit.
-    expect(err?.environment).toBe('staging');
-    expect(err?.missing).toEqual(['FDA_ESG_STAGING_SFTP_HOST', 'FDA_ESG_STAGING_SFTP_USER', 'FDA_ESG_STAGING_SFTP_KEY_PATH']);
+    expect(err?.code).toBe('DISPATCH_BLOCKED');
+    expect(String(err?.message)).toBe('Transmit blocked — the package is just over 1 GiB (1,073,741,825 bytes), and at ' +
+      'launch Concept2Cure sends packages of up to 1 GiB to FDA. Nothing was sent. The signature given for this transmit is ' +
+      'now void; sign again for a new attempt.');
+    // A refused step takes its signature out of force (P-23).
+    expect(state.signatureVoided).toBe(true);
     expect(claimTaken()).toBe(true);
-    // The gateway recorded its own row as refused, not in flight.
-    expect(poolCalls.some((c) => /UPDATE submission_transmittals/.test(c.text) && c.params?.includes('rejected'))).toBe(true);
     expect(state.dispatchStatus).toBe('pending');
     expect(resendRefusal(state.dispatchStatus)).toBeNull();
-  });
-  it('releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close)', async () => {
-    // The module is not installed in this repository (nor declared), so the
-    // dynamic import fails before any connection is opened.
-    Object.assign(bundle, bundles.clean, { sizeBytes: 1_073_741_825 });
-    Object.assign(process.env, AS2_ENV);
-    const keyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'fda-sftp-key-'));
-    await fs.writeFile(path.join(keyDir, 'id'), 'KEY');
-    Object.assign(process.env, {
-      FDA_ESG_STAGING_SFTP_HOST: 'sftp.esg.example.invalid',
-      FDA_ESG_STAGING_SFTP_USER: 'sponsor',
-      FDA_ESG_STAGING_SFTP_KEY_PATH: path.join(keyDir, 'id'),
-    });
-    integrity.ignoreSize = true;
-    try {
-      const err = await transmit();
-      expect(err).toBeInstanceOf(TransportError);
-      expect(String(err?.message)).toMatch(/ssh2-sftp-client/);
-      expect(claimTaken()).toBe(true);
-      expect(poolCalls.some((c) => /UPDATE submission_transmittals/.test(c.text) && c.params?.includes('rejected'))).toBe(true);
-      expect(state.dispatchStatus).toBe('pending');
-      expect(resendRefusal(state.dispatchStatus)).toBeNull();
-      expect(err?.transmitted).toBe(false);
-      expect(String(err?.message)).toMatch(/nothing was sent/);
-    } finally {
-      for (const k of ['FDA_ESG_STAGING_SFTP_HOST', 'FDA_ESG_STAGING_SFTP_USER', 'FDA_ESG_STAGING_SFTP_KEY_PATH']) delete process.env[k];
-    }
+    expect(wire).not.toHaveBeenCalled();
+    expect(archived.puts).toBe(0);
+    expect(poolCalls.some((c) => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
   });
 });
 
@@ -386,16 +352,20 @@ describe('the FDA SFTP branch refusing before connect (round-3 skeptic)', () => 
 describe('the FDA AS2 POST, classified by the delivery classifier', () => {
   let pki: MtlsPki;
   let server: MtlsServer;
-  const mtlsEnv = (client: 'trusted' | 'rogue'): Record<string, string> => ({
-    FDA_ESG_STAGING_URL: `https://127.0.0.1:${server.port}/as2`,
-    FDA_ESG_STAGING_AS2_FROM: 'SPONSOR-AS2',
-    FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
-    FDA_ESG_STAGING_CERT_PATH: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
-    FDA_ESG_STAGING_KEY_PATH: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
-    FDA_ESG_STAGING_FDA_CERT_PATH: pki.paths.ca,
-    // TLS trust and the recipient's AS2 encryption certificate are independent.
-    FDA_ESG_STAGING_TLS_CA_PATH: pki.paths.ca,
-  });
+  /** The FDA ESG AS2 credentials for one environment: FDA_ESG_STAGING_* for staging, FDA_ESG_* for production. */
+  const mtlsEnv = (client: 'trusted' | 'rogue', environment: 'staging' | 'production' = 'staging', url = `https://127.0.0.1:${server.port}/as2`): Record<string, string> => {
+    const p = environment === 'production' ? 'FDA_ESG_' : 'FDA_ESG_STAGING_';
+    return {
+      [`${p}URL`]: url,
+      [`${p}AS2_FROM`]: 'SPONSOR-AS2',
+      [`${p}AS2_TO`]: 'FDA-AS2-ID-TEST',
+      [`${p}CERT_PATH`]: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
+      [`${p}KEY_PATH`]: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
+      [`${p}FDA_CERT_PATH`]: pki.paths.ca,
+      // TLS trust and the recipient's AS2 encryption certificate are independent.
+      [`${p}TLS_CA_PATH`]: pki.paths.ca,
+    };
+  };
   beforeAll(async () => {
     pki = makeMtlsPki();
     server = await startMtlsServer(pki);
@@ -420,11 +390,11 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
     expect(err?.transmitted).toBe(false);
   });
 
-  it('NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle): in transit, the claim stays transmitting', async () => {
+  it('NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle) on a production send: in transit, the claim stays transmitting', async () => {
     Object.assign(bundle, bundles.clean);
-    Object.assign(process.env, mtlsEnv('trusted'));
+    Object.assign(process.env, mtlsEnv('trusted', 'production'));
     server.respond = (_req, res) => { res.writeHead(502); res.end('Bad Gateway'); };
-    const err = await transmit();
+    const err = await transmit('production');
     expect(server.seen).toHaveLength(1);
     // The network body is the real encrypted CMS entity, not the plaintext ZIP.
     expect(server.seen[0].body.length).toBeGreaterThan(bundles.clean.sizeBytes);
@@ -437,33 +407,53 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
     expect(claimTaken()).toBe(true);
     expect(state.dispatchStatus).toBe('transmitting');
     expect(resendRefusal(state.dispatchStatus)).not.toBeNull();
+    expect(state.signatureVoided, 'a production send that may be at FDA voided its signature').toBe(false);
   });
 
+  it('the same failure on a send to the TEST environment: the claim is released and its signature voided (F1)', async () => {
+    Object.assign(bundle, bundles.clean);
+    Object.assign(process.env, mtlsEnv('trusted', 'staging'));
+    server.respond = (_req, res) => { res.writeHead(502); res.end('Bad Gateway'); };
+    const err = await transmit('staging');
+    expect(server.seen).toHaveLength(1);
+    expect(err).toBeInstanceOf(GatewayError);
+    expect(claimTaken()).toBe(true);
+    expect(state.dispatchStatus, 'a failed test send held the sequence').toBe('pending');
+    expect(resendRefusal(state.dispatchStatus)).toBeNull();
+    expect(state.signatureVoided, 'the test send signature stayed able to file the sequence').toBe(true);
+    expect(String(err?.message)).toMatch(/may hold it/);
+    expect(String(err?.message)).toMatch(TEST_SEND_RELEASED);
+  });
+
+  // Each environment separately: what a production send must keep, a test send releases.
   it.each([
-    ['HTTP 502', { mode: 'answer' as const, status: 502, delayMs: 10 }],
-    ['a reset', { mode: 'reset' as const, delayMs: 10 }],
-  ])('NEGATIVE — %s from a separate-process server that read the whole bundle, while this process is busy: the claim stays transmitting', async (_label, opts) => {
+    ['HTTP 502', 'production', 'transmitting transmitted=undefined voided=false', { mode: 'answer' as const, status: 502, delayMs: 10 }],
+    ['a reset', 'production', 'transmitting transmitted=undefined voided=false', { mode: 'reset' as const, delayMs: 10 }],
+    ['HTTP 502', 'staging', 'pending transmitted=undefined voided=true', { mode: 'answer' as const, status: 502, delayMs: 10 }],
+    ['a reset', 'staging', 'pending transmitted=undefined voided=true', { mode: 'reset' as const, delayMs: 10 }],
+  ] as const)('NEGATIVE — %s on a %s send from a separate-process server that read the whole bundle, while this process is busy: %s', async (_label, environment, expected, opts) => {
     Object.assign(bundle, bundles.clean);
     const srv = await startSeparateProcessServer(pki, opts);
-    Object.assign(process.env, mtlsEnv('trusted'), { FDA_ESG_STAGING_URL: `https://127.0.0.1:${srv.port}/as2` });
+    Object.assign(process.env, mtlsEnv('trusted', environment, `https://127.0.0.1:${srv.port}/as2`));
     const outcomes: string[] = [];
     const stop = busyLoop(30);
     try {
       for (let i = 0; i < 3; i++) {
         state.dispatchStatus = 'pending';
+        state.signatureVoided = false;
         poolCalls.length = 0;
-        const err = await transmit();
+        const err = await transmit(environment);
         const received = await srv.nextClose();
         expect(received.bodyRead).toBe(received.contentLength);
         expect(received.contentLength).toBeGreaterThan(bundles.clean.sizeBytes);
         expect(claimTaken()).toBe(true);
-        outcomes.push(`${state.dispatchStatus} transmitted=${String(err?.transmitted)}`);
+        outcomes.push(`${state.dispatchStatus} transmitted=${String(err?.transmitted)} voided=${String(state.signatureVoided)}`);
       }
     } finally {
       stop();
       srv.close();
     }
-    expect(outcomes).toEqual(Array(3).fill('transmitting transmitted=undefined'));
+    expect(outcomes).toEqual(Array(3).fill(expected));
   }, 120_000);
 });
 
@@ -473,16 +463,42 @@ describe('a failure from inside the gateway after the guard passed (NEGATIVE)', 
   it.each([
     ['TransportError', () => new TransportError('socket hang up after the POST body was sent')],
     ['GatewayError', () => new GatewayError('FDA ESG AS2 returned HTTP 500', 500, null, 'boom')],
-  ])('%s keeps the claim at transmitting', async (_label, make) => {
+  ])('%s on a production send keeps the claim at transmitting', async (_label, make) => {
     Object.assign(bundle, bundles.clean);
     vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
     const thrown = make();
     const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockRejectedValue(thrown);
-    const err = await transmit();
+    const err = await transmit('production');
     expect(wire).toHaveBeenCalledTimes(1);
     expect(err).toBe(thrown);
     expect(claimTaken()).toBe(true);
     expect(state.dispatchStatus).toBe('transmitting');
     expect(resendRefusal(state.dispatchStatus)).not.toBeNull();
+    expect(state.signatureVoided).toBe(false);
+  });
+
+  // F1 (row D7): the agency's test environment holds no filing, so the same
+  // failure there releases the claim, after voiding the signature it was given.
+  it.each([
+    ['TransportError', () => new TransportError('socket hang up after the POST body was sent')],
+    ['GatewayError', () => new GatewayError('FDA ESG AS2 returned HTTP 500', 500, null, 'boom')],
+  ])('%s on a send to the test environment releases the claim and voids its signature', async (_label, make) => {
+    Object.assign(bundle, bundles.clean);
+    vi.spyOn(FdaEsgGateway.prototype, 'isConfigured').mockResolvedValue(true);
+    const thrown = make();
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockRejectedValue(thrown);
+    const err = await transmit('staging');
+    expect(wire).toHaveBeenCalledTimes(1);
+    expect(err).toBe(thrown);
+    expect(claimTaken()).toBe(true);
+    expect(state.dispatchStatus, 'a failed test send held the sequence').toBe('pending');
+    expect(resendRefusal(state.dispatchStatus)).toBeNull();
+    expect(state.signatureVoided).toBe(true);
+    // Voided before it was released: the release is the last write of the attempt.
+    const voidAt = poolCalls.findIndex((c) => /UPDATE electronic_signatures/.test(c.text));
+    const releaseAt = poolCalls.findIndex((c) => /SET dispatch_status = 'pending'/.test(c.text));
+    expect(voidAt).toBeGreaterThan(-1);
+    expect(releaseAt).toBeGreaterThan(voidAt);
+    expect(String(err?.message)).toMatch(TEST_SEND_RELEASED);
   });
 });

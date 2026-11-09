@@ -19,3 +19,7 @@ cdiscpilot01-efficacy-results.json|approved|t
 # Authoring documents made from the two 'Clinical Study Report (CSR)' entries
 CDISCPILOT01 Clinical Study Report|component:clinical_study_report
 Template check: second CSR entry|registry:ICH_CSR
+
+# After the import path walk (later, 2026-11-02)
+build 2 headings: approved 20
+working copy: importSource.kind=csr, importSource.id=2, sections=20

@@ -1,0 +1,8 @@
+# Consequence at HEAD 3ea6208639: case 1 with only its approval assertions (hash and version-row assertions removed),
+# against HEAD's module3-convergence-service.ts. A bridged section, reviewed by an independent reviewer, cannot be approved.
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > stores sha256 of its text, so the signed act approves it after an independent review 82ms
+   → {"success":false,"error":{"message":"The document changed while it was being signed. Reload it and sign again. Nothing was signed.","code":"ARTIFACT_CHANGED"}}: expected 409 to be 200 // Object.is equality
+AssertionError: {"success":false,"error":{"message":"The document changed while it was being signed. Reload it and sign again. Nothing was signed.","code":"ARTIFACT_CHANGED"}}: expected 409 to be 200 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 51 skipped (52)

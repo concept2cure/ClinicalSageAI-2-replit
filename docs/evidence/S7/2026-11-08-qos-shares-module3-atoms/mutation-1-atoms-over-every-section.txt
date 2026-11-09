@@ -1,0 +1,4 @@
+ × server/services/__tests__/m2-qos-shares-module3-atoms-and-methods.test.ts > the QOS cites the Module 3 sections’ own atoms > claims no atom from a section it did not summarize 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'so-3.2.S.1', 'adventitious-1' ] to deeply equal [ 'so-3.2.S.1' ]
+      Tests  1 failed | 13 passed (14)

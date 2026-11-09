@@ -1,0 +1,19 @@
+{
+  "observed_at": "2026-11-06T18:21:07.649723+00:00",
+  "base_commit": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "source_sha256": {
+    "client/src/concept2cure/v2/V2App.tsx": "99b4d381ab5eeae1f90e847e3e55468eb45c511184f764d5a55b5e0bb3f82cf1",
+    "client/src/concept2cure/v2/routing.ts": "8828d3afe5ab625b7440cfcfbf1a49762bbe2d9bdd45f1175429db6faf3ac439",
+    "client/src/concept2cure/v2/surfaces/ConversationThread.tsx": "8e14bf4f385f87e266f003dcc2c920ce7cfb97cc0084b39865b56af33f174c3a"
+  },
+  "final_idle_matrix": "green-four-contexts.json: four contexts passed; latest full repeat passed first three, then accumulated local requests returned429 on mobile-dark history. After the ordinary limiter window reset, only mobile-dark was rerun and passed; no application, limiter, database or credentials configuration was changed.",
+  "synthetic_stream": "Playwright held the entire intercepted POST /api/ana-ri/stream response; release used explicit synthetic text/post_done SSE frames; no provider or model draft. Tests assert both Rail/palette preserve exact textarea, followup and full URL, consume refusal, fetch no B history, do not replay B on completion, and accept a fresh B selection clearing the notice.",
+  "synthetic_contexts": [
+    "1440x1000 light",
+    "390x844 dark"
+  ],
+  "browser_page_errors": 0,
+  "runtime_role": "app_service; superuser=false; bypassrls=false; RLS_ENFORCE=on",
+  "baseline_preserved": "../baseline.json and ../before-selected-B-still-A.png",
+  "earlier_four_context_evidence_preserved": "../green.json"
+}

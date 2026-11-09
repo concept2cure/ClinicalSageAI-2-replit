@@ -45,10 +45,9 @@ import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
-import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
-import { EsignModal } from '../../_shared/components/EsignModal';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState, ProjectBack } from '../dataConnect';
+import { EsignModal, type EsignModalProps } from '../../_shared/components/EsignModal';
 import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
@@ -67,20 +66,29 @@ import {
   Chip,
   DispatchWorkspace,
   SeqPicker,
+  SeqSelect,
   ShadowReviewWorkspace,
   ValidationWorkspace,
   VerdictNote,
+  blockerForDisplay,
   clause,
+  environmentWords,
   mutateVerbatim,
+  retirementOf,
+  settlementOf,
+  TEST_SEND_NOT_A_FILING,
   type GovernedKind,
   type GovernedPrecheck,
+  type HeldSendOverview,
+  type SettlementRequest,
   type Notice,
   type SeqRow,
   type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
 import { NewSubmissionForm } from './NewSubmissionForm';
-import { gatewayLabel } from '../gatewayLabels';
+import { gatewayLabel, heldSendDay } from '../gatewayLabels';
+import { dispatchWords } from './CommitmentRow';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { consumeNavParams, stashNavParamsForTarget, NAV_PARAMS_EVENT } from '../navParams';
@@ -97,6 +105,7 @@ import {
   type DeviceFilingRow,
 } from './DeviceFilings';
 import { isTrackedFilingId } from '@shared/types/task-filing-home';
+import { isDeviceOrDiagnosticProgram } from '@shared/constants/domain/product-types';
 import { SubmissionRequiredDeliverables, type SubmissionCoverageSequence } from './SubmissionRequiredDeliverables';
 import { useSubmissionReadSession, useSubmissionScopedRows } from './submissionScopedRead';
 import { getSurfaceMeta } from '../registryModel';
@@ -156,6 +165,8 @@ interface RegionProfileForm {
   name: string;
   formId?: string;
   required: boolean;
+  /** Application types that file this form. Absent = all of them. */
+  requiredFor?: string[];
   description: string;
   url?: string;
 }
@@ -204,6 +215,14 @@ function requiredModule1For(
   };
   walk(sections ?? []);
   return out;
+}
+
+/** The agency forms THIS application type files, by the same `requiredFor`
+ *  contract as requiredModule1For: an IND does not file Form 356h (J4 human
+ *  test, 2026-11-06). Unknown type: every form is kept. */
+function formsFor(forms: RegionProfileForm[] | undefined, applicationType: string | null | undefined): RegionProfileForm[] {
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  return (forms ?? []).filter((f) => !f.requiredFor || !app || f.requiredFor.includes(app));
 }
 
 // (SUB_STATUS_TONE / SUB_STATUS_LABEL — the submission status chip — live in
@@ -281,43 +300,224 @@ function NextSequenceControl({ sub, rows, baseline, type, onType, busy, onStart 
         onChange={(e) => onType(e.target.value)}>
         {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
-      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
-        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      {/* Not the view's primary (the header's "New submission" is, D0 §7 check 2), and it asks nothing of AnA, so it
+          carries no spark (D0 §8.1; the coordinating session, 2026-11-09). The hairline secondary, not the bare `.btn`,
+          which has no border and read as text in the running app. */}
+      <button type="button" className="btn ghost" disabled={busy} onClick={() => onStart(next)}>
+        {busy ? 'Creating…' : `Start sequence ${next}`}
       </button>
     </div>
   );
 }
 
 /** A governed step in flight: what is signed, for a transmit where it goes, for
- *  a Shadow Review waiver (P-34) the failed run it answers, and for a finding
- *  disposition (P-35) the finding and how it is closed. */
-type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest };
+ *  a Shadow Review waiver (P-34) the failed run it answers, for a finding
+ *  disposition (P-35) the finding and how it is closed, and for a retirement
+ *  (P-86) the statement the server gave, signed word for word. */
+type GovernedFlow = {
+  seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest; statement?: string;
+  /** A held send's settlement (P-92): the way and its ground, and the server's answer it is signed over. */
+  settlement?: SettlementRequest; heldSend?: HeldSendOverview;
+};
 const GOVERNED_LABEL: Record<GovernedKind, string> = {
   freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver',
-  'shadow-finding-disposition': 'Closing a critical finding',
+  'shadow-finding-disposition': 'Closing a critical finding', retire: 'Retirement', 'held-send-settlement': 'Settling a held send',
 };
 const GOVERNED_PAST: Record<GovernedKind, string> = {
   freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived', 'shadow-finding-disposition': 'closed',
+  retire: 'retired', 'held-send-settlement': 'settled',
 };
+/** What a governed step needs beyond its kind: where a transmit goes, the run a waiver answers (P-34), the finding a
+ *  disposition closes (P-35), or the way a held send is settled (P-92). */
+type GovernedRequest = { transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest; settlement?: SettlementRequest };
+/** A cleared answer that carried no statement: nothing can be signed over it. */
+const NO_STATEMENT = 'Whether the server would accept this could not be checked — the answer carried no statement to sign. Nothing was signed.';
+const STATEMENT_CHANGED = 'What you would state changed since this dialog opened. Nothing was signed; close it and open it again.';
+
+/** What a settlement's precheck asks: the way and its ground. */
+function settlementBody(r: SettlementRequest | undefined): Record<string, string> {
+  if (!r) return {};
+  return { outcome: r.outcome, evidenceKind: r.evidenceKind, ...(r.evidenceDocumentId ? { evidenceDocumentId: r.evidenceDocumentId } : {}) };
+}
+/** What a settlement's signature carries beyond its intent and meaning (P-92 §3.1): the way, the transmission and attempt
+ *  it settles, the evidence and the statement, all as the server answered them, compared by the server word for word. */
+function settlementFields(f: GovernedFlow): Record<string, unknown> {
+  if (f.kind !== 'held-send-settlement' || !f.settlement || !f.heldSend) return {};
+  return {
+    outcome: f.settlement.outcome, transmittalId: f.heldSend.transmittalId, transmitAttemptId: f.heldSend.attemptId,
+    evidence: f.heldSend.evidence, statement: f.statement,
+  };
+}
+/** The step's own statement, from a cleared answer: a retirement's (P-86) or a settlement's (P-92); none for the others. */
+function clearedAnswer(kind: GovernedKind, data: GovernedPrecheck): { refusal: string | null; statement?: string; heldSend?: HeldSendOverview } {
+  if (kind === 'retire') {
+    const retirement = retirementOf(data);
+    return retirement ? { refusal: null, statement: retirement.statement } : { refusal: NO_STATEMENT };
+  }
+  if (kind === 'held-send-settlement') {
+    const held = settlementOf(data);
+    return held ? { refusal: null, statement: held.statement, heldSend: held } : { refusal: NO_STATEMENT };
+  }
+  return { refusal: null };
+}
+/** The page's word that a held send was settled (P-92 C2, S8), with no signature id. */
+function settledNotice(f: GovernedFlow, signer: string, meaning: string): string {
+  const n = f.seq.sequenceNumber;
+  const kind = f.settlement?.evidenceKind;
+  if (f.settlement?.outcome === 'received') {
+    return `Sequence ${n} is recorded as received by FDA, on its ${kind === 'ack3' ? 'Ack3' : 'Ack2'} kept in the Vault, signed by ${signer} (${meaning}).`;
+  }
+  const ground = kind === 'platform-proof' ? "the platform's own record that it never left" : "FDA's written confirmation kept in the Vault";
+  return `Sequence ${n}'s held send is released as not received, on ${ground}, signed by ${signer} (${meaning}). It can be sent again, under a new signature.`;
+}
+
+/** What a retirement's signature carries beyond its intent and meaning (P-86 D6): that the sequence was filed by no
+ *  other route, and the server's statement, which the server compares word for word. The client holds no copy. */
+function retirementFields(f: GovernedFlow): { notFiledElsewhere?: true; statement?: string } {
+  return f.kind === 'retire' ? { notFiledElsewhere: true, statement: f.statement } : {};
+}
+
+type SigningWords = Pick<EsignModalProps, 'action' | 'targetMeta' | 'defaultMeaning' | 'meanings' | 'renderMeaningDetails' | 'signedRows'>;
+
+/** The retirement's one signature (P-86 C3): Responsibility only; a target line that says what the act does and
+ *  carries no record key (plan §2's retired patterns); and the server's statement, shown and recorded word for word. */
+function retirementSigning(flow: GovernedFlow, region: string): SigningWords {
+  const statement = flow.statement ?? '';
+  return {
+    action: 'Retire sequence',
+    targetMeta: `${region} · takes the sequence out of use; nothing is sent to the agency; cannot be undone`,
+    defaultMeaning: 'responsibility',
+    meanings: ['responsibility'],
+    renderMeaningDetails: () => (
+      <div className="sc-mb" data-testid="retire-statement">
+        <span className="tl-spec-k">By signing, you state:</span>
+        <p><q>{statement}</q></p>
+      </div>
+    ),
+    signedRows: [{ label: 'Stated', value: statement }],
+  };
+}
+
+/** A held send's one signature (P-92 C2): Responsibility only; a target line that says what the act does and carries
+ *  no record key; the server's statement, shown and recorded word for word; and the FDA document it rests on, if any. */
+function settlementSigning(flow: GovernedFlow, region: string): SigningWords {
+  const statement = flow.statement ?? '';
+  const n = flow.seq.sequenceNumber;
+  const day = heldSendDay(flow.heldSend?.sentAt);
+  const document = flow.settlement?.documentLabel;
+  return {
+    action: flow.settlement?.outcome === 'received' ? `Record sequence ${n} as received` : `Release sequence ${n}'s held send`,
+    targetMeta: `${region} · settles the held send${day ? ` of ${day}` : ''}; nothing is sent to FDA`,
+    defaultMeaning: 'responsibility',
+    meanings: ['responsibility'],
+    renderMeaningDetails: () => (
+      <div className="sc-mb" data-testid="held-send-statement">
+        <span className="tl-spec-k">By signing, you state:</span>
+        <p><q>{statement}</q></p>
+      </div>
+    ),
+    signedRows: [...(document ? [{ label: 'FDA document', value: document }] : []), { label: 'Stated', value: statement }],
+  };
+}
+
+/** The words of the one signing dialog, for the step in flight. */
+function governedSigning(flow: GovernedFlow, region: string): SigningWords {
+  if (flow.kind === 'retire') return retirementSigning(flow, region);
+  if (flow.kind === 'held-send-settlement') return settlementSigning(flow, region);
+  return {
+    action:
+      flow.kind === 'shadow-waiver'
+        ? SHADOW_WAIVER_ACTION
+        : flow.kind === 'shadow-finding-disposition'
+          ? shadowDispositionAction(flow.disposition)
+          : `${GOVERNED_LABEL[flow.kind]} sequence`,
+    targetMeta: `${region} · ectd-sequence:${flow.seq.id} · ${
+      flow.kind === 'freeze'
+        ? 'irreversible content lock'
+        : flow.kind === 'dispatch'
+          ? 'records dispatch; the package is sent by a separate, signed transmit'
+          : flow.kind === 'shadow-waiver'
+            ? shadowWaiverTargetLine(flow.waiver)
+            : flow.kind === 'shadow-finding-disposition'
+              ? shadowDispositionTargetLine(flow.disposition)
+              : transmitTargetLine(flow.transmit)
+    }`,
+    defaultMeaning:
+      flow.kind === 'freeze'
+        ? 'approval'
+        : flow.kind === 'shadow-waiver'
+          ? 'responsibility'
+          : flow.kind === 'shadow-finding-disposition'
+            ? shadowDispositionDefaultMeaning(flow.disposition)
+            : 'release',
+    // Freeze and dispatch are approval and release acts. "Authorship"
+    // is not offered: the sign route skips separation of duties for it,
+    // and the step refuses a signature that declares it (Gate 1). A
+    // Shadow Review waiver is responsibility or approval (P-34), and so is
+    // closing a critical finding (P-35).
+    meanings:
+      flow.kind === 'shadow-waiver'
+        ? SHADOW_WAIVER_MEANINGS
+        : flow.kind === 'shadow-finding-disposition'
+          ? SHADOW_DISPOSITION_MEANINGS
+          : flow.kind === 'freeze'
+            ? ['approval', 'responsibility']
+            : ['release', 'approval', 'responsibility'],
+  };
+}
 
 /** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
  *  transmit that sent nothing, whether the signature given for it is now void
  *  (P-23). */
 type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string; signatureVoided?: boolean };
 
-/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence. */
+/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence.
+ *  The environment is said in words, never as stored (F1, row D7). */
 function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
   const sentence = a.reason === 'gateway_not_configured'
-    ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
-    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+    ? `Not sent — ${gatewayLabel(a.gateway)} has no credentials configured for ${environmentWords(environment)} for this organization. Nothing was sent; the attempt is recorded. Add the credentials, then send again.`
+    : `Not sent — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
   return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
 }
 
-/** A performed transmit, as the server reported it. */
-function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined): string {
-  return `Sequence ${seq.sequenceNumber} handed to ${gatewayLabel(a.gateway)} (${environment ?? 'environment not recorded'}) — transmittal #${
-    a.transmittalId ?? 'not returned'
-  }, status ${a.status ?? 'not returned'}`;
+/** A performed transmit, as the server reported it, with who signed it. The
+ *  environment is said in words, never as stored. F1 (row D7, 2026-11-01): a
+ *  send to the agency's test environment is said to be one, and not a filing,
+ *  always: whatever it answered, the sequence can still be filed. How the agency
+ *  now holds a production send is said by dispatchWords (CommitmentRow.tsx),
+ *  and only for a status it names: any other is not yet confirmed, never "not
+ *  on file" just after a send. */
+function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined, signed: string): string {
+  const n = seq.sequenceNumber;
+  const record = `transmittal #${a.transmittalId ?? 'not returned'}, gateway status ${a.status ?? 'not returned'}, ${signed}`;
+  const sent = `Sequence ${n} sent to ${environmentWords(environment)} through ${gatewayLabel(a.gateway)} — ${record}.`;
+  if (environment === 'staging') {
+    return `${sent} ${TEST_SEND_NOT_A_FILING}; sequence ${n} is ${dispatchWords('pending')} and can still be filed with the agency.`;
+  }
+  const named = a.dispatchStatus === 'sent' || a.dispatchStatus === 'acknowledged' || a.dispatchStatus === 'rejected';
+  const held = named
+    ? ` Sequence ${n} is now ${dispatchWords(a.dispatchStatus)}.`
+    : ` Whether the agency holds sequence ${n} is not yet confirmed; check the transmittal list before sending again.`;
+  return `${sent}${held}`;
+}
+
+/** The environment a transmit signature names, so it authorizes a send there
+ *  only (the server refuses it for the other, F1, row D7, 2026-11-08). */
+function transmitEnvironmentField(f: { kind: string; transmit?: TransmitRequest }): { environment?: string } {
+  return f.kind === 'transmit' && f.transmit?.environment ? { environment: f.transmit.environment } : {};
+}
+
+/** What the transmit's signer reads before signing: where the package goes, in
+ *  words, and that a test send is not a filing (F1, row D7, 2026-11-01). */
+function transmitTargetLine(t: TransmitRequest | undefined): string {
+  const application = `application ${t?.applicationId ?? 'not given'}`;
+  if (t?.environment === 'production') {
+    return `sends the package to ${environmentWords(t.environment)}, ${application}; this files the sequence with the agency`;
+  }
+  if (t?.environment === 'staging') {
+    return `sends the package to ${environmentWords(t.environment)}, ${application}; ${TEST_SEND_NOT_A_FILING.toLowerCase()}, and the sequence can still be filed with the agency`;
+  }
+  return `sends the package to the agency gateway (environment not chosen), ${application}`;
 }
 
 /** The open project as the create form's programme: the org's own row when
@@ -330,45 +530,27 @@ function openProgramme(
   return { id, title: row?.title || shell?.title || '', code: row?.code || shell?.code || '' };
 }
 
-/** Whose submissions are listed, in one line, with the way to the others.
- *  `notOffered` is the server's count of the organization's submissions the
- *  project scope left out (meta.notOffered); null when it did not say, and the
- *  line then says nothing about them rather than guessing. `name` is null when
- *  neither the shell nor the projects list names the project; the line then
- *  says "the open project" once, not twice.
+/** The context row's scope toggle (D7 §A.4 step 3). The sentence it replaced ("Submissions of X, the open project")
+ *  is said by the page's back link and this label. `notOffered` is the server's count of the organization's
+ *  submissions the project scope left out (meta.notOffered); the label carries it when the server sent it, and says
+ *  nothing about them when it did not, rather than guessing. Scoped with no other submission, "show all" would list
+ *  the same rows, so it is not offered.
  *
- *  One <p>, one <span> of words and the toggle <button> at the same place in
- *  both states, so the button is the same element after a toggle and keyboard
- *  focus stays on it (WCAG 2.4.3). It used to sit at a different child index
- *  in each state, so React replaced it and focus fell to <body>. */
-function ProjectScopeLine({ name, scoped, notOffered, onToggle }: {
-  name: string | null;
+ *  It is one <button> in both states, relabelled, so it is the same element after a toggle and keyboard focus stays
+ *  on it (WCAG 2.4.3). */
+function ProjectScopeToggle({ scoped, notOffered, onToggle }: {
   scoped: boolean;
   notOffered: number | null;
   onToggle: () => void;
 }) {
-  const others =
-    notOffered == null
-      ? ''
-      : notOffered === 0
-        ? ' Your organization has no other submissions.'
-        : ` ${plural(notOffered, 'other submission', 'other submissions')} in your organization ${notOffered === 1 ? 'is' : 'are'} not shown.`;
-  const words = !scoped
-    ? 'Every submission in your organization.'
-    : name
-      ? <>Submissions of <b>{name}</b>, the open project.{others}</>
-      : <>Submissions of the open project.{others}</>;
-  // Scoped with no other submission, "show all" would list the same rows.
-  const showToggle = !scoped || notOffered !== 0;
+  if (scoped && notOffered === 0) return null;
+  const label = scoped
+    ? `Show the organization's submissions${notOffered ? ` (${notOffered} more)` : ''}`
+    : "Show this project's submissions";
   return (
-    <p className="sp-state sc-mb" data-testid="sc-scope">
-      <span>{words}</span>{' '}
-      {showToggle && (
-        <button type="button" className="pj-card-h-go" onClick={onToggle}>
-          {scoped ? "Show all of the organization's submissions" : `Show only ${name ? `${name}'s` : "the open project's"} submissions`}
-        </button>
-      )}
-    </p>
+    <button type="button" className="btn ghost small" data-testid="sc-scope" onClick={onToggle}>
+      {label}
+    </button>
   );
 }
 
@@ -383,7 +565,42 @@ function scopedMissReason(wanted: string, projectName: string | null, notOffered
     notOffered != null
       ? `${plural(notOffered, 'other submission', 'other submissions')} of the organization ${notOffered === 1 ? 'is' : 'are'}`
       : "The organization's other submissions are";
-  return `${head}. ${others} not listed here; the person can list them with "Show all of the organization's submissions" under the title.`;
+  return `${head}. ${others} not listed here; the person can list them with "Show the organization's submissions" beside the submission picker.`;
+}
+
+/* ── Device filings follow the open project (B4, demo walk 2026-11-05) ──────
+   A drug IND's Submission Center showed "Device filings · eSTAR" and a 510(k)
+   assembly verdict. The platform follows the project's own record: the eSTAR
+   section, and its two reads, belong to a device or diagnostic project
+   (isDeviceOrDiagnosticProgram, the rule Project home and the market refusal
+   read). While that record is read, or when it cannot be read, the section is
+   not shown; nothing is guessed. With no project open the screen is the
+   organization's view and lists them as before. */
+function useDeviceFilingsShown(openProgramId: string | null): boolean {
+  const record = useLiveData<{ product_type?: string | null; program_type?: string | null }>(
+    openProgramId ? `/api/c2c/projects/${encodeURIComponent(openProgramId)}` : null, [openProgramId]);
+  if (!openProgramId) return true;
+  return !record.loading && !record.error && isDeviceOrDiagnosticProgram(record.data);
+}
+
+/** What AnA is told about the device filings: nothing it would read as "none
+ *  tracked" when the section is not shown for this project. */
+function deviceFilingFacts(
+  shown: boolean,
+  read: { loading: boolean; error?: unknown },
+  count: number,
+  assembly: AssemblyVerdictState,
+): Record<string, unknown> {
+  if (!shown) return { deviceFilings: 'not shown: the open project is not recorded as a device or diagnostic filing' };
+  return {
+    deviceFilings: read.loading || read.error ? null : count,
+    deviceFilingsUnavailable: read.error ? 'the eSTAR tracker read failed' : null,
+    deviceAssemblyVerdict:
+      assembly.state === 'ready'
+        ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
+            undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
+        : assembly.state === 'error' ? 'unavailable' : 'loading',
+  };
 }
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
@@ -483,13 +700,16 @@ export function SubmissionCenter({
     assessmentRan: false,
   });
 
-  // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings.
+  const showDeviceFilings = useDeviceFilingsShown(openProgramId);
+  // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings,
+  // read only where the section is shown (useDeviceFilingsShown).
   // { submissions } envelope (not the `{ data }` convention), so the shape is
   // guarded explicitly; a mismatched 200 reaches the error branch, never an
   // invented empty state.
+  const deviceFilingsPath = showDeviceFilings ? '/api/510k/estar/submissions' : null;
   const deviceRes = useLiveData<{ submissions: DeviceFilingRow[] }>(
-    '/api/510k/estar/submissions',
-    ['/api/510k/estar/submissions'],
+    deviceFilingsPath,
+    [deviceFilingsPath],
     hasKeys('submissions'),
   );
   const deviceFilingsRaw = deviceRes.data?.submissions;
@@ -497,10 +717,12 @@ export function SubmissionCenter({
 
   // POST /api/510k/estar/assemble — ONE org-wide device-assembly verdict for
   // the section header (read-only on the server; renders/persists nothing).
-  // One call per mount, never per-row.
+  // One call each time the section is shown, never per-row.
   const [assembly, setAssembly] = React.useState<AssemblyVerdictState>({ state: 'loading' });
   React.useEffect(() => {
+    if (!showDeviceFilings) return undefined;
     let cancelled = false;
+    setAssembly({ state: 'loading' });
     liveMutateOrNull<AssemblyVerdictPayload>('POST', '/api/510k/estar/assemble', {
       pathway: '510k',
       variant: 'device',
@@ -516,7 +738,7 @@ export function SubmissionCenter({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showDeviceFilings]);
 
   // GET /api/submissions/:id/sequences — keyed on the selected submission (a real
   // numeric id). Null path while no submission is selected → the hook stays idle
@@ -785,49 +1007,50 @@ export function SubmissionCenter({
    *  opened the e-signature with no gate shown, the signature was recorded, and
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
-  const precheckRefusal = async (
+  const precheckAnswer = async (
     s: SeqRow,
     kind: GovernedKind,
-    transmit?: TransmitRequest,
-    waiver?: WaiverRequest,
-    disposition?: DispositionRequest,
-  ): Promise<string | null> => {
+    { transmit, waiver, disposition, settlement }: GovernedRequest = {},
+  ): Promise<{ refusal: string | null; statement?: string; heldSend?: HeldSendOverview }> => {
     // A waiver answers one failed run; without it there is nothing to sign (P-34).
-    if (kind === 'shadow-waiver' && !waiver) return 'No failed Shadow Review run is named for this waiver. Nothing was signed.';
-    // A disposition closes one named finding (P-35).
-    if (kind === 'shadow-finding-disposition' && !disposition) return 'No finding is named to close. Nothing was signed.';
+    if (kind === 'shadow-waiver' && !waiver) return { refusal: 'No failed Shadow Review run is named for this waiver. Nothing was signed.' };
+    // A disposition closes one named finding (P-35); a settlement settles the held send one way, on one ground (P-92).
+    if (kind === 'shadow-finding-disposition' && !disposition) return { refusal: 'No finding is named to close. Nothing was signed.' };
+    if (kind === 'held-send-settlement' && !settlement) return { refusal: 'No way to settle the held send is chosen. Nothing was signed.' };
     // A transmit's typed number is judged against the program record here,
     // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
       step: kind,
       ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
       ...dispositionFields(disposition),
+      ...settlementBody(settlement),
     });
     if (!r.data || typeof r.data.cleared !== 'boolean') {
-      return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
+      return { refusal: `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.` };
     }
-    return r.data.cleared ? null : `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.`;
+    if (!r.data.cleared) return { refusal: `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.` };
+    // A retirement (P-86 D6) and a settlement (P-92) sign the server's statement word for word: a cleared answer without
+    // one is unreadable.
+    return clearedAnswer(kind, r.data);
   };
 
   /** Open the e-signature for a governed step only when its gates clear. The
    *  Sequences row and the Dispatch tab both come here: one path to a signature. */
-  const requestGoverned = async (
-    s: SeqRow,
-    kind: GovernedKind,
-    transmit?: TransmitRequest,
-    waiver?: WaiverRequest,
-    disposition?: DispositionRequest,
-  ) => {
+  const requestGoverned = async (s: SeqRow, kind: GovernedKind, req: GovernedRequest = {}) => {
     if (acting != null || flow != null) return;
     setActing(s.id);
     setNotice(null);
-    const refusal = await precheckRefusal(s, kind, transmit, waiver, disposition);
+    const { transmit, waiver, disposition, settlement } = req;
+    const { refusal, statement, heldSend } = await precheckAnswer(s, kind, req);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
       return;
     }
-    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}) });
+    setFlow({
+      seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}),
+      ...(statement ? { statement } : {}), ...(settlement ? { settlement } : {}), ...(heldSend ? { heldSend } : {}),
+    });
   };
 
   /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
@@ -841,20 +1064,29 @@ export function SubmissionCenter({
    *       sequence and that the deterministic dispatch gate is clear, atomically.
    *  Any failure throws with the server's words; the modal shows it inline and
    *  no success is fabricated. */
+  const askAgain = async (f: GovernedFlow) => {
+    const again = await precheckAnswer(f.seq, f.kind, { transmit: f.transmit, waiver: f.waiver, disposition: f.disposition, settlement: f.settlement });
+    if (again.refusal) throw new Error(again.refusal);
+    // A settlement is signed over the statement the dialog shows; the server's answer now must be the same (P-92 C2).
+    if (f.kind === 'held-send-settlement' && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);
+  };
   const runGoverned = async (
     f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
-    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit, f.waiver, f.disposition);
-    if (refusal) throw new Error(refusal);
+    await askAgain(f);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
       '/api/c2c/actions/sign',
       {
         target: `ectd-sequence:${f.seq.id}`,
         reason: input.reason,
-        // A disposition's signature names the finding and how it is closed (P-35).
-        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition) },
+        // A disposition's signature names the finding and how it is closed (P-35);
+        // a transmit's names where the package goes (F1, row D7, 2026-11-08).
+        payload: {
+          intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition), ...transmitEnvironmentField(f), ...retirementFields(f),
+          ...settlementFields(f),
+        },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
     );
@@ -863,12 +1095,15 @@ export function SubmissionCenter({
         `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
     }
-    // Transmit, the Shadow Review waiver (P-34) and closing a finding (P-35)
-    // each have their own act after the signature; freeze and dispatch share one.
+    // Transmit, the Shadow Review waiver (P-34), closing a finding (P-35) and
+    // retirement (P-86) each have their own act after the signature; freeze and
+    // dispatch share one.
     const ownAct: Partial<Record<GovernedKind, typeof runTransmit>> = {
       transmit: runTransmit,
       'shadow-waiver': runWaiver,
       'shadow-finding-disposition': runDisposition,
+      retire: runRetire,
+      'held-send-settlement': runSettlement,
     };
     const act = ownAct[f.kind];
     if (act) return act(f, sign.data.actionId, input, sign.data.sha256Chain);
@@ -911,13 +1146,22 @@ export function SubmissionCenter({
       { signatureActionId, environment: f.transmit?.environment, applicationId: f.transmit?.applicationId },
     );
     if (done.error || !done.data || typeof done.data.transmitted !== 'boolean') {
-      throw new Error(`${clause(done.error ?? 'The transmit was not performed')}. Nothing was sent.`);
+      // The server's own sentence says whether anything reached the agency: a
+      // refusal before the wire says nothing was sent, a failure after it says the
+      // agency may hold the package. Nothing is added that could contradict it
+      // (F1, row D7, 2026-11-08). A send to the agency's test environment files
+      // nothing whatever became of it, so that is said.
+      const after = f.transmit?.environment === 'staging' ? ` ${TEST_SEND_NOT_A_FILING}, so nothing was filed.` : '';
+      throw new Error(`${clause(done.error ?? 'The server did not confirm the transmit; check the transmittal list before sending again')}.${after}`);
     }
     setSeqBump((b) => b + 1);
     if (!done.data.transmitted) throw new Error(notTransmittedSentence(done.data, f.transmit?.environment));
     setNotice({
       tone: 'ok',
-      text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
+      text: transmittedSentence(
+        f.seq, done.data, f.transmit?.environment,
+        `signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}`,
+      ),
     });
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
   };
@@ -932,7 +1176,7 @@ export function SubmissionCenter({
     input: { meaning: EsigMeaning; reason: string },
     hash: string | undefined,
   ) => {
-    // precheckRefusal refused a waiver flow without its run before anything was signed.
+    // precheckAnswer refused a waiver flow without its run before anything was signed.
     if (!f.waiver) throw new Error('No failed Shadow Review run is named for this waiver. Nothing was waived.');
     try {
       const done = await submitShadowWaiver(f.seq, signatureActionId, f.waiver);
@@ -953,11 +1197,64 @@ export function SubmissionCenter({
     input: { meaning: EsigMeaning; reason: string },
     hash: string | undefined,
   ) => {
-    // precheckRefusal refused a disposition flow without its finding before anything was signed.
+    // precheckAnswer refused a disposition flow without its finding before anything was signed.
     if (!f.disposition) throw new Error('No finding is named to close. Nothing was closed.');
     try {
       const done = await submitFindingDisposition(f.seq, signatureActionId, f.disposition);
       setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
+  };
+
+  /** Retirement (P-86 C3): POST /sequences/:id/retire with the signature. Only the server saying that THIS sequence
+   *  was retired is a success; any other answer throws its words (the modal shows them inline) and nothing is said
+   *  retired. The notice carries no signature id and no record key (plan §2's retired patterns): the id stays in the
+   *  audit trail. The sequences are read again whatever the answer, so a retired one leaves the picker. */
+  const runRetire = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const n = f.seq.sequenceNumber;
+    try {
+      const done = await mutateVerbatim<{ retired?: unknown; sequenceId?: unknown; numberFreed?: unknown }>(
+        'POST', `/api/submissions/sequences/${f.seq.id}/retire`, { signatureActionId },
+      );
+      if (done.error) throw new Error(blockerForDisplay(done.error));
+      if (done.data?.retired !== true || done.data.sequenceId !== f.seq.id) {
+        throw new Error(`The server did not confirm that sequence ${n} was retired. Check whether it is still listed before signing again.`);
+      }
+      const number = done.data.numberFreed === true
+        ? ` Its number is free: start sequence ${n} again from the Sequences tab.`
+        : done.data.numberFreed === false ? ` Another sequence ${n} is in use, so the number stays taken.` : '';
+      setNotice({ tone: 'ok', text: `Sequence ${n} is retired, signed by ${signerLabel} (${input.meaning}).${number}` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setSeqBump((b) => b + 1);
+    }
+  };
+
+  /** The settlement's act (P-92 C2): only a server answer that says this sequence's held send was settled, the way it
+   *  was signed, is a success; any other answer is the server's words, or that it did not confirm. */
+  const runSettlement = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const outcome = f.settlement?.outcome;
+    try {
+      const done = await mutateVerbatim<{ settled?: unknown; sequenceId?: unknown; outcome?: unknown }>(
+        'POST', `/api/submissions/sequences/${f.seq.id}/held-send/settle`, { signatureActionId, outcome },
+      );
+      if (done.error) throw new Error(blockerForDisplay(done.error));
+      if (done.data?.settled !== true || done.data.sequenceId !== f.seq.id || done.data.outcome !== outcome) {
+        throw new Error(`The server did not confirm that sequence ${f.seq.sequenceNumber}'s held send was settled. Check its Dispatch tab before signing again.`);
+      }
+      setNotice({ tone: 'ok', text: settledNotice(f, signerLabel, input.meaning) });
       return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
     } finally {
       setReadinessBump((b) => b + 1);
@@ -1147,19 +1444,7 @@ export function SubmissionCenter({
         workingSequence: seq
           ? { id: seq.id, number: seq.sequenceNumber, status: seq.status, validation: seq.validationStatus }
           : null,
-        deviceFilings: deviceRes.loading
-          ? null
-          : deviceRes.error
-            ? null
-            : deviceFilings.length,
-        deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
-        deviceAssemblyVerdict:
-          assembly.state === 'ready'
-            ? { artifactKind: assembly.artifactKind, missingRequiredSections: assembly.missingRequired,
-                undeterminedSections: assembly.undetermined, otherBlockers: assembly.otherBlockers }
-            : assembly.state === 'error'
-              ? 'unavailable'
-              : 'loading',
+        ...deviceFilingFacts(showDeviceFilings, { loading: deviceRes.loading, error: deviceRes.error }, deviceFilings.length, assembly),
         lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
         /* The Planner's region profile. The three outcomes are kept apart here
            for the same reason they are on screen: an assistant told only
@@ -1185,7 +1470,7 @@ export function SubmissionCenter({
                     profile.data.module1Sections,
                     sub?.applicationType,
                   ).map((s) => ({ number: s.number, title: s.title })),
-                  requiredForms: (profile.data.forms ?? [])
+                  requiredForms: formsFor(profile.data.forms, sub?.applicationType)
                     .filter((f) => f.required)
                     .map((f) => ({ formId: f.formId ?? null, name: f.name })),
                   specificRequirements: profile.data.specificRequirements ?? [],
@@ -1199,126 +1484,121 @@ export function SubmissionCenter({
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
         'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
-        'Open a tracked eSTAR device filing in the 510(k) surface',
+        ...(showDeviceFilings ? ['Open a tracked eSTAR device filing in the 510(k) surface'] : []),
       ],
     };
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
     scopedTo, openProjectName, openProjectKnownName, notOffered, portfolioCountLine,
-    deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+    showDeviceFilings, deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
     profile.loading, profile.error, profile.data,
   ]);
   usePublishSurfaceContext('submission-center', anaContext);
 
+  /* The page's one-sentence state (D7 §A.4 step 2): what the deleted AnswerLead's headline said, as a plain
+     sentence. While the sequences are in flight or unreadable it says so and never counts them (seqState). */
+  const latestSeq = seqs.rows.reduce<(typeof seqs.rows)[number] | null>(
+    (a, r) => (!a || r.sequenceNumber > a.sequenceNumber ? r : a), null);
+  const headSub = !sub
+    ? "Plan, build, validate and dispatch each market's eCTD sequences."
+    : `${appL(sub.applicationType)} · ${regL(sub.primaryRegion)}, ${sub.lifecycleStage}. ` + (
+      seqState === 'loading' ? 'Loading its sequences…'
+        : seqState === 'unreadable' ? 'Its sequences could not be read.'
+          : !latestSeq ? 'No sequence yet.'
+            : `${plural(seqs.rows.length, 'sequence', 'sequences')}: ${latestSeq.sequenceNumber}, ` +
+              `${(SC_SEQ_STATUS[latestSeq.status]?.l ?? latestSeq.status).toLowerCase()}.`);
+
   return (
-    <div className="sp sc-page">
-      <div className="sp-head">
+    <div className="sp sc-page" data-work-area="submission-center">
+      <ProjectBack onNav={onNav} />
+      <header className="ph">
         <div>
-          <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">{getSurfaceMeta('submission-center').label}</h1>
-          <p className="sp-state">
-            Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
-          </p>
+          <h1 className="ph-title">{getSurfaceMeta('submission-center').label}</h1>
+          <p className="ph-sub" data-testid="sc-state">{headSub}</p>
         </div>
-        {list.length > 0 && (
-          <select
-            className="sc-subpick"
-            aria-label="Submission to work on"
-            value={sub?.id ?? ''}
-            onChange={(e) => setSelSub(Number(e.target.value))}
-          >
-            {list.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} · {appL(s.applicationType)} · {regL(s.primaryRegion)}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      {openProjectName && (
-        <ProjectScopeLine
-          name={openProjectKnownName}
-          scoped={Boolean(scopedTo)}
-          notOffered={notOffered}
-          onToggle={() => setOrgWide((w) => !w)}
-        />
-      )}
-
-      {sub && (
-        <AnswerLead
-          tone="calm"
-          eyebrow={`Where ${sub.title} stands`}
-          headline={
-            <>
-              {sub.title}
-              {/* No article: "a FDA", "a EU" read wrong, and an initialism's
-                  article depends on how it is said (design review 2026-10-08). */}
-              {sub.productName ? ` (${sub.productName})` : ''} — {appL(sub.applicationType)} · {regL(sub.primaryRegion)}, at
-              the <b>{sub.lifecycleStage}</b> stage.
-            </>
-          }
-          body={
-            seqs.loading ? (
-              <>Loading this submission&#39;s sequences…</>
-            ) : seqs.error ? (
-              <>
-                This submission&#39;s sequences couldn&#39;t be loaded right now — open the Sequences
-                workspace to retry.
-              </>
-            ) : (
-              <>
-                <b>{seqs.rows.length}</b> eCTD {seqs.rows.length === 1 ? 'sequence' : 'sequences'}{' '}
-                tracked{seqs.rows.length ? '' : ' yet'}. Plan, assemble, validate and dispatch it
-                across the workspaces below; validation findings load per sequence once it is
-                assembled.
-              </>
-            )
-          }
-          reassure="I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you."
-          /* ── The lead's action used to branch on `seqs.rows.length` alone ────
-             It read `seqs.rows.length ? 'Open the sequences' : 'Plan the
-             submission'`, with the same expression choosing the destination —
-             and `rows` is empty in flight, on a failed read, and on a genuine
-             zero-sequence submission alike. So the reader could see the body
-             copy two props above say "Loading this submission's sequences…" or
-             "couldn't be loaded" while the button directly below offered to plan
-             the submission from zero, and clicking it opened the Planner: the
-             right destination only when zero is the KNOWN count, not the unknown
-             one. The Planner is now offered from 'not-assessed' only — a settled
-             read with no sequences recorded. While the count is unknown the
-             button names the workspace it opens and claims nothing about what is
-             in it; that workspace reports the loading or failed read itself. ── */
-          action={
-            seqState === 'not-assessed'
-              ? { label: 'Plan the submission', onClick: () => setWs('planner') }
-              : seqState === 'assessed-with-findings'
-                ? { label: 'Open the sequences', onClick: () => setWs('sequences') }
-                : { label: 'Open the Sequences workspace', onClick: () => setWs('sequences') }
-          }
-          secondary="Or move through the workspaces below — plan, build, validate, dispatch."
-        />
-      )}
-      {/* P-32: the IND forms and letters are a feature of this app, reached
-          from the US IND they are filed in (audit 2026-10-17: nothing opened
-          them). The IND screen reads { submissionId } once on mount and opens
-          that submission's checklist, or says it has none. */}
-      {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
-        <div className="scaf-note sc-mb" role="note">
-          Form FDA 1571, the cover letter and the Letter of Authorization for this IND are built on the IND screen, opened on
-          this submission.{' '}
+        <div className="ph-acts">
+          {/* P-32: the IND forms and letters are a feature of this app, reached from the US IND they are filed in.
+              The IND screen reads { submissionId } once on mount and opens that submission's checklist. */}
+          {sub && onNav && isUsInd(sub) && available('ind-checklist') && (
+            <button
+              type="button"
+              className="btn ghost"
+              title="Form FDA 1571, the cover letter and the Letter of Authorization for this IND, on the IND screen"
+              onClick={() => {
+                stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
+                onNav('ind-checklist');
+              }}
+            >
+              Forms and letters
+            </button>
+          )}
+          {/* The compile screen, opened on the working sequence (FILING_SPINE.md F14). */}
+          {seq && onNav && available('ectd-compile') && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
+            >
+              Compile &amp; export
+            </button>
+          )}
           <button
             type="button"
-            className="sc-trans-b"
-            onClick={() => {
-              stashNavParamsForTarget('ind-checklist', { submissionId: String(sub.id) });
-              onNav('ind-checklist');
-            }}
+            className="btn primary"
+            onClick={() => setNewOpen(true)}
+            disabled={creating || (!openProgramId && programmes.rows.length === 0)}
+            title={
+              !openProgramId && programmes.rows.length === 0
+                ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
+                : undefined
+            }
           >
-            {I.right} Forms and letters (1571, cover letter, LOA)
+            {I.plus} New submission
           </button>
         </div>
+      </header>
+
+      {sub && (
+        <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
+          {[
+            { label: 'Where does this submission stand?', prompt: `Where does ${sub.title} stand, sequence by sequence, and what is next?` },
+            { label: 'What blocks dispatch?', prompt: 'What blocks dispatch of the working sequence, and what clears each blocker?' },
+            { label: 'Plan the next sequence', prompt: 'Plan the next sequence for this submission from its region profile.' },
+          ].map((st) => (
+            <button key={st.label} type="button" className="sp-starter" onClick={() => onAsk(st.prompt)}>
+              <span className="sk" aria-hidden="true">{I.sparkles}</span><span>{st.label}</span>
+            </button>
+          ))}
+        </div>
       )}
+
+      {(list.length > 0 || openProjectName) && (
+        <div className="sc-context" data-testid="sc-context">
+          {list.length > 0 && (
+            <label className="sc-context-f">
+              <span>Submission</span>
+              <select
+                className="c2c-input"
+                aria-label="Submission to work on"
+                value={sub?.id ?? ''}
+                onChange={(e) => setSelSub(Number(e.target.value))}
+              >
+                {list.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title} · {appL(s.applicationType)} · {regL(s.primaryRegion)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {/* The working sequence (D7-A2 step 8), once this submission's sequences are read. */}
+          {sub && !seqs.loading && !seqs.error && <SeqSelect rows={seqs.rows} selId={seq?.id ?? null} onSel={setSelSeq} />}
+          {openProjectName && (
+            <ProjectScopeToggle scoped={Boolean(scopedTo)} notOffered={notOffered} onToggle={() => setOrgWide((w) => !w)} />
+          )}
+        </div>
+      )}
+
       {/* P-14's remedy: a submission the server records with no project is
           anchored here (POST /api/submissions/:id/program-anchor). */}
       {sub && sub.programId === null && (
@@ -1331,14 +1611,14 @@ export function SubmissionCenter({
         />
       )}
 
-      <div className="sc-wsbar" role="tablist">
+      <div className="tabs" role="tablist" aria-label="Workspaces">
         {SUBMISSION_WORKSPACES.map((w) => (
           <button
             key={w.id}
             type="button"
             role="tab"
             aria-selected={ws === w.id}
-            className={`sc-ws${ws === w.id ? ' on' : ''}`}
+            className="tab"
             onClick={() => setWs(w.id)}
           >
             {w.label}
@@ -1377,24 +1657,12 @@ export function SubmissionCenter({
 
       {ws === 'portfolio' && (
         <>
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Submissions</span>
-            <button
-              type="button"
-              className="pj-card-h-go"
-              onClick={() => setNewOpen(true)}
-              disabled={creating || (!openProgramId && programmes.rows.length === 0)}
-              title={
-                !openProgramId && programmes.rows.length === 0
-                  ? 'A submission belongs to a project, and this organization has none yet. Create one in Projects first.'
-                  : undefined
-              }
-            >
-              + New submission
-            </button>
+        <section className="pj-sec" aria-labelledby="sc-subs-h">
+          <div className="pj-sec-h">
+            <h2 id="sc-subs-h">Submissions</h2>
+            {!subs.loading && !subs.error && <span className="sec-sub">{list.length}</span>}
           </div>
-          <div className="pj-card-b pj-card-b-flush">
+          <div className="sc-tbl">
             {subs.loading ? (
               <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading submissions…
@@ -1430,7 +1698,6 @@ export function SubmissionCenter({
                     <th>Region</th>
                     <th>Type</th>
                     <th>Client</th>
-                    <th>Stage</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -1454,18 +1721,23 @@ export function SubmissionCenter({
                         <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
                           <b>{s.title}</b>
                         </button>
-                        {[s.productName ? `Product ${s.productName}` : null, programOf(s)]
+                        {/* The project is said by the back link when the list is the open project's. */}
+                        {[s.productName ? `Product ${s.productName}` : null, scopedTo ? null : programOf(s)]
                           .filter(Boolean)
                           .map((part) => <span key={part} className="sp-row-s"> · {part}</span>)}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>
                       <td>{appL(s.applicationType)}</td>
                       <td className="sc-cap">{s.clientType}</td>
-                      <td className="sc-cap">{s.lifecycleStage}</td>
                       <td>
+                        {/* Status and stage are two fields that start equal ("planning"): the stage is said only
+                            when it differs, so one column carries both without repeating either. */}
                         <span className={`rd-chip tone-${SUB_STATUS_TONE[s.status] ?? 'idle'}`}>
                           {SUB_STATUS_LABEL[s.status] ?? s.status}
                         </span>
+                        {s.lifecycleStage && s.lifecycleStage.toLowerCase() !== String(s.status).toLowerCase() && (
+                          <span className="sp-row-s sc-cap"> · {s.lifecycleStage}</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1473,9 +1745,9 @@ export function SubmissionCenter({
               </table>
             )}
           </div>
-        </div>
+        </section>
 
-        <DeviceFilingsCard
+        {showDeviceFilings && <DeviceFilingsCard
           res={deviceRes}
           filings={deviceFilings}
           assembly={assembly}
@@ -1492,7 +1764,7 @@ export function SubmissionCenter({
             setFilingLinkError(null); setNavTarget(null); setFilingTarget(f.id);
           }}
           onOpenPathway={() => onNav && onNav('device-510k')}
-        />
+        />}
         </>
       )}
 
@@ -1596,11 +1868,11 @@ export function SubmissionCenter({
                   })()}
 
                   {/* Agency forms. */}
-                  {profile.data.forms?.length > 0 && (
+                  {formsFor(profile.data.forms, sub.applicationType).length > 0 && (
                     <div className="sc-mt">
                       <div className="tl-spec-k sc-mb">Agency forms</div>
                       <div className="sc-chiprow">
-                        {profile.data.forms.map((f) => (
+                        {formsFor(profile.data.forms, sub.applicationType).map((f) => (
                           <span
                             key={f.formId ?? f.name}
                             className={`rd-chip tone-${f.required ? 'warn' : 'idle'}`}
@@ -1710,13 +1982,7 @@ export function SubmissionCenter({
       )}
       {PER_SEQ_WS.has(ws) && sub && (
         <>
-          <SeqPicker
-            loading={seqs.loading}
-            error={seqs.error}
-            rows={seqs.rows}
-            selId={seq?.id ?? null}
-            onSel={setSelSeq}
-          />
+          <SeqPicker loading={seqs.loading} error={seqs.error} rows={seqs.rows} />
           {!seqs.loading && !seqs.error && seq && (
             <>
               {ws === 'builder' && (
@@ -1732,7 +1998,7 @@ export function SubmissionCenter({
                   key={seq.id}
                   seq={seq}
                   reread={readinessBump}
-                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', undefined, undefined, d)}
+                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', { disposition: d })}
                 />
               )}
               {ws === 'required-deliverables' && <SubmissionRequiredDeliverables
@@ -1746,7 +2012,7 @@ export function SubmissionCenter({
                   sub={sub}
                   seq={seq}
                   onNav={onNav}
-                  onGoverned={(s, kind, transmit, waiver) => void requestGoverned(s, kind, transmit, waiver)}
+                  onGoverned={(s, kind, transmit, waiver, settlement) => void requestGoverned(s, kind, { transmit, waiver, settlement })}
                 />
               )}
             </>
@@ -1793,13 +2059,14 @@ export function SubmissionCenter({
                       hint="Create the first eCTD sequence (0000) to begin assembling this submission."
                     />
                     <div className="cm-pushbar sc-mt">
+                      {/* The hairline secondary, as NextSequenceControl's: not the view's primary, and no spark. */}
                       <button
                         type="button"
-                        className="sp-primary sc-btn"
+                        className="btn ghost"
                         onClick={() => void startSequence(sub, '0000', 'original')}
                         disabled={creatingSeq}
                       >
-                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
+                        {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
                       </button>
                     </div>
                   </>
@@ -1911,48 +2178,8 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={
-            flow.kind === 'shadow-waiver'
-              ? SHADOW_WAIVER_ACTION
-              : flow.kind === 'shadow-finding-disposition'
-                ? shadowDispositionAction(flow.disposition)
-                : `${GOVERNED_LABEL[flow.kind]} sequence`
-          }
+          {...governedSigning(flow, regL(flow.seq.region))}
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
-          targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
-            flow.kind === 'freeze'
-              ? 'irreversible content lock'
-              : flow.kind === 'dispatch'
-                ? 'records dispatch; the package is sent by a separate, signed transmit'
-                : flow.kind === 'shadow-waiver'
-                  ? shadowWaiverTargetLine(flow.waiver)
-                  : flow.kind === 'shadow-finding-disposition'
-                    ? shadowDispositionTargetLine(flow.disposition)
-                    : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
-          }`}
-          defaultMeaning={
-            flow.kind === 'freeze'
-              ? 'approval'
-              : flow.kind === 'shadow-waiver'
-                ? 'responsibility'
-                : flow.kind === 'shadow-finding-disposition'
-                  ? shadowDispositionDefaultMeaning(flow.disposition)
-                  : 'release'
-          }
-          // Freeze and dispatch are approval and release acts. "Authorship"
-          // is not offered: the sign route skips separation of duties for it,
-          // and the step refuses a signature that declares it (Gate 1). A
-          // Shadow Review waiver is responsibility or approval (P-34), and so is
-          // closing a critical finding (P-35).
-          meanings={
-            flow.kind === 'shadow-waiver'
-              ? SHADOW_WAIVER_MEANINGS
-              : flow.kind === 'shadow-finding-disposition'
-                ? SHADOW_DISPOSITION_MEANINGS
-                : flow.kind === 'freeze'
-                  ? ['approval', 'responsibility']
-                  : ['release', 'approval', 'responsibility']
-          }
           signer={esignSigner}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

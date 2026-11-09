@@ -1,10 +1,10 @@
 /**
  * Multi-region submission resolver.
  *
- * The codebase BUILDS region-correct dossiers for FDA, EMA, and PMDA — region
- * Module 1 backbones (regional-packager) and region validation profiles
- * (ectd-regional-rules) — and transmits through the registered gateways
- * (fda-esg / pmda-gateway; ema-cesp for EU national, MRP and DCP procedures).
+ * Reports the existing registry, regional backbone and channel statements.
+ * An agency's backbone filename is not proof that every filing/product at
+ * that agency can be built or transmitted. Preserve the selected filing and
+ * expose unsupported combinations; never substitute a neighbouring workflow.
  * This resolver answers, for a given filing in a given region: which regional
  * application applies, what dossier standard + Module 1 + validation profile it
  * uses, and which channel carries it — and reports, cell by cell, where build or
@@ -13,8 +13,8 @@
  * It does not decide channels. `submissionChannelFor`
  * (server/services/regulatory/registry/submittabilityCoverage.ts) is the one
  * channel function; this file only reads it. A centralised EMA filing is
- * therefore build-only here (eSubmission Gateway / Web Client, no connector),
- * and an EU CTA goes to the CTIS portal — never CESP.
+ * reported with its existing unconnected channel; regional build limitations
+ * remain explicit. An EU CTA keeps its existing portal-only channel.
  *
  * This resolver composes the existing registry + gateways; it does not duplicate
  * the packager or the gateway implementations.
@@ -23,24 +23,19 @@
  */
 
 import type { Agency, ApplicationFamily, ProductClass, Region, DossierStandard, RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy';
-import {
-  getApplicationType,
-  getByRegion,
-  resolveFromLegacy,
-  search,
-} from '../../../shared/regulatory/global-document-registry';
+import { getByRegion } from '../../../shared/regulatory/global-document-registry';
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
 import { listGateways, type GatewayName, type Region as GatewayRegion } from '../submission-gateways';
 import { REGION_IDENTITY } from '../../../shared/regulatory/region-identity';
 import { submissionChannelFor, type SubmissionChannel } from './registry/submittabilityCoverage';
 import { channelSupportFor, module1StatementForAgency } from './market-support';
 
-/** The three regions the build+submit stack has region-correct support for. */
+/** Default comparison regions, not a claim that each build/channel is qualified. */
 export const CORE_REGIONS: Region[] = ['US', 'EU', 'JP'];
 
 // Module 1 backbone comes from the canonical region-identity registry — no
-// hand-typed paths. The KEYS pin the agencies this resolver has region-correct
-// build+submit support for today (US/EU/JP); the VALUES are the single source of
-// truth. The channel for a filing is NOT read from here or from the region — it
+// hand-typed paths. The KEYS pin this resolver's existing scope (US/EU/JP),
+// not a qualification verdict; the VALUES retain the canonical identities. The channel for a filing is NOT read from here or from the region — it
 // comes from `submissionChannelFor`, the one channel function.
 const AGENCY_MODULE1: Partial<Record<Agency, string>> = {
   FDA:  `/${REGION_IDENTITY.US.m1Backbone}`,
@@ -102,11 +97,11 @@ export interface ResolveInput {
 }
 
 const METHODOLOGY = [
-  'The anchor filing resolves through the global document registry (resolveFromLegacy / id / synonym search).',
-  'For each target region the regional equivalent is the registry entry matching the same applicationFamily and the product class (e.g. a biologic marketing application maps to US BLA, EU MAA, JP JNDA).',
+  'The selected filing resolves through the existing submission-type bridge; an unknown name is not replaced by a search hit or a default filing.',
+  'In its own region the selected registry entry is preserved. Other regions use compatible registry candidates of the same family and lifecycle stage; these candidates are not an assertion of legal equivalence. A missing product match remains a gap.',
   'Module 1 path + validation profile come from the regional packager / validation profiles; the gateway from the submission-gateways registry.',
   'The channel comes from submissionChannelFor (submittabilityCoverage): a centralised-procedure EMA eCTD filing (MAA, variation, renewal, PSUR/RMP, ASMF) is unconnected (EMA eSubmission Gateway / Web Client — CESP is not accepted for it, and there is no connector); orphan designation, scientific advice, PIP and PRIME requests are unconnected (EMA IRIS); any other EMA filing is unconnected with its channel not modelled; a CTIS filing is portal-only; otherwise the registered gateway.',
-  'buildSupported = Module 1 is built to the agency\'s own headings (market-support.ts; today FDA only — EMA and PMDA are filed flat); submitSupported = the channel is a registered gateway whose adapter does not refuse.',
+  'buildSupported = an eCTD filing whose Module 1 is built to the agency\'s own headings (market-support.ts; today FDA only — EMA and PMDA are filed flat). Other formats cannot inherit that claim. submitSupported = the existing channel is a registered gateway whose adapter does not refuse; this is not delivery acceptance.',
 ];
 
 function availableGatewaySet(): Set<string> {
@@ -129,7 +124,7 @@ function channelGap(channel: SubmissionChannel | null): string {
 }
 
 function planGap(r: SubmissionPlanRegion, family: ApplicationFamily): string | null {
-  if (!r.filing) return `${r.region}: no ${family} application`;
+  if (!r.filing) return `${r.region}: no compatible ${family} application for the selected settings`;
   if (!r.buildSupported) return `${r.region}: build not region-correct`;
   if (!r.submitSupported) return `${r.region}: ${channelGap(r.channel)}`;
   return null;
@@ -189,7 +184,12 @@ function channelFor(entry: RegulatoryApplicationType, gateways: Set<string>): Re
 /** Region-correct build: Module 1 built to the agency's own headings
  *  (market-support.ts, FILING_SPINE.md F19). A backbone file name is not that:
  *  EMA's and PMDA's Module 1 leaves are filed flat. */
-function buildSupportFor(agency: string): { buildSupported: boolean; note: string | null } {
+function buildSupportFor(entry: RegulatoryApplicationType): { buildSupported: boolean; note: string | null } {
+  const agency = entry.agency;
+  if (entry.dossierStandard !== 'eCTD') {
+    return { buildSupported: false,
+      note: `This filing uses ${entry.dossierStandard}; regional eCTD Module 1 support does not establish a build for this format.` };
+  }
   const m1 = module1StatementForAgency(agency);
   if (m1?.shape === 'structured') return { buildSupported: true, note: null };
   return {
@@ -198,30 +198,31 @@ function buildSupportFor(agency: string): { buildSupported: boolean; note: strin
   };
 }
 
-/** Pick the regional registry entry matching a family + product class. */
+/** Product applicability comes from the existing registry, not an industry fork. */
+function acceptsProduct(entry: RegulatoryApplicationType, productClass: ProductClass): boolean {
+  return entry.productClass.includes(productClass) || entry.productClass.includes('any');
+}
+
+/** Pick a compatible regional candidate; never fall back to an incompatible product.
+ * Family-level discovery retains the registry's ordering among compatible rows.
+ * An explicit filing selection is preserved separately below, not rediscovered here.
+ */
 export function pickRegionalEntry(
   region: Region,
   family: ApplicationFamily,
   productClass: ProductClass,
+  stage?: RegulatoryApplicationType['stage'],
 ): RegulatoryApplicationType | undefined {
-  const candidates = getByRegion(region).filter((e) => e.applicationFamily === family);
-  if (candidates.length === 0) return undefined;
-  // Prefer an exact product-class match, then 'any', then anything.
+  const candidates = getByRegion(region).filter((e) => e.active &&
+    e.applicationFamily === family && (stage === undefined || e.stage === stage));
   const exact = candidates.find((e) => e.productClass.includes(productClass));
-  if (exact) return exact;
-  const generic = candidates.find((e) => e.productClass.includes('any'));
-  return generic ?? candidates[0];
+  return exact ?? candidates.find((e) => e.productClass.includes('any'));
 }
 
 function anchorEntry(input: ResolveInput): RegulatoryApplicationType | undefined {
-  if (input.filingType) {
-    return (
-      resolveFromLegacy(input.filingType) ||
-      getApplicationType(input.filingType) ||
-      search(input.filingType)[0]
-    );
-  }
-  return undefined;
+  // The bridge already owns IDs, legacy strings and curated aliases. Free-text
+  // search is discovery, not authority to silently choose a filing.
+  return input.filingType ? resolveToRegistryEntry(input.filingType) ?? undefined : undefined;
 }
 
 export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
@@ -230,14 +231,23 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
   // Infer product class from the anchor if it is specific; else from input; else 'any'.
   const anchorClass = anchor?.productClass.find((c) => c !== 'any');
   const productClass: ProductClass = input.productClass ?? anchorClass ?? 'any';
-  const regions = input.regions && input.regions.length ? input.regions : CORE_REGIONS;
+  // Keep the returned intent independent of the caller's project-setting array.
+  const regions = [...(input.regions && input.regions.length ? input.regions : CORE_REGIONS)];
   const gateways = availableGatewaySet();
+  const selectionIssue = input.filingType?.trim() && !anchor
+    ? 'The selected filing is not recognized by the submission-type bridge. Choose a registered filing; no substitute was selected.'
+    : anchor && !anchor.active
+      ? 'The selected filing is inactive in the registry. No substitute was selected.'
+      : anchor && input.productClass && input.productClass !== 'any' && !acceptsProduct(anchor, input.productClass)
+        ? 'The selected filing does not support the recorded product class. Reconcile the project settings; no substitute was selected.'
+        : null;
 
   const perRegion: SubmissionPlanRegion[] = regions.map((region) => {
-    const entry = pickRegionalEntry(region, family, productClass);
+    const entry = selectionIssue ? undefined : anchor?.region === region ? anchor
+      : pickRegionalEntry(region, family, productClass, anchor?.stage);
     const notes: string[] = [];
     if (!entry) {
-      notes.push(`No ${family} application registered for ${region}.`);
+      notes.push(selectionIssue ?? `No compatible ${family} application registered for ${productClass} in ${region}${anchor ? ` at lifecycle stage ${anchor.stage}` : ''}.`);
       return {
         region,
         agency: 'ICH' as Agency,
@@ -254,7 +264,7 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
       };
     }
     const ch = channelFor(entry, gateways);
-    const { buildSupported, note: buildNote } = buildSupportFor(entry.agency);
+    const { buildSupported, note: buildNote } = buildSupportFor(entry);
     const submitSupported = ch.submitSupported;
     if (buildNote) notes.push(buildNote);
     if (ch.note) notes.push(ch.note);
@@ -268,7 +278,7 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
         family: entry.applicationFamily,
         dossierStandard: entry.dossierStandard,
       },
-      module1Path: AGENCY_MODULE1[entry.agency] ?? null,
+      module1Path: entry.dossierStandard === 'eCTD' ? AGENCY_MODULE1[entry.agency] ?? null : null,
       validationProfile: entry.validationProfile,
       sectionBlueprint: entry.defaultSectionBlueprint,
       taskBlueprint: entry.defaultTaskBlueprint,
@@ -280,7 +290,10 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
     };
   });
 
-  const gaps = perRegion.map((r) => planGap(r, family)).filter((g): g is string => g != null);
+  const gaps = [
+    ...(selectionIssue ? [selectionIssue] : []),
+    ...perRegion.map((r) => planGap(r, family)).filter((g): g is string => g != null),
+  ];
   const coverage = gaps.length === 0 ? 'complete' : 'partial';
 
   return {
@@ -288,7 +301,7 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
     perRegion,
     coverage,
     gaps,
-    methodology: METHODOLOGY,
+    methodology: [...METHODOLOGY],
   };
 }
 
@@ -337,7 +350,7 @@ export function submissionCoverageMatrix(
           total += 1;
           return { region, agency: null, filingId: null, filingCode: null, buildSupported: false, submitSupported: false };
         }
-        const { buildSupported } = buildSupportFor(entry.agency);
+        const { buildSupported } = buildSupportFor(entry);
         const submitSupported = channelFor(entry, gateways).submitSupported;
         total += 1;
         if (buildSupported && submitSupported) coveredCount += 1;
@@ -350,15 +363,15 @@ export function submissionCoverageMatrix(
           submitSupported,
         };
       });
-      const fullyCovered = cells.every((c) => c.buildSupported && c.submitSupported);
+      const fullyCovered = cells.length > 0 && cells.every((c) => c.buildSupported && c.submitSupported);
       return { family, productClass, cells, fullyCovered };
     }),
   );
 
   return {
-    regions,
-    families,
-    productClasses,
+    regions: [...regions],
+    families: [...families],
+    productClasses: [...productClasses],
     rows,
     summary: `${coveredCount}/${total} (filing × region) combinations support both region-correct build and gateway submission.`,
   };

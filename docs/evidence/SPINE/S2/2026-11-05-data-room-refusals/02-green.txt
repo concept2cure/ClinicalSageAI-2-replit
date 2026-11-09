@@ -1,0 +1,63 @@
+ ✓ sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > offers assembly for retained readable data without requiring original bytes 171ms
+ ✓ sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > hands only the explicitly pinned ProjectHome sources to the shared chooser 183ms
+ ✓ sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > refuses a sixth explicit pin without silently dropping a source 133ms
+ ✓ sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > retains the selected Vault UUID namespace instead of converting it into a Data Roo
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not offer an explicit section-only read as a whole-document build target 14ms
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > withdraws a whole-document build target when the fresh list confirms section-only access 40ms
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > opens the exact project/document with selected identities and no write or generation 40ms
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > holds an unavailable target after the fresh read instead of opening another document 44ms
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > refuses a foreign scoped document list rather than presenting it as empty 15ms
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > retains sources for the existing-editor creation remedy without dispatching a pre-mount creat
+ ✓ sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not publish while another governed form is open 42ms
+ ✓ sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after project round trip 39ms
+ ✓ sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after account change 42ms
+ ✓ sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after organization change 37ms
+ ✓ sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after unmount 36ms
+ ✓ sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > discards a late target list when the selected source changes 14ms
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > deep-copies at publication and at every read 1ms
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback:
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback:
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback:
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback:
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback:
+ ✓ sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > requires the exact document/project and does not manufacture sou
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after project round trip before the editor mounts
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after account change before the editor mounts 1ms
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after organization change before the editor mount
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after session replacement before the editor mount
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > keeps a legitimate handoff after the chooser closes and its component unmounts 39ms
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > registers ownership before the existing editor-target event is delivered 1ms
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > refuses an unregistered raw source-target copy 1ms
+ ✓ sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > preserves ordinary target behavior across project visits 1ms
+ ✓ editorSourceLibraries.test.tsx > processing recovery in the existing editor > shows a durable processing failure and refuses AnA grounding without persisted text 158
+ ✓ editorSourceLibraries.test.tsx > processing recovery in the existing editor > refreshes the same captured identity after readable recovery without issuing repair wri
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > searches and pages the whole data room instead of an initial capped list 584ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > keeps withdrawn sources visible while refusing work or grounding from them 21ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > never promotes a stored source title into AnA instructions 20ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > a catalogue failure is reported with recovery rather than an empty room 15ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > an IND deliverable from a later phase opens the exact existing working document 31ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > routes official form preparation to AnA without promising to generate the form 30ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > offers recovery when existing documents cannot be checked 26ms
+ ✓ editorSourceLibraries.test.tsx > source libraries in the existing editor > offers a clear-filter action when the IND search has no matches 25ms
+ ✓ sourceUiRules.test.tsx > governed source intake rules > explains the reason rule and refuses a short or overlong reason before sending 139ms
+ ✓ sourceUiRules.test.tsx > source catalogue disclosures and availability > shows exclusion before expansion and explains the disabled work and AnA actions 83ms
+ ✓ sourceUiRules.test.tsx > source catalogue disclosures and availability > keeps retained readable text available to AnA when the original file is unavailable 46ms
+ ✓ sourceUiRules.test.tsx > source catalogue disclosures and availability > recovers from no search matches by clearing the search rather than hiding project sources 28
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a plan without the feature': its own words, no retry, and no "could n
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a feature not in this release': its own words, no retry, and no "coul
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a role that cannot read it': its own words, no retry, and no "could n
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'an unconfirmed organization': its own words, no retry, and no "could 
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a project not in this organization': its own words, no retry, and no 
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'an expired session': its own words, no retry, and no "could not be re
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a server failure' stays a failed read that offers a retry 27ms
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'a store that did not answer' stays a failed read that offers a retry 
+ ✓ dataRoomSourceReads.test.tsx > a Data Room refusal is said as itself, never as a failed read > 'no response at all' stays a failed read that offers a retry 22ms
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > hides earlier actionable sources immediately while a different search is pen
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > reports unconfirmed page metadata as a recoverable read failure ({"projectId
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > resets search, page and selected import when the project changes 36ms
+ ✓ dataRoomSourceReads.test.tsx > Data Room reads preserve their exact project and search > ignores an old project completion after a switch 11ms
+ Test Files  4 passed (4)
+      Tests  61 passed (61)

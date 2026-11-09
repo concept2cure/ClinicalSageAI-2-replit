@@ -21,6 +21,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ProjectRespond } from '../surfaces/ProjectRespond';
+import { useAgencyInbox } from '../surfaces/AgencyInbox';
+import { C2CToast, useToast } from '../toast';
+
+/* D3-2b: the page reads the agency inbox once and hands it to Respond (and to the Filing card), and shows its
+   notices once. This mounts Respond the way the page does. */
+type RespondProps = React.ComponentProps<typeof ProjectRespond>;
+function Respond({ commitments = null, projectId = null, onCommitmentsChanged = () => {}, ...props }:
+  Omit<RespondProps, 'inbox' | 'commitments' | 'projectId' | 'onCommitmentsChanged'> & Partial<Pick<RespondProps, 'commitments' | 'projectId' | 'onCommitmentsChanged'>>) {
+  const [toast, fire] = useToast();
+  const inbox = useAgencyInbox(props.pid, fire);
+  return <><ProjectRespond {...props} inbox={inbox} commitments={commitments} projectId={projectId} onCommitmentsChanged={onCommitmentsChanged} /><C2CToast msg={toast} /></>;
+}
 import { consumeNavParams } from '../navParams';
 
 const PID = '22222222-2222-4222-8222-222222222222';
@@ -46,7 +58,7 @@ afterEach(() => { cleanup(); delete (window as { C2C_SOURCE_PINS?: unknown }).C2
 
 describe('Respond answers the agency (F15)', () => {
   it('offers the three steps, and no longer names question-by-question tracking as coming later', async () => {
-    render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    render(<Respond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect(screen.getByRole('heading', { name: /Add the agency's letter/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Choose the letter file/ })).toBeTruthy();
     // AnA is asked to invent no number or date; the person is told to check (2026-10-15).
@@ -64,7 +76,7 @@ describe('Respond answers the agency (F15)', () => {
 
   it('"Start a response sequence" opens that market\'s Sequences tab with the follow-up type response', async () => {
     const onNav = vi.fn();
-    render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda'), submission(56, 'ONC-221 MAA', 'maa', 'eu')])} onNav={onNav} onAsk={vi.fn()} />);
+    render(<Respond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda'), submission(56, 'ONC-221 MAA', 'maa', 'eu')])} onNav={onNav} onAsk={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/The market the letter came from/), { target: { value: '56' } });
     fireEvent.click(screen.getByRole('button', { name: /Start a response sequence/ }));
     expect(onNav).toHaveBeenCalledWith('submission-center');
@@ -72,7 +84,7 @@ describe('Respond answers the agency (F15)', () => {
   });
 
   it('with no market yet, says so instead of offering a sequence nothing can hold', async () => {
-    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect((screen.getByRole('button', { name: /Start a response sequence/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/This project has no submission to respond in yet/)).toBeTruthy();
   });
@@ -95,7 +107,7 @@ describe('One agency inbox: Respond logs into Communication\'s store and shows i
       json: async () => ({ fileId: 'file_9', sourceId: 77, status: 'ready', extractionMethod: 'pdf-text', extractionWords: 120 }),
     }));
     vi.stubGlobal('fetch', fetchMock);
-    const { container } = render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    const { container } = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [new File(['%PDF'], 'IR-2026-10-12.pdf', { type: 'application/pdf' })] } });
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', COMMS_URL, expect.objectContaining({
@@ -115,7 +127,7 @@ describe('One agency inbox: Respond logs into Communication\'s store and shows i
       if (m === 'POST' && url === COMMS_URL) return { ok: false, status: 500, json: async () => ({ success: false, message: 'The store is unavailable' }) } as Response;
       return String(url).startsWith(`/api/c2c/projects/${PID}/sources`) ? ok(SOURCES) : ok({ success: true, data: [] });
     });
-    const { container } = render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    const { container } = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['%PDF'], 'IR.pdf', { type: 'application/pdf' })] } });
     expect(await screen.findByText(/not logged in the agency inbox/)).toBeTruthy();
     expect(screen.getByText(/The store is unavailable/)).toBeTruthy();
@@ -128,7 +140,7 @@ describe('One agency inbox: Respond logs into Communication\'s store and shows i
       return String(url).startsWith(`/api/c2c/projects/${PID}/sources`) ? ok(SOURCES) : ok({});
     });
     const onAsk = vi.fn();
-    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
     expect(await screen.findByText('Agency letter: IR-2026-10-12.pdf')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Draft response with AnA/ }));
     expect((window as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS).toEqual(['77']);
@@ -143,7 +155,7 @@ describe('One agency inbox: Respond logs into Communication\'s store and shows i
     apiRequest.mockImplementation(async (_m: string, url: string) =>
       url === COMMS_URL ? ok({ success: true, data: [commRow({ linkedArtifactIds: [], communicationType: 'Information request' })] }) : ok({}));
     const onAsk = vi.fn();
-    render(<ProjectRespond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={onAsk} />);
     fireEvent.click(await screen.findByRole('button', { name: /Draft response with AnA/ }));
     expect((window as { C2C_SOURCE_PINS?: string[] }).C2C_SOURCE_PINS).toBeUndefined();
     expect(onAsk.mock.calls[0][0]).toMatch(/No document of the letter is linked/);
@@ -180,7 +192,7 @@ describe('A letter uploaded in Respond names the submission it concerns (gap 6.5
   };
 
   it("with the project's only submission, links it, and the person can see and change that", async () => {
-    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    const { container } = render(<Respond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
     expect((screen.getByLabelText(/The submission this letter concerns/) as HTMLSelectElement).value).toBe('55');
     upload(container);
     expect((await loggedBody()).linkedSubmissionId).toBe('55');
@@ -188,7 +200,7 @@ describe('A letter uploaded in Respond names the submission it concerns (gap 6.5
 
   it('with several, links none until one is chosen, and the chosen one is also the response sequence\'s market', async () => {
     const onNav = vi.fn();
-    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda'), submission(56, 'ONC-221 MAA', 'maa', 'eu')])} onNav={onNav} onAsk={vi.fn()} />);
+    const { container } = render(<Respond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda'), submission(56, 'ONC-221 MAA', 'maa', 'eu')])} onNav={onNav} onAsk={vi.fn()} />);
     const picker = screen.getByLabelText(/The submission this letter concerns/) as HTMLSelectElement;
     expect(picker.value).toBe('');
     fireEvent.change(picker, { target: { value: '56' } });
@@ -200,9 +212,47 @@ describe('A letter uploaded in Respond names the submission it concerns (gap 6.5
   });
 
   it('a letter the person marks as about no submission is logged with none', async () => {
-    const { container } = render(<ProjectRespond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    const { container } = render(<Respond pid={PID} markets={markets([submission(55, 'ONC-221 IND', 'ind', 'fda')])} onNav={vi.fn()} onAsk={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/The submission this letter concerns/), { target: { value: '' } });
     upload(container);
     expect(await loggedBody()).not.toHaveProperty('linkedSubmissionId');
+  });
+});
+
+/* D3-4 (D3.md §4.7 Respond item 3, §6 item 11): Respond lists the project's commitments to the agency from the page's one
+   read, with Communication's row and its "Record fulfilment" dialog on the project's door. */
+describe('Respond lists the commitments to the agency (D3-4)', () => {
+  const commitment = (over: Record<string, unknown> = {}) => ({
+    id: 9, project_id: 11, organization_id: 1, commitment_type: 'pmc', description: 'Submit the 12-month stability data',
+    regulatory_basis: '21 CFR 314.81', due_date: '2099-03-01', status: 'open', effectiveStatus: 'open', fulfilled_date: null,
+    source_question_id: null, source_question_ref: null, source_communication_type: null,
+    fulfilment: { state: 'none', rule: { signatureRequired: false, evidence: 'none' }, sequence: null, vaultVersion: null }, ...over,
+  });
+  const read = (rows: unknown[]) => ({ data: { commitments: rows } as never, loading: false, empty: rows.length === 0 });
+
+  it('lists each commitment and its "Record fulfilment" opens the project-door dialog', async () => {
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={read([commitment()])} projectId={11} />);
+    const section = screen.getByRole('region', { name: 'Commitments to the agency' });
+    expect(section.textContent).toContain('Submit the 12-month stability data');
+    fireEvent.click(screen.getByRole('button', { name: 'Record fulfilment' }));
+    await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/concept2cure/projects/11/commitments/9/fulfilment-options')).toBe(true));
+  });
+
+  it('says there are none, says a failed read failed, and waits while the read is not in', () => {
+    const { unmount } = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={read([])} projectId={11} />);
+    expect(screen.getByText('No commitments to the agency on this project.')).toBeTruthy();
+    unmount();
+    const retry = vi.fn();
+    const failed = render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={{ data: null, loading: false, empty: false, error: 'boom', status: 500 }} projectId={11} onCommitmentsChanged={retry} />);
+    expect(screen.getByText("Couldn't load this project's commitments")).toBeTruthy();
+    expect(screen.queryByText('No commitments to the agency on this project.')).toBeNull();
+    failed.unmount();
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} commitments={null} commitmentsUnverified={null} projectId={null} />);
+    expect(screen.getByRole('region', { name: 'Commitments to the agency' }).textContent).toContain('Reading this project’s commitments…');
+  });
+
+  it('keeps the step heading for screen readers only', () => {
+    render(<Respond pid={PID} markets={markets([])} onNav={vi.fn()} onAsk={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Respond', level: 2 }).className).toBe('sr-only');
   });
 });

@@ -19,9 +19,12 @@ import { evaluateCompleteness, type SectionView } from './protocol-development-l
 import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-pack';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
+import { mapAmendments, mapDeviations, mapReviewComments, mapReviews } from './pdev-view-registers';
+import { milestoneBucket } from '../protocol-milestones/protocol-milestones-logic';
+import { summarizeRiskRegister, type RiskImpact, type RiskLikelihood, type RiskRegisterSummary } from '../protocol-risks/protocol-risks-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
 import { validateDesign } from '../study-design/design-validation';
-import { dispositionTarget, finalizationTarget, readSignatureFacets, type PdevSignatureFacet } from './protocol-signature-manifestation';
+import { dispositionTarget, finalizationTarget, readSignatureFacets } from './protocol-signature-manifestation';
 
 import { loadPdevProtocolRows, type ProtocolReadScope } from './pdev-protocol-index';
 export { listPdevProtocolIndex, type ProtocolReadScope } from './pdev-protocol-index';
@@ -45,41 +48,30 @@ function groupBy<T>(rows: T[], key: (r: T) => unknown): Map<string, T[]> {
   return m;
 }
 
-function milestoneUrgency(targetDate: unknown, actualDate: unknown, now: number): string {
-  if (actualDate) return 'done';
-  if (!targetDate) return 'normal';
-  const t = new Date(str(targetDate)).getTime();
-  if (Number.isNaN(t)) return 'normal';
-  const days = (t - now) / 86_400_000;
-  if (days < 0) return 'overdue';
-  if (days <= 30) return 'soon';
-  return 'normal';
+/** A date column as YYYY-MM-DD. node-postgres returns a DATE as a local-midnight
+ *  Date, which String() printed in full ("Wed Jan 01 2020 00:00:00 GMT…"). */
+function isoDay(v: unknown): string {
+  if (v instanceof Date) {
+    return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+  }
+  return str(v).slice(0, 10);
 }
 
-/** The protocol's review comments. They belong to the protocol, not to a
- *  reviewer: `protocol_review_comments` is keyed by document. They were copied
- *  onto every assignment, so the pane, which flattens the assignments, showed
- *  each comment once per reviewer and none at all before a review was asked. */
-function mapReviewComments(comments: Record<string, unknown>[]): unknown[] {
-  return comments.map((c) => ({
-    id: str(c.id), sec: str(c.section_ref), sev: str(c.severity), text: str(c.comment), resolved: bool(c.resolved),
-  }));
-}
-
-/** Review assignments. Extracted for the lint budget. */
-function mapReviews(
-  rows: Record<string, unknown>[],
-  signatureOf: (target: string) => PdevSignatureFacet,
-): unknown[] {
-  return rows.map((rv) => ({
-    id: str(rv.id), reviewer: str(rv.reviewer_name), role: str(rv.role), status: str(rv.status),
-    // Who may sign the disposition: that user, or (null) anyone taking
-    // responsibility for recording a reviewer who has no account.
-    reviewerUserId: rv.reviewer_user_id == null ? null : Number(rv.reviewer_user_id),
-    disposition: str(rv.disposition), dueDate: rv.due_date ? String(rv.due_date).slice(0, 10) : '',
-    // Who signed it, from the signature row, not the assignment's label.
-    signature: signatureOf(dispositionTarget(str(rv.id))),
-  }));
+/** The register's summary from the QRM engine (summarizeRiskRegister, the one
+ *  GET /api/protocol-risks/documents/:id/register returns), over the risks
+ *  scored on both axes; `unscored` counts the rest, which no level describes. */
+function riskSummaryOf(rows: Record<string, unknown>[]): RiskRegisterSummary & { unscored: number } {
+  const scorable = rows.filter((r) => str(r.likelihood) in LIKELIHOOD && str(r.impact) in IMPACT);
+  const residual = (l: unknown, i: unknown) => (str(l) in LIKELIHOOD && str(i) in IMPACT);
+  const summary = summarizeRiskRegister(scorable.map((r) => ({
+    category: str(r.category),
+    likelihood: str(r.likelihood) as RiskLikelihood,
+    impact: str(r.impact) as RiskImpact,
+    residualLikelihood: residual(r.residual_likelihood, r.residual_impact) ? str(r.residual_likelihood) as RiskLikelihood : null,
+    residualImpact: residual(r.residual_likelihood, r.residual_impact) ? str(r.residual_impact) as RiskImpact : null,
+    status: str(r.status),
+  })));
+  return { ...summary, unscored: rows.length - scorable.length };
 }
 
 /** The cover page's principal investigator: the column when the protocol
@@ -168,48 +160,6 @@ function mapBudget(
     })),
     summary: budgetSummary,
   };
-}
-
-/** Amendments with their change rows. Extracted so the per-document mapper
- *  stays under the size the repo's lint budget allows. */
-function mapAmendments(
-  rows: Record<string, unknown>[],
-  changesByAmend: Map<string, Record<string, unknown>[]>,
-): unknown[] {
-  const at = (id: number) => changesByAmend.get(str(id)) ?? [];
-  return rows.map((a) => ({
-    id: str(a.id), num: str(a.amendment_number), summary: str(a.title),
-    status: a.decided_date ? 'decided' : a.submitted_date ? 'submitted' : 'draft',
-    // Re-consent is the IRB's determination (45 CFR 46.109(b); 21 CFR 56.109(b)),
-    // never the engine's. true = a declared consent or risk impact means the
-    // IRB must decide; null = either impact undeclared; false = both declared no.
-    reconsent: reconsentIndicator(a.affects_consent, a.affects_risk), path: '',
-    changes: at(Number(a.id)).map((c) => ({ sec: str(c.section_ref), from: str(c.previous_text), to: str(c.proposed_text) })),
-  }));
-}
-
-function reconsentIndicator(consent: unknown, risk: unknown): boolean | null {
-  if (bool(consent) || bool(risk)) return true;
-  if (consent === null || consent === undefined || risk === null || risk === undefined) return null;
-  return false;
-}
-
-/** Deviations with their CAPA rows. Extracted for the same reason. */
-function mapDeviations(
-  rows: Record<string, unknown>[],
-  capaByDev: Map<string, Record<string, unknown>[]>,
-): unknown[] {
-  const at = (id: number) => capaByDev.get(str(id)) ?? [];
-  return rows.map((dv) => ({
-    id: str(dv.id), title: str(dv.description), sev: str(dv.severity), cat: str(dv.category),
-    // Assessed = severity AND safety impact recorded. Legacy rows (defaulted
-    // severity, no safety assessment) read as not assessed — which they were.
-    assessed: dv.severity != null && dv.affects_safety != null,
-    // true = prompt IRB report indicated; false = not indicated; null = not determined.
-    reportable: dv.is_reportable === null || dv.is_reportable === undefined ? null : bool(dv.is_reportable),
-    status: str(dv.status),
-    capa: at(Number(dv.id)).map((c) => ({ id: str(c.deviation_id), action: str(c.action), status: str(c.status) })),
-  }));
 }
 
 /* ── The bound study design, and the design gates' findings ──────────────── */
@@ -400,7 +350,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
   const docs = await loadPdevProtocolRows(orgId, scope, queryExecutor);
   if (docs.length === 0) return [];
   const ids = docs.map((d) => Number(d.id));
-  const now = Date.now();
+  // Today as YYYY-MM-DD for the timeline engine, the way isoDay reads a DATE.
+  const today = isoDay(new Date());
 
   // Bulk-fetch every child in one query each, scoped to the org + these docs.
   const q = (sql: string, params: unknown[] = [ids, orgId]) => queryExecutor.query(sql, params);
@@ -414,8 +365,8 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
     q(`SELECT id, protocol_document_id, kind, criterion FROM protocol_eligibility_criteria WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY kind, order_index, id`),
     q(`SELECT id, protocol_document_id, visit_name, timepoint FROM protocol_schedule_visits WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY order_index, id`),
     q(`SELECT id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status, owner FROM protocol_risks WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
-    q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
-    q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    q(`SELECT id, protocol_document_id, name, milestone_type, target_date, actual_date, status FROM protocol_milestones WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY target_date NULLS LAST, id`),
+    q(`SELECT id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date, decided_date FROM protocol_amendments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     /* severity / category / status are NOT NULL with CHECK constraints on this
        table and were simply never selected, then hard-blanked below. A monitor
        could not tell a CRITICAL deviation from a MINOR one — which is the 3-day
@@ -451,7 +402,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
       ? queryExecutor.query(`SELECT amendment_id, section_ref, change_description, previous_text, proposed_text FROM protocol_amendment_changes WHERE amendment_id = ANY($1)`, [amendmentIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     deviationIds.length
-      ? queryExecutor.query(`SELECT deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1)`, [deviationIds])
+      ? queryExecutor.query(`SELECT id, deviation_id, action, status FROM protocol_capa_actions WHERE deviation_id = ANY($1) ORDER BY id`, [deviationIds])
       : Promise.resolve({ rows: [] as Record<string, unknown>[] }),
     consentFormIds.length
       ? queryExecutor.query(`SELECT id, consent_form_id, element_key, title, required, present, order_index FROM consent_form_elements WHERE consent_form_id = ANY($1) AND organization_id = $2 ORDER BY order_index, id`, [consentFormIds, orgId])
@@ -568,6 +519,7 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
         exclusion: g(byDoc.eligibility, id).filter((e) => e.kind === 'exclusion').map((e) => ({ id: str(e.id), text: str(e.criterion) })),
       },
       soa: mapSoa(liveVisits, liveAssessments, liveCells, soaValidation),
+      riskSummary: riskSummaryOf(g(byDoc.risks, id)),
       risks: g(byDoc.risks, id).map((r) => ({
         id: str(r.id), hazard: str(r.description), cat: str(r.category),
         // 0 — not on the 5×5 map — rather than an invented 3 (2026-10-15).
@@ -576,9 +528,13 @@ export async function assembleOrgPdevDocs(orgId: number, scope: ProtocolReadScop
         rl: LIKELIHOOD[str(r.residual_likelihood)] ?? 0, ri: IMPACT[str(r.residual_impact)] ?? 0,
         status: str(r.status), owner: str(r.owner),
       })),
+      /* The recorded status (planned, in progress, met, missed, cancelled), and
+         the urgency bucket from the timeline engine the timeline route uses
+         (milestoneBucket). Both were derived here from the dates by a second
+         rule, which read a missed or cancelled milestone as pending. */
       milestones: g(byDoc.milestones, id).map((m) => ({
-        id: str(m.id), label: str(m.name), date: str(m.actual_date ?? m.target_date),
-        status: m.actual_date ? 'complete' : 'pending', urgency: milestoneUrgency(m.target_date, m.actual_date, now),
+        id: str(m.id), label: str(m.name), date: isoDay(m.actual_date ?? m.target_date),
+        status: str(m.status), urgency: milestoneBucket({ targetDate: isoDay(m.target_date) || null, status: str(m.status) }, today),
       })),
       budget: mapBudget(params, budgetRows, budgetSummary),
       amendments: mapAmendments(g(byDoc.amendments, id), changesByAmend),

@@ -1,0 +1,16 @@
+# Trunk before this session (2026-11-05 01:12 UTC, HEAD 1aa22ba924): server CSR suites
+      Tests  12 failed | 1063 passed (1075)
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > can draft supported title metadata without requiring unavailable clinical result tables
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > CSR cancellation and unsupported bindings > does not grandfather a clean legacy results finding over an empty retained evidence pack
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > does not treat missing source lineage on a saved run-bound results section as verified
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses completion if the source is withdrawn after the final section was saved
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > refuses to reuse saved narrative whose exact evidence digest differs from the readable current pack
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > saved CSR source evidence on resume and completion > saves and completes an unchanged source-supported draft
+ FAIL  server/services/csr/__tests__/csr-job-runner.source-revalidation.test.ts > the retained source stays admitted across CSR drafting and resume > does not save a reply when its source-table digest changed during the model call
+ FAIL  server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a cancelled build stops the run, which is recorded as cancelled and lands nothing
+ FAIL  server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a superseded attempt cannot record an outcome
+ FAIL  server/services/csr/__tests__/csr-narrative-run.pglite.test.ts > narrative run on the CSR build queue (SYNTHETIC data) > a worker that dies mid-run is stalled, taken over by the next request, and resumes without recomposing verified subjects
+ FAIL  server/services/csr/__tests__/csr-results-claim-provenance.test.ts > CSR clinical outcomes always require retained analysis-cell claims > does not treat planned sample size as evidence of deaths or completions
+ FAIL  server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §12.2
+ Test Files  4 failed | 97 passed (101)
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯

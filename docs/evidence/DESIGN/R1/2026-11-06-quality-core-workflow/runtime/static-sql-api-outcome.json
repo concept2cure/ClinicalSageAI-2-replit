@@ -1,0 +1,53 @@
+{
+  "runId": 4,
+  "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "scopeLabel": "F1 Recent conversation verification",
+  "api": {
+    "saved": 200,
+    "/rendered": 200,
+    "/dependencies": 200,
+    "/export.pdf": 200
+  },
+  "sourcesStatus": [
+    200,
+    200
+  ],
+  "sourceIdsStable": true,
+  "nativeSourceIds": [
+    157,
+    158,
+    159
+  ],
+  "historyStatus": 200,
+  "snapshotCount": 3,
+  "nativeFactsUnchanged": true,
+  "reportStatus": "partial",
+  "checks": [
+    "Project catalogue read 1 returned 200",
+    "Project catalogue read 2 returned 200",
+    "Repeated catalogue reads retain identical source IDs",
+    "Catalogue contains the same three native Quality identities",
+    "Native source IDs remain unchanged from before the SQL repair",
+    "Report creation returned 201",
+    "Saved read JSON returned 200",
+    "Saved read /rendered returned 200",
+    "Saved read /dependencies returned 200",
+    "Saved read /export.pdf returned 200",
+    "Saved JSON retains the three fictional Quality snapshots",
+    "Saved JSON retains full parseable native texts",
+    "Saved JSON retains CAPA native identity",
+    "Saved JSON retains complete original provenance snapshots",
+    "Native facts and scope are unchanged from the pre-SQL-fix live report",
+    "Rendered main tables contain business numbers and description",
+    "Rendered main tables omit technical keys and raw JSON",
+    "Rendered model omits machine provenance appendix",
+    "Report remains partial",
+    "Ownership and unassessed scope remain explicit",
+    "PDF contains business numbers and readable description",
+    "PDF preserves human project and ownership scope",
+    "PDF omits machine keys and raw JSON appendix",
+    "PDF keeps partial and assessment limits",
+    "History returned 200"
+  ],
+  "fixture": "Fictional local records; deterministic Quality projection. API-only reproof after literal SQL repair; no model calls requested."
+}

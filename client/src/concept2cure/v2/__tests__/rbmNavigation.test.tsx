@@ -10,9 +10,15 @@ const entitlement = vi.hoisted(() => ({
   current: { id: 'rbm', label: 'Risk-based monitoring', entitled: true, source: 'included', requiredTier: 'professional' } as NavSurfaceEntitlement,
 }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', roles: ['admin'], permissions: ['billing:admin'] }, logout: vi.fn() }),
+/* One signed-in account, the same object on every render, as AuthProvider holds it. The shell reads the
+   navigation verdicts once per account visit (navEntitlements.tsx useNavigationReadOwner, 0fc881c16f): a new
+   user object on every render was a new visit on every render, and the suite read and re-rendered until the
+   test worker ran out of memory. */
+const signedIn = vi.hoisted(() => ({
+  user: { id: 7, firstName: 'Ada', lastName: 'Rowe', roles: ['admin'], permissions: ['billing:admin'] },
+  logout: () => Promise.resolve(),
 }));
+vi.mock('@/services/portal/authService', () => ({ useAuth: () => signedIn }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { id: 7, name: 'Recorded organization' } }),
 }));

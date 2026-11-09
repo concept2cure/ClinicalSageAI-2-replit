@@ -12,8 +12,9 @@
  *   POST /generate-narrative   a model-written patient narrative; replaced by the
  *                              build's narrative job, POST /api/csr/jobs/:jobId/narratives.
  *   POST /analyze-benefit-risk a model-written benefit-risk verdict; the
- *                              deterministic engines are regulatory/benefit-risk.ts
- *                              (AnA assess_benefit_risk) and benefit-risk-knowledge.ts.
+ *                              deterministic engine is benefit-risk-knowledge.ts
+ *                              (AnA assess_benefit_risk_balance; S7, 2026-11-09, retired
+ *                              regulatory/benefit-risk.ts onto it).
  * The second mount of this router at /api/csr (beside /api/csr/jobs) is removed.
  * Proved by server/routes/__tests__/csr-builder-retired-endpoints.test.ts.
  */

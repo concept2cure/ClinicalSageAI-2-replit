@@ -1,0 +1,15 @@
+{
+  "result": "accepted",
+  "source": "d75e63b617700584971794b874ff5ae6f1990ba3",
+  "remoteVerified": "d75e63b617700584971794b874ff5ae6f1990ba3",
+  "branch": "concept2cure-v2",
+  "verifiedAt": "2026-11-06T20:58:08.230700+00:00",
+  "method": "normal git push with all repository hooks enabled",
+  "typeScriptErrors": 0,
+  "typeScriptBaseline": 0,
+  "warningGrowth": 0,
+  "sourceManifest": "source-sha256.json",
+  "sourceHashesMatched": 13,
+  "mergedDependencyHashesMatched": 3,
+  "limits": "Software selection/reach proof only; no live provider/agency, deployment or scientific/model qualification."
+}

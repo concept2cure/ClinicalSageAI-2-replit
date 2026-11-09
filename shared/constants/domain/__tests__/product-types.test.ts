@@ -15,6 +15,7 @@ import {
   workstreamForFilingType,
   workstreamSqlCase,
   isDeviceFamily,
+  isDeviceOrDiagnosticProgram,
   isIvdFamily,
   isMedicinalProduct,
   isProductType,
@@ -272,5 +273,35 @@ describe('product descriptions preserve conditional diagnostic classification', 
     const description = PRODUCT_TYPES.find(entry => entry.value === 'cdx')!.description;
     expect(description).toMatch(/classification.*intended use.*(applicable|regional)/i);
     expect(description).not.toMatch(/Class D under the IVDR/i);
+  });
+});
+
+/* B4 (2026-11-05): one rule for "this program files as a device or diagnostic",
+   read from the program's own record, so Submission Center, Project home and
+   the market refusal agree. */
+describe('isDeviceOrDiagnosticProgram — the program record decides', () => {
+  it('a drug IND, an NDA and a biologic BLA are not device filings', () => {
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'IND', product_type: 'drug' })).toBe(false);
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'nda', product_type: null })).toBe(false);
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'BLA', product_type: 'biologic' })).toBe(false);
+  });
+
+  it('a recorded device-family product type is a device filing', () => {
+    for (const productType of ['device', 'ivd', 'cdx', 'samd', 'IVD']) {
+      expect(isDeviceOrDiagnosticProgram({ program_type: null, product_type: productType })).toBe(true);
+    }
+  });
+
+  it('a device filing class decides when the product type is not recorded', () => {
+    expect(isDeviceOrDiagnosticProgram({ program_type: '510k', product_type: null })).toBe(true);
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'pma' })).toBe(true);
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'ivd_approval' })).toBe(true);
+    expect(isDeviceOrDiagnosticProgram({ program_type: 'mdl' })).toBe(true);
+  });
+
+  it('no record is not a device filing', () => {
+    expect(isDeviceOrDiagnosticProgram(null)).toBe(false);
+    expect(isDeviceOrDiagnosticProgram(undefined)).toBe(false);
+    expect(isDeviceOrDiagnosticProgram({})).toBe(false);
   });
 });

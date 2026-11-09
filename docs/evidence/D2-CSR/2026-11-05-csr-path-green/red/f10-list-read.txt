@@ -1,0 +1,5 @@
+# F10, server list read, before the fix
+       × returns each failed build’s reason in plain words, and none for a build that did not fail 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/csr-jobs-build-and-review.pglite.test.ts > GET /api/csr/jobs?programId&runId — the builds bound to one retained run (the CSR card, 2026-10-30) > a failed build names why it stopped > returns each failed build’s reason in plain words, and none for a build that did not fail
+      Tests  1 failed | 18 passed (19)

@@ -80,29 +80,41 @@ function ScopedRead({ scope, current }: { scope: ProjectRecordedContextScope; cu
     else setRead({ message: RETIRED });
   }} />;
 }
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="pj-card" style={{ minWidth: 0, overflowWrap: 'anywhere' }}><div className="pj-card-h"><h3>{title}</h3></div>{children}</section>;
+/** What AnA knows (D3-2a, D3.md §4.8 item 5): one card, on every step, with the saved profile's memory and its
+ *  instructions each in a closed disclosure. The two sentences that said the profile and the authored instructions
+ *  are separate sources are gone: the first line says what AnA reads, and the skills are their own card. */
+/** What each disclosure's summary adds to its name: when the memory was enriched, or that nothing is saved. */
+function summaryTails(profile: ProjectRecordedProfile | null | undefined): { memory: string; instructions: string } {
+  if (!profile) return { memory: ' · none saved', instructions: ' · none saved' };
+  const when = profile.lastEnrichedAt ? new Date(profile.lastEnrichedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+  return { memory: when ? ` · enriched ${when}` : '', instructions: profile.customInstructions?.trim() ? '' : ' · none recorded' };
 }
 function Cards({ read, retry }: { read: Read; retry?: () => void }) {
   const profile = read.data?.profile;
   const message = read.loading ? 'Reading saved project profile…' : read.message;
-  return <>
-    <Card title="Memory">
-      {message ? <p role={read.failed ? 'alert' : 'status'}>{message}</p> : profile
-        ? <Memory profile={profile} /> : <p>No saved intelligence profile for this project.</p>}
-      {read.failed && retry && <button className="btn ghost small" onClick={retry}>Retry recorded project context</button>}
-    </Card>
-    <Card title="Instructions">
-      <p><strong>Saved intelligence-profile instructions</strong></p>
-      <p className="sec-sub">Authored project instructions and the skills AnA follows are separate sources. This view does not combine or change them.</p>
-      {message ? <p role={read.failed ? 'alert' : 'status'}>{message}</p> : profile
-        ? <RecordedText value={profile.customInstructions} absent="No instructions recorded on this profile." />
-        : <p>No saved profile to supply instructions.</p>}
-    </Card>
-  </>;
+  const tails = summaryTails(profile);
+  return (
+    <section className="pj-card pj-knows" aria-labelledby="pj-knows-h">
+      <div className="pj-card-h"><h3 id="pj-knows-h">What AnA knows</h3></div>
+      <p className="sec-sub">AnA reads these in every conversation in this project.</p>
+      {message ? <>
+        <p role={read.failed ? 'alert' : 'status'}>{message}</p>
+        {read.failed && retry && <button type="button" className="btn ghost small" onClick={retry}>Retry recorded project context</button>}
+      </> : <>
+        <details className="pj-more">
+          <summary>Memory{tails.memory}</summary>
+          {profile ? <Memory profile={profile} /> : <p>No saved intelligence profile for this project.</p>}
+        </details>
+        <details className="pj-more">
+          <summary>Instructions{tails.instructions}</summary>
+          {profile ? <RecordedText value={profile.customInstructions} absent="No instructions recorded on this profile." /> : <p>No saved profile to supply instructions.</p>}
+        </details>
+      </>}
+    </section>
+  );
 }
 function RecordedText({ value, absent }: { value: string | null; absent: string }) {
-  return <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value?.trim() ? value : absent}</p>;
+  return <p className="pj-knows-t">{value?.trim() ? value : absent}</p>;
 }
 function RecordedList<T>({ title, rows, children }: { title: string; rows: readonly T[]; children: (row: T) => React.ReactNode }) {
   const shown = rows.slice(0, 5);

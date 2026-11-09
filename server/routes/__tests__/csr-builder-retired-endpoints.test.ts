@@ -12,9 +12,10 @@
  *                              Replaced by the CSR build's narrative job,
  *                              POST /api/csr/jobs/:jobId/narratives.
  *   POST /analyze-benefit-risk a model-written benefit-risk verdict. No client
- *                              caller. The deterministic engines that exist are
- *                              regulatory/benefit-risk.ts (AnA assess_benefit_risk)
- *                              and benefit-risk/benefit-risk-knowledge.ts.
+ *                              caller. The deterministic engine that exists is
+ *                              benefit-risk/benefit-risk-knowledge.ts (AnA
+ *                              assess_benefit_risk_balance); S7 (2026-11-09) retired
+ *                              regulatory/benefit-risk.ts onto it.
  *   app.use('/api/csr', …)     served every builder route a second time beside
  *                              /api/csr/jobs (a second build path, POST /api/csr/build).
  *   POST /build                (2026-10-29, D5, hand-on from the CSR end-to-end

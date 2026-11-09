@@ -1,0 +1,41 @@
+{
+  "fullGateSourceCheckpoint": "e802750f45765e2900f7da8db672f2b8b67ee346",
+  "fullGateCanonicalBase": "7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+  "metadataCanonicalBase": "9ecf9bed29cccfa58c2aaa9ce37ffb8b985e55fe",
+  "mergedHead": "e06d4b7b8f12272d2d44dc2216e3b8adda133530",
+  "preservedPaths": [
+    "docs/reports/repo-health-scan-latest.json",
+    "docs/reports/repo-health-scan-latest.md"
+  ],
+  "sourceInputCount": 13212,
+  "sourceSha256": "005c32e461077bc8b27fbae26fa6fb241f240bc72e2fd89c3d99241166aa717a",
+  "sourceBytesUnchanged": true,
+  "fullCompilerRepeatedForMetadataOnly": false,
+  "checks": [
+    {
+      "check": "plan",
+      "exitCode": 0,
+      "path": "checks/final-metadata-plan.txt",
+      "sha256": "77ba5c3902120211f10925d3d57ceba2dfecc3cc22a8688d3269e5ff53c7c7cc"
+    },
+    {
+      "check": "size",
+      "exitCode": 0,
+      "path": "checks/final-metadata-size.txt",
+      "sha256": "87d95b0258d9dd443e0b663ec2c7e45480ec6917eddfe7d47649143be198bb97"
+    },
+    {
+      "check": "imports",
+      "exitCode": 0,
+      "path": "checks/final-metadata-imports.txt",
+      "sha256": "51d8e4dc1ae884a158a7acb4bf2446f4f66de05a366905ca1cc2699788a1b8b8"
+    },
+    {
+      "check": "secrets",
+      "exitCode": 0,
+      "path": "checks/final-metadata-secrets.txt",
+      "sha256": "f7329d46faa2c9a441ccf22a60021cdc98262e73f2f818f5ca88c970fb94e6f9"
+    }
+  ],
+  "scope": "Automatic repository-health report refresh only; original full gate and all source/test/build/browser input qualification retained. No source baseline or gate relaxed."
+}

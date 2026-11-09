@@ -873,7 +873,7 @@ function RiskLead({ r, onAsk }: { r: RiskRegisterState; onAsk: Ask }) {
            residual-risk evaluation in it at all. */
         : summary.firstOutstanding
           ? { label: 'Open the ' + summary.firstOutstanding.id + ' evaluation', onClick: () => r.setSel(summary.firstOutstanding!.id) }
-          : { label: 'Draft RMF conclusion', onClick: () => onAsk(DRAFT_RMF) }}
+          : { label: 'Draft RMF conclusion', icon: I.sparkles, onClick: () => onAsk(DRAFT_RMF) }}
       secondary="Or work the matrix and hazards below."
     />
   );

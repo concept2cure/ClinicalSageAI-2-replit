@@ -523,7 +523,7 @@ function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProg
               data-blocker={s.blocker || undefined}
               title={canImport ? 'Preview saved output for this ICH E3 section' : 'Ask AnA to open this section'}
               onClick={() => canImport
-                ? setImportSource({ kind: 'csr', jobId, sectionNumbers: [s.num] })
+                ? setImportSource({ kind: 'csr', jobId, sectionNumbers: [s.num], approvedOnly: true })
                 : onAsk(`Open CSR §${s.num} in the editor`)}
             >
               <div className="mono" style={{ color: 'var(--accent-200)' }}>{s.num}</div>

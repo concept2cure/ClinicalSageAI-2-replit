@@ -1,0 +1,49 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/work-projects.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-09T08:35:10.157Z","pid":2345,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T08:35:10.158Z","pid":2345,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T08:35:10.158Z","pid":2345,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 74ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 68ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind 52ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 86ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 50ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 47ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 50ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 40ms
+stderr | tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written
+{
+  "timestamp": "2026-11-09T08:35:13.773Z",
+  "level": "error",
+  "message": "[c2c-projects] Work project not added",
+  "context": {
+    "err": {
+      "length": 219,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "23514",
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "synthetic_work_project_audit_failure",
+      "file": "execMain.c",
+      "line": "2109",
+      "routine": "ExecConstraints"
+    }
+  }
+}
+
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 59ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 79ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 70ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 36ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  08:35:08
+   Duration  5.48s (transform 2.61s, setup 51ms, import 154ms, tests 5.10s, environment 0ms)
+

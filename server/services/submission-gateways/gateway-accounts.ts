@@ -22,6 +22,7 @@
  */
 import { CredentialError, type GatewayName, type Region } from './types';
 import { decryptCredential, encryptCredential } from '../security/credential-cipher';
+import { createHash } from 'node:crypto';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -92,6 +93,47 @@ export interface ResolvedGatewayAccount {
   credentials: Record<string, string> | null;
 }
 
+interface AccountAuthority {
+  organizationId: number;
+  region: Region;
+  gateway: GatewayName;
+  environment: GatewayEnvironment;
+  fingerprint: string;
+}
+
+// Process-local authority cannot be supplied by a request or reconstructed
+// from public account fields. Neither ciphertext nor its digest is exposed in
+// a response, a trace or the account metadata stamped on a transmission.
+const accountAuthorities = new WeakMap<ResolvedGatewayAccount, AccountAuthority>();
+
+function authorityFingerprint(row: Record<string, unknown> | undefined): string {
+  return createHash('sha256').update(JSON.stringify([
+    Boolean(row), row?.account_mode ?? null, row?.sender_identifier ?? null,
+    row?.credentials_ciphertext ?? null, row?.updated_at ?? null,
+  ])).digest('hex');
+}
+
+async function readAccountRow(db: Queryable, authority: Omit<AccountAuthority, 'fingerprint'>) {
+  const { organizationId, region, gateway, environment } = authority;
+  const { rows } = await db.query(
+    `SELECT account_mode, sender_identifier, credentials_ciphertext, updated_at
+       FROM organization_gateway_accounts
+      WHERE organization_id = $1 AND region = $2 AND gateway = $3 AND environment = $4`,
+    [organizationId, region, gateway, environment],
+  );
+  return rows[0] as Record<string, unknown> | undefined;
+}
+
+function resolvedAccount(row: Record<string, unknown> | undefined, authority: AccountAuthority): ResolvedGatewayAccount {
+  const account: ResolvedGatewayAccount = row?.account_mode === 'client'
+    ? { mode: 'client', senderIdentifier: typeof row.sender_identifier === 'string' ? row.sender_identifier : null,
+        credentials: typeof row.credentials_ciphertext === 'string' && row.credentials_ciphertext
+          ? JSON.parse(decryptCredential(row.credentials_ciphertext)) : null }
+    : { mode: 'platform', senderIdentifier: null, credentials: null };
+  accountAuthorities.set(account, Object.freeze(authority));
+  return account;
+}
+
 /** The organisation's choice for one gateway and environment. No row is the platform account. */
 export async function resolveGatewayAccount(
   db: Queryable,
@@ -100,21 +142,36 @@ export async function resolveGatewayAccount(
   gateway: GatewayName,
   environment: GatewayEnvironment,
 ): Promise<ResolvedGatewayAccount> {
-  const { rows } = await db.query(
-    `SELECT account_mode, sender_identifier, credentials_ciphertext
-       FROM organization_gateway_accounts
-      WHERE organization_id = $1 AND region = $2 AND gateway = $3 AND environment = $4`,
-    [organizationId, region, gateway, environment],
-  );
-  const row = rows[0];
-  if (!row || row.account_mode !== 'client') {
-    return { mode: 'platform', senderIdentifier: null, credentials: null };
-  }
-  return {
-    mode: 'client',
-    senderIdentifier: row.sender_identifier ?? null,
-    credentials: row.credentials_ciphertext ? JSON.parse(decryptCredential(row.credentials_ciphertext)) : null,
-  };
+  const identity = { organizationId, region, gateway, environment };
+  const row = await readAccountRow(db, identity);
+  return resolvedAccount(row, { ...identity, fingerprint: authorityFingerprint(row) });
+}
+
+/**
+ * Re-establish the account's authority after asynchronous archive/source
+ * checks, immediately before handing credentials to the deterministic
+ * transport. A rotation, deletion or account/sender change revokes this
+ * attempt; it never falls back to the platform account. In-flight network
+ * operations cannot be recalled by this checkpoint.
+ */
+export async function resolveGatewayAccountForUse(
+  db: Queryable,
+  captured: ResolvedGatewayAccount,
+  scope: Omit<AccountAuthority, 'fingerprint'>,
+): Promise<ResolvedGatewayAccount> {
+  const { organizationId, region, gateway, environment } = scope;
+  const authority = accountAuthorities.get(captured);
+  const changed = () => new CredentialError(region, gateway, environment, [
+    'The gateway account changed or could not be confirmed while this package was being prepared. Review the current account settings and authorize a fresh transmission; nothing was sent.',
+  ]);
+  if (!authority || authority.organizationId !== organizationId || authority.region !== region
+    || authority.gateway !== gateway || authority.environment !== environment) throw changed();
+  let row: Awaited<ReturnType<typeof readAccountRow>>;
+  try { row = await readAccountRow(db, authority); } catch { throw changed(); }
+  if (authorityFingerprint(row) !== authority.fingerprint) throw changed();
+  // Decrypt only after the authority still matches, and ignore any mutation of
+  // the public captured object's fields while asynchronous checks were running.
+  return resolvedAccount(row, authority);
 }
 
 /** What a client account still lacks before it can send; empty when it can. */
@@ -264,6 +321,39 @@ export interface GatewayAccountWrite {
   /** True when this write stored new secret material (it needs re-authentication). */
   credentialsChanged: boolean;
   previousMode: AccountMode;
+  /** The persisted, secret-free reason the caller must also use for its chained audit. */
+  reason: string;
+}
+
+function gatewayCredentialVariants(value: string): string[] {
+  const normalized = value.replace(/\\r\\n|\\r|\\n/g, '\n').replace(/\r\n?/g, '\n');
+  return [value, value.trim(), normalized, normalized.trim(), normalized.replace(/\n/g, '\\n'),
+    normalized.trim().replace(/\n/g, '\\n'), JSON.stringify(value).slice(1, -1), JSON.stringify(value.trim()).slice(1, -1)].filter(Boolean);
+}
+
+function safeGatewayChangeReason(reason: string, credentials: Record<string, string>[]): string {
+  const values = credentials.flatMap(fields => Object.values(fields)).flatMap(gatewayCredentialVariants);
+  let safe = reason.trim();
+  for (const secret of [...new Set(values)].sort((a, b) => b.length - a.length)) safe = safe.split(secret).join('[redacted]');
+  return safe;
+}
+
+function priorGatewayCredentials(ciphertext: unknown, mode: AccountMode): { credentials: Record<string, string>; unreadable: boolean } {
+  if (!ciphertext) return { credentials: {}, unreadable: false };
+  try {
+    const credentials: unknown = JSON.parse(decryptCredential(String(ciphertext)));
+    if (!credentials || typeof credentials !== 'object' || Array.isArray(credentials) ||
+        Object.values(credentials).some(value => typeof value !== 'string')) throw new Error('Invalid stored credentials');
+    return { credentials: credentials as Record<string, string>, unreadable: false };
+  } catch {
+    if (mode === 'client') throw new GatewayAccountInputError('CREDENTIALS_UNREADABLE', 'Stored gateway credentials could not be read. Clear the client account before replacing them.');
+    return { credentials: {}, unreadable: true };
+  }
+}
+
+function gatewayChangeReason(change: GatewayAccountChange, prior: ReturnType<typeof priorGatewayCredentials>): string {
+  if (prior.unreadable) return 'Gateway account changed; reason withheld because prior credentials could not be read.';
+  return safeGatewayChangeReason(change.reason, [prior.credentials, change.credentials ?? {}]);
 }
 
 /** Validate a change before anything is written: the refusals a person can act on. */
@@ -315,15 +405,15 @@ export async function writeGatewayAccount(db: Queryable, c: GatewayAccountChange
   );
   const before = prior.rows[0];
   const previousMode: AccountMode = before?.account_mode === 'client' ? 'client' : 'platform';
+  const kept = priorGatewayCredentials(before?.credentials_ciphertext, mode);
+  const reason = gatewayChangeReason(c, kept);
 
   let ciphertext: string | null = null;
   let held: string[] = [];
   let senderIdentifier: string | null = null;
   const credentialsChanged = mode === 'client' && Object.keys(c.credentials ?? {}).length > 0;
   if (mode === 'client') {
-    const kept: Record<string, string> =
-      before?.credentials_ciphertext ? JSON.parse(decryptCredential(before.credentials_ciphertext)) : {};
-    const merged = { ...kept, ...(c.credentials ?? {}) };
+    const merged = { ...kept.credentials, ...(c.credentials ?? {}) };
     held = Object.keys(merged).sort();
     ciphertext = held.length ? encryptCredential(JSON.stringify(merged)) : null;
     senderIdentifier =
@@ -343,7 +433,7 @@ export async function writeGatewayAccount(db: Queryable, c: GatewayAccountChange
        reason = EXCLUDED.reason,
        updated_by = EXCLUDED.updated_by,
        updated_at = NOW()`,
-    [c.organizationId, spec.region, spec.gateway, environment, mode, senderIdentifier, ciphertext, held, c.reason.trim(), c.userId],
+    [c.organizationId, spec.region, spec.gateway, environment, mode, senderIdentifier, ciphertext, held, reason, c.userId],
   );
-  return { spec, environment, mode, senderIdentifier, credentialFieldsHeld: held, credentialsChanged, previousMode };
+  return { spec, environment, mode, senderIdentifier, credentialFieldsHeld: held, credentialsChanged, previousMode, reason };
 }

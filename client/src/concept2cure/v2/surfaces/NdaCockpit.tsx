@@ -570,6 +570,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
           : filingState === 'not-assessed'
             ? 'Assess Refuse-to-File risk with AnA'
             : 'Draft the final readiness plan',
+        icon: I.sparkles,
         onClick: () => ask && ask(
           filingState === 'assessed-with-findings' && topHigh
             ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text

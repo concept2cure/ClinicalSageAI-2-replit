@@ -1,0 +1,10 @@
+# Mutant: the preflight (refuseSignedArtifactAct) does not pass the signer to the quorum
+# in server/services/artifact-approval-act.ts
+# - artifact.version, input.signerId);
+# + artifact.version);
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer reviewed and approved this version: their approval is refused before the password is verified, nothing written 45ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > the signer reviewed this version in a closed round, and a colleague in a new one: still refused 63ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-95 Q1: the approval is signed by someone who did not review it > the signer reviewed this version: refused 12ms
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 164 passed (167)

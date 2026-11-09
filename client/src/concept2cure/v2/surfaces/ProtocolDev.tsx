@@ -276,7 +276,8 @@ function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onC
     if (programId && scope !== programId) onCreatedScope(programId);
     setReloadKey((key) => key + 1);
   };
-  return <>
+  // One root for the shell's .page-full row: the bar above the protocol, not beside it (protocol-dev-editing.css .pde-shell).
+  return <div className="pde-shell">
     <ProtocolSelectionBar selection={selection} programId={programId} programName={program}
       scope={scope} setScope={setScope} onCreated={created} />
     {!doc && selection.selectedId && !loading
@@ -285,7 +286,7 @@ function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onC
       : <ProtocolWorkspaceDoc key={doc.id}
           doc={doc as never} onAsk={onAsk} onNav={onNav} refreshing={loading} reloadError={error}
           onChanged={() => setReloadKey((key) => key + 1)} onOpenSection={setOpenSectionId} />}
-  </>;
+  </div>;
 
 }
 

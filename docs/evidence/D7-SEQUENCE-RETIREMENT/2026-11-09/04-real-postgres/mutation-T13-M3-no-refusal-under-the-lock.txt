@@ -1,0 +1,6 @@
+MUTATION T13-M3-no-refusal-under-the-lock in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T07:59:44.811530Z): replaced [const judged = await retirableFacts(q, { ...subject, dispatchStatus: (row.rows[0]?.dispatch_status as string | null) ?? null }, ctx.organizationId);] with [const judged = await readRetirementFacts(q, ctx.organizationId, { ...subject, dispatchStatus: (row.rows[0]?.dispatch_status as string | null) ?? null }, async () => false);]
+ × server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 100ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 579ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 5fbcd7416628419e8e27f7cf1467859efaf26c32ff7d0e40790e2459cf10b20a (expected 5fbcd7416628419e8e27f7cf1467859efaf26c32ff7d0e40790e2459cf10b20a)

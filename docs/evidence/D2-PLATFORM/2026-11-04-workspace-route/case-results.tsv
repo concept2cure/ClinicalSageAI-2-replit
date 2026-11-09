@@ -1,0 +1,71 @@
+before	after	case
+PASS	PASS	retains the same three GET routes and auth middleware
+PASS	PASS	/config: refuses missing need before reading context
+PASS	PASS	/config: refuses repeated need before reading context
+PASS	PASS	/config: refuses empty need before reading context
+FAIL	PASS	/config: refuses repeated region before reading context
+FAIL	PASS	/config: refuses empty region before reading context
+FAIL	PASS	/config: refuses nested region before reading context
+FAIL	PASS	/config: refuses unknown region before reading context
+FAIL	PASS	/config: refuses repeated client before reading context
+FAIL	PASS	/config: refuses empty client before reading context
+FAIL	PASS	/config: refuses null client before reading context
+FAIL	PASS	/config: refuses unknown client before reading context
+FAIL	PASS	/config: refuses inherited profile property before reading context
+FAIL	PASS	/config: refuses unsupported project selector before reading context
+FAIL	PASS	/config: refuses tenant query override before reading context
+FAIL	PASS	/config: refuses license query override before reading context
+PASS	PASS	/config: preserves NDA/US/pharma without choosing another context
+PASS	PASS	/config: preserves US_510K/EU/medtech without choosing another context
+PASS	PASS	/config: preserves EU_IVDR/JP/cro without choosing another context
+PASS	PASS	/config: preserves CSR/CA/medical_writing without choosing another context
+PASS	PASS	/config: preserves SOP/AU/biotech without choosing another context
+PASS	PASS	/config: omitted overlays retain authenticated industry and leave region defaulting to the existing service
+PASS	PASS	/config: preserves authenticated tenant-context industry fallback
+PASS	PASS	/config: retains explicit normalized strings and the existing case-insensitive client lookup
+PASS	PASS	/config: leaves an unknown document need to the existing honest fallback
+PASS	PASS	/config: does not reinterpret an unknown stored industry as an explicit user selection
+PASS	PASS	/project-map: refuses missing need before reading context
+PASS	PASS	/project-map: refuses repeated need before reading context
+PASS	PASS	/project-map: refuses empty need before reading context
+FAIL	PASS	/project-map: refuses repeated region before reading context
+FAIL	PASS	/project-map: refuses empty region before reading context
+FAIL	PASS	/project-map: refuses nested region before reading context
+FAIL	PASS	/project-map: refuses unknown region before reading context
+FAIL	PASS	/project-map: refuses repeated client before reading context
+FAIL	PASS	/project-map: refuses empty client before reading context
+FAIL	PASS	/project-map: refuses null client before reading context
+FAIL	PASS	/project-map: refuses unknown client before reading context
+FAIL	PASS	/project-map: refuses inherited profile property before reading context
+FAIL	PASS	/project-map: refuses unsupported project selector before reading context
+FAIL	PASS	/project-map: refuses tenant query override before reading context
+FAIL	PASS	/project-map: refuses license query override before reading context
+PASS	PASS	/project-map: preserves NDA/US/pharma without choosing another context
+PASS	PASS	/project-map: preserves US_510K/EU/medtech without choosing another context
+PASS	PASS	/project-map: preserves EU_IVDR/JP/cro without choosing another context
+PASS	PASS	/project-map: preserves CSR/CA/medical_writing without choosing another context
+PASS	PASS	/project-map: preserves SOP/AU/biotech without choosing another context
+PASS	PASS	/project-map: omitted overlays retain authenticated industry and leave region defaulting to the existing service
+PASS	PASS	/project-map: preserves authenticated tenant-context industry fallback
+PASS	PASS	/project-map: retains explicit normalized strings and the existing case-insensitive client lookup
+PASS	PASS	/project-map: leaves an unknown document need to the existing honest fallback
+PASS	PASS	/project-map: does not reinterpret an unknown stored industry as an explicit user selection
+PASS	PASS	/config: tenant undefined cannot read a workspace projection
+FAIL	PASS	/config: tenant 0 cannot read a workspace projection
+FAIL	PASS	/config: tenant -1 cannot read a workspace projection
+FAIL	PASS	/config: tenant 0.5 cannot read a workspace projection
+PASS	PASS	/project-map: tenant undefined cannot read a workspace projection
+FAIL	PASS	/project-map: tenant 0 cannot read a workspace projection
+FAIL	PASS	/project-map: tenant -1 cannot read a workspace projection
+FAIL	PASS	/project-map: tenant 0.5 cannot read a workspace projection
+PASS	PASS	/selection-catalog: tenant undefined cannot read a workspace projection
+FAIL	PASS	/selection-catalog: tenant 0 cannot read a workspace projection
+FAIL	PASS	/selection-catalog: tenant -1 cannot read a workspace projection
+FAIL	PASS	/selection-catalog: tenant 0.5 cannot read a workspace projection
+FAIL	PASS	/config: source failure is unavailable, not a successful substitute or raw exception
+FAIL	PASS	/project-map: source failure is unavailable, not a successful substitute or raw exception
+FAIL	PASS	/selection-catalog: source failure is unavailable, not a successful substitute or raw exception
+FAIL	PASS	/config: asynchronous rejection also refuses a fabricated success
+PASS	PASS	/config: a missing license assessment stays missing, not a new grant or hard failure
+PASS	PASS	/config: body and headers cannot choose the license tenant
+FAIL	PASS	/config: overlapping organizations retain their settings when one enrichment fails

@@ -1,0 +1,78 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:21:29.850Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:21:29.852Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:21:29.852Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:21:30.037Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses new reviewer adoption after that reviewer became a historical content contributor 127ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses legacy unbound approval before explicit adoption 32ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on earlier prose before explicit adoption of an edited copy 48ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a verdict on an earlier title before explicit adoption 28ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > refuses a copy when a current fingerprint and unknown/template metadata are its only evidence 51ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a review verdict and an unchecked REVIEWER signature are not explicit adoption 52ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows unknown source after a current full-hash signed assigned adoption 56ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > allows template source after a current full-hash signed assigned adoption 58ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > a signature and editable audit-shaped metadata without the chained act do not release 49ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > workflow release needs current explicit full-document human adoption > rejects the author adopting their own copy and an unassigned reviewer 28ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model null even after explicit adoption 41ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > holds retained known machine content with model a-model-name even after explicit adoption 38ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > immutable genesis and current source facts win over relabeling the displayed origin 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > moving copied machine prose to another section cannot launder it as a local human save 43ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > formatting and whitespace changes are not replacement by human words 30ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > punctuation-only edits do not clear a positive machine source hold 39ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > positive machine origin never becomes model qualification by review > a genuine governed human rewrite clears qualification hold but requires a fresh full-document adoption 109ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > retains historical signature facts but holds release after its reviewer becomes a content contributor 56ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > does not infer release adoption from a verdict that loses its retained binding 52ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > requires the adopting reviewer to retain current membership in this tenant 55ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > fails closed when source access or fingerprint verification fails, including a previously adopted copy 32ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a title change invalidates adoption even when signature prose hash is unchanged 43ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a reopened review assignment invalidates its earlier signed adoption 48ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > a signature with an invalid recomputable digest is not adoption 47ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > source identity and current content stay verified at release > refuses a write whose present text no longer matches its live lineage 21ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > uncontrolled review copies retain the real qualification hold > renders a working DOCX with NOT FINAL and qualification disclosure while controlled rendition refuses 231ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > IVD saved-source copies use the existing human review and signature lifecycle > retains ivd-assessment genesis and releases only after an assigned reviewer signs the current complete copy 114ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > IVD saved-source copies use the existing human review and signature lifecycle > retains ivd-document genesis and releases only after an assigned reviewer signs the current complete copy 101ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > a CSR import is also held for its scientific review > neither adopts nor releases a CSR that has no scientific-review receipt, even with an assigned approval 219ms
+ ✓ server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts > a CSR import is also held for its scientific review > holds a renamed copy by its stored CSR origin 28ms
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  22:21:26
+   Duration  15.03s (transform 6.80s, setup 126ms, import 9.45s, tests 5.08s, environment 0ms)
+
+JSON report written to /workspace/scratch/shared-editor-e5-governance-green.json

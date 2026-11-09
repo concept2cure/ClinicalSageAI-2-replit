@@ -1,0 +1,4 @@
+ok  Protocol door /^Open in Study & Protocol Design/ opens /concept2cure/protocol-dev?program=6065271c-d4b0-4936-aad1-02855423a738
+ok  Protocol door /^Open Biostatistics/ opens /concept2cure/biostatistics?program=6065271c-d4b0-4936-aad1-02855423a738
+ok  Tasks handoff (stage review + workId) opens Plan with the requested row first and focused
+ok  Respond lists the commitment; "Record fulfilment" opens the fulfilment dialog

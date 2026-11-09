@@ -314,7 +314,7 @@ router.post('/faers/data', async (req, res) => {
     res.json(faersData);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.issues });
     }
     console.error('Error fetching FAERS data:', error);
     res.status(500).json({ error: 'Failed to fetch FAERS data' });
@@ -335,7 +335,7 @@ router.post('/faers/generate-narrative', async (req, res) => {
     res.json({ narrative });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.issues });
     }
     console.error('Error generating CER narrative:', error);
     res.status(500).json({ error: 'Failed to generate CER narrative' });
@@ -427,7 +427,7 @@ router.post('/faers/save-report', async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.issues });
     }
     console.error('Error saving CER report:', error);
     res.status(500).json({ error: 'Failed to save CER report' });
@@ -613,7 +613,7 @@ router.post('/mdr/generate', async (req, res) => {
   } catch (error) {
     if (error instanceof ProjectAdmissionRefusal) return res.status(error.status).json({error:error.message,code:error.code});
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid data', details: error.issues });
     }
     cerLog.error('MDR CER generation error', {
       err: error instanceof Error ? error.message : String(error),
@@ -646,7 +646,7 @@ router.post('/reports/:cerId/evidence', async (req, res) => {
     return res.status(201).json(saved);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid data', details: error.issues });
     }
     if (error instanceof Error && /not found or access denied/i.test(error.message)) {
       return res.status(404).json({ error: 'CER report not found' });

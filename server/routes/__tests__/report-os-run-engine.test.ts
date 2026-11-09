@@ -172,7 +172,8 @@ describe('private project access remains required for reporting', () => {
     h.queued.select.push([DIGEST], [HLV]);
     const res = await request(app).post('/api/report-os/runs').set('x-test-role', 'member').send({ scopeType: 'project', scopeId: '11', reportTypeId: DIGEST.typeId });
     expect(res.status).toBe(404);
-    expect(x.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, expect.objectContaining({ scopeType: 'project', scopeId: '11' }), undefined, [11,12]);
+    expect(x.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, expect.objectContaining({ scopeType: 'project', scopeId: '11' }), undefined,
+      expect.objectContaining({ accessibleIds: [11,12] }));
     expect(h.compute).not.toHaveBeenCalled();
     expect(h.audit).not.toHaveBeenCalled();
   });
@@ -267,7 +268,8 @@ describe('saved report detail and history', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ id: 52, reportTypeLabel: DIGEST.label, computedScope: 'project', scopeLabel: HLV.name });
     const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
-    expect(h.params[index]).toEqual([7, [11,12], true, 52, 1, 0]);
+    expect(h.params[index]).toEqual([7, [], [11,12], true, 52, 1, 0]);
+    expect(h.statements.slice(0, index).some(sql => sql.includes('qualityEvidence') && sql.includes('FOR SHARE'))).toBe(true);
     expect(h.statements[0]).toBe('BEGIN');
     expect(h.statements[1]).toMatch(/current_tenant_id/);
     expect(h.params[1]).toEqual(['7']);
@@ -283,7 +285,7 @@ describe('saved report detail and history', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ data: [], meta: { limit: 5, offset: 10, total: 0, hasMore: false } });
     const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
-    expect(h.params[index]).toEqual([7, [11,12], true, '%EU%', 5, 10]);
+    expect(h.params[index]).toEqual([7, [], [11,12], true, '%EU%', 5, 10]);
     expect(h.statements[index]).toContain('ORDER BY "reportTypeLabel" ASC');
   });
 });

@@ -68,6 +68,60 @@ async function counts() {
 }
 
 describe('stored CSR output through canonical verified source intake', () => {
+  it('rechecks approved-only CSR selection at preview and refuses an approval changed before import', async () => {
+    const selected = { programId: PROGRAM, source: {
+      kind: 'csr' as const, jobId, sectionNumbers: ['11.1'], approvedOnly: true as const,
+    } };
+    const requested = () => author(request(app).post('/api/authoring/import/source'));
+    const unavailable = await requested().send({ ...selected, previewOnly: true });
+    expect(unavailable.status).toBe(409);
+    expect(unavailable.body.error).toBe('WORKFLOW_CSR_APPROVAL_REQUIRED');
+
+    // A real review decision must have a current saved-content hash.
+    // Set up a test-only independent reviewer as the regular review service
+    // would; no production authorization or signature is inferred.
+    await db.pglite.query(`INSERT INTO users(id,name,email)
+      VALUES(6,'Independent synthetic reviewer','reviewer@example.test') ON CONFLICT(id) DO NOTHING`);
+    await db.pool.query(`UPDATE csr_section_outputs
+      SET review_status = 'approved', reviewer_id = 6,
+          reviewed_content_hash = content_hash, review_decided_at = now()
+      WHERE job_id = $1`, [jobId]);
+    try {
+      const current = await requested().send({ ...selected, previewOnly: true });
+      expect(current.status, JSON.stringify(current.body)).toBe(200);
+      expect(current.body.data.origin.selection).toMatchObject({
+        kind: 'csr', jobId, sectionNumbers: ['11.1'], approvedOnly: true,
+      });
+      const fingerprint = current.body.data.fingerprint;
+      expect(fingerprint).toMatch(/^[a-f0-9]{64}$/);
+      const created = await requested().send({
+        ...selected, expectedFingerprint: fingerprint, reason,
+      });
+      expect(created.status, JSON.stringify(created.body)).toBe(201);
+      expect(created.body.data.doc.status).toMatch(/^draft$/i);
+      expect(created.body.data.origin.selection.approvedOnly).toBe(true);
+      // The new working copy must not inherit a signed/approved status.
+      expect(created.body.data.doc.provenance).toMatchObject({ source: 'import', governedWrite: 'unverified' });
+
+      // Revoke the approval before another import/reuse. An earlier preview
+      // and existing draft do not authorize a now-changed source.
+      // A source preview is not a
+      // permission to import a later, different review state.
+      await db.pool.query(`UPDATE csr_section_outputs SET review_status = 'in_review'
+        WHERE job_id = $1`, [jobId]);
+      const changed = await requested().send({
+        ...selected, expectedFingerprint: fingerprint, reason,
+      });
+      expect(changed.status).toBe(409);
+      expect(changed.body.error).toBe('WORKFLOW_CSR_APPROVAL_REQUIRED');
+    } finally {
+      await db.pool.query(`UPDATE csr_section_outputs
+        SET review_status = 'draft', reviewer_id = NULL,
+            reviewed_content_hash = NULL, review_decided_at = NULL
+        WHERE job_id = $1`, [jobId]);
+    }
+  });
+
   it('previews exact saved selection/model-knownness without creating authoring evidence', async () => {
     const before = await counts();
     const p = await preview();

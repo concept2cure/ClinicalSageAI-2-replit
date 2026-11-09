@@ -1,0 +1,56 @@
+before	after	case
+fail	pass	returned filing-required artifacts cannot rewrite the canonical catalog or another workspace
+fail	pass	returned filing lifecycle actions cannot rewrite the canonical catalog or another workspace
+fail	pass	returned program standards cannot rewrite the canonical catalog or another workspace
+fail	pass	returned claim support-app references cannot rewrite the canonical catalog or another workspace
+fail	pass	returned claim filing placements cannot rewrite the canonical catalog or another workspace
+fail	pass	returned nested app output definitions cannot rewrite the canonical catalog or another workspace
+pass	pass	returned service labels cannot rewrite the canonical catalog or another workspace
+pass	pass	returned service display location cannot rewrite the canonical catalog or another workspace
+fail	pass	an existing workspace does not follow later catalog mutations
+fail	pass	the exported shell is not writable through a returned workspace
+fail	pass	cross-cutting capabilities are not shared between filing and QMS workspaces
+fail	pass	supplementary document requirements remain caller-local
+pass	pass	unknown documents cannot edit another knowledge-service label
+fail	pass	pharma terminology is a private overlay, not a writable profile
+fail	pass	biotech terminology is a private overlay, not a writable profile
+fail	pass	medtech terminology is a private overlay, not a writable profile
+fail	pass	cro terminology is a private overlay, not a writable profile
+pass	pass	US_IND retains its own existing identity and dossier format
+pass	pass	US_BLA retains its own existing identity and dossier format
+pass	pass	US_510K retains its own existing identity and dossier format
+pass	pass	US_510K_IVD retains its own existing identity and dossier format
+pass	pass	EU_MAA retains its own existing identity and dossier format
+pass	pass	JP_MKT_APPROVAL retains its own existing identity and dossier format
+pass	pass	CA_NDS retains its own existing identity and dossier format
+pass	pass	AU_CTA retains its own existing identity and dossier format
+pass	pass	explicit US overlay remains separate from the selected filing identity
+pass	pass	explicit EU overlay remains separate from the selected filing identity
+pass	pass	explicit JP overlay remains separate from the selected filing identity
+pass	pass	explicit CA overlay remains separate from the selected filing identity
+pass	pass	explicit AU overlay remains separate from the selected filing identity
+pass	pass	unknown input keeps the honest blank-workspace fallback
+fail	pass	an enriched response cannot mutate cached license grants
+fail	pass	later license cache changes cannot make an earlier response contradict its access lists
+fail	pass	a failed app projection does not publish partially assessed entitlements
+fail	pass	malformed license (empty tier) leaves availability unknown, not fabricated
+fail	pass	malformed license (blank tier) leaves availability unknown, not fabricated
+fail	pass	malformed license (missing tier) leaves availability unknown, not fabricated
+fail	pass	malformed license (nonstring tier) leaves availability unknown, not fabricated
+fail	pass	malformed license (string module list) leaves availability unknown, not fabricated
+fail	pass	malformed license (missing module list) leaves availability unknown, not fabricated
+fail	pass	malformed license (null module list) leaves availability unknown, not fabricated
+fail	pass	malformed license (numeric module list) leaves availability unknown, not fabricated
+fail	pass	malformed license (sparse module list) leaves availability unknown, not fabricated
+fail	pass	malformed license (object module) leaves availability unknown, not fabricated
+fail	pass	malformed license (null module) leaves availability unknown, not fabricated
+fail	pass	malformed license (numeric module) leaves availability unknown, not fabricated
+fail	pass	malformed license (empty module) leaves availability unknown, not fabricated
+fail	pass	malformed license (blank module) leaves availability unknown, not fabricated
+pass	pass	an unavailable license preserves document and region context without granting apps
+pass	pass	a license read failure preserves context and does not leak its exception
+pass	pass	valid empty grants are distinct from an unavailable license
+pass	pass	existing canonical and legacy module policy remains with the app registry
+pass	pass	no organization ID means no license lookup or inferred grant
+pass	pass	unknown industry does not create a fictional client profile
+fail	pass	overlapping organizations keep independent configured documents and license reads

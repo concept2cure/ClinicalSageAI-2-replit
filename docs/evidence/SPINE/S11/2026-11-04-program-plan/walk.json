@@ -1,0 +1,59 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-04T23:58:29.279Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "email": "jm.smith@concept2cure.pro",
+      "projects": {
+        "c2c101": "6bd20d25-dae2-437a-826e-118fe6652c3b",
+        "lmn201": "d06cde6e-7e99-4ae7-9d6d-0f5b4cbae8e1",
+        "device": "604f79bb-ff04-4d66-899e-137ca066b93c"
+      }
+    },
+    {
+      "name": "C2C-101 Plan: the Program plan states its progress",
+      "summary": "0 of 58 tasks done · critical path 0% done · about 326 hours of work remaining. The phases, tasks, hours and dependencies are the engine's; each task's status is this project's.",
+      "screenshot": "screenshots/01-c2c101-program-plan.png"
+    },
+    {
+      "name": "C2C-101: \"Define product profile\" set to In progress, recorded on this project",
+      "task": "Define product profile",
+      "screenshot": "screenshots/02-c2c101-task-in-progress.png"
+    },
+    {
+      "name": "C2C-101 after a reload: \"Define product profile\" still In progress",
+      "screenshot": "screenshots/03-c2c101-after-reload.png"
+    },
+    {
+      "name": "LMN-201 (another IND): \"Define product profile\" is To do here; the progress is the project's, not the filing type's",
+      "screenshot": "screenshots/04-lmn201-own-progress.png"
+    },
+    {
+      "name": "NeuroPanel-Dx 510(k): the Program plan is its filing's (510(k) — Premarket Notification work breakdown)",
+      "summary": "0 of 42 tasks done · critical path 0% done · about 217 hours of work remaining. The phases, tasks, hours and dependencies are the engine's; each task's status is this project's.",
+      "screenshot": "screenshots/05-device-510k-plan.png"
+    },
+    {
+      "name": "ONC-221 NDA: not in this tenant, so not walked"
+    },
+    {
+      "name": "390 wide: the Program plan and its work breakdown",
+      "horizontalOverflowPx": 0,
+      "screenshot": "screenshots/07-c2c101-390.png"
+    },
+    {
+      "name": "C2C-101: the task set back to To do, so a re-run starts from the same state"
+    }
+  ],
+  "apiErrors": [
+    "500 GET /api/submissions/sequences/1/dispatch-readiness",
+    "500 GET /api/submissions/sequences/1/dispatch-readiness",
+    "500 GET /api/submissions/sequences/1/dispatch-readiness",
+    "500 GET /api/submissions/sequences/2/dispatch-readiness",
+    "500 GET /api/submissions/sequences/1/dispatch-readiness",
+    "500 GET /api/submissions/sequences/1/dispatch-readiness"
+  ],
+  "outcome": "passed",
+  "finishedAt": "2026-11-04T23:58:58.702Z"
+}

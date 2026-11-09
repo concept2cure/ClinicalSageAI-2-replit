@@ -30,8 +30,10 @@ process.env.JWT_SECRET = JWT_SECRET;
 // secret the verifier actually reads, or every token 401s.
 process.env.JWT_SECRET_DEV = JWT_SECRET;
 
+// An integer account id, as users.id is: the current-actor read that admits a
+// project-scoped read refuses any id that is not one (PROJECT_ACTOR_ACCESS_DENIED).
 const AUTHOR = {
-  id: '4a2b3c10-0000-4000-8000-000000000001',
+  id: '4',
   organizationId: 1,
   email: 'author@scope.example',
   name: 'Pat Author',
@@ -78,15 +80,12 @@ vi.mock('../server/db', () => ({
 }));
 
 // The authoring router re-checks live org membership (enforceOrgMembership)
-// by coercing the token's userId with parseInt (server/middleware/orgMembership
-// .parseFiniteInt). A UUID like '4a2b3c10-…' coerces to its leading integer, so
-// the seeded organization_users row must key on that same coerced id or every
-// request is refused as membership-indeterminate (503).
-const AUTHOR_MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 4a2b3c10-… → 4
+// on the token's integer userId, so the organization_users row keys on it.
+const AUTHOR_MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10);
 
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
-  CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, status TEXT NOT NULL DEFAULT 'active', uuid UUID NOT NULL DEFAULT gen_random_uuid());
+  CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT, status TEXT NOT NULL DEFAULT 'active');
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
@@ -96,6 +95,22 @@ const PREREQ = `
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role)
     VALUES (${AUTHOR.organizationId}, ${AUTHOR_MEMBERSHIP_ID}, 'member');
+  -- A project-scoped read admits the actor to the project first (cc1607c3a3): each
+  -- program's one project anchor, its visibility and members, and the review
+  -- assignments the accessible-project read counts, as the sibling contract suite
+  -- (schema-contract/authoring-review-audit-comment) presents them.
+  CREATE TABLE projects (id INTEGER PRIMARY KEY, organization_id INTEGER, name TEXT, regulatory_program_id UUID,
+    client_workspace_id INTEGER, status TEXT NOT NULL DEFAULT 'planning', owner_id INTEGER, created_by_id INTEGER,
+    settings JSONB NOT NULL DEFAULT '{}');
+  CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+  CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+  CREATE TABLE concept2cure_artifacts (id INTEGER PRIMARY KEY, organization_id INTEGER, project_id INTEGER);
+  CREATE TABLE concept2cure_review_assignments (id SERIAL PRIMARY KEY, artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
+  INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES
+    (61, 1, 'Project A', '${PROGRAM_A}'), (62, 1, 'Project B', '${PROGRAM_B}'),
+    (64, 1, 'Project C', '${PROGRAM_C}'), (63, 2, 'Other org project', '${PROGRAM_FOREIGN}');
+  INSERT INTO project_visibility_settings (project_id, organization_id, visibility) VALUES
+    (61, 1, 'org_public'), (62, 1, 'org_public'), (64, 1, 'org_public'), (63, 2, 'org_public');
 `;
 
 let jdb: JourneyDb;
@@ -112,6 +127,8 @@ beforeAll(async () => {
       // exist, in the real table, for a create to succeed.
       'migrations/20260524_program_workbench_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // The creator's ownership grant on create (principal_id): the read's ACL.
+      'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       'migrations/20260727_authoring_document_program_scope.sql',
@@ -132,8 +149,13 @@ beforeAll(async () => {
   const { default: authoringRouter } = await import('../server/routes/authoring.router');
   app = express();
   app.use(express.json({ limit: '5mb' }));
-  // No auth shim: the router's OWN jose middleware verifies the token.
-  app.use('/api/authoring', authoringRouter);
+  // No auth shim: the router's OWN jose middleware verifies the token. The request's
+  // connection, as the scope installer pins it: the document list reads on it and never
+  // on the shared pool (requestPgClient, cc1607c3a3).
+  app.use('/api/authoring', (req, _res, next) => {
+    req.dbClient = { query: (text: string, params?: unknown[]) => jdb.pool.query(text, params) } as typeof req.dbClient;
+    next();
+  }, authoringRouter);
 }, T);
 
 afterAll(async () => {
@@ -172,10 +194,17 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
     // A legacy row: a document created org-wide before PF-07, which deployed
     // databases still hold (PF-07 refuses new ones; it does not backfill). No
     // route can make it now, so it is written directly. No project's list may
-    // show it; the organization's own unfiltered list still does.
+    // show it; the organization's own unfiltered list still does, to someone
+    // the document's ACL admits: since cc1607c3a3 a list holds only documents
+    // the reader's current grants reach, so its author grants this one VIEWER.
     await jdb.pool.query(
       `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id, client_program_id)
        VALUES ('55555555-5555-4555-8555-555555555555', 'Legacy org-wide doc', 'M3', 'draft', 'u-1', 1, NULL)`,
+    );
+    await jdb.pool.query(
+      `INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, role, granted_by)
+       VALUES ('55555555-5555-4555-8555-555555555555', 1, $1, 'VIEWER', 'u-1')`,
+      [AUTHOR.id],
     );
 
     // The tagged document really carries the program id.

@@ -1,0 +1,8 @@
+MUTATION C2-M4-retire-not-a-governed-verb in shared/navigation/surface-actions.ts (on the final code and tests, 2026-11-09T08:12:03.642035Z): replaced [|purchase|retire)\b/i;] with [|purchase)\b/i;]
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > no registered action names governed work 9ms
+ × shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > REFUSES a governed id — the check shown failing on what it exists to catch 12ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > ungoverned view verbs pass the pattern (no false positives on the registry style) 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > deep-research actions carry no credit-spend pre-arm params 2ms
+      Tests  1 failed | 3 passed | 8 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7b5ae0230c21452563ce3cc564f20b8a9e9e6ada4a2118affa60a031d68d5a5d (expected 7b5ae0230c21452563ce3cc564f20b8a9e9e6ada4a2118affa60a031d68d5a5d)

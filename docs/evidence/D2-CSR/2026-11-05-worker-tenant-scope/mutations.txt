@@ -1,0 +1,24 @@
+# Mutations, 2026-11-05: each worker's default deps put back to the integer-only open, one at a time
+
+## narrative
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL narratives and assembly, through their own default deps > the narrative worker reads its source in its organization’s scope and composes; no other organization’s row is visible to it
+ FAIL narratives and assembly, through their own default deps > another organization’s worker sees its own source and not organization 7’s
+ FAIL narratives and assembly, through their own default deps > a job whose organization has no uuid is refused by name and reads nothing: never run in the integer scope alone
+      Tests  3 failed | 3 passed (6)
+      1 +     "code": "CSR_SOURCE_DATA_UNAVAILABLE",
+      2 +     "orgUuid": null,
+
+## assembly
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL narratives and assembly, through their own default deps > the assembly worker reads its source in its organization’s scope and assembles; no other organization’s row is visible to it
+ FAIL narratives and assembly, through their own default deps > a job whose organization has no uuid is refused by name and reads nothing: never run in the integer scope alone
+      Tests  2 failed | 4 passed (6)
+      1 +     "code": "CSR_SOURCE_DATA_UNAVAILABLE",
+      1 +     "orgUuid": null,
+
+## recovery-build
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL the boot sweep (jobs/csrQueueRecovery.ts), through its own default deps > resumes a stalled build in its organization’s full scope, and refuses by name the one whose organization has no uuid
+      Tests  1 failed | 5 passed (6)
+      1 +     "orgUuid": null,

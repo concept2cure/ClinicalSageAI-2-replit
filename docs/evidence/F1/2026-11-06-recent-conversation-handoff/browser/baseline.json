@@ -1,0 +1,18 @@
+{
+  "before": {
+    "url": "http://127.0.0.1:5000/concept2cure/conversation-thread/f1_recent_1793988502724_tin7x95fa",
+    "messages": [
+      "F1 Recent conversation A"
+    ]
+  },
+  "after_selecting_B": {
+    "url": "http://127.0.0.1:5000/concept2cure/conversation-thread",
+    "messages": [
+      "F1 Recent conversation A"
+    ],
+    "handoff": {
+      "id": "f1_recent_1793988502746_f194dfozc"
+    }
+  },
+  "bug_reproduced": true
+}

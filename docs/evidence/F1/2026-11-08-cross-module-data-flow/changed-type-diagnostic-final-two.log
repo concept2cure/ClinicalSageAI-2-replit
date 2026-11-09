@@ -1,0 +1,21 @@
+Start 00-discover: full-program context, 0 semantic targets, heap 7168 MB
+Resource 00-discover 0.0s: pid 33, RSS 88 kB, HWM 88 kB
+Resource 00-discover 20.0s: pid 33, RSS 3335492 kB, HWM 3335492 kB
+Resource 00-discover 40.0s: pid 33, RSS 6067836 kB, HWM 6067836 kB
+Worker exit 00-discover: {"phase": "00-discover", "exitCode": 0, "elapsedSeconds": 47.237, "cumulativeCompletedChildPeakRssKiB": 6200980}
+Completed 00-discover: 0 diagnostics
+Discovery: 15470 full-program files; 2 changed targets; 0 changed files outside the configured program; snapshot 1657748ffc5baeb82cf196de2392244fc1a0d0eba07c20fa27fe81e47443cb49
+Start 01-check: full-program context, 2 semantic targets, heap 7168 MB
+Resource 01-check 0.0s: pid 41, RSS 84 kB, HWM 84 kB
+Resource 01-check 20.0s: pid 41, RSS 3396616 kB, HWM 3396616 kB
+Resource 01-check 40.0s: pid 41, RSS 6058056 kB, HWM 6058056 kB
+Worker exit 01-check: {"phase": "01-check", "exitCode": 0, "elapsedSeconds": 47.94, "cumulativeCompletedChildPeakRssKiB": 6206232}
+Completed 01-check: 0 diagnostics
+Supplemental changed-target progress 2/2; full publication gate remains separate
+Start 99-verify: full-program context, 0 semantic targets, heap 7168 MB
+Resource 99-verify 0.0s: pid 49, RSS 48 kB, HWM 48 kB
+Resource 99-verify 20.0s: pid 49, RSS 3398576 kB, HWM 3398576 kB
+Resource 99-verify 40.0s: pid 49, RSS 6057572 kB, HWM 6057572 kB
+Worker exit 99-verify: {"phase": "99-verify", "exitCode": 0, "elapsedSeconds": 47.436, "cumulativeCompletedChildPeakRssKiB": 6206232}
+Completed 99-verify: 0 diagnostics
+COMPLETE: 2 repaired fixture targets checked in the unchanged 15470-file program; no changed-target errors. This is NOT full semantic coverage or a publication gate.

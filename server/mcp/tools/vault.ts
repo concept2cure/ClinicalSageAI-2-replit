@@ -18,7 +18,7 @@ export const listVaultDocuments = defineTool({
     'totals — total, withheld by the limit, not yet studied, extraction failed, unfiled — so a page is never ' +
     'mistaken for the whole. Use a document id from here with c2c_file_draft_for_review.',
   inputSchema: {
-    project_id: z.string().uuid().optional().describe('A project id from c2c_list_projects.'),
+    project_id: z.string().guid().optional().describe('A project id from c2c_list_projects.'),
     title_contains: z.string().max(120).optional().describe('Case-insensitive substring filter on title/file name (applied to the page).'),
     limit: z.number().int().min(1).max(200).default(50),
   },
@@ -68,7 +68,7 @@ export const searchVaultDocuments = defineTool({
     'the question.',
   inputSchema: {
     query: z.string().min(2).max(500),
-    project_id: z.string().uuid().optional().describe('A project id from c2c_list_projects.'),
+    project_id: z.string().guid().optional().describe('A project id from c2c_list_projects.'),
     limit: z.number().int().min(1).max(25).default(8),
   },
   annotations: READ,

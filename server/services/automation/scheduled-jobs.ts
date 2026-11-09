@@ -15,7 +15,7 @@
 
 import Queue from 'bull';
 import { createScopedLogger } from '../../utils/logger.js';
-import { runProactiveDigest } from '../digest/proactive-digest.js';
+import { runProactiveDigest, runRuleAlignmentDigest } from '../digest/proactive-digest.js';
 import { parseDigestPreferences } from '../digest/digest-preferences.js';
 import { runWithOrgJobScope, runWithSystemTenantScope } from '../../db/tenantStore';
 import {
@@ -207,8 +207,9 @@ async function handleProactiveDigest(config: ScheduledJobConfig): Promise<Schedu
   const start = Date.now();
   try {
     const preferences = parseDigestPreferences(config.parameters);
+    const alignment = await runRuleAlignmentDigest(config.organizationId, preferences);
     const result = await runProactiveDigest(config.organizationId, preferences);
-    const created = result.created ? 1 : 0;
+    const created = (result.created ? 1 : 0) + alignment.notificationsCreated;
     return {
       jobType: config.type,
       organizationId: config.organizationId,

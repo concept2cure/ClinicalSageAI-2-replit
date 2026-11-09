@@ -52,12 +52,12 @@ const leaf = (ctdSection: string, fileName: string, md5: string, operation = 'ne
   leafId: `leaf-${fileName.replace(/\W/g, '-')}`, backbone: 'index.xml', ...extra,
 });
 
-async function tenant(slug: string): Promise<Tenant> {
+async function tenant(slug: string, programType = 'ind'): Promise<Tenant> {
   const org = (await owner.query(`INSERT INTO organizations (name, slug, status) VALUES ($1, $1, 'active') RETURNING id, uuid`, [`${TAG}-${slug}`])).rows[0];
   const prog = (await owner.query(
     `INSERT INTO regulatory_programs (name, code, organization_id, program_type, product_type, primary_agency, product_name)
-     VALUES ($1, $2, $3, 'ind', 'drug', 'FDA', 'Invented product') RETURNING id`,
-    [`${TAG} ${slug} program`, `${TAG}-${slug}`.toUpperCase(), org.id])).rows[0];
+     VALUES ($1, $2, $3, $4, 'drug', 'FDA', 'Invented product') RETURNING id`,
+    [`${TAG} ${slug} program`, `${TAG}-${slug}`.toUpperCase(), org.id, programType])).rows[0];
   await owner.query('INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)', [org.id, userId, 'admin']);
   return { orgId: Number(org.id), orgUuid: String(org.uuid), programId: String(prog.id) };
 }
@@ -215,5 +215,30 @@ describe('what the agency holds is what was sent (F1)', () => {
       { sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' },
       { sequenceNumber: '0001', dispatchStatus: 'sent', filed: true, basis: 'transmit' },
     ]);
+  });
+});
+
+/* 3b slice 3 (c), under founder decision P-97 (2026-11-02, "Keep filed state
+   regardless"): a project that is not an application is refused the filed state
+   only when it has no dispatched sequence. One that does (an IND anchored to a
+   CSR project before 5ab138ed3 refused it) keeps what is on file, read from the
+   submission that holds that sequence, though its type resolves no spine. */
+describe('a project that is not an application keeps its filed state once it has filed (P-97)', () => {
+  it('a clinical study report project that filed shows what is on file', async () => {
+    const csr = await tenant('csr-filed', 'csr');
+    const sub = await submission(csr);
+    await sentWithRecord(csr, sub, '0000', randomUUID(), [leaf('3.2.S.1.1', 'nomenclature.pdf', 'c'.repeat(32))]);
+    const res = await view(csr);
+    expect(res.status).toBe(200);
+    expect(res.body.submissionId).toBe(sub);
+    expect(res.body.sequences).toEqual([expect.objectContaining({ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' })]);
+    expect(res.body.leaves.map((l: { fileName: string }) => l.fileName)).toEqual(['nomenclature.pdf']);
+  });
+
+  it('a clinical study report project that never filed is refused, by name', async () => {
+    const csr = await tenant('csr-unfiled', 'csr');
+    const res = await view(csr);
+    expect(res.status).toBe(422);
+    expect(res.body.error).toEqual({ code: 'ECTD_NOT_APPLICABLE', message: expect.stringMatching(/^This project is a clinical study report, authored here and not compiled as an eCTD sequence\./) });
   });
 });

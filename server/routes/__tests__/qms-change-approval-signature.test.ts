@@ -75,10 +75,30 @@ vi.mock('../../services/part11/signature-persistence', async (importOriginal) =>
 });
 
 import mdxQmsRouter from '../mdx-qms';
+import { learningPromotionOf } from '../../services/qms/change-approval-signature';
+import { sha256CanonicalJson } from '../../services/part11/signature-persistence';
 
 const ORG = 9;
 const SIGNER = 8;
 const PROPOSER = 7;
+
+describe('reviewed learning artifact identity', () => {
+  const artifact = { kind: 'aggregate_learning_v1', libraryVersionId: '11111111-1111-4111-8111-111111111111',
+    classKey: 'independent_review', agency: 'fda', documentType: 'cer', cohortMinimum: 3, tenantCount: 3, eventCount: 4 };
+  it('accepts only a canonical closed artifact and binds every count and enum byte', () => {
+    const promotion = { artifact, artifactSha256: sha256CanonicalJson(artifact) };
+    expect(learningPromotionOf({ learningPromotion: promotion })).toEqual(promotion);
+    expect(() => learningPromotionOf({ learningPromotion: { ...promotion, artifact: { ...artifact, eventCount: 5 } } })).toThrow('Nothing was shared.');
+    expect(learningPromotionOf({})).toBeNull();
+  });
+  it.each([
+    { donorText: 'RAW_TENANT_CANARY' }, { tenantIds: [10, 11, 12] }, { textFingerprint: 'a'.repeat(64) },
+    { cohortMinimum: 1 }, { tenantCount: 2 }, { classKey: 'RAW_TENANT_CANARY' },
+  ])('refuses free fields or unsupported cohort controls even with a recalculated hash: %o', patch => {
+    const candidate = { ...artifact, ...patch };
+    expect(() => learningPromotionOf({ learningPromotion: { artifact: candidate, artifactSha256: sha256CanonicalJson(candidate) } })).toThrow('Nothing was shared.');
+  });
+});
 
 const UNDER_ASSESSMENT = {
   id: 1, organization_id: ORG, change_number: 'CC-2026-014', title: 'Sterile filter supplier change',

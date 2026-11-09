@@ -1,0 +1,46 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:26:28.399Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:26:28.400Z","pid":37,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:26:28.400Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ↓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit
+ ↓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > retains a verified saved run as distinct context when workbench inputs changed
+ ↓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > refuses a named study from another project without creating a document
+ ↓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > does not expose a private study to an active unshared organization member
+ ↓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > records illustrative examples without a study or saved-run claim
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/biostat-authoring-basis.dbtest.ts [ tests/db/biostat-authoring-basis.dbtest.ts ]
+error: null value in column "product_name" of relation "regulatory_programs" violates not-null constraint
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ program tests/db/biostat-authoring-basis.dbtest.ts:42:18
+     40|   actor = await user('author'); outsider = await user('unshared');
+     41|   const program = async (name: string) => {
+     42|     const row = (await owner.query(`INSERT INTO regulatory_programs(or…
+       |                  ^
+     43|       VALUES($1,$2,$3,'IND','drug','FDA',$4) RETURNING id`, [org.id, `…
+     44|     const anchor = await seedNativeCatalogProject(owner, { organizatio…
+ ❯ tests/db/biostat-authoring-basis.dbtest.ts:49:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 642, severity: 'ERROR', code: '23502', detail: 'Failing row contains (b83197a7-c94a-49a2-9048-3efe14c7a291, 15, biostat-authoring-mw83thdb_1996f515 study, biostat-authoring-mw83thdb_1996f515-study, null, IND, drug, null, null, FDA, [], null, null, null, null, [], [], draft, planning, medium, null, null, null, 0, 0, 0, 34, [], null, null, [], null, null, null, 2026-11-08 09:26:28.691003, 2026-11-08 09:26:28.691003, null, null, null, null, null, null, null, null, null, null, null).', hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: 'public', table: 'regulatory_programs', dataType: undefined, constraint: undefined, file: 'execMain.c', routine: 'ExecConstraints' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 skipped (5)
+   Start at  09:26:27
+   Duration  1.70s (transform 742ms, setup 54ms, import 1.37s, tests 36ms, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

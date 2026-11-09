@@ -12,7 +12,7 @@ import { declineOwnInvitation, listOwnPendingInvitations } from '../services/ten
 import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import { stopPersonsRuns } from '../services/account-standing';
+import { stopPersonsRuns } from '../services/ana/run-session-end';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { mountQmsApproverDesignation } from './tenant-users-qms-approver';
@@ -562,7 +562,7 @@ router.post('/', async (req, res) => {
   } catch (error) {
     log.error('Error creating user:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid user data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid user data', details: error.issues });
     }
     res.status(500).json({ error: 'Failed to create user' });
   }
@@ -602,7 +602,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       if (parsed.error.issues.every(i => i.path[0] === 'reason')) {
         return reasonRequired(res, "change a member's role");
       }
-      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.errors });
+      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.issues });
     }
     const { role, reason } = parsed.data;
 

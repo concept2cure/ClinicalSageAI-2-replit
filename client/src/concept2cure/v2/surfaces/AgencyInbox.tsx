@@ -37,7 +37,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { utcDaysUntil } from '@shared/utils/utc-day';
+import { utcDayText, utcDaysUntil } from '@shared/utils/utc-day';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { CC_SOURCE_TYPES, CC_TONE, CC_CLOSURE } from '../fixtures/commcenter';
@@ -275,6 +275,15 @@ export function useAgencyInbox(projectId: string | null, fire: (m: string, tone?
  * overdue verdict compares (shared/utils/utc-day.ts): counted in milliseconds
  * from the browser's clock, a letter due today read "-1d" from 12:00 UTC on.
  */
+/** Who may read a letter, as the inbox says it (COMMUNICATION_VISIBILITY_TIERS). */
+const VISIBILITY_TIER_LABEL: Record<string, string> = {
+  client_internal: 'Your team only',
+  c2c_internal: 'Concept2Cure team only',
+  shared_client_c2c: 'Your team and Concept2Cure',
+  publishops_only: 'Publishing operations only',
+  restricted_legal_sensitive: 'Restricted: legal',
+};
+
 export function daysTo(d: string | null | undefined, now: Date = new Date()): number | null {
   return utcDaysUntil(d, now.toISOString());
 }
@@ -316,6 +325,8 @@ export interface InboxResponses {
   projectId: string;
   fire: (m: string, tone?: 'ok' | 'error') => void;
   onNav?: (id: string) => void;
+  /** A commitment was recorded from a letter or one of its questions: the host's register re-reads. */
+  onCommitmentRecorded?: () => void;
 }
 
 /** A request, from another screen, to open one letter (and one of its questions). */
@@ -390,7 +401,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
           )}
         </div>
         <div className="cc-comm-meta mono">
-          {c.sourceChannel} · received {c.receivedDate}
+          {c.sourceChannel} · received {utcDayText(c.receivedDate) ?? 'date not recorded'}
           {clockLine(c)}
           {/* linkedSectionCodes / extractedIssues are absent, not [], on rows
               the list read narrows or that predate the columns. */}
@@ -429,7 +440,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
           )}
           {c.auditMetadata?.visibilityTier && (
             <span className="cc-comm-vis" title="Visibility tier">
-              {I.eye} {c.auditMetadata.visibilityTier.replace(/_/g, ' ')}
+              {I.eye} {VISIBILITY_TIER_LABEL[c.auditMetadata.visibilityTier] ?? c.auditMetadata.visibilityTier.replace(/_/g, ' ')}
             </span>
           )}
         </div>
@@ -440,6 +451,7 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               letter={c}
               fire={responses.fire}
               onNav={responses.onNav}
+              onCommitmentRecorded={responses.onCommitmentRecorded}
               focusQuestionId={targeted ? opening?.questionId ?? null : null}
             />
           </div>

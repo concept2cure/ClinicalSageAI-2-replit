@@ -1,0 +1,16 @@
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the project vault read words each refusal as itself > a plan without the Vault says it is not enabled, not that the person lacks access, and offers no retry 5052ms
+   → Unable to find an element with the text: Not enabled for your organization. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the project vault read words each refusal as itself > a part outside this release says so 5016ms
+   → Unable to find an element with the text: Not in this release. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the project vault read words each refusal as itself > an uncoded 403 is the person’s role 5016ms
+   → Unable to find an element with the text: Your role cannot do this. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the project vault read words each refusal as itself > a project not in this organization is still said as not found, and a failure still offers a retry 205ms
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the searches word a refusal as itself, never as an unverified result > the library search across projects 211ms
+   → expected ' The library search could not be veri…' to contain 'This feature is not enabled for your …'
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the searches word a refusal as itself, never as an unverified result > the project search 5134ms
+   → Unable to find an element with the text: /This part of the product is not in this release, so the vault search was not run\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: the searches word a refusal as itself, never as an unverified result > a failed search is still an unverified result 151ms
+ × client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: an upload the module gate refuses says the Vault is not enabled > reads the gate’s top-level code, and never shows its module id 9ms
+   → expected [ { name: 'cover.pdf', …(1) } ] to deeply equal [ { name: 'cover.pdf', …(1) } ]
+ ✓ client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx > S6 V1: an upload the module gate refuses says the Vault is not enabled > a role refusal with its own sentence keeps it 4ms
+      Tests  6 failed | 3 passed (9)

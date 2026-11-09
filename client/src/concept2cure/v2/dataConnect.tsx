@@ -23,7 +23,7 @@ import { apiRequest, redactInternals } from '@/lib/queryClient';
 import { I } from './icons';
 import { useShellProject } from './shellProject';
 import { getAuthToken } from '@/utils/authToken';
-import { withReadDeadline } from '../mdx/hooks/useFetchJson';
+import { describeReadFailure, readFailureFor, withReadDeadline } from '../mdx/hooks/useFetchJson';
 
 export function connected(): boolean {
   return Boolean(getAuthToken());
@@ -547,6 +547,41 @@ export function useLiveRows<T>(
  * The distinction is spatial, not semantic: both are `role="alert"`, both are
  * announced assertively, and both must offer a recovery path.
  */
+/** The failed read a panel reports: a v2 read's `{ status, code }` (DataState) or a ReadFailure. */
+export type FailedRead = { status?: number; code?: string | null } | null | undefined;
+
+/**
+ * What a refused read says, or null when the read was not refused (a failure to
+ * answer, or no read given) and the caller's own words and retry stand.
+ *
+ * The founder, 2026-11-05: a feature can be not licensed, not relevant to the
+ * project, blocked by missing evidence, or unavailable to this user, and those
+ * are never one generic failure. They are told apart by the one read classifier
+ * (`readFailureFor`, `describeReadFailure` in mdx/hooks/useFetchJson.ts), which
+ * the Vault, the Data Room and the editor's citation catalogue each used through
+ * a helper of their own; this is that rule in the one panel every screen shares.
+ * An expired session (401) is said too. Only the unavailable ownership check
+ * keeps a retry: it is the one refusal a retry can change.
+ */
+export function readRefusalWords(read: FailedRead, what = 'it'): { title: string; message: string; retryable: boolean } | null {
+  if (!read) return null;
+  if (read.status === 401) return { title: 'Your session has expired', message: `Sign in again to read ${what}.`, retryable: false };
+  const kind = readFailureFor(read.status, read.code ?? undefined);
+  if (kind === 'failed') return null;
+  return describeReadFailure(kind, what);
+}
+
+/** The title, message and retry a failure panel shows: the caller's, unless its read was refused. */
+function shownFailure(
+  given: { title: string; message?: React.ReactNode; retry?: () => void },
+  read: FailedRead,
+  readWhat: string | undefined,
+): { shownTitle: string; shownMessage?: React.ReactNode; recover?: () => void } {
+  const refusal = readRefusalWords(read, readWhat);
+  if (!refusal) return { shownTitle: given.title, shownMessage: given.message, recover: given.retry };
+  return { shownTitle: refusal.title, shownMessage: refusal.message, recover: refusal.retryable ? given.retry : undefined };
+}
+
 export function ErrorState({
   title,
   message,
@@ -558,8 +593,10 @@ export function ErrorState({
   icon,
   busy = false,
   testId,
+  read,
+  readWhat,
 }: {
-  /** What failed, in the user's terms. Always shown. */
+  /** What failed, in the user's terms. Shown unless `read` was refused. */
   title: string;
   /** The server's own sentence, when it sent one. Redacted before render. */
   message?: React.ReactNode;
@@ -574,12 +611,18 @@ export function ErrorState({
   icon?: React.ReactNode;
   busy?: boolean;
   testId?: string;
+  /** The failed read. When it was refused, the panel says that refusal in the
+   *  classifier's words, in place of `title` and `message`, and offers no retry. */
+  read?: FailedRead;
+  /** What was not read, as a sentence names it ("the task board"); used in a refusal's words. */
+  readWhat?: string;
 }) {
+  const { shownTitle, shownMessage, recover } = shownFailure({ title, message, retry }, read, readWhat);
   /* A string is only rendered if it survives the internals filter; otherwise the
      title carries the message alone, which is always safe because the caller
      wrote it. */
   const safe =
-    typeof message === 'string' ? redactInternals(message, '') : message ?? '';
+    typeof shownMessage === 'string' ? redactInternals(shownMessage, '') : shownMessage ?? '';
 
   return (
     <div
@@ -591,7 +634,7 @@ export function ErrorState({
     >
       <span className="c2c-error-ic" aria-hidden="true">{icon ?? I.alertTriangle}</span>
       <div className="c2c-error-body">
-        <div className="c2c-error-t">{title}</div>
+        <div className="c2c-error-t">{shownTitle}</div>
         {safe ? <div className="c2c-error-h">{safe}</div> : null}
         {correlationId ? (
           /* The support handle. It replaced the store name the API used to
@@ -602,10 +645,10 @@ export function ErrorState({
           </div>
         ) : null}
       </div>
-      {(retry || onDismiss) && (
+      {(recover || onDismiss) && (
         <div className="c2c-error-actions">
-          {retry && (
-            <button type="button" className="c2c-error-retry" onClick={retry} disabled={busy}>
+          {recover && (
+            <button type="button" className="c2c-error-retry" onClick={recover} disabled={busy}>
               {busy ? 'Retrying…' : retryLabel}
             </button>
           )}
@@ -668,6 +711,8 @@ export function EmptyState({
   action,
   regulation,
   testId,
+  read,
+  readWhat,
 }: {
   title: string;
   hint?: React.ReactNode;
@@ -685,6 +730,9 @@ export function EmptyState({
    *  (e.g. "Serves the CTD Module 3 record (ICH M4Q)"). */
   regulation?: string;
   testId?: string;
+  /** tone="error" only: the failed read, passed to ErrorState (a refusal is said as itself, no retry). */
+  read?: FailedRead;
+  readWhat?: string;
 }) {
   /* A failure is not an empty state. It has one renderer, and this is not it —
      every `tone="error"` call site is served by ErrorState above, so all 139 of
@@ -701,6 +749,8 @@ export function EmptyState({
         {...(retryLabel ? { retryLabel } : {})}
         busy={busy}
         testId={testId}
+        read={read}
+        readWhat={readWhat}
       />
     );
   }
@@ -769,17 +819,30 @@ export function EmptyState({
  *   the channel's own `shellProgramName` reads it, `String(v ?? '')`, because
  *   the global is loosely typed and restored from storage with only its id
  *   checked: a `.trim()` on a non-string would take the work area down.
+ * - **A project opened by its link alone is in the shell by id only.** The
+ *   top bar names it once its own read answers (Shell.tsx
+ *   `useNameProjectOpenedById`); until then, or if that read fails, the link
+ *   read "Project" (the Reporting running-app run,
+ *   docs/evidence/DESIGN/D7/2026-11-02-reporting/). A screen that has read
+ *   the project itself passes that `name`. The label is the first non-blank
+ *   of: the shell's title (it names the project open now), `name`, the
+ *   shell's product, its code, then "Project". The design is the
+ *   coordinator's (2026-11-02), rebuilt here because its commit never reached
+ *   origin.
  *
  * The look is `.pj-back` in `styles/app-v2.css`, and its focus ring is the
  * shared `.c2c-v2 button:focus-visible`. `ProjectHome`'s "All projects" link
  * shares the class but leaves the project, so it is not this component.
  */
-export function ProjectBack({ onNav }: { onNav?: (id: string) => void }) {
+export function ProjectBack({ onNav, name }: { onNav?: (id: string) => void; name?: string | null }) {
   const project = useShellProject();
   if (!project) return null;
+  const label = [project.title, name, project.product, project.code]
+    .map((v) => String(v ?? '').trim())
+    .find(Boolean) ?? 'Project';
   return (
     <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
-      {I.left} {String(project.title ?? '').trim() || 'Project'}
+      {I.left} {label}
     </button>
   );
 }

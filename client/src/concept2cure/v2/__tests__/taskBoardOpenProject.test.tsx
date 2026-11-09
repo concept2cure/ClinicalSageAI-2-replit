@@ -31,6 +31,8 @@ import { TaskBoard } from '../surfaces/TaskBoard';
 import { TASK_SAVED_EVENT } from '../surfaces/CollabLauncher';
 import { __resetSurfaceActionBus, applySurfaceAction, registeredSurfaceId } from '../surfaceActions';
 import { clearNavParams } from '../navParams';
+import { clearEditorTarget } from '../editorTarget';
+import { clearShellProject } from '../shellProject';
 
 const P31 = '31313131-3131-4131-8131-313131313131';
 const P32 = '32323232-3232-4232-8232-323232323232';
@@ -42,6 +44,7 @@ const base = {
 };
 const T31 = { ...base, taskId: 'TASK-31', title: 'Draft stability summary', project: '31' };
 const T32 = { ...base, taskId: 'TASK-32', title: 'Review predicate table', project: '32' };
+const DOC_32 = 'df541fa2-594e-48d7-b451-3a5a3d994d39';
 const PROJECTS = [
   { id: 31, name: 'BX-204 Oncology IND', regulatoryProgramId: P31 },
   { id: 32, name: 'MD-11 510(k)', regulatoryProgramId: P32 },
@@ -72,13 +75,14 @@ afterEach(() => {
   __resetSurfaceActionBus();
   clearAuthToken();
   clearNavParams();
-  Reflect.deleteProperty(window, 'C2C_PROJECT');
+  clearEditorTarget();
+  clearShellProject();
 });
 
-async function mount() {
+async function mount(onNav = vi.fn()) {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <TaskBoard {...({ onAsk, onNav: vi.fn() } as unknown as React.ComponentProps<typeof TaskBoard>)} />
+      <TaskBoard {...({ onAsk, onNav } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
   await waitFor(() => expect(registeredSurfaceId()).toBe('tasks'));
@@ -129,6 +133,52 @@ describe('Tasks opens on the open project', () => {
     await act(async () => { finish(ok(PROJECTS)); });
     expect(filter()).toBe('all');
     expect(card(T32.title)).toBeTruthy();
+  });
+});
+
+describe('linked authoring task opens its exact project in the one editor', () => {
+  it('closes the task drawer before navigating and preserves the task project with the document', async () => {
+    Object.assign(window, { C2C_PROJECT: { id: P31, title: 'BX-204' } });
+    const currentRequest = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (path === '/api/task-management/board') {
+        return ok({ data: [T31, { ...T32, sourceDocumentId: DOC_32 }] });
+      }
+      return currentRequest(method, path);
+    });
+    const onNav = vi.fn();
+    await mount(onNav);
+    await waitFor(() => expect(filter()).toBe('31'));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by project' }),
+      { target: { value: 'all' } });
+    fireEvent.click(await screen.findByRole('button', { name: `Open ${T32.title}` }));
+    const open = screen.getByRole('button', { name: /Open linked document in editor/ });
+    fireEvent.click(open);
+    await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
+    expect((window.C2C_PROJECT as unknown as { id: string }).id).toBe(P32);
+    expect(window.C2C_EDITOR_TARGET?.docId).toBe(DOC_32);
+    expect(window.C2C_EDITOR_TARGET?.programId).toBe(P32);
+  });
+
+  it('refuses an unresolvable project without changing the shell project or editor target', async () => {
+    Object.assign(window, { C2C_PROJECT: { id: P31, title: 'BX-204' } });
+    const currentRequest = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (path === '/api/task-management/board') {
+        return ok({ data: [T31, { ...T32, sourceDocumentId: DOC_32 }] });
+      }
+      if (path === '/api/projects') return ok(PROJECTS.map(p => ({ id: p.id, name: p.name })));
+      return currentRequest(method, path);
+    });
+    const onNav = vi.fn();
+    await mount(onNav);
+    await waitFor(() => expect(filter()).toBe('all'));
+    fireEvent.click(await screen.findByRole('button', { name: `Open ${T32.title}` }));
+    fireEvent.click(screen.getByRole('button', { name: /Open linked document in editor/ }));
+    expect(screen.getByText(/task’s exact document and project could not be verified/)).toBeTruthy();
+    expect(onNav).not.toHaveBeenCalled();
+    expect((window.C2C_PROJECT as unknown as { id: string }).id).toBe(P31);
+    expect(window.C2C_EDITOR_TARGET).toBeUndefined();
   });
 });
 

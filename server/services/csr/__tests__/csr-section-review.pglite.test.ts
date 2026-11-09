@@ -102,6 +102,67 @@ describe('per-section review state', () => {
     expect(resubmitted).toMatchObject({ state: 'in_review', contentHash: sha(REDRAFT) });
   });
 
+  it('never submits a placeholder-filled template as reviewable clinical writing', async () => {
+    const template = '§10.1 Disposition: [DATA TO BE INSERTED FROM SOURCE RECORDS]';
+    await db.query(`INSERT INTO csr_section_outputs (organization_id, project_id, job_id, section_number, content, content_hash)
+      VALUES (7, 11, 1, '10.1', $1, $2)`, [template, sha(template)]);
+    await expect(decide({ sectionNumber: '10.1', expectedContentHash: sha(template), decision: 'submit' }))
+      .rejects.toMatchObject({ code: 'CSR_SECTION_DATA_PLACEHOLDER', status: 409 });
+    const rows = await db.query<{ review_status: string }>(`SELECT review_status FROM csr_section_outputs WHERE job_id=1 AND section_number='10.1'`);
+    expect(rows.rows[0].review_status).toBe('draft');
+  });
+
+  it('rejects a content-only edit racing between integrity read and the review UPDATE', async () => {
+    // The recorded hash alone is insufficient for an optimistic lock: an
+    // out-of-band editor can replace the bytes while leaving content_hash
+    // unchanged. Run the actual PGlite UPDATE after that intervening write.
+    await db.query(`UPDATE csr_section_outputs
+      SET content = $1, content_hash = $2, review_status = 'in_review',
+          review_decided_at = now(), reviewed_content_hash = $2
+      WHERE job_id = 1 AND section_number = '11.4.1'`, [REDRAFT, sha(REDRAFT)]);
+    let injected = false;
+    const racing = {
+      query: async (sql: string, params?: unknown[]) => {
+        if (!injected && sql.startsWith('UPDATE csr_section_outputs')) {
+          injected = true;
+          await db.query(`UPDATE csr_section_outputs SET content = $1
+             WHERE job_id = 1 AND section_number = '11.4.1'`, ['Text changed between SELECT and UPDATE']);
+        }
+        return db.query<Record<string, unknown>>(sql, params as never[]);
+      },
+    };
+    await expect(decideCsrSectionReview(racing, {
+      organizationId: 7, jobId: 1, sectionNumber: '11.4.1',
+      reviewerId: 6, decision: 'approve', expectedContentHash: sha(REDRAFT),
+    })).rejects.toMatchObject({ code: 'CSR_SECTION_CHANGED', status: 409 });
+    expect(injected).toBe(true);
+    const result = await db.query<{ review_status: string; content: string }>(
+      `SELECT review_status, content FROM csr_section_outputs WHERE job_id = 1 AND section_number = '11.4.1'`);
+    expect(result.rows[0]).toEqual({
+      review_status: 'in_review', content: 'Text changed between SELECT and UPDATE',
+    });
+  });
+
+  it('refuses independent approval when a legacy completed job has no recorded requester', async () => {
+    await db.query(`INSERT INTO csr_build_jobs
+      (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by)
+      VALUES (10, 7, 11, 'SYN-LEGACY', 'complete', '{}'::jsonb, NULL)`);
+    await db.query(`INSERT INTO csr_section_outputs
+      (organization_id, project_id, job_id, section_number, content, content_hash)
+      VALUES (7, 11, 10, '11.4.1', $1, $2)`, [TEXT, sha(TEXT)]);
+    const input = {
+      organizationId: 7, jobId: 10, sectionNumber: '11.4.1',
+      expectedContentHash: sha(TEXT), reviewerId: 6,
+    };
+    const submitted = await decideCsrSectionReview(q, { ...input, decision: 'submit' });
+    expect(submitted.state).toBe('in_review');
+    await expect(decideCsrSectionReview(q, { ...input, decision: 'approve' }))
+      .rejects.toMatchObject({ code: 'CSR_REVIEW_REQUESTER_MISSING', status: 409 });
+    const current = await db.query<{ review_status: string }>(
+      `SELECT review_status FROM csr_section_outputs WHERE job_id = 10`);
+    expect(current.rows[0].review_status).toBe('in_review');
+  });
+
   it('refuses tampered text, a foreign tenant and a missing section', async () => {
     await db.query(`UPDATE csr_section_outputs SET content = 'edited outside the runner' WHERE job_id = 1`);
     await expect(decide({ decision: 'approve', expectedContentHash: sha(REDRAFT) })).rejects.toMatchObject({ code: 'CSR_SECTION_HASH_MISMATCH' });

@@ -1,0 +1,10 @@
+MUTATION 13-readiness-measures-fda-only in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T01:54:44.758260Z): replaced [  if (canonicalRegionOf(seq.region) !== 'US' && !gatewaySizeLimitEnforced(gatewayRegion)) return before;] with [  if (canonicalRegionOf(seq.region) !== 'US') return before;]
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a sequence for another region is not measured (FDA only) 23ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed 15ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > one byte over CESP’s 600 MiB is refused 9ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > at exactly CESP’s 600 MiB it is not refused on size 8ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 198ms
+      Tests  2 failed | 3 passed | 10 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed
+restored sha256 8d0c5c54a65407fc38d39f5383157c6a208d3755bf6cc9e407541ccc98f1f17a (expected 8d0c5c54a65407fc38d39f5383157c6a208d3755bf6cc9e407541ccc98f1f17a)

@@ -93,17 +93,27 @@ pg_isready -h "$PG_HOST" -p "$PG_PORT" >/dev/null 2>&1 || { err "PostgreSQL fail
 export PAGER=cat PSQL_PAGER=cat
 PSQL="psql -h ${PG_HOST} -p ${PG_PORT} -U postgres -q -v ON_ERROR_STOP=1"
 
+# The role applies the migration set, so it holds what the production applier
+# (the RDS master) holds: CREATEROLE, and ownership of its database. It is not a
+# superuser, as the RDS master is not, so a migration that only a superuser could
+# apply fails here as it would in production. Without these two (2026-11-05),
+# deploy-migrate stopped at 20260617_audit_logs_immutability.sql ("permission
+# denied to create role") and, on a database this script did not create, at the
+# first GRANT on schema public. Re-applied on every run: an existing role or
+# database is brought to the same state.
 log "Ensuring role '${DB_USER}' and database '${DB_NAME}'"
 $PSQL >/dev/null <<SQL
 DO \$\$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}') THEN
-    CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}' CREATEDB;
+    CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}' CREATEDB CREATEROLE;
   END IF;
 END \$\$;
+ALTER ROLE ${DB_USER} CREATEROLE NOSUPERUSER;
 SQL
 if ! $PSQL -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
   $PSQL >/dev/null -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
 fi
+$PSQL >/dev/null -c "ALTER DATABASE ${DB_NAME} OWNER TO ${DB_USER};"
 
 log "Ensuring schemas + extensions"
 $PSQL -d "$DB_NAME" >/dev/null <<SQL

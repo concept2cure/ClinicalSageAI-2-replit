@@ -58,6 +58,10 @@ export interface DocumentAttributionBarProps {
    * painting spans from a summary that no longer holds.
    */
   onSummary?: (summary: DocumentAttributionSummary | null) => void;
+  /** What the figure measures, in the bar's words: the editor reads one section
+   *  (documentTable authoring_sections), and an empty Title Page said "This
+   *  document has no text yet" beside a written Summary (J3, 2026-11-06). */
+  subject?: 'document' | 'section';
 }
 
 type Load =
@@ -152,6 +156,7 @@ export function DocumentAttributionBar({
   refreshToken,
   onOpenDetail,
   onSummary,
+  subject = 'document',
 }: DocumentAttributionBarProps) {
   const [load, setLoad] = useState<Load>({ status: 'idle' });
 
@@ -237,7 +242,7 @@ export function DocumentAttributionBar({
   if (summary.contentLength === 0) {
     return (
       <Shell>
-        <span style={{ color: MUTED }}>This document has no text yet.</span>
+        <span style={{ color: MUTED }}>This {subject} has no text yet.</span>
       </Shell>
     );
   }
@@ -249,7 +254,7 @@ export function DocumentAttributionBar({
     <Shell>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
         <strong style={{ color: INK, fontSize: 13 }}>
-          {attributedPct}% of this document has a recorded origin
+          {attributedPct}% of this {subject} has a recorded origin
         </strong>
         <span style={{ color: MUTED, fontSize: 12 }}>
           {summary.attributedChars.toLocaleString()} of{' '}

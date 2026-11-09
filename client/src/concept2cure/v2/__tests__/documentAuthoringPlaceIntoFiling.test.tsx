@@ -107,7 +107,7 @@ async function openAndTarget() {
   fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
   await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
   fireEvent.change(screen.getByLabelText('Target submission'), { target: { value: '9' } });
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences'));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences', undefined, undefined, expect.any(AbortSignal)));
   await waitFor(() => expect(document.body.textContent).toContain('0000'));
   fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
 }
@@ -132,8 +132,8 @@ describe('the dialog states the identity fact and picks real targets', () => {
     mockApi();
     renderSeam();
     await openAndTarget();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions');
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions', undefined, undefined, expect.any(AbortSignal));
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences', undefined, undefined, expect.any(AbortSignal));
   });
 
   it('excludes frozen sequences from selection WITH the reason shown', async () => {
@@ -240,7 +240,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
       reason: REASON,
     });
     // The SAVED sections were re-read from the server for the snapshot.
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/authoring/docs/D1/sections');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/authoring/docs/D1/sections', undefined, undefined, expect.any(AbortSignal));
     // Success reports the placement and deep-links to the Submission Center.
     expect(document.body.textContent).toContain('sequence 0000 · original');
     expect(document.body.textContent).toContain('from Authored document #501');

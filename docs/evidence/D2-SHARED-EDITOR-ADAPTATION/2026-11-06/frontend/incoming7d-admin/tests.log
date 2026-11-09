@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 559ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does 153ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 350ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > offers the client type chips in words 178ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it 154ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed 356ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them 200ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered 166ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab 104ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name 74ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab 224ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > captures a key through the governed route, clears entry and never displays saved or reflected values 228ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > closes on failed submit and uses a fixed refusal without server response text 82ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > revokes without sending any credential material 57ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > takes capability from the backend and shows a failed read without fabricating status 16ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > drops a secret drawer and late old-tenant metadata on an organisation switch 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > cancels without retaining a key on reopen 114ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > keeps portal credentials explicitly storage-only 15ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > cannot apply an old tenant write receipt after the organisation changes 138ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > does not call an unconfirmed write response a recorded credential change 100ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > accepts the complete 14-card metadata contract and keeps all eight existing adapter management forms reachable 942ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > captures the Google private key without a raw DOM value and sends exact PEM newlines 266ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > separates configured credentials from agency qualification 66ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > lists each gateway's environments with the choice and whether it can send 14ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a read that fails says so and shows no account 114ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing your own account sends identifier, certificate, key, reason and password, then reads again 453ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > a refused change says it was not changed, in the server's words 113ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > agency gateway accounts setting > choosing the platform account sends no identifier and no secret 2ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > the transmittal log says whose account each transmittal went out under > as recorded on the row, and nothing when it was not recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > gateway secure capture ownership > masks multiline credentials, preserves exact newlines and clears on cancel 99ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > gateway secure capture ownership > never reflects a submitted secret from an error payload 94ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > gateway secure capture ownership > retires secret entry synchronously when the organisation changes 35ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > drops prior account authority when a reread is refused 88ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx > clears captured PEM state before a later submit 151ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > says a failed library read failed, and never shows it as an empty library 94ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > turns a skill off only with a stated reason, and sends that reason 476ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > sends the change with the reason when one is stated 205ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > shows which skills a question would load and why 93ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says how many turns followed skills, marks each skill’s use, and explains it in the drawer 94ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > filters to the skills AnA did not use, and to those written for a market 135ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says use could not be read, and never shows every skill as unused 67ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > shows mandatory rules independently of prompt selection and links their source audit record 277ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > keeps approval bindings and provenance out of an ordinary method edit instead of clearing or rewriting them 188ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > distinguishes saved draft rules and retains their source reference when history cannot load 119ms
+
+ Test Files  3 passed (3)
+      Tests  44 passed (44)
+   Start at  20:31:22
+   Duration  17.57s (transform 3.41s, setup 682ms, import 4.62s, tests 7.54s, environment 3.25s)
+

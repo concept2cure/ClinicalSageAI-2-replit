@@ -1,19 +1,7 @@
 {
   "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
-  "ceiling": 15,
+  "ceiling": 11,
   "hops": {
-    "capture": {
-      "bytes-durable": {
-        "findings": [
-          "DR-ANA-11"
-        ],
-        "closedBy": [
-          "LX-02"
-        ],
-        "observed": "null",
-        "why": "cre_evidence_sources.stored_artifact_ref is 'uploads/org-<n>/<fileId>', a path on the serving task's own disk written best-effort (server/routes/chat/upload.ts:166-184, :563). No storage-provider object exists for it, so the bytes behind checksum = sha256(X) cannot be read back through getStorageProviderFor."
-      }
-    },
     "ana-draft": {
       "tool-accepts-sources": {
         "findings": [
@@ -90,16 +78,6 @@
       }
     },
     "transmit": {
-      "bytes-retained": {
-        "findings": [
-          "SUB-2"
-        ],
-        "closedBy": [
-          "LX-12"
-        ],
-        "observed": "false",
-        "why": "transmitSequence removes the staged package in its finally block (server/services/submission-service/submission-service.ts:1418); submission_transmittals.bundle_path names a deleted file and no durable copy is written."
-      },
       "transmittal-names-sequence": {
         "findings": [
           "SUB-2"

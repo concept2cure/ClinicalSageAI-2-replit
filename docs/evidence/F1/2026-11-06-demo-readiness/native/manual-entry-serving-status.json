@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-11-06T20:05:21.168Z",
+  "port": 5000,
+  "runtime": {
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "readinessHttpStatus": 503,
+  "readyz": {
+    "ready": false,
+    "failed": [
+      "ana"
+    ],
+    "dependencies": {
+      "database": "ok",
+      "schema": "ok",
+      "ana": "down",
+      "storage": "ok",
+      "virusScan": "skipped",
+      "redis": "skipped",
+      "worker": "skipped"
+    },
+    "schemaState": "ready",
+    "anaState": "no_provider",
+    "capabilityRegistry": "seeded",
+    "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) \u2014 without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+  },
+  "devLogin": {
+    "status": 200,
+    "email": "ana.author@concept2cure.pro",
+    "organizationId": "2"
+  },
+  "startup": "explicit-entry diagnostic fallback; npm dev requalification pending root fix",
+  "syntheticIdentities": true,
+  "realAiDraftingQualified": false
+}

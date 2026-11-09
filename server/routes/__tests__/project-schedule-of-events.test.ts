@@ -157,7 +157,8 @@ describe('program UUID → anchored project (schedule and unified work)', () => 
     query.mockResolvedValueOnce({ rows: [{ type: 'regulatory', metadata: {} }] });
     const res = await request(app()).get(`/api/concept2cure/projects/${PROGRAM}/unified-work`);
     expect(res.status).toBe(200);
-    expect(loadUnifiedWork).toHaveBeenCalledWith({ organizationId: 7, projectId: 11 }, requestDb(received[0]));
+    expect(loadUnifiedWork).toHaveBeenCalledWith({ organizationId: 7, projectId: 11,
+      rollUpFor: { userId: 41, role: 'member', executor: q } }, requestDb(received[0]));
   });
 
   it('answers an unresolved program with a named 409 and reads nothing', async () => {

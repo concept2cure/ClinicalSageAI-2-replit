@@ -2,7 +2,7 @@ name: Neon PR Preview DB + Schema Validation
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   preview_db_test:
-    # Skip if Neon secrets not configured or PR closed
-    if: github.event.action != 'closed' && vars.NEON_PROJECT_ID != ''
+    # Opt-in only. Each run creates, tests and deletes its own isolated schema branch.
+    if: github.event.action != 'closed' && vars.NEON_PROJECT_ID != '' && vars.NEON_PREVIEW_ENABLED == 'true' && vars.NEON_SAFE_PARENT_BRANCH != ''
     runs-on: ubuntu-latest
     # Posts a preview-DB status comment on the PR (github-script createComment).
     permissions:
@@ -26,8 +26,8 @@ jobs:
         id: check_secrets
         run: |
           if [ -z "${{ secrets.NEON_API_KEY }}" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "⚠️ NEON_API_KEY not configured, skipping preview DB"
+            echo "::error::NEON_API_KEY absent while Neon preview was explicitly enabled; no database verification ran"
+            exit 1
           else
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
@@ -35,20 +35,37 @@ jobs:
       - name: Choose Neon branch name (safe + stable)
         if: steps.check_secrets.outputs.skip != 'true'
         id: names
-        run: echo "branch=preview/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+        run: echo "branch=preview/pr-${{ github.event.pull_request.number }}-run-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Bound ephemeral PR validation branch lifetime to one day
+        if: steps.check_secrets.outputs.skip != 'true'
+        id: expiry
+        run: echo "expires_at=$(date -u -d '+1 day' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
       - name: Create Neon branch for this PR
         if: steps.check_secrets.outputs.skip != 'true'
         id: neon
-        continue-on-error: true
         uses: neondatabase/create-branch-action@fb620d43d4c565abaf088b848a4e28e5c4ea4d9c # v6
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: ${{ steps.names.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
-          # Optional for schema-only (no sensitive data):
-          # parent_branch: prod-v1-schema
-          # role: neondb_owner
+          # An explicit non-production parent is required; do not copy the
+          # project's default or production branch into a PR environment.
+          parent_branch: ${{ vars.NEON_SAFE_PARENT_BRANCH }}
+          # Do not clone patient/client records into PR preview environments.
+          branch_type: schema-only
+          # A one-day server-side expiration survives runner loss or cancelled
+          # workflows. PR checks must not retain a long-lived database.
+          expires_at: ${{ steps.expiry.outputs.expires_at }}
+
+      - name: Require a freshly created PR validation branch
+        if: steps.check_secrets.outputs.skip != 'true'
+        run: |
+          if [[ "${{ steps.neon.outputs.created }}" != "true" || -z "${{ steps.neon.outputs.branch_id }}" ]]; then
+            echo "::error::Neon did not confirm a fresh isolated PR branch; refusing migration"
+            exit 1
+          fi
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'
@@ -64,31 +81,33 @@ jobs:
         if: steps.check_secrets.outputs.skip != 'true'
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Resolve Neon DATABASE_URL
+      - name: Resolve direct Neon DATABASE_URL
         if: steps.check_secrets.outputs.skip != 'true'
         id: db_url
+        env:
+          DIRECT_DB_URL: ${{ steps.neon.outputs.db_url }}
         run: |
-          DB_URL='${{ steps.neon.outputs.db_url }}'
+          set -euo pipefail
+          DB_URL="$DIRECT_DB_URL"
           if [ -z "$DB_URL" ]; then
-            DB_URL='${{ steps.neon.outputs.db_url_pooled }}'
+            echo "::error::Neon did not supply a direct DB URL; migrations must not use a pooler"
+            exit 1
           fi
-          if [ -z "$DB_URL" ]; then
-            DB_URL='${{ steps.neon.outputs.db_url_with_pooler }}'
+          # The Neon direct endpoint has no -pooler suffix. Session/DDL work
+          # via the pooler can appear to pass on the wrong connection.
+          if [[ "$DB_URL" == *-pooler.* ]]; then
+            echo "::error::Migration target is a pooled Neon endpoint; refusing DDL"
+            exit 1
           fi
-
-          if [ -z "$DB_URL" ]; then
-            echo "skip_db=true" >> $GITHUB_OUTPUT
-            echo "⚠️ Neon preview DB URL unavailable; skipping DB validation steps"
-          else
-            echo "skip_db=false" >> $GITHUB_OUTPUT
-            echo "DATABASE_URL=$DB_URL" >> $GITHUB_ENV
-          fi
+          echo "::add-mask::$DB_URL"
+          echo "skip_db=false" >> "$GITHUB_OUTPUT"
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Apply migrations + verify schema
         if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
         run: |
-          # The Neon preview branch inherits from the project's default
-          # parent (which already has the full migration history applied).
+          # The schema-only Neon preview inherits the explicitly approved
+          # non-production parent's SCHEMA (no client data).
           # Running `scripts/db_migrate.sh` here would re-apply all ~166
           # migrations from scratch — most aren't idempotent, so the
           # whole step fails on something like a duplicate CREATE TABLE.
@@ -111,8 +130,8 @@ jobs:
             BASE_SHA="$BASE_SHA_HINT"
           fi
           if [ -z "$BASE_SHA" ]; then
-            echo "::notice::No merge-base resolvable; skipping migration apply."
-            exit 0
+            echo "::error::No PR merge-base can be resolved; migration verification did not run"
+            exit 1
           fi
           NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'db/migrations/*.sql' 'migrations/*.sql' | sort)
           if [ -z "$NEW_MIGRATIONS" ]; then
@@ -174,10 +193,27 @@ jobs:
         # it (security audit 2026-09-24 INF-24). .npmrc carries legacy-peer-deps.
         run: |
           npm ci
-          npm run test:unit --if-present
+          npm run codespaces:doctor:test
+
+      - name: Verify preview's live schema inventory (baseline no-regression)
+        if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
+        # Read-only: a schema-only copy must still contain the app's baseline
+        # tables. This is NOT full RLS or governed authoring qualification.
+        run: npm run ci:tables-live-schema
+
+      - name: Delete exactly this run's PR validation branch
+        id: delete
+        # Always attempt cleanup after validation, including failures.
+        # The branch is unique to this run; never delete by a reusable PR name.
+        if: always() && steps.neon.outputs.created == 'true' && steps.neon.outputs.branch_id != ''
+        uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ${{ steps.neon.outputs.branch_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
 
       - name: Post PR comment with preview DB info
-        if: success() && steps.check_secrets.outputs.skip != 'true'
+        if: success() && steps.delete.outcome == 'success'
         continue-on-error: true
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
@@ -191,32 +227,6 @@ jobs:
               // (scripts/db_verify.sql) was never authored, so its step is a
               // guarded no-op — a comment asserting "verification passed" was
               // reporting a check that did not happen.
-              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Migrations applied successfully\n✅ Tests completed\n\n_This branch will be automatically deleted when the PR is closed._`
+              body: `🗄️ **Neon PR Schema Validation — Branch Deleted**\n\nBranch: \`${branch}\`\n\n✅ Newly added migration files applied (or none added)\n✅ Codespaces/Neon policy tests and live schema inventory completed (baseline no-regression)\n\n_This is not full database provisioning, RLS or regulatory qualification. The ephemeral branch was deleted before this result was posted._`
             });
 
-  cleanup_preview_db:
-    if: github.event.action == 'closed' && vars.NEON_PROJECT_ID != ''
-    runs-on: ubuntu-latest
-    # Posts a cleanup-confirmation comment on the PR (github-script createComment).
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Delete Neon branch for this PR
-        uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
-        continue-on-error: true # Don't fail if branch doesn't exist
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch: preview/pr-${{ github.event.pull_request.number }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-
-      - name: Post cleanup confirmation
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `🧹 **Neon Preview DB Cleaned Up**\n\nThe preview database branch \`preview/pr-${{ github.event.pull_request.number }}\` has been deleted.`
-            });

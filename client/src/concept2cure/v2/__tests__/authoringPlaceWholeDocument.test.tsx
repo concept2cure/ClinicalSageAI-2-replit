@@ -81,7 +81,7 @@ async function openAndTarget() {
   fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
   await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
   fireEvent.change(screen.getByLabelText('Target submission'), { target: { value: '9' } });
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences'));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/9/sequences', undefined, undefined, expect.any(AbortSignal)));
   await waitFor(() => expect(document.body.textContent).toContain('0000'));
   fireEvent.change(screen.getByLabelText(/^Reason for this placement/), { target: { value: REASON } });
 }
@@ -123,12 +123,38 @@ describe('a whole document is filed at its own code, and a repeat placement says
     expect(apiRequest.mock.calls.filter(c => c[0] !== 'GET')).toHaveLength(0);
   });
 
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): the MDX 510(k)
+     Summary's sections are numbered 1 … 9 (21 CFR 807.92(a)(1) …), so they
+     share no code and the dialog fell back to the open section's "1" — then
+     refused its own prefill in red before the publisher had typed anything. */
+  it('does not prefill a section code it would itself refuse when the sections share no code', async () => {
+    mockApi();
+    renderSeam({ sectionCodes: ['1', '2', '3'], activeSectionCode: '1' });
+    await openAndTarget();
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('');
+    expect(document.body.textContent).not.toMatch(/one section of this document/);
+    expect((screen.getByRole('button', { name: /Place leaf/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('a one-section document is filed at that section’s code', async () => {
     mockApi();
     renderSeam({ sectionCodes: ['3.2.S.4.1'], activeSectionCode: '3.2.S.4.1' });
     await openAndTarget();
     expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('3.2.S.4.1');
     expect(document.body.textContent).not.toMatch(/one section of this document/);
+  });
+
+  /* J3 human test, 2026-11-06: an Investigator's Brochure from a template whose
+     sections are title_page, 1, 2 … has no common code. The dialog prefilled
+     the open section's "1" and, in the same breath, refused it in red. */
+  it('does not prefill a code it would refuse: with no common code, the field is empty and asks for one', async () => {
+    mockApi();
+    renderSeam({ sectionCodes: ['title_page', '1', '2'], activeSectionCode: '1' });
+    fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('');
+    expect(document.body.textContent).not.toMatch(/one section of this document/);
+    expect(document.body.textContent).toMatch(/Enter the CTD code it is filed at/);
   });
 
   it('a repeat placement the server answers with the existing leaf is reported as already placed, not as a new leaf', async () => {

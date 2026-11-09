@@ -224,7 +224,7 @@ router.post('/projects/:projectId/profile/enrich', async (req: Request, res: Res
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+      return res.status(400).json({ error: 'Invalid payload', details: error.issues });
     }
     logger.error('Profile enrichment failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to enrich project intelligence' });
@@ -336,7 +336,7 @@ router.post('/projects/:projectId/feedback', async (req: Request, res: Response)
     return res.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+      return res.status(400).json({ error: 'Invalid payload', details: error.issues });
     }
     logger.error('Feedback recording failed', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to record feedback' });

@@ -1,0 +1,10 @@
+{
+  "argv": [
+    "node",
+    "scripts/seed-admin.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.605,
+  "rawOutput": "green-seed-rhea.log.gz",
+  "rawGzipSha256": "0ba924039720f8517b0231b7839cd2c2a3ae483f63ca3992d76142bc1ab5a2c8"
+}

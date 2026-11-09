@@ -21,7 +21,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { CollabLayer, TASK_SAVED_EVENT, dueDateIso, taskProjectFor } from '../surfaces/CollabLauncher';
+import { CollabLayer, TASK_SAVED_EVENT, contextTaskProject, dueDateIso, taskProjectFor } from '../surfaces/CollabLauncher';
 
 const P41 = '41414141-4141-4141-8141-414141414141';
 const P42 = '42424242-4242-4242-8242-424242424242';
@@ -37,6 +37,8 @@ beforeEach(() => {
       return ok([
         { id: 41, name: 'BX-204', code: 'NDA-212345', regulatoryProgramId: P41 },
         { id: 42, name: 'MD-11 510(k)', regulatoryProgramId: P42 },
+        // A work project under BX-204 (P-111): a child projects row, listed like any other, with no program of its own.
+        { id: 101, name: 'Drug substance CMC', regulatoryProgramId: null },
       ]);
     }
     if (method === 'POST' && url === '/api/tasks/tasks') return ok({ data: { taskId: 'TASK-1761-3f2a', assigneeId: 8801 } }, 201);
@@ -46,6 +48,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   Reflect.deleteProperty(window, 'C2C_PROJECT');
+  (window as unknown as { C2C: { setContext: (p: Record<string, unknown>) => void } }).C2C.setContext({ workProjectId: null });
 });
 
 async function openTaskForm() {
@@ -127,5 +130,28 @@ describe('taskProjectFor', () => {
   it('reads only a calendar date as a due date', () => {
     expect(dueDateIso('')).toBeUndefined();
     expect(dueDateIso('2027-02-31')).toBeUndefined();
+  });
+
+  it('opens on the work project a bound work area names, and on the open project once it is unbound (P-111)', async () => {
+    Object.assign(window, { C2C_PROJECT: { id: P41, title: 'BX-204' } });
+    const launcher = (window as unknown as { C2C: { setContext: (p: Record<string, unknown>) => void } }).C2C;
+    launcher.setContext({ workProjectId: '101' });
+    await openTaskForm();
+    await waitFor(() => expect(projectSelect().value).toBe('101'));
+    title('Confirm the drug substance specification');
+    fireEvent.click(screen.getByRole('button', { name: /^.?Create task$/ }));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0][2].projectId).toBe(101);
+    cleanup();
+    launcher.setContext({ workProjectId: null });
+    await openTaskForm();
+    await waitFor(() => expect(projectSelect().value).toBe('41'));
+  });
+
+  it('never files on a bound work project that is not a listed project: it falls back to the open project', () => {
+    const rows = [{ id: 41, programId: P41 }, { id: 101, programId: null }];
+    expect(contextTaskProject(rows, { project: P41, workProjectId: '101' })).toBe('101');
+    expect(contextTaskProject(rows, { project: P41, workProjectId: '999' })).toBe('41');
+    expect(contextTaskProject(rows, { project: P41, workProjectId: null })).toBe('41');
   });
 });

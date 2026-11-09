@@ -47,6 +47,7 @@ import { ReportEngine } from '../surfaces/ReportEngine';
 vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeEnforced: false }) }));
 
 import { CmcModule } from '../surfaces/CmcModule';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 
 function res(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
@@ -158,7 +159,6 @@ const engineDocument = (type: string) => ({
    document bar's action says it copies the example (2026-10-31) and the saved
    title says it is one. */
 const BIO_OPEN = /Copy example to editor/;
-const EXAMPLE = ' — worked example: Pivotal OS (survival)';
 
 /** The engine has answered and its document is on screen, so the hand-off has
  *  something to hand off. */
@@ -172,6 +172,7 @@ const posts = () =>
   apiRequest.mock.calls.filter((c) => c[0] === 'POST' && (c[1] === DOC_URL || c[1] === SEC_URL));
 const docCalls = () => apiRequest.mock.calls.filter((c) => c[0] === 'POST' && c[1] === DOC_URL);
 const secCalls = () => apiRequest.mock.calls.filter((c) => c[0] === 'POST' && c[1] === SEC_URL);
+const statisticalCalls = () => apiRequest.mock.calls.filter(c => c[0] === 'POST' && isStatisticalSave(c[1], c[2]));
 
 let setItem: ReturnType<typeof vi.spyOn>;
 /** Every localStorage/sessionStorage key written since the test began. */
@@ -182,14 +183,16 @@ function wireStore(over: (m: string, u: string, b?: any) => Response | null = ()
   apiRequest.mockImplementation(async (m: string, u: string, b: any = {}) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === '/api/cmc/variations/classify') return res({ success: true, data: {
+    if (m !== 'POST') return res({});
+    if (isStatisticalSave(u, b)) return res(statisticalSaveReceipt(b, 'D-77'), 201);
+    if (u === '/api/cmc/variations/classify') return res({ success: true, data: {
       fdaReportingCategory: 'annual_report', emaVariationCategory: 'type_ia', supacTier: 'level_1', bioequivalence: 'none',
       rationale: ['Comparable process requires documented assessment.'], validationRequirements: ['Document comparability evidence.'], impactedCtdSections: ['3.2.S.2'], citations: ['SUPAC-IR'],
     } });
-    if (m === 'POST' && u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
-    if (m === 'POST' && u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
-    if (m === 'POST' && u === COMPUTE_URL) return res(ENGINE_COMPUTE);
-    if (m === 'POST' && u === DOCGEN_URL) return res(engineDocument(String(b.documentType ?? '')));
+    if (u === DOC_URL) return res({ success: true, document: { id: 'D-77', title: b.title, client_program_id: b.client_program_id } }, 201);
+    if (u === SEC_URL) return res({ success: true, section: { id: 'S-12', code: b.code, doc_id: b.doc_id, title: b.title } }, 201);
+    if (u === COMPUTE_URL) return res(ENGINE_COMPUTE);
+    if (u === DOCGEN_URL) return res(engineDocument(String(b.documentType ?? '')));
     return res({});
   });
 }
@@ -225,7 +228,7 @@ const props = (id: string, onNav: () => void) => ({
 /* ══════════════════════════ Biostatistics ══════════════════════════ */
 
 describe('Biostatistics — Open in editor', () => {
-  it('creates the document, saves the markdown as a section, then navigates', async () => {
+  it('atomically saves the statistical document and its source basis, then navigates', async () => {
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
@@ -236,20 +239,12 @@ describe('Biostatistics — Open in editor', () => {
     // synchronously, which is exactly the behaviour being removed.
     expect(onNav).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(secCalls()).toHaveLength(1));
-
-    const doc = docCalls()[0][2];
-    expect(doc).toMatchObject({ title: 'Sample Size Rationale' + EXAMPLE, module: 'M5', client_program_id: PROGRAM });
-
-    const sec = secCalls()[0][2];
-    expect(sec).toMatchObject({
-      doc_id: 'D-77',
-      title: 'Sample Size Rationale' + EXAMPLE,
-      // NOT a CTD number: the editor binds outline nodes by exact code match, so
-      // a numeric code here would assert a filing position this surface cannot
-      // know.
-      code: 'sample_size_rationale',
-    });
+    await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
+    const saved = statisticalCalls()[0][2];
+    expect(saved).toMatchObject({ documentType: 'sample_size_rationale', module: 'M5', programId: PROGRAM,
+      input: ENGINE_INPUT, basis: { kind: 'worked_example', label: 'Pivotal OS (survival)' } });
+    expect(saved.expectedMarkdown).toBe(engineDocumentContent('sample_size_rationale'));
+    const sec = statisticalSaveReceipt(saved, 'D-77').data.sections[0];
 
     // The deliverable actually travels — the ENGINE's document, not a browser
     // draft — and it arrives as the document the page renders: HTML headings
@@ -266,7 +261,8 @@ describe('Biostatistics — Open in editor', () => {
 
     // And only then the navigation.
     expect(onNav).toHaveBeenCalledWith('document-authoring');
-    expect(posts().map((c) => c[1])).toEqual([DOC_URL, SEC_URL]);
+    expect(statisticalCalls()).toHaveLength(1);
+    expect(posts()).toHaveLength(0);
   });
 
   it('never writes the retired localStorage note', async () => {
@@ -286,8 +282,8 @@ describe('Biostatistics — Open in editor', () => {
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
     fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
-    await waitFor(() => expect(docCalls()).toHaveLength(1));
-    expect(docCalls()[0][2]).toMatchObject({ client_program_id: '11111111-2222-3333-4444-555555555555' });
+    await waitFor(() => expect(statisticalCalls()).toHaveLength(1));
+    expect(statisticalCalls()[0][2]).toMatchObject({ programId: '11111111-2222-3333-4444-555555555555' });
   });
 
   /* The two happy-path cases above and the chooser case below are the contract;
@@ -301,8 +297,9 @@ describe('Biostatistics — Open in editor', () => {
     fireEvent.click(btn);
     fireEvent.click(btn);
     await waitFor(() => expect(onNav).toHaveBeenCalled());
-    expect(docCalls()).toHaveLength(1);
-    expect(secCalls()).toHaveLength(1);
+    expect(statisticalCalls()).toHaveLength(1);
+    expect(docCalls()).toHaveLength(0);
+    expect(secCalls()).toHaveLength(0);
   });
 
   it('hands off the document the user actually chose', async () => {
@@ -313,16 +310,15 @@ describe('Biostatistics — Open in editor', () => {
     // The engine writes the newly chosen document before it can be handed off.
     await biostatDocReady('Data Safety Monitoring Board');
     fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
-    await waitFor(() => expect(secCalls()).toHaveLength(1));
-    expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter' + EXAMPLE, client_program_id: PROGRAM });
-    expect(secCalls()[0][2]).toMatchObject({ code: 'dsmb_charter' });
-    expect(secCalls()[0][2].content).toMatch(/DSMB|Data Monitoring/i);
+    await waitFor(() => expect(statisticalCalls()).toHaveLength(1));
+    expect(statisticalCalls()[0][2]).toMatchObject({ documentType: 'dsmb_charter', programId: PROGRAM });
+    expect(statisticalCalls()[0][2].expectedMarkdown).toMatch(/DSMB|Data Monitoring/i);
   });
 });
 
 describe('Biostatistics — Open in editor: every way it can fail', () => {
   it('does NOT navigate when the document create fails — and saves no section', async () => {
-    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Failed to create document' }, 500) : null));
+    wireStore((m, u, b) => (m === 'POST' && isStatisticalSave(u, b) ? res({ error: 'Failed to create document' }, 500) : null));
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
@@ -338,7 +334,7 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
   });
 
   it('says so, and stays put, when the session is not authenticated', async () => {
-    wireStore((m, u) => (m === 'POST' && u === DOC_URL ? res({ error: 'Authentication required' }, 401) : null));
+    wireStore((m, u, b) => (m === 'POST' && isStatisticalSave(u, b) ? res({ error: 'Authentication required' }, 401) : null));
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
@@ -348,16 +344,18 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
     expect(secCalls()).toHaveLength(0);
   });
 
-  it('does NOT navigate when the section create fails — the text would be lost', async () => {
-    wireStore((m, u) => (m === 'POST' && u === SEC_URL ? res({ error: 'Document is FROZEN/APPROVED' }, 403) : null));
+  it('does NOT navigate when the atomic receipt omits the saved section', async () => {
+    wireStore((m, u, b) => (m === 'POST' && isStatisticalSave(u, b)
+      ? res({ ...statisticalSaveReceipt(b), data: { ...statisticalSaveReceipt(b).data, sections: [] } }) : null));
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await biostatDocReady();
 
     fireEvent.click(screen.getByRole('button', { name: BIO_OPEN }));
 
-    expect(await screen.findByText(/its text did not save/, HANDOFF_NOTICE)).toBeTruthy();
+    expect(await screen.findByText(/Could not confirm whether the document was saved/, HANDOFF_NOTICE)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
+    expect(secCalls()).toHaveLength(0);
   });
 
   it('does NOT navigate when the request throws', async () => {
@@ -365,8 +363,8 @@ describe('Biostatistics — Open in editor: every way it can fail', () => {
        the statistical engine's two calls, so the surface would have no document
        to hand off — a different failure, which would pass this assertion for
        the wrong reason. */
-    wireStore((m, u) => {
-      if (m === 'POST' && (u === DOC_URL || u === SEC_URL)) throw new Error('network down');
+    wireStore((m, u, b) => {
+      if (m === 'POST' && isStatisticalSave(u, b)) throw new Error('network down');
       return null;
     });
     const onNav = vi.fn();

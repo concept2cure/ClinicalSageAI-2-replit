@@ -120,7 +120,7 @@ function sendValidationError(
   err: z.ZodError
 ) {
   console.warn(`[Enterprise Auth] ${code} validation failed:`, {
-    issues: err.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
+    issues: err.issues.map(e => ({ path: e.path.join('.'), message: e.message })),
   });
   return res.status(400).json({ error: code, message });
 }

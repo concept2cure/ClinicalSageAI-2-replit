@@ -137,7 +137,7 @@ describe('deadlines retain truthful memory availability', () => {
     expect(result.read).toEqual([]);
   });
 
-  it('keeps the unavailability notice ahead of content when the prompt budget trims', async () => {
+  it('keeps the unavailability notice when the prompt budget omits a whole working record', async () => {
     sources.latest.mockResolvedValue('Working summary '.repeat(200));
     sources.client.mockReturnValue(deferred<ClientResult>().promise);
     const promise = buildMemoryContextForChat({ ...INPUT, projectId: undefined, maxChars: 1000 });
@@ -145,7 +145,11 @@ describe('deadlines retain truthful memory availability', () => {
     const result = await promise;
     expect(result.memoryBlock).toContain('Client Memory unavailable (timeout)');
     expect(result.memoryBlock).toContain('Do not infer that missing memory or prior decisions do not exist');
-    expect(result.memoryBlock.indexOf('unavailable')).toBeLessThan(result.memoryBlock.indexOf('## Working Memory'));
+    expect(result.memoryBlock).not.toContain('Working summary');
+    expect(result.memoryBlock).toMatch(/incomplete|omitt|withheld|not (?:all|included|shown)/i);
+    expect(result.memoryBlock).toMatch(/budget|limit|fit|space/i);
+    expect(result.memoryBlock.trimEnd().endsWith('--- END PERSISTENT MEMORY CONTEXT ---')).toBe(true);
+    expect(result.read).toEqual([]);
     expect(result.memoryBlock.length).toBeLessThanOrEqual(1000);
     expect(result.diagnostics.trimmed).toBe(true);
   });

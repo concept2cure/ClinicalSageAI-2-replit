@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the batch-analyses tables match expected cells > §3.2.S.4.4 files both substance results, the second as the contradiction it is 9ms
+   → expected { …(3) } to deeply equal { …(3) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)

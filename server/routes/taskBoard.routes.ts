@@ -83,6 +83,9 @@ import {
 import { getSecureOrgId } from '../utils/tenantContext';
 import { unifiedTasks, taskDependencies } from '../../shared/schema';
 import { readTaskAssignmentOptions, readAssignableAccounts, assignmentFailure } from '../services/tasking/task-assignment';
+import { authorizeAuthoringProgram } from '../services/authoring/authoring-program-access';
+import { authorizeQmsContentRead } from '../services/qms/controlled-document-content';
+import { authorizeQmsTrainingRead, isQmsTrainingAssignee } from '../services/qms/training-assignment';
 
 const logger = createScopedLogger('task-board-routes');
 
@@ -164,6 +167,9 @@ interface TaskBoardItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Exact authoring document linked to this task, when its stored source is an
+   * authoring_document UUID. The editor independently verifies document access. */
+  sourceDocumentId?: string;
   due: string;
   /**
    * Machine-readable due date (ISO 8601) or null. The humanised `due` string
@@ -204,6 +210,176 @@ interface TaskBoardItem {
   };
   /** The owning store's own note (a blocker, a module, a catalogue key), when it has one. */
   detail?: string | null;
+  /**
+   * A review-route member's task (`review_route_id` set): where the route is
+   * acted on. The board never moves such a task (the server answers 409,
+   * ROUTE_TASK_OWNED_BY_ROUTE), so without this a reviewer who started from
+   * Tasks had no way to the version (J5 human test, J2's D4, 2026-11-06).
+   * Resolved as a task notice is (notification-record-target.ts,
+   * canonicalDocumentTarget); 'unresolved' when the version could not be read.
+   * The Vault checks access again when the version is opened.
+   */
+  reviewRoute?: ReviewRouteHome;
+  /** Native source identity is retained even when its current record cannot be opened. */
+  sourceEntityType?: string | null;
+  sourceEntityId?: string | null;
+  qualitySource?: QualitySource;
+}
+
+type ReviewRouteHome =
+  | { kind: 'vault'; documentId: string; programId: string | null }
+  | { kind: 'quality'; qmsDocumentId: string; programId: string | null }
+  | { kind: 'unresolved' };
+
+type QualityTab = 'sop' | 'capa' | 'deviations' | 'suppliers' | 'audits';
+type QualitySource = { kind: 'quality'; qmsTab: QualityTab; qmsDocumentId?: string; qmsIntent?: 'read'; programId: string | null }
+  | { kind: 'unresolved' };
+type NativeQualityKind = 'document' | 'training' | 'capa' | 'action' | 'deviation' | 'supplier' | 'audit';
+interface QualityReference { kind: NativeQualityKind; tab: QualityTab; id: string }
+const QUALITY_SOURCES: Record<string, { kind: NativeQualityKind; tab: QualityTab; key: RegExp }> = {
+  qms_document: { kind: 'document', tab: 'sop', key: /^([1-9]\d{0,9})$/ },
+  qms_periodic_review: { kind: 'document', tab: 'sop', key: /^qms-document:([1-9]\d{0,9})$/ },
+  qms_training: { kind: 'training', tab: 'sop', key: /^qms-document:([1-9]\d{0,9}):user:[1-9]\d{0,9}$/ },
+  capa_record: { kind: 'capa', tab: 'capa', key: /^capa:([0-9a-f-]{36})$/i },
+  capa_action: { kind: 'action', tab: 'capa', key: /^capa-action:([0-9a-f-]{36})$/i },
+  qms_deviation: { kind: 'deviation', tab: 'deviations', key: /^qms-deviation:([1-9]\d{0,9})$/ },
+  qms_supplier_audit: { kind: 'supplier', tab: 'suppliers', key: /^qms-supplier-audit:([1-9]\d{0,9})$/ },
+  qms_supplier_reapproval: { kind: 'supplier', tab: 'suppliers', key: /^qms-supplier-reapproval:([1-9]\d{0,9})$/ },
+  qms_internal_audit: { kind: 'audit', tab: 'audits', key: /^qms-internal-audit:([1-9]\d{0,9})$/ },
+};
+const hasQualitySource = (type: string | null) => type != null && Object.hasOwn(QUALITY_SOURCES, type);
+type SourceClient = { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
+
+function qualityReference(type: string | null, key: string | null): QualityReference | null {
+  if (!hasQualitySource(type) || typeof key !== 'string') return null;
+  const definition = QUALITY_SOURCES[type!], match = definition.key.exec(key);
+  if (!match) return null;
+  const id = match[1];
+  if (definition.kind === 'capa' || definition.kind === 'action') {
+    if (!VAULT_UUID.test(id)) return null;
+  } else if (!Number.isSafeInteger(Number(id)) || Number(id) > 2_147_483_647) return null;
+  return { kind: definition.kind, tab: definition.tab, id };
+}
+
+/** Open the existing exact document; assigned training readers retain their narrower released-text grant. */
+async function controlledQualitySource(client: SourceClient, orgId: number, userId: number, ref: QualityReference): Promise<QualitySource> {
+  const { rows } = await client.query('SELECT * FROM qms_documents WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL', [Number(ref.id), orgId]);
+  if (rows.length !== 1) return { kind: 'unresolved' };
+  const doc = rows[0] as Parameters<typeof authorizeQmsTrainingRead>[3];
+  if (ref.kind === 'training' && await isQmsTrainingAssignee(client, orgId, Number(ref.id), userId)) {
+    await authorizeQmsTrainingRead(client, orgId, userId, doc);
+    return { kind: 'quality', qmsTab: 'sop', qmsDocumentId: ref.id, qmsIntent: 'read', programId: null };
+  }
+  await authorizeQmsContentRead(client, orgId, userId, doc);
+  let programId: string | null = null;
+  if (doc.authoring_document_id != null) {
+    const authored = await client.query('SELECT client_program_id::text AS program_id FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [doc.authoring_document_id, orgId]);
+    const owner = authored.rows.length === 1 ? authored.rows[0].program_id : null;
+    if (typeof owner !== 'string' || !VAULT_UUID.test(owner)) return { kind: 'unresolved' };
+    programId = owner;
+  }
+  return { kind: 'quality', qmsTab: 'sop', qmsDocumentId: ref.id, programId };
+}
+
+/** A CAPA belongs to its recorded program; its action inherits that parent, never the task's stale placement. */
+async function capaQualitySource(client: SourceClient, orgId: number, userId: number, ref: QualityReference): Promise<QualitySource> {
+  const statement = ref.kind === 'action'
+    ? `SELECT c.id::text AS id,c.program_id FROM capa_actions a JOIN capa_records c ON c.id=a.capa_id
+       JOIN regulatory_programs rp ON rp.id::text=c.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL WHERE a.id=$1::uuid`
+    : `SELECT c.id::text AS id,c.program_id FROM capa_records c
+       JOIN regulatory_programs rp ON rp.id::text=c.program_id AND rp.organization_id=$2 AND rp.deleted_at IS NULL WHERE c.id=$1::uuid`;
+  const { rows } = await client.query(statement, [ref.id, orgId]);
+  const programId = rows.length === 1 ? rows[0].program_id : null;
+  if (typeof programId !== 'string' || !VAULT_UUID.test(programId)) return { kind: 'unresolved' };
+  await authorizeAuthoringProgram(client, { tenantId: orgId, actor: { id: String(userId), email: null }, programId, forWrite: false });
+  return { kind: 'quality', qmsTab: 'capa', programId };
+}
+
+/** Organization records keep organization scope; a native title never assigns them a project. */
+async function organizationQualitySource(client: SourceClient, orgId: number, ref: QualityReference): Promise<QualitySource> {
+  const statement = ref.kind === 'supplier'
+    ? 'SELECT id FROM qms_suppliers WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL'
+    : ref.kind === 'audit' ? 'SELECT id FROM qms_internal_audits WHERE id=$1 AND organization_id=$2'
+      : 'SELECT id FROM qc_deviations WHERE id=$1 AND organization_id=$2';
+  const { rows } = await client.query(statement, [Number(ref.id), orgId]);
+  return rows.length === 1 ? { kind: 'quality', qmsTab: ref.tab, programId: null } : { kind: 'unresolved' };
+}
+
+async function loadQualitySources(client: SourceClient | null, orgId: number, userId: number,
+  rows: Array<{ sourceEntityType: string | null; sourceEntityId: string | null }>): Promise<Map<string, QualitySource>> {
+  const sources = new Map<string, QualitySource>();
+  for (const row of rows) {
+    if (!hasQualitySource(row.sourceEntityType)) continue;
+    const key = `${row.sourceEntityType}:${row.sourceEntityId}`;
+    if (sources.has(key)) continue;
+    const ref = qualityReference(row.sourceEntityType, row.sourceEntityId);
+    let target: QualitySource = { kind: 'unresolved' };
+    try {
+      if (client && ref && Number.isSafeInteger(userId) && userId > 0) {
+        target = ref.kind === 'document' || ref.kind === 'training' ? await controlledQualitySource(client, orgId, userId, ref)
+          : ref.kind === 'capa' || ref.kind === 'action' ? await capaQualitySource(client, orgId, userId, ref)
+            : await organizationQualitySource(client, orgId, ref);
+      }
+    } catch { logger.warn('task board: a native Quality source is unavailable', { organizationId: orgId, sourceEntityType: row.sourceEntityType }); }
+    sources.set(key, target);
+  }
+  return sources;
+}
+
+function qualitySourceFields(row: { sourceEntityType: string | null; sourceEntityId: string | null }, sources: Map<string, QualitySource>):
+  Pick<TaskBoardItem, 'sourceEntityType' | 'sourceEntityId' | 'qualitySource'> {
+  if (!hasQualitySource(row.sourceEntityType)) return {};
+  return { sourceEntityType: row.sourceEntityType, sourceEntityId: row.sourceEntityId,
+    qualitySource: sources.get(`${row.sourceEntityType}:${row.sourceEntityId}`) ?? { kind: 'unresolved' } };
+}
+
+const VAULT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** One org-scoped read of the Vault versions the board's Vault route tasks are on. */
+async function loadRouteVersions(
+  client: { query: (text: string, values: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  organizationId: number,
+  canonicalIds: string[],
+): Promise<Map<string, { documentId: string; programId: string | null }> | null> {
+  if (!canonicalIds.length) return new Map();
+  try {
+    const { rows } = await client.query(
+      `SELECT cd.canonical_id, vd.id::text AS vault_id, vd.program_id::text AS program_id
+         FROM canonical_documents cd
+         JOIN vault.documents vd
+           ON vd.id::text = cd.source_refs->'vault_documents'->>'nativeId'
+          AND vd.organization_id = cd.organization_id AND vd.deleted_at IS NULL
+        WHERE cd.organization_id = $1 AND cd.canonical_id = ANY($2::text[])`,
+      [organizationId, canonicalIds],
+    );
+    const out = new Map<string, { documentId: string; programId: string | null }>();
+    for (const r of rows) {
+      if (typeof r.canonical_id !== 'string' || typeof r.vault_id !== 'string' || !VAULT_UUID.test(r.vault_id)) continue;
+      const programId = typeof r.program_id === 'string' && VAULT_UUID.test(r.program_id) ? r.program_id.toLowerCase() : null;
+      out.set(r.canonical_id, { documentId: r.vault_id.toLowerCase(), programId });
+    }
+    return out;
+  } catch (error) {
+    logger.warn('task board: review-route versions unread', { err: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+function routeHomeOf(
+  row: { reviewRouteId?: string | null; sourceEntityType: string | null; sourceEntityId: string | null },
+  versions: Map<string, { documentId: string; programId: string | null }> | null,
+  quality?: QualitySource,
+): ReviewRouteHome | undefined {
+  if (!row.reviewRouteId) return undefined;
+  if (row.sourceEntityType === 'qms_document' && typeof row.sourceEntityId === 'string' && /^[1-9]\d{0,9}$/.test(row.sourceEntityId)) {
+    return quality?.kind === 'quality' && quality.qmsDocumentId
+      ? { kind: 'quality', qmsDocumentId: quality.qmsDocumentId, programId: quality.programId } : { kind: 'unresolved' };
+  }
+  if (row.sourceEntityType === 'canonical_document' && typeof row.sourceEntityId === 'string') {
+    const version = versions?.get(row.sourceEntityId);
+    if (version) return { kind: 'vault', ...version };
+  }
+  return { kind: 'unresolved' };
 }
 
 /** What the board says about its own read: which stores it could not read. */
@@ -249,6 +425,7 @@ function humanizeDue(dueDate: Date | null, status: string): string {
  * real column, it does not invent: unmapped values fall through to 'unified'.
  */
 function mapSource(sourceEntityType: string | null): string {
+  if (hasQualitySource(sourceEntityType)) return 'quality';
   if (!sourceEntityType) return 'unified';
   const s = sourceEntityType.toLowerCase();
   if (s.includes('template')) return 'template';
@@ -356,6 +533,8 @@ export function otherStoreCards(
 async function readOwnBoard(
   db: RequestDb,
   organizationId: number,
+  client?: Parameters<typeof loadRouteVersions>[0],
+  actorUserId = NaN,
 ): Promise<{ tasks: TaskBoardItem[]; mirrored: Set<string> }> {
   const mirrored = new Set<string>();
   // Soft-deleted (archived) rows never reach the board (D24).
@@ -404,6 +583,11 @@ async function readOwnBoard(
     blocksMap.set(dep.predecessorTaskId, blocks);
   }
 
+  const routeCanonicalIds = [...new Set(rows.flatMap(row =>
+    row.reviewRouteId && row.sourceEntityType === 'canonical_document' && typeof row.sourceEntityId === 'string' ? [row.sourceEntityId] : []))];
+  const routeVersions = client ? await loadRouteVersions(client, organizationId, routeCanonicalIds) : null;
+  const qualitySources = await loadQualitySources(client ? { query: (text, values = []) => client.query(text, values) } : null, organizationId, actorUserId, rows);
+
   const tasks: TaskBoardItem[] = rows.map(row => {
     const status = row.status;
     const blocked =
@@ -431,11 +615,17 @@ async function readOwnBoard(
       comments: jsonArrayLength(row.comments),
       attachments: jsonArrayLength(row.attachments),
       source: mapSource(row.sourceEntityType),
+      ...qualitySourceFields(row, qualitySources),
+      ...(row.sourceEntityType === 'authoring_document' &&
+        typeof row.sourceEntityId === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.sourceEntityId)
+        ? { sourceDocumentId: row.sourceEntityId } : {}),
       due: humanizeDue(row.dueDate, status),
       dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
       phase: row.lifecyclePhase ?? null,
       blocked,
       estimatedHours: row.estimatedHours ?? null,
+      ...(row.reviewRouteId ? { reviewRoute: routeHomeOf(row, routeVersions, qualitySources.get(`${row.sourceEntityType}:${row.sourceEntityId}`)) } : {}),
     };
   });
 
@@ -496,7 +686,7 @@ export default function createTaskBoardRoutes(): Router {
 
       // The board's own store: its cards keep their move and edit behaviour.
       try {
-        ({ tasks, mirrored: mirroredProjectTaskIds } = await readOwnBoard(db, organizationId));
+        ({ tasks, mirrored: mirroredProjectTaskIds } = await readOwnBoard(db, organizationId, requestPgClient(req), Number(req.userId ?? req.user?.id)));
       } catch (error) {
         if (!isMissingTable(error)) throw error;
         logger.error('task board: unified_tasks unprovisioned — the board reports it unread', {

@@ -8,6 +8,8 @@ import { readTaskNavigationTarget, taskActorScope, type TaskActorScope } from '.
 import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
+import { setEditorTarget } from '../editorTarget';
+import { openNotificationRecord } from '../notificationNavigation';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState, ErrorState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
@@ -107,6 +109,14 @@ interface TaskItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Exact UUID of an authoring document linked by the task's persisted source. */
+  sourceDocumentId?: string;
+  /** A review-route member's task: where the route is acted on (taskBoard.routes.ts
+   *  reviewRoute). The board does not move such a task; the route completes it. */
+  reviewRoute?: { kind: 'vault'; documentId: string; programId: string | null } | { kind: 'quality'; qmsDocumentId: string; programId?: string | null } | { kind: 'unresolved' };
+  sourceEntityType?: string | null;
+  sourceEntityId?: string | null;
+  qualitySource?: QualitySource;
   /** Humanised label for display only — never parsed for overdue state. */
   due: string;
   /**
@@ -143,6 +153,15 @@ interface TaskItem {
   /** unified_tasks.description: what the task asks (Assign review stores the
    *  author's instructions to the reviewer here). Null when none was given. */
   description?: string | null;
+}
+
+type QualitySource = { kind: 'quality'; qmsTab: 'sop' | 'capa' | 'deviations' | 'suppliers' | 'audits'; qmsDocumentId?: string; qmsIntent?: 'read'; programId: string | null }
+  | { kind: 'unresolved' };
+function qualitySourceLabel(source: Extract<QualitySource, { kind: 'quality' }>): string {
+  if (source.qmsDocumentId) return source.qmsIntent === 'read' ? 'Read and acknowledge' : 'Open the controlled document';
+  const labels = { sop: 'Open controlled document register', capa: 'Open CAPA register', deviations: 'Open deviation register',
+    suppliers: 'Open supplier register', audits: 'Open internal audit register' };
+  return labels[source.qmsTab];
 }
 
 /** The screen that owns another store's work, as a person reads it. A project's
@@ -281,7 +300,8 @@ function ruleActions(r: RuleRow): string {
   const types = (Array.isArray(r.actions) ? r.actions : [])
     .map(a => (a && typeof a.type === 'string' ? ruleWords(a.type).toLowerCase() : ''))
     .filter(Boolean);
-  return types.length ? types.join(' and ') : 'no action';
+  // A rule with no action configured says so as configuration ("none set"), not as a clearance.
+  return types.length ? types.join(' and ') : 'none set';
 }
 
 function AutomationCard() {
@@ -598,6 +618,12 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
   const [sel, setSel] = useState<TaskItem | null>(null);
+  // A task detail must close before the registered surface-leave guard will
+  // allow navigation. Keep the verified project+document target for that next
+  // render, not a free-floating docId that opens against the previous project.
+  const pendingEditorNav = useRef<{ docId: string; programId: string; programTitle: string } | null>(null);
+  /** A review-route task's record, opened once its drawer has closed (the leave guard refuses while it is open). */
+  const pendingRouteNav = useRef<Parameters<typeof openNotificationRecord>[0] | null>(null);
   const selectedTask = useRef(sel);
   selectedTask.current = sel;
   const mounted = useRef(true);
@@ -659,6 +685,29 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const leaveGuard = useRef<() => string | null>(() => null);
   leaveGuard.current = () => boardBusyGuard()?.reason ?? (sel ? 'A task detail is open — close it first.' : null);
   useEffect(() => registerSurfaceLeaveGuard(() => leaveGuard.current()), []);
+  useEffect(() => {
+    const target = pendingRouteNav.current;
+    if (!target || sel !== null) return;
+    pendingRouteNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    try { openNotificationRecord(target, onNav); } catch (e) {
+      setActionErr(e instanceof Error ? e.message : 'The document could not be opened.');
+    }
+  }, [sel, user, isCurrent, onNav]);
+  useEffect(() => {
+    const pending = pendingEditorNav.current;
+    if (!pending || sel !== null) return;
+    pendingEditorNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    // The drawer is now gone. Reuse the normal leave guard so an open
+    // signature or unsaved form can still veto the transition.
+    const refusal = surfaceLeaveRefusal();
+    if (refusal) { setActionErr(refusal); return; }
+    publishShellProject({ id: pending.programId, title: pending.programTitle });
+    setEditorTarget({ docType: null, docId: pending.docId,
+      programId: pending.programId, programTitle: pending.programTitle });
+    onNav('document-authoring');
+  }, [sel, user, isCurrent, onNav]);
   const targetMessage = useTaskTarget({
     scope: taskActorScope(user), isCurrent, read: liveTasks, reloadKey,
     reload: () => setReloadKey(key => key + 1),
@@ -1312,7 +1361,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         {!t.readOnly && <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
                       </div>
-                      {canWrite && !t.readOnly && (
+                      {canWrite && !t.readOnly && !t.reviewRoute && (
                         <div className="tb-move" onClick={e => e.stopPropagation()}>
                           <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
                           <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
@@ -1534,6 +1583,46 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           byId={byId}
           projLabel={projLabel}
           onClose={() => setSel(null)}
+          onOpenDocument={(documentId) => {
+            if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+            const task = tasks.find(t => t.taskId === sel.taskId);
+            const project = projectOpts.rows.filter(p => String(p.id) === String(task?.project));
+            const programId = project.length === 1 ? project[0].regulatoryProgramId : null;
+            if (liveTasks.error || liveTasks.loading || boardIncomplete ||
+                projectOpts.error || projectOpts.loading ||
+                task?.sourceDocumentId !== documentId ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId) ||
+                typeof programId !== 'string' ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(programId)) {
+              setActionErr('The task’s exact document and project could not be verified from the current Tasking and Projects records. Refresh both lists before opening the editor.');
+              return;
+            }
+            setActionErr('');
+            pendingEditorNav.current = { docId: documentId, programId, programTitle: project[0].name };
+            setSel(null);
+          }}
+          onOpenRoute={(task) => {
+            const route = task.reviewRoute;
+            if (!route || route.kind === 'unresolved' || !currentTaskActor(taskActorScope(user), isCurrent)) return 'The document could not be opened. Reopen the task.';
+            if (route.kind === 'vault' && !route.programId) return 'This version is in no project. Open it from the Vault.';
+            pendingRouteNav.current = route.kind === 'vault'
+              ? { surface: 'vault', label: 'Open the version in the Vault', params: { documentId: route.documentId }, programId: route.programId }
+              : { surface: 'quality', label: 'Open the controlled document', params: { qmsDocumentId: route.qmsDocumentId }, programId: route.programId ?? null };
+            setSel(null);
+            return null;
+          }}
+          onOpenQuality={(task) => {
+            const current = tasks.find(item => item.taskId === task.taskId), source = current?.qualitySource;
+            if (!currentTaskActor(taskActorScope(user), isCurrent) || liveTasks.loading || liveTasks.error || boardIncomplete || !source || source.kind !== 'quality') {
+              return 'The Quality record could not be verified. Reopen the task.';
+            }
+            const params: Record<string, string> = { qmsTab: source.qmsTab };
+            if (source.qmsDocumentId) params.qmsDocumentId = source.qmsDocumentId;
+            if (source.qmsIntent === 'read') params.qmsIntent = source.qmsIntent;
+            pendingRouteNav.current = { surface: 'quality', label: qualitySourceLabel(source), params, programId: source.programId };
+            setSel(null);
+            return null;
+          }}
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
@@ -1571,6 +1660,10 @@ interface TaskDetailProps {
   byId: (id: string) => TaskItem | undefined;
   projLabel: (id: string) => string;
   onClose: () => void;
+  onOpenDocument?: (documentId: string) => void;
+  /** Opens where a review-route task is acted on; returns a refusal to show, or null. */
+  onOpenRoute?: (t: TaskItem) => string | null;
+  onOpenQuality?: (t: TaskItem) => string | null;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
   onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
@@ -1642,7 +1735,39 @@ function OtherStoreTaskDetail({ t, projName, onClose, onOpenHome, opening, error
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+/** A review-route task's place (J5 human test, J2's D4, 2026-11-06): the board
+ *  cannot move it (the server answers 409), so the drawer opens where it is signed. */
+function RouteTaskSection({ t, onOpenRoute }: { t: TaskItem; onOpenRoute?: (t: TaskItem) => string | null }) {
+  const [err, setErr] = useState('');
+  const route = t.reviewRoute;
+  if (!route) return null;
+  const label = route.kind === 'vault' ? 'Open the version in the Vault' : route.kind === 'quality' ? 'Open the controlled document' : null;
+  return (
+    <div className="tb-detail-sec">
+      <div className="tb-detail-note">
+        This task is a step on a review route. It is reviewed and signed on the document, and the route completes it; it is not moved on the board.
+      </div>
+      {label && onOpenRoute
+        ? <button type="button" className="btn primary" onClick={() => setErr(onOpenRoute(t) ?? '')}>{I.fileText} {label}</button>
+        : <div role="status" className="tb-detail-note">The document this route is on could not be read. Open it from the Vault or Quality.</div>}
+      {err && <div role="alert" className="tb-detail-note">{err}</div>}
+    </div>
+  );
+}
+
+function QualityTaskSection({ t, onOpen }: { t: TaskItem; onOpen?: (task: TaskItem) => string | null }) {
+  const [error, setError] = useState('');
+  if (!t.qualitySource || t.reviewRoute) return null;
+  const source = t.qualitySource;
+  return <div className="tb-detail-sec">
+    {source.kind === 'quality' && onOpen
+      ? <button type="button" className="btn ghost" onClick={() => setError(onOpen(t) ?? '')}>{qualitySourceLabel(source)}</button>
+      : <div role="status" className="tb-detail-note">The Quality record could not be read. Reopen the task after checking access in Quality.</div>}
+    {error && <div role="alert" className="tb-detail-note">{error}</div>}
+  </div>;
+}
+
+function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, onOpenQuality, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
   actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
@@ -1738,6 +1863,15 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           <div><label>Came from</label><span>{src.t}</span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
+        {t.sourceDocumentId && onOpenDocument && (
+          <div className="tb-detail-sec">
+            <button type="button" className="btn primary" onClick={() => onOpenDocument(t.sourceDocumentId!)}>
+              {I.fileText} Open linked document in editor
+            </button>
+          </div>
+        )}
+        <RouteTaskSection t={t} onOpenRoute={onOpenRoute} />
+        <QualityTaskSection t={t} onOpen={onOpenQuality} />
         {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
           projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
           disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}
@@ -1854,7 +1988,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
               screens' scroll container, journey-v2.css) gave this spacer a
               height and padding and pushed Advance onto its own row. */}
           <span className="tb-grow" />
-          {canWrite && (
+          {canWrite && !t.reviewRoute && (
             <>
               <button className="btn ghost" disabled={assignmentBlocked || t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
               <button className="btn primary" disabled={assignmentBlocked || t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
@@ -2320,8 +2454,9 @@ function filingHomeErrorText(error: unknown): string {
 function publishNativeTaskHome(t: TaskItem, projName: (id: string) => string | null): void {
   if (!t.home?.programId) return;
             publishShellProject({ id: t.home.programId, title: t.home.programTitle || (t.home.projectId != null ? projName(String(t.home.projectId)) : null) || 'Project' });
+            // The project page lists tasks and approvals on Plan (D3-4, 2026-11-08).
             stashNavParamsForTarget(t.home.surface, {
-              stage: 'review', workId: t.taskId,
+              stage: 'plan', workId: t.taskId,
               workSource: t.home.source || t.source, workNativeId: t.home.nativeId || '',
             });
  }

@@ -79,7 +79,7 @@ router.post('/letterhead/preview', handle(async (req, res) => {
 
 const letterheadRenderSchema = z.object({ title: z.string().trim().min(1).max(300).optional(),
     paragraphs: z.array(z.string().max(10000)).max(100).optional(), purpose: z.enum(['company', 'submission']).optional(),
-    sequenceId: z.number().int().positive().optional(), variantId: z.string().uuid().optional() }).strict().superRefine((value, ctx) => {
+    sequenceId: z.number().int().positive().optional(), variantId: z.string().guid().optional() }).strict().superRefine((value, ctx) => {
       if (value.purpose === 'submission' && !value.sequenceId) ctx.addIssue({ code: 'custom', message: 'A submission sequence is required for filing correspondence.', path: ['sequenceId'] });
       if (value.purpose !== 'submission' && value.sequenceId !== undefined) ctx.addIssue({ code: 'custom', message: 'A sequence reference requires submission correspondence.', path: ['sequenceId'] });
       if (value.variantId && value.purpose !== 'submission') ctx.addIssue({ code: 'custom', message: 'A stationery variant requires an admitted submission sequence.', path: ['variantId'] });

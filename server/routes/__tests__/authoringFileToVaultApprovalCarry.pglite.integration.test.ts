@@ -19,7 +19,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import type express from 'express';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { LEAF_SOURCE_PGLITE_DDL } from '../../db/pglite-harness';
-import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import {
+  PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, REVIEW_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS, releaseAnaDraft,
+} from './_authoring-canvas-fixture';
 import { computeDocHash } from '../../services/authoring/authoring-export';
 import { vaultVersionNotTransmittable, readVaultLifecycles } from '../../services/vault/vault-lifecycle';
 import { hashLifecyclePayload } from '../../services/regulatory/canonicalDocumentStore';
@@ -69,7 +71,7 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     // AUTHORING_ACCESS_DDL: the current member and project anchor the authoring
     // access gate reads (authorizeAuthoringProgram, 0e4ccf46f).
-    prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}
+    prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${REVIEW_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}
       ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'),
@@ -103,6 +105,8 @@ beforeAll(async () => {
       'migrations/20261018_company_legal_registry.sql',
       // The review route header (RR1a): the Vault lifecycle read lists each version's round.
       'migrations/20261023_review_routes.sql',
+      // The saved-document checks an AnA draft is released by (releaseAnaDraft) read the review store.
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
     ],
   });
   h.db = jdb.db;
@@ -116,7 +120,7 @@ beforeAll(async () => {
   }));
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  app = makeApp(router, { dbClient: jdb.pool });
 }, T);
 
 afterAll(async () => {
@@ -125,13 +129,14 @@ afterAll(async () => {
 
 interface Sig { meaning: 'REVIEWER' | 'APPROVER'; who: { email: string; name: string }; at: string; content?: 'other' }
 
-/** A drafted document, put into the state the signing routes leave it in. */
+/** A drafted document, released as production releases an AnA draft (releaseAnaDraft), then put into the state the signing routes leave it in. */
 async function signedDocument(title: string, status: string, sigs: Sig[]): Promise<{ docId: string; ids: string[]; digest: string }> {
   const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   const docId: string = res.body.data.doc.id;
+  await releaseAnaDraft(app, author, res.body.data);
   const digest = await computeDocHash(jdb.pool as never, docId, ORG);
   const ids: string[] = [];
   for (const s of sigs) {

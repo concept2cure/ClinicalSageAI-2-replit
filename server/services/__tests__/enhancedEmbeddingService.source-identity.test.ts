@@ -36,7 +36,8 @@ const HYBRID_ROWS = [
 ];
 
 /** searchHybrid runs only under a tenant key (server/db/currentTenant.ts); these
- *  cases are about source identity, so any well-formed key will do. */
+ *  cases are about source identity, so any well-formed key will do. Both take a
+ *  required project scope (F1, 2026-11-05; evidence-retrieval-project-scope.pglite.test.ts). */
 const ORG_UUID = '11111111-1111-4111-8111-111111111111';
 
 const isEnrichment = (sql: string) => /source_id,\s*source_type\s+FROM\s+lumen_data_atoms/i.test(sql);
@@ -58,7 +59,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID });
+    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID, projectIds: [10] });
 
     expect(out).toHaveLength(2);
     expect(out[0]).toMatchObject({ id: 'atom-1', content: 'c1', sourceId: 'artifact-abc', sourceType: 'data_room_upload' });
@@ -75,7 +76,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID });
+    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID, projectIds: [10] });
 
     expect(out).toHaveLength(2); // retrieval still returns its rows
     expect(out.every((r) => r.sourceId === null && r.sourceType === null)).toBe(true);
@@ -90,7 +91,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [{ id: 'atom-3', content: 'c3', title: 't3', similarity: '0.95', atom_type: 'finding' }] };
     });
 
-    const out = await svc.searchSimilar('q', 5, 0.7, 'org-uuid-1');
+    const out = await svc.searchSimilar('q', 5, 0.7, { organizationUuid: 'org-uuid-1', projectIds: [10] });
 
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({

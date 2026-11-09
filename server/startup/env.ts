@@ -165,7 +165,34 @@ function refuseHostedOwnerCredential(env: NodeJS.ProcessEnv): void {
   }
 }
 
+/**
+ * Codespaces is a request-serving environment, not a migration worker.
+ * An owner credential inherited from old Codespaces secrets can be consumed by
+ * legacy routes that still read DATABASE_URL directly. Reject it at boot,
+ * even when APP_DATABASE_URL is correctly set for the canonical pool.
+ */
+export const CODESPACES_OWNER_CREDENTIAL_NAMES = [
+  ...HOSTED_OWNER_CREDENTIAL_NAMES,
+  'DATABASE_URL_ADMIN',
+  'NEON_DATABASE_URL_ADMIN',
+  'DATABASE_URL_DIRECT',
+] as const;
+
+export function assertCodespacesNoOwnerCredential(env: NodeJS.ProcessEnv = process.env): void {
+  if (env.C2C_CODESPACE !== '1' && env.CODESPACES !== 'true') return;
+  const present = CODESPACES_OWNER_CREDENTIAL_NAMES
+    .filter(name => typeof env[name] === 'string' && !!env[name]?.trim());
+  if (present.length) {
+    throw new Error(
+      '[FATAL] Codespaces request-serving API must not contain database owner/maintenance credentials: ' +
+      present.join(', ') +
+      '. Remove them from Codespaces secrets and use a separate authorized maintenance environment.'
+    );
+  }
+}
+
 export function validateEnvironment(): void {
+  assertCodespacesNoOwnerCredential(process.env);
   const isProduction = process.env.NODE_ENV === 'production';
   // Production serves from the runtime role (APP_DATABASE_URL, NOSUPERUSER
   // NOBYPASSRLS) and needs nothing else: the owner credential is the deploy's,

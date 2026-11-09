@@ -1,0 +1,10 @@
+MUTATION 3-verdict-always-clears in server/services/ectd/leaf-release-verdicts.ts (on the final code and tests, 2026-11-09T03:16:27.918931Z): replaced [  if (!uploadSha256) return ONBOARDING_UPLOAD_NOT_APPROVED;] with [  return null;]
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > an upload with no approved copy in the project's Vault is a DOCUMENT_NOT_APPROVED warning that blocks every release verdict 42ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in the project's Vault clear the upload, with no new act 26ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes in the Vault but not approved do not clear it 21ms
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in another project's Vault do not clear it 23ms
+      Tests  3 failed | 1 passed | 10 skipped (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > an upload with no approved copy in the project's Vault is a DOCUMENT_NOT_APPROVED warning that blocks every release verdict
+AssertionError: expected [] to have a length of 1 but got +0
+restored sha256 f1cf1c2d5e1ee1b6e5780e88be7837af159a6bba80255fa89cb0be99ee7d7171 (expected f1cf1c2d5e1ee1b6e5780e88be7837af159a6bba80255fa89cb0be99ee7d7171)

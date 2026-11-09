@@ -37,7 +37,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { shellProgramId } from '../shellProject';
 import { setEditorTarget } from '../editorTarget';
 import {
-  PY_ROLES, PY_STATUS, PY_RISK,
+  pyRoleLabel, PY_STATUS, PY_RISK,
   pyProgress, pyNextTasks, pyRiskProfile,
   type PyType, type PyTask, type PyPyramid, type PyGlobalConfig,
 } from '../fixtures/pyramid-data';
@@ -158,7 +158,7 @@ function PyDashboard({ pyr, onPhase, onTask }: { pyr: PyPyramid; onPhase: (id: s
             <button key={t.id} className="py-next-row" onClick={() => onTask(t.id)}>
               {t.critical && <span className="py-crit" title="Critical path">critical</span>}
               <span className="t">{t.name}</span>
-              <span className="m">{PY_ROLES[t.role] || t.role} · {t.hours}h</span>
+              <span className="m">{pyRoleLabel(t.role)} · {t.hours}h</span>
               <span className="go">{I.chevRight}</span>
             </button>
           ))}
@@ -169,9 +169,11 @@ function PyDashboard({ pyr, onPhase, onTask }: { pyr: PyPyramid; onPhase: (id: s
 
 // ── Work breakdown ────────────────────────────────────────────────────────
 
-function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
+export function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus, rowPlan }: {
   pyr: PyPyramid; focusPhase: string | null; onTask: (id: string) => void;
   tasks: PyTask[]; onStatus: (id: string, status: string) => void;
+  /** A project's line for the task: its due date and owner (S11 step 3, PyramidProject.tsx). */
+  rowPlan?: (task: PyTask) => React.ReactNode;
 }) {
   const phases = focusPhase ? pyr.phases.filter(p => p.id === focusPhase) : pyr.phases;
   return (
@@ -187,9 +189,10 @@ function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
                   <button className="py-row-main" onClick={() => onTask(t.id)}>
                     {t.critical && <span className="py-crit">critical</span>}
                     <span className="py-row-t">{t.name}</span>
-                    <span className="py-row-role">{PY_ROLES[t.role] || t.role}</span>
+                    <span className="py-row-role">{pyRoleLabel(t.role)}</span>
                     <span className="py-row-h">{t.hours}h</span>
                     {t.risk && <span className="py-row-risk" data-sev={t.risk.severity} title={`Risk: ${t.risk.severity}`}>{I.alertTriangle}</span>}
+                    {rowPlan?.(t)}
                   </button>
                   <select className="py-row-status" data-tone={PY_STATUS[t.status]?.tone} value={t.status}
                     onChange={e => onStatus(t.id, e.target.value)} aria-label={`Status of ${t.name}`}>
@@ -222,8 +225,10 @@ function PyramidDeliverables({ task, onWorkDocument, projectOpen }: {
   </div>;
 }
 
-function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen }: {
+export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen, plan }: {
   pyr: PyPyramid; task: PyTask; tasks: PyTask[];
+  /** A project's schedule and owner for the task (S11 step 3, PyramidProject.tsx). */
+  plan?: React.ReactNode;
   onClose: () => void; onTask: (id: string) => void;
   onStatus: (id: string, status: string) => void;
   onWorkDocument?: (title: string) => void;
@@ -267,8 +272,10 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocume
               onChange={e => onStatus(task.id, e.target.value)}>
               {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
             </select>
-            <span className="py-sheet-meta">{PY_ROLES[task.role] || task.role} · {task.hours}h{task.critical && ' · critical path'}</span>
+            <span className="py-sheet-meta">{pyRoleLabel(task.role)} · {task.hours}h{task.critical && ' · critical path'}</span>
           </div>
+
+          {plan}
 
           {task.risk && (
             <div className="py-sheet-sec">
@@ -338,7 +345,7 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocume
  * beside a reverted control reads as an explanation of the current value
  * rather than of a write that did not land.
  */
-function statusRefusal(why: string): string {
+export function statusRefusal(why: string): string {
   return 'The status was not saved — ' + why.replace(/[.\s]+$/, '') + '. The task is unchanged.';
 }
 
@@ -347,6 +354,12 @@ function statusRefusal(why: string): string {
 const PyLoading = ({ label }: { label: string }) => (
   <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '18px 10px' }}>{label}</div>
 );
+
+/** What AnA is asked when a person works on an IND deliverable from a task: one wording, here and in the project's
+ *  program plan (PyramidProject.tsx). */
+export function workDocumentAsk(title: string, taskName: string): string {
+  return `Work on the IND deliverable “${title}” for the task “${taskName}” in this project. First inspect existing authoring documents and current data-room/catalogue/Vault sources, following all relevant pages. Open the existing working document if present. For an official form, dataset or signature deliverable, use the supplied original and prepare a completion checklist; do not invent a completed form, data file or signature. For narrative documents, prepare a source-grounded draft with draft_authoring_document in the existing editor. Preserve source references and state missing evidence. Do not mark the task or document complete or approved.`;
+}
 
 // ── Shell ─────────────────────────────────────────────────────────────────
 
@@ -726,7 +739,7 @@ export function PyramidShell(_props: SurfaceViewProps) {
           if (!programId) return;
           const task = openObj;
           setOpenTask(null);
-          _props.onAsk(`Work on the IND deliverable “${title}” for the task “${task.name}” in this project. First inspect existing authoring documents and current data-room/catalogue/Vault sources, following all relevant pages. Open the existing working document if present. For an official form, dataset or signature deliverable, use the supplied original and prepare a completion checklist; do not invent a completed form, data file or signature. For narrative documents, prepare a source-grounded draft with draft_authoring_document in the existing editor. Preserve source references and state missing evidence. Do not mark the task or document complete or approved.`);
+          _props.onAsk(workDocumentAsk(title, task.name));
         } : undefined} />}
     </div>
   );

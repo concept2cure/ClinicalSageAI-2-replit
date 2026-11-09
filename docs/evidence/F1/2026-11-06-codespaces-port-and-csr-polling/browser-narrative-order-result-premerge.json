@@ -1,0 +1,344 @@
+{
+  "status": "passed",
+  "startedAt": "2026-11-06T21:33:28.746Z",
+  "jobId": 1,
+  "programId": "ff0a5984-4100-460a-8b80-97de5a8efb10",
+  "documentId": "03fff5f2-0e49-4a35-8766-eb1a7645217a",
+  "cases": [
+    {
+      "name": "Actual completed run is visible inside the existing CSR editor",
+      "status": "passed",
+      "injected": false
+    },
+    {
+      "name": "Newer native completion survives an older running response",
+      "status": "passed",
+      "injected": true,
+      "responseOrder": [
+        {
+          "sequence": 1,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10225
+        },
+        {
+          "sequence": 2,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10225
+        },
+        {
+          "sequence": 4,
+          "delivered": "native-complete",
+          "elapsedMs": 14303
+        },
+        {
+          "sequence": 3,
+          "delivered": "injected-older-running",
+          "elapsedMs": 14353
+        },
+        {
+          "sequence": 5,
+          "delivered": "native-complete",
+          "elapsedMs": 14621
+        },
+        {
+          "sequence": 6,
+          "delivered": "native-complete",
+          "elapsedMs": 14629
+        }
+      ],
+      "statusRequests": 6,
+      "limitation": "End-to-end check; editor headings refresh can remount this panel. Hook RED/GREEN is the causal unit proof."
+    },
+    {
+      "name": "Newer status-read error survives an older success, then native completion settles",
+      "status": "passed",
+      "injected": true,
+      "responseOrder": [
+        {
+          "sequence": 1,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10095
+        },
+        {
+          "sequence": 2,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10099
+        },
+        {
+          "sequence": 4,
+          "delivered": "injected-newer-read-failure",
+          "elapsedMs": 14111
+        },
+        {
+          "sequence": 3,
+          "delivered": "injected-older-running",
+          "elapsedMs": 14161
+        },
+        {
+          "sequence": 5,
+          "delivered": "native-complete",
+          "elapsedMs": 16160
+        },
+        {
+          "sequence": 6,
+          "delivered": "native-complete",
+          "elapsedMs": 16482
+        },
+        {
+          "sequence": 7,
+          "delivered": "native-complete",
+          "elapsedMs": 16492
+        }
+      ],
+      "statusRequests": 7,
+      "limitation": "Read-error assertion precedes the next native poll."
+    }
+  ],
+  "blockedWrites": [],
+  "allowedPresenceRequests": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/awareness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/awareness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/03fff5f2-0e49-4a35-8766-eb1a7645217a/awareness"
+    }
+  ],
+  "scope": "Native GET baseline plus explicitly injected browser response-order faults; no narrative generation or model/agency request.",
+  "native": {
+    "runId": 1,
+    "status": "complete",
+    "composed": 95,
+    "selected": 95,
+    "sectionsWritten": [
+      "14.3.3",
+      "12.3.2"
+    ]
+  },
+  "faults": [
+    {
+      "newerFailure": false,
+      "phase": "native",
+      "requests": 6,
+      "held": true,
+      "heldSequence": 3,
+      "released": true,
+      "newerReturned": true,
+      "requestOrder": [
+        {
+          "sequence": 1,
+          "phase": "prime",
+          "elapsedMs": 10218
+        },
+        {
+          "sequence": 2,
+          "phase": "prime",
+          "elapsedMs": 10221
+        },
+        {
+          "sequence": 3,
+          "phase": "hold-next",
+          "elapsedMs": 12246
+        },
+        {
+          "sequence": 4,
+          "phase": "newer",
+          "elapsedMs": 14246
+        },
+        {
+          "sequence": 5,
+          "phase": "native",
+          "elapsedMs": 14515
+        },
+        {
+          "sequence": 6,
+          "phase": "native",
+          "elapsedMs": 14523
+        }
+      ],
+      "responseOrder": [
+        {
+          "sequence": 1,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10225
+        },
+        {
+          "sequence": 2,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10225
+        },
+        {
+          "sequence": 4,
+          "delivered": "native-complete",
+          "elapsedMs": 14303
+        },
+        {
+          "sequence": 3,
+          "delivered": "injected-older-running",
+          "elapsedMs": 14353
+        },
+        {
+          "sequence": 5,
+          "delivered": "native-complete",
+          "elapsedMs": 14621
+        },
+        {
+          "sequence": 6,
+          "delivered": "native-complete",
+          "elapsedMs": 14629
+        }
+      ],
+      "routeErrors": []
+    },
+    {
+      "newerFailure": true,
+      "phase": "native",
+      "requests": 7,
+      "held": true,
+      "heldSequence": 3,
+      "released": true,
+      "newerReturned": true,
+      "requestOrder": [
+        {
+          "sequence": 1,
+          "phase": "prime",
+          "elapsedMs": 10091
+        },
+        {
+          "sequence": 2,
+          "phase": "prime",
+          "elapsedMs": 10093
+        },
+        {
+          "sequence": 3,
+          "phase": "hold-next",
+          "elapsedMs": 12109
+        },
+        {
+          "sequence": 4,
+          "phase": "newer",
+          "elapsedMs": 14109
+        },
+        {
+          "sequence": 5,
+          "phase": "native",
+          "elapsedMs": 16115
+        },
+        {
+          "sequence": 6,
+          "phase": "native",
+          "elapsedMs": 16377
+        },
+        {
+          "sequence": 7,
+          "phase": "native",
+          "elapsedMs": 16385
+        }
+      ],
+      "responseOrder": [
+        {
+          "sequence": 1,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10095
+        },
+        {
+          "sequence": 2,
+          "delivered": "injected-running-prime",
+          "elapsedMs": 10099
+        },
+        {
+          "sequence": 4,
+          "delivered": "injected-newer-read-failure",
+          "elapsedMs": 14111
+        },
+        {
+          "sequence": 3,
+          "delivered": "injected-older-running",
+          "elapsedMs": 14161
+        },
+        {
+          "sequence": 5,
+          "delivered": "native-complete",
+          "elapsedMs": 16160
+        },
+        {
+          "sequence": 6,
+          "delivered": "native-complete",
+          "elapsedMs": 16482
+        },
+        {
+          "sequence": 7,
+          "delivered": "native-complete",
+          "elapsedMs": 16492
+        }
+      ],
+      "routeErrors": []
+    }
+  ],
+  "finishedAt": "2026-11-06T21:34:21.819Z"
+}

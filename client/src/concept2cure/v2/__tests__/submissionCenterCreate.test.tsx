@@ -149,7 +149,7 @@ describe('SubmissionCenter — the next sequence', () => {
   it('starts the next sequence in the submission\'s region, numbered after the last, of the type chosen', async () => {
     const seqPosts = serve([seq(9, '0000')]);
     render(<SubmissionCenter {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
 
     const start = await screen.findByRole('button', { name: 'Start sequence 0001' });
     fireEvent.change(screen.getByLabelText('Type of sequence 0001'), { target: { value: 'response' } });
@@ -162,7 +162,7 @@ describe('SubmissionCenter — the next sequence', () => {
   it('numbers after the highest sequence in the submission\'s own region — numbering restarts per region', async () => {
     serve([seq(9, '0000'), seq(10, '0001'), seq(11, '0004', 'ema')]);
     render(<SubmissionCenter {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open the sequences' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
     expect(await screen.findByRole('button', { name: 'Start sequence 0002' })).toBeTruthy();
     // An original is sequence 0000; a follow-up is never offered as one.
     const types = Array.from((screen.getByLabelText('Type of sequence 0002') as HTMLSelectElement).options).map((o) => o.value);
@@ -182,6 +182,23 @@ describe('SubmissionCenter — the next sequence', () => {
     expect(screen.queryByRole('button', { name: 'Start sequence 0000' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Start sequence 0042' }));
     await waitFor(() => expect(seqPosts).toEqual([{ region: 'fda', sequenceNumber: '0042', type: 'amendment' }]));
+  });
+
+  /* D0 §7 check 2 and §8.1 (the coordinating session, 2026-11-09): the header's "New submission" is the view's one
+     orange fill, and starting a sequence asks nothing of AnA, so it is the hairline secondary with no spark, in both
+     places. */
+  it.each([
+    ['the first sequence, on an empty submission', [] as unknown[], 'Start sequence 0000'],
+    ['the next sequence', [seq(9, '0000')], 'Start sequence 0001'],
+  ])('%s is started from a hairline button: not orange, no spark', async (_label, rows, name) => {
+    serve(rows);
+    render(<SubmissionCenter {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
+    const start = await screen.findByRole('button', { name });
+    expect(start.className).toBe('btn ghost');
+    expect(start.querySelector('svg')).toBeNull();
+    // The view's one orange fill is the header's.
+    expect(Array.from(document.querySelectorAll('.sp-primary, .btn.primary')).map((b) => b.textContent?.trim())).toEqual(['New submission']);
   });
 
   it('an empty submission with nothing declared offers 0000, or a declaration', async () => {

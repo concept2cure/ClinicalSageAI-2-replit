@@ -1,0 +1,146 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 6608ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 1909ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections 407ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections 345ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial 1132ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 1187ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 850ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 820ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 1105ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 2377ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 720ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 1078ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 319ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 484ms
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 689ms
+   → expected 'This working copy’s exact filing coul…' to contain 'Choose a supported writing region bef…'
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > does not fetch on mount and permits a read-only frozen viewer to inspect historical references 35ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > rechecks the same exact saved record before adopting selectors and never writes or generates 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > offers the explicit check in the existing build disclosure 276ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > distinguishes admitted empty history from a later failed read without touching editing state 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > adopts no old build preferences and does not invoke editor refresh or review navigation 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > explicit saved source reference checks > requires clearing an explicit new selection and checking again before reuse 24ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no affirmative envelope instead of claiming empty history 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong document instead of claiming empty history 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses wrong project instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses missing record instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid time instead of claiming empty history 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses invalid manifest instead of claiming empty history 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new event time between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses new manifest between Check and Use without choosing another record 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > refuses no latest record between Check and Use without choosing another record 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > exact historical read receipts > checks ownership again after JSON parsing, never publishing a late private result 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > coalesces immediate Check and Use attempts without a second active historical read 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after project ABA and requires a fresh Check 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after document ABA and requires a fresh Check 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after account ABA and requires a fresh Check 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after session ABA and requires a fresh Check 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > hides historical metadata after source ABA and requires a fresh Check 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after dirty opens and closes during its read 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not admit a late reuse after review opens and closes during its read 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > does not let a retired finalizer release a newer Check after a document round trip 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved-reference ownership and synchronous lanes > never lets a pending Use replace a new selection or revive after source ABA 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during dirty 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during sealed 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during view-only 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during ceremony 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during building 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during unknown 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during accept-unknown 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > allows Check but refuses Use during review-pane 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > historical reads do not release write or review holds > ignores a late Use when an ordinary build lane started and ended during the read 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > refuses a mismatched bearer before a new Check can start without rerendering 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > hides a late check after bearer claims change before rerendering 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > hides a late reuse after bearer claims change before rerendering 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > keeps a pending check through genuine same-revision refresh with captured credentials 5ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx > saved reference native credential ownership > keeps a pending reuse through genuine same-revision refresh with captured credentials 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > offers assembly for retained readable data without requiring original bytes 393ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > hands only the explicitly pinned ProjectHome sources to the shared chooser 1042ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > refuses a sixth explicit pin without silently dropping a source 621ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source-first entry in the existing Data Room rail > retains the selected Vault UUID namespace instead of converting it into a Data Room id 1176ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not offer an explicit section-only read as a whole-document build target 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > withdraws a whole-document build target when the fresh list confirms section-only access 104ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > opens the exact project/document with selected identities and no write or generation 98ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > holds an unavailable target after the fresh read instead of opening another document 120ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > refuses a foreign scoped document list rather than presenting it as empty 37ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > retains sources for the existing-editor creation remedy without dispatching a pre-mount creator or writing 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > shared read-only source target chooser > does not publish while another governed form is open 101ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after project round trip 149ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after account change 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after organization change 82ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > refuses a delayed final target read after unmount 65ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source chooser late results stay in the original context > discards a late target list when the selected source changes 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > deep-copies at publication and at every read 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'empty selection' 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Data Room id' 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'invalid Vault id' 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'duplicate source' 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > rejects malformed selections instead of a plain-target fallback: 'six selected sources' 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > existing editor target channel validates and owns source references > requires the exact document/project and does not manufacture source intent from copied URLs 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after project round trip before the editor mounts 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after account change before the editor mounts 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after organization change before the editor mounts 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > retires a published source target after session replacement before the editor mounts 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > keeps a legitimate handoff after the chooser closes and its component unmounts 95ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > registers ownership before the existing editor-target event is delivered 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > refuses an unregistered raw source-target copy 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx > source publisher ownership before receiver mount > preserves ordinary target behavior across project visits 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > governed source intake rules > explains the reason rule and refuses a short or overlong reason before sending 543ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > shows exclusion before expansion and explains the disabled work and AnA actions 293ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > keeps retained readable text available to AnA when the original file is unavailable 150ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx > source catalogue disclosures and availability > recovers from no search matches by clearing the search rather than hiding project sources 345ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 130ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 90ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 114ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"textAvailable":"true"}) 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"completed","retryable":false,"reasonCode":null,"leaseExpiresAt":"not-a-date","nextRetryAt":null}}) 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"future_state","retryable":false,"reasonCode":null,"leaseExpiresAt":null,"nextRetryAt":null}}) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a plan without the feature': its own words, and no retry offered 61ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a part not in this release': its own words, and no retry offered 59ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a role that cannot read it': its own words, and no retry offered 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a project not in this organization': its own words, and no retry offered 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a server failure' stays a failed read that a retry can fix 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'no response at all' stays a failed read that a retry can fix 54ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > names Quality as the source and opens the CAPA register after closing its drawer 1487ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > opens sop through the existing Quality destination 567ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > opens sop through the existing Quality destination 385ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > opens deviations through the existing Quality destination 483ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > opens suppliers through the existing Quality destination 314ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > opens audits through the existing Quality destination 205ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > says a missing source is unavailable and offers no guessed Quality door 241ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx > Tasks retains native Quality destinations > keeps the existing leave guard ahead of project publication and parameter handoff 174ms
+ ✓ client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx > Quality native record handoff in the unified workflow > accepts only known register targets and retains exact personal-reader targets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx > Quality native record handoff in the unified workflow > starts the native register on first mount and uses its existing action handler for later handoffs 38ms
+ ✓ client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx > Quality native record handoff in the unified workflow > shows a refused same-surface register handoff without remounting the controlled editor 28ms
+ ✓ client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx > Quality native record handoff in the unified workflow > shows project ownership and lifecycle beside shared Quality source facts 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it
+AssertionError: expected 'This working copy’s exact filing coul…' to contain 'Choose a supported writing region bef…'
+
+Expected: "Choose a supported writing region before drafting."
+Received: "This working copy’s exact filing could not be verified. Re-read it before drafting."
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:291:66
+    289|     const pane = within(screen.getByTestId('ai-draft-panel'));
+    290|     expect((pane.getByLabelText('Region') as HTMLSelectElement).value)…
+    291|     expect(pane.getByTestId('ai-draft-region-note').textContent).toCon…
+       |                                                                  ^
+    292|     fireEvent.change(pane.getByLabelText('Region'), { target: { value:…
+    293|     await waitFor(() => expect(generate.disabled).toBe(false)); fireEv…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 116 passed (117)
+   Start at  21:34:00
+   Duration  64.99s (transform 9.57s, setup 1.43s, import 15.61s, tests 31.03s, environment 14.00s)
+

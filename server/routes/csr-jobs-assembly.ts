@@ -21,7 +21,7 @@
 import { Router, type Request, type Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { CsrScopeError, requireCsrJobAccess } from '../services/csr/project-scope';
 import {
   CsrAssemblyRunError, enqueueCsrAssembly, readCsrJobBinding, readLatestCsrAssembly, startCsrAssembly,
@@ -42,21 +42,18 @@ export interface CsrAssemblyRouteHelpers {
   placementDeps?: () => Promise<CsrPlacementDeps>;
 }
 
-function requireDb(): NonNullable<typeof db> {
-  if (!db) throw new Error('[csr-jobs-assembly] Drizzle db is not initialized');
-  return db;
-}
-const q = () => queryableFromDrizzle(requireDb());
+/** The request's pinned, tenant-scoped connection, not the shared pool (ci:requestdb-coverage, 2026-11-09). */
+const q = (req: Request) => queryableFromDrizzle(requestDb(req));
 
-async function defaultPlacementDeps(): Promise<CsrPlacementDeps> {
+async function defaultPlacementDeps(req: Request): Promise<CsrPlacementDeps> {
   const { getSequence, upsertLeaf, removeLeaf } = await import('../services/submission-service/submission-service.js');
   return {
     getSequence: (id, ctx) => getSequence(id, ctx),
     upsertLeaf: (input, ctx) => upsertLeaf(input as unknown as Parameters<typeof upsertLeaf>[0], ctx),
     removeLeaf: (leafId, sequenceId, ctx, reason) => removeLeaf(leafId, sequenceId, ctx, reason),
-    priorStudyLeaves: (args) => readPriorCsrStudyLeaves(q(), args),
+    priorStudyLeaves: (args) => readPriorCsrStudyLeaves(q(req), args),
     submissionProgram: async (submissionId, organizationId) => {
-      const { rows } = await q().query(`SELECT program_id::text AS program_id, title FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [submissionId, organizationId]);
+      const { rows } = await q(req).query(`SELECT program_id::text AS program_id, title FROM submissions WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [submissionId, organizationId]);
       return rows[0] ? { programId: rows[0].program_id ?? null, title: String(rows[0].title) } : null;
     },
   };
@@ -77,7 +74,7 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
     const organizationId = h.resolveOrganizationId(req);
     const userId = h.resolveUserId(req);
     if (organizationId == null || userId == null) { res.status(401).json({ error: 'A signed-in user is required' }); return null; }
-    const allowed = write ? await h.requireWriteAccess(organizationId, jobId, userId) : await requireCsrJobAccess(requireDb(), organizationId, jobId, userId);
+    const allowed = write ? await h.requireWriteAccess(organizationId, jobId, userId) : await requireCsrJobAccess(requestDb(req), organizationId, jobId, userId);
     if (!allowed) { res.status(404).json({ error: 'Job not found' }); return null; }
     return { organizationId, userId, jobId };
   };
@@ -87,7 +84,7 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
       const s = await scope(req, res, true);
       if (!s) return;
       const body = (req.body ?? {}) as { notApplicable?: unknown; supplied?: unknown };
-      const queued = await enqueueCsrAssembly(q(), { ...s, notApplicable: body.notApplicable, supplied: body.supplied });
+      const queued = await enqueueCsrAssembly(q(req), { ...s, notApplicable: body.notApplicable, supplied: body.supplied });
       (h.start ?? startCsrAssembly)(queued.assemblyId, s.organizationId);
       return res.status(202).json(queued);
     } catch (err) { return sendError(res, err, 'queue the CSR assembly', { jobId: req.params.jobId }); }
@@ -97,7 +94,7 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      return res.json({ assembly: await readLatestCsrAssembly(q(), s.organizationId, s.jobId) });
+      return res.json({ assembly: await readLatestCsrAssembly(q(req), s.organizationId, s.jobId) });
     } catch (err) { return sendError(res, err, 'read the CSR assembly', { jobId: req.params.jobId }); }
   });
 
@@ -105,8 +102,8 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      const { programId } = await readCsrJobBinding(q(), s.organizationId, s.jobId);
-      return res.json(await listSuppliedCandidates(q(), { organizationId: s.organizationId, programId }));
+      const { programId } = await readCsrJobBinding(q(req), s.organizationId, s.jobId);
+      return res.json(await listSuppliedCandidates(q(req), { organizationId: s.organizationId, programId }));
     } catch (err) { return sendError(res, err, 'list the Vault documents that can be supplied', { jobId: req.params.jobId }); }
   });
 
@@ -114,7 +111,7 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
     try {
       const s = await scope(req, res, false);
       if (!s) return;
-      return res.json({ sequences: await listCsrPlacementTargets(q(), s.organizationId, s.jobId) });
+      return res.json({ sequences: await listCsrPlacementTargets(q(req), s.organizationId, s.jobId) });
     } catch (err) { return sendError(res, err, 'list the sequences the CSR can be placed in', { jobId: req.params.jobId }); }
   });
 
@@ -125,8 +122,8 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
       const assemblyId = h.parseJobIdParam(req.params.assemblyId);
       const sequenceId = h.parseJobIdParam((req.body ?? {}).sequenceId);
       if (assemblyId == null || sequenceId == null) return res.status(400).json({ error: 'Choose an assembly and a sequence.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
-      const deps = await (h.placementDeps ?? defaultPlacementDeps)();
-      const placement = await placeCsrAssembly(q(), deps, { ...s, assemblyId, sequenceId, reason: (req.body ?? {}).reason,
+      const deps = await (h.placementDeps ? h.placementDeps() : defaultPlacementDeps(req));
+      const placement = await placeCsrAssembly(q(req), deps, { ...s, assemblyId, sequenceId, reason: (req.body ?? {}).reason,
         keepOnFile: (req.body ?? {}).keepOnFile, withdraw: (req.body ?? {}).withdraw });
       return res.json({ placement });
     } catch (err) { return sendError(res, err, 'place the CSR files', { jobId: req.params.jobId }); }
@@ -139,8 +136,8 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
       const assemblyId = h.parseJobIdParam(req.params.assemblyId);
       const sequenceId = h.parseJobIdParam(req.query.sequenceId);
       if (assemblyId == null || sequenceId == null) return res.status(400).json({ error: 'Choose an assembly and a sequence.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
-      const deps = await (h.placementDeps ?? defaultPlacementDeps)();
-      return res.json({ lifecycle: await previewCsrPlacementLifecycle(q(), deps, { ...s, assemblyId, sequenceId }) });
+      const deps = await (h.placementDeps ? h.placementDeps() : defaultPlacementDeps(req));
+      return res.json({ lifecycle: await previewCsrPlacementLifecycle(q(req), deps, { ...s, assemblyId, sequenceId }) });
     } catch (err) { return sendError(res, err, 'read what the CSR files replace', { jobId: req.params.jobId }); }
   });
 
@@ -150,8 +147,8 @@ export function csrAssemblyRouter(h: CsrAssemblyRouteHelpers): Router {
       if (!s) return;
       const assemblyId = h.parseJobIdParam(req.params.assemblyId);
       if (assemblyId == null) return res.status(400).json({ error: 'Choose an assembly.', code: 'CSR_PLACEMENT_TARGET_REQUIRED' });
-      const deps = await (h.placementDeps ?? defaultPlacementDeps)();
-      return res.json({ placement: await withdrawPartialCsrPlacement(q(), deps, { ...s, assemblyId, reason: (req.body ?? {}).reason }) });
+      const deps = await (h.placementDeps ? h.placementDeps() : defaultPlacementDeps(req));
+      return res.json({ placement: await withdrawPartialCsrPlacement(q(req), deps, { ...s, assemblyId, reason: (req.body ?? {}).reason }) });
     } catch (err) { return sendError(res, err, 'withdraw the partly placed CSR files', { jobId: req.params.jobId }); }
   });
 

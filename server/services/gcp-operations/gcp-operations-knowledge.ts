@@ -8,9 +8,14 @@
  * protocol-deviation classification, and Trial Master File / essential-document
  * planning.
  *
- * NO LLM, NO network, NO database, NO cross-service imports. Every exported
- * function is closed-form and reproducible: identical input always yields
- * identical output.
+ * NO LLM, NO network, NO database. Beyond the consent-element record and the
+ * sibling reference module, its only imports are the shared stated-input
+ * readers and their refusal. Every exported function is closed-form and
+ * reproducible: identical input always yields identical output. An omitted or
+ * null boolean reads as not_stated (inputStates) and is never scored, graded
+ * or classified as false; each tool definition says what its omission leaves
+ * out. A malformed value a function reads is refused by field (Rule 2 S5c,
+ * 2026-11-02).
  *
  * Regulatory grounding (citations are returned verbatim in the engine output):
  *   - ICH E6(R3) Good Clinical Practice (Step 4, 2025-01-06; FDA adoption 2025),
@@ -51,6 +56,15 @@ import {
   type TmfZone,
   type TrialStage,
 } from './gcp-operations-reference';
+import { ComputationRefusal } from '../ana-biostats/computation-engine';
+import {
+  allOf,
+  anyOf,
+  booleanInputStates,
+  statedNumber,
+  statedOneOf,
+  unstated,
+} from '../immunogenicity/immunogenicity-reference';
 
 export type {
   Common483Finding,
@@ -70,9 +84,9 @@ export type TrialPhase = 'phase1' | 'phase2' | 'phase3' | 'phase4' | 'device' | 
 export type MonitoringApproach = 'centralized' | 'on_site' | 'remote' | 'triggered';
 export type Severity = 'minor' | 'moderate' | 'major' | 'critical';
 
-/** Coerce an arbitrary numeric input into a finite number with a default. */
-function num(value: number | undefined, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+/** A stated whole number of at least `min`; undefined when left out, refused by field when malformed. */
+function statedCount(field: string, value: unknown, min: number): number | undefined {
+  return statedNumber(field, value, (n) => Number.isInteger(n) && n >= min, `a whole number, at least ${min}`);
 }
 
 /** Clamp a number into [min, max]. */
@@ -100,22 +114,6 @@ function uniq(items: string[]): string[] {
 }
 
 /** Whether a fact was left out (undefined or null). Absent and false are different facts. */
-function unstated(value: unknown): boolean {
-  return value === undefined || value === null;
-}
-
-/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
-function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => f === true)) return true;
-  return facts.some(unstated) ? undefined : false;
-}
-
-/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
-function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => !unstated(f) && f !== true)) return false;
-  return facts.some(unstated) ? undefined : true;
-}
-
 /** `test` applied to a stated input; undefined (not assessed) when the input was left out. */
 function stated<T>(value: T | null | undefined, test: (v: T) => boolean): boolean | undefined {
   return value === undefined || value === null ? undefined : test(value);
@@ -161,6 +159,18 @@ export interface MonitoringPlanParams {
   organizationId?: string | number;
 }
 
+const TRIAL_PHASES: readonly TrialPhase[] = ['phase1', 'phase2', 'phase3', 'phase4', 'device', 'other'];
+const MONITORING_FLAGS: ReadonlyArray<keyof MonitoringPlanParams> = [
+  'isFirstInHuman', 'isMultiRegional', 'usesInvestigationalDevice', 'blinded', 'vulnerablePopulation',
+  'complexProtocol', 'electronicDataCapture', 'experiencedSites', 'priorInspectionFindings',
+];
+/** The context facts that each add a critical-to-quality factor when true. */
+const CTQ_BY_FLAG = {
+  blinded: 'blinding maintenance',
+  vulnerablePopulation: 'vulnerable-participant safeguards',
+  usesInvestigationalDevice: 'device accountability',
+} as const;
+
 export interface MonitoringMix {
   centralizedPercent: number;
   onSitePercent: number;
@@ -187,6 +197,8 @@ export interface MonitoringPlanResult {
   regulatoryCitations: string[];
   /** Risk-factor inputs that were not stated. */
   notAssessed: Array<keyof MonitoringPlanParams>;
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   warnings: string[];
   notes: string[];
 }
@@ -348,10 +360,15 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
   // 2026-10-15: the phase used to default to 'phase3' and every factor was read
   // with `=== true`, so `{}` scored 0/100, "low", with the low-risk mix. An
   // unstated factor now leaves the level 'not_assessed' (score and mix null)
-  // unless it cannot change the band; notAssessed names the inputs.
-  const numberOfSites =
-    typeof params.numberOfSites === 'number' && Number.isFinite(params.numberOfSites) ? params.numberOfSites : undefined;
-  const enrollment = num(params.plannedEnrollment, 0);
+  // unless it cannot change the band; notAssessed names the inputs. 2026-11-02 (S5c): a malformed value was
+  // read as a stated one (isFirstInHuman 'true' or phase 'Phase 1' scored as absent, numberOfSites '50' as
+  // unstated but not listed); each is now refused by field.
+  const inputStates = booleanInputStates(params, MONITORING_FLAGS);
+  statedOneOf('phase', params.phase, TRIAL_PHASES);
+  statedOneOf('noveltyOfIntervention', params.noveltyOfIntervention, ['established', 'novel', 'first_in_class']);
+  statedOneOf('endpointObjectivity', params.endpointObjectivity, ['objective', 'subjective', 'mixed']);
+  const numberOfSites = statedCount('numberOfSites', params.numberOfSites, 1);
+  const enrollment = statedCount('plannedEnrollment', params.plannedEnrollment, 1);
   const warnings: string[] = [];
   const notes: string[] = [];
 
@@ -506,6 +523,10 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
       citation: '21 CFR 812.140; 812.150',
     });
   }
+  const openCtq = (Object.keys(CTQ_BY_FLAG) as Array<keyof typeof CTQ_BY_FLAG>).filter((k) => unstated(params[k]));
+  if (openCtq.length > 0) {
+    notes.push(`Not assessed: ${openCtq.map((k) => `${CTQ_BY_FLAG[k]} (${k} not stated)`).join('; ')}. Each is a critical-to-quality factor when its fact is true.`);
+  }
 
   // ── Key risk indicators ──
   const kris: KeyRiskIndicator[] = [
@@ -608,7 +629,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     'Process for amending the monitoring plan as risks evolve.',
   ];
 
-  if (enrollment > 0 && numberOfSites !== undefined && numberOfSites > 0 && enrollment / numberOfSites < 3) {
+  if (enrollment !== undefined && numberOfSites !== undefined && enrollment / numberOfSites < 3) {
     warnings.push(
       `Low planned enrollment per site (~${round(enrollment / numberOfSites, 1)} participants/site) may dilute statistical signal in central monitoring; consider central monitoring at the program level.`,
     );
@@ -644,6 +665,7 @@ export function designMonitoringPlan(params: MonitoringPlanParams): MonitoringPl
     planComponents,
     regulatoryCitations,
     notAssessed,
+    inputStates,
     warnings,
     notes,
   };
@@ -681,8 +703,15 @@ export interface InspectionReadinessParams {
   organizationId?: string | number;
 }
 
+const READINESS_FLAGS: ReadonlyArray<keyof InspectionReadinessParams> = [
+  'tmfContemporaneous', 'consentDocumentationComplete', 'delegationLogCurrent', 'trainingRecordsComplete',
+  'ipAccountabilityReconciled', 'safetyReportingCurrent', 'protocolDeviationsLogged', 'capaProcessInPlace',
+  'dataTraceabilityVerified', 'computerizedSystemsValidated', 'monitoringReportsCurrent', 'priorInspectionFindings',
+];
+
 export interface InspectionReadinessResult {
-  inspectionTarget: InspectionTarget;
+  /** not_stated when left out; common483Findings are then the sponsor ones (see warnings). */
+  inspectionTarget: InspectionTarget | 'not_stated';
   /** 'not_assessed' while an area is not assessed, unless the assessed areas already make it 'not_ready'. */
   overallReadiness: 'ready' | 'gaps' | 'not_ready' | 'not_assessed';
   /** Mean of the area scores; null while any area is not assessed. */
@@ -693,6 +722,8 @@ export interface InspectionReadinessResult {
   dataTraceabilityChecks: string[];
   prioritizedActions: string[];
   regulatoryCitations: string[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   warnings: string[];
 }
 
@@ -732,13 +763,16 @@ function capaPostureFor(params: InspectionReadinessParams): string[] {
   } else {
     capaPosture.push('CAPA process status not provided — confirm a documented CAPA SOP (root-cause analysis, effectiveness checks, closure tracking) is in place.');
   }
-  if (typeof params.openCapas !== 'number' || !Number.isFinite(params.openCapas)) {
+  const openCapas = statedCount('openCapas', params.openCapas, 0);
+  if (openCapas === undefined) {
     capaPosture.push('Number of open CAPAs not provided — confirm the open-CAPA count and closure status before inspection.');
-  } else if (params.openCapas > 0) {
-    capaPosture.push(`${params.openCapas} open CAPA(s) — prioritize closure or document interim controls and a realistic closure timeline before inspection.`);
+  } else if (openCapas > 0) {
+    capaPosture.push(`${openCapas} open CAPA(s) — prioritize closure or document interim controls and a realistic closure timeline before inspection.`);
   }
   if (params.priorInspectionFindings === true) {
     capaPosture.push('Prior inspection findings present — prepare evidence that previous CAPAs were implemented and verified effective; inspectors commonly verify recurrence.');
+  } else if (unstated(params.priorInspectionFindings)) {
+    capaPosture.push('Prior inspection findings not provided — if there are any, prepare evidence that their CAPAs were implemented and verified effective.');
   }
   capaPosture.push('Maintain a chronological inspection-readiness binder: organizational charts, SOP index, deviation/CAPA log, and a back-room/front-room SOP.');
   return capaPosture;
@@ -750,7 +784,12 @@ function capaPostureFor(params: InspectionReadinessParams): string[] {
 export function assessInspectionReadiness(
   params: InspectionReadinessParams,
 ): InspectionReadinessResult {
-  const target: InspectionTarget = params.inspectionTarget ?? 'sponsor';
+  // 2026-11-02 (S5c): a target outside the vocabulary crashed, null read as sponsor with no warning, a
+  // percentage outside 0-100 was clamped (150 read as 100) and a malformed flag read as not provided. A malformed
+  // value is now refused by field, and a null target reads as an omitted one.
+  const inputStates = booleanInputStates(params, READINESS_FLAGS);
+  const statedTarget = statedOneOf('inspectionTarget', params.inspectionTarget, Object.keys(COMMON_483_FINDINGS) as InspectionTarget[]);
+  const target: InspectionTarget = statedTarget ?? 'sponsor';
   const warnings: string[] = [];
 
   // 2026-10-15: essentialDocsCompletePercent used to default to 100, openCapas
@@ -759,9 +798,7 @@ export function assessInspectionReadiness(
   // read "No documented CAPA process detected". What was not provided is now
   // 'not_assessed' with a null score, and says so.
   const docPct =
-    typeof params.essentialDocsCompletePercent === 'number' && Number.isFinite(params.essentialDocsCompletePercent)
-      ? clamp(params.essentialDocsCompletePercent, 0, 100)
-      : null;
+    statedNumber('essentialDocsCompletePercent', params.essentialDocsCompletePercent, (n) => n >= 0 && n <= 100, 'a percentage from 0 to 100') ?? null;
 
   // Helper: boolean to component score; null when not provided.
   const flag = (v: boolean | undefined): number | null => (v === true ? 100 : v === false ? 0 : null);
@@ -892,7 +929,7 @@ export function assessInspectionReadiness(
   if (params.computerizedSystemsValidated === false) {
     warnings.push('Unvalidated computerised systems are a high-visibility finding under ICH E6(R3) Annex 1 §4.3 and 21 CFR Part 11.');
   }
-  if (params.inspectionTarget === undefined) {
+  if (statedTarget === undefined) {
     warnings.push('Inspection target not stated — the common Form FDA-483 findings listed are those for a sponsor inspection; state inspectionTarget for an investigator, CRO or IRB inspection.');
   }
 
@@ -906,7 +943,7 @@ export function assessInspectionReadiness(
   ]);
 
   return {
-    inspectionTarget: target,
+    inspectionTarget: statedTarget ?? 'not_stated',
     overallReadiness,
     readinessScore,
     areaScores,
@@ -915,6 +952,7 @@ export function assessInspectionReadiness(
     dataTraceabilityChecks,
     prioritizedActions,
     regulatoryCitations,
+    inputStates,
     warnings,
   };
 }
@@ -945,6 +983,15 @@ export interface GCPComplianceParams {
   organizationId?: string | number;
 }
 
+/** The facts assess_gcp_compliance reads; the first nine decide principles P1–P9, in order. */
+const GCP_FLAGS: ReadonlyArray<keyof GCPComplianceParams> = [
+  'ethicsApprovalCurrent', 'informedConsentProcessCompliant', 'independentEthicsReviewDocumented',
+  'riskBasedQualityManagement', 'proportionateProcessesDocumented', 'sponsorOversightDocumented',
+  'personnelQualified', 'ipManagementCompliant', 'dataGovernanceAlcoaPlus',
+  'vendorOversightDocumented', 'delegationDocumented', 'protocolFollowedWithChangeControl',
+  'safetyReportingCompliant', 'computerizedSystemsValidated', 'auditTrailReviewPerformed', 'recordRetentionCompliant',
+];
+
 export interface PrincipleAssessment {
   principleId: string;
   title: string;
@@ -954,7 +1001,7 @@ export interface PrincipleAssessment {
 }
 
 export interface GCPGap {
-  domain: 'oversight' | 'delegation' | 'data_governance' | 'computerized_systems' | 'safety' | 'consent' | 'quality_management';
+  domain: 'oversight' | 'delegation' | 'protocol_compliance' | 'data_governance' | 'computerized_systems' | 'safety' | 'consent' | 'quality_management';
   severity: Severity;
   description: string;
   remediation: string;
@@ -962,13 +1009,28 @@ export interface GCPGap {
 }
 
 export interface GCPComplianceResult {
-  overallStatus: 'compliant' | 'minor_gaps' | 'major_gaps' | 'critical_gaps';
-  complianceScore: number;
+  /** 'not_assessed' unless every answer the unstated facts (notAssessed) could take gives the same status. */
+  overallStatus: 'compliant' | 'minor_gaps' | 'major_gaps' | 'critical_gaps' | 'not_assessed';
+  /** Percent of the nine principles that conform; null while any principle is unverified. */
+  complianceScore: number | null;
   principleAssessments: PrincipleAssessment[];
   gaps: GCPGap[];
   strengths: string[];
   regulatoryCitations: string[];
+  /** The facts that were not stated. */
+  notAssessed: Array<keyof GCPComplianceParams>;
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   notes: string[];
+}
+
+type GCPStatus = Exclude<GCPComplianceResult['overallStatus'], 'not_assessed'>;
+
+/** The status that gaps and a count of conforming principles (of nine) give. */
+function gcpStatus(gaps: GCPGap[], conforming: number): GCPStatus {
+  if (gaps.some((g: GCPGap) => g.severity === 'critical')) return 'critical_gaps';
+  if (gaps.filter((g: GCPGap) => g.severity === 'major').length >= 2 || round((conforming / 9) * 100, 0) < 55) return 'major_gaps';
+  return gaps.length > 0 || conforming < 9 ? 'minor_gaps' : 'compliant';
 }
 
 /**
@@ -978,8 +1040,7 @@ export interface GCPComplianceResult {
  */
 export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceResult {
   const notes: string[] = [];
-  const gaps: GCPGap[] = [];
-  const strengths: string[] = [];
+  const inputStates = booleanInputStates(params, GCP_FLAGS);
 
   // Map each principle to the controlling input(s).
   const conformOf = (v: boolean | undefined): PrincipleAssessment['conforms'] =>
@@ -1001,7 +1062,7 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
         conforms === 'conforms'
           ? findingPass
           : conforms === 'unverified'
-            ? `${findingFail} (status not provided — verify and document).`
+            ? `Status not provided — verify and document. If it is not met: ${findingFail}`
             : findingFail,
       citation: p.citation,
     });
@@ -1069,133 +1130,29 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
   );
 
   // ── Gap synthesis (cross-cutting domains) ──
-  if (params.sponsorOversightDocumented === false || params.sponsorOversightDocumented === undefined) {
-    gaps.push({
-      domain: 'oversight',
-      severity: params.sponsorOversightDocumented === false ? 'major' : 'moderate',
-      description: 'Sponsor oversight of trial conduct and delegated activities is not documented.',
-      remediation: 'Document an oversight framework: governance meetings, KPIs/KRIs, escalation paths and review of delegated-party performance.',
-      citation: 'ICH E6(R3) Annex 1 §3.9 (sponsor oversight); 21 CFR 312.50',
-    });
-  } else {
-    strengths.push('Sponsor oversight of delegated activities is documented (E6(R3) Annex 1 §3.9).');
-  }
-
-  if (params.vendorOversightDocumented === false) {
-    gaps.push({
-      domain: 'oversight',
-      severity: 'major',
-      description: 'Oversight of service providers / CROs is not documented despite delegation of obligations.',
-      remediation: 'Maintain written transfer-of-obligation agreements (21 CFR 312.52) and documented governance of each delegated obligation.',
-      citation: 'ICH E6(R3) Annex 1 §3.3 (allocation of activities) and §3.9 (sponsor oversight); 21 CFR 312.52',
-    });
-  }
-
-  if (params.delegationDocumented === false || params.delegationDocumented === undefined) {
-    gaps.push({
-      domain: 'delegation',
-      severity: params.delegationDocumented === false ? 'major' : 'moderate',
-      description: 'Delegation of authority is not adequately documented and reconciled with qualification/training.',
-      remediation: 'Maintain a current delegation-of-authority log mapping each task to a qualified, trained individual.',
-      citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60',
-    });
-  } else {
-    strengths.push('Delegation of authority is documented and reconciled with qualifications.');
-  }
-
-  if (params.dataGovernanceAlcoaPlus === false || params.dataGovernanceAlcoaPlus === undefined) {
-    gaps.push({
-      domain: 'data_governance',
-      severity: params.dataGovernanceAlcoaPlus === false ? 'major' : 'moderate',
-      description: 'Data governance across the data life cycle (ALCOA+) is not evidenced.',
-      remediation: 'Define data-flow and governance: source identification, certified copies, retention, and controls ensuring attributable/contemporaneous/original/accurate records.',
-      citation: 'ICH E6(R3) Principle 9; Annex 1 §4 (data governance)',
-    });
-  } else {
-    strengths.push('ALCOA+ data governance is evidenced across the data life cycle.');
-  }
-
-  if (params.computerizedSystemsValidated === false || params.computerizedSystemsValidated === undefined) {
-    gaps.push({
-      domain: 'computerized_systems',
-      severity: params.computerizedSystemsValidated === false ? 'major' : 'moderate',
-      description: 'Computerised systems holding trial data are not evidenced as validated and access-controlled.',
-      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per E6(R3) Annex 1 §4.3 and 21 CFR Part 11.',
-      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
-    });
-  } else {
-    strengths.push('Computerised systems are validated with access controls and audit trails.');
-  }
-
-  if (params.auditTrailReviewPerformed === false) {
-    gaps.push({
-      domain: 'computerized_systems',
-      severity: 'moderate',
-      description: 'Audit-trail review is not performed, weakening detection of unauthorized or implausible data changes.',
-      remediation: 'Institute risk-based audit-trail review focused on critical data and on metadata indicative of data-integrity concerns.',
-      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
-    });
-  }
-
-  if (params.safetyReportingCompliant === false) {
-    gaps.push({
-      domain: 'safety',
-      severity: 'critical',
-      description: 'Safety reporting is non-compliant — AE/SAE/SUSAR ascertainment or timelines are deficient.',
-      remediation: 'Remediate pharmacovigilance SOPs and reconcile the safety database; treat as a participant-protection priority.',
-      citation: '21 CFR 312.32; 312.64(b)',
-    });
-  }
-
-  if (params.informedConsentProcessCompliant === false) {
-    gaps.push({
-      domain: 'consent',
-      severity: 'critical',
-      description: 'Informed-consent process is non-compliant.',
-      remediation: 'Halt affected enrollment; remediate the consent process; consult IRB on re-consent and reportability.',
-      citation: '21 CFR 50.20; 50.25; 50.27',
-    });
-  }
-
-  if (params.riskBasedQualityManagement === false || params.riskBasedQualityManagement === undefined) {
-    gaps.push({
-      domain: 'quality_management',
-      severity: params.riskBasedQualityManagement === false ? 'moderate' : 'minor',
-      description: 'Risk-based quality management (CtQ identification, risk control, QTLs) is not evidenced.',
-      remediation: 'Implement the E8(R1)/E6(R3) quality-by-design cycle: identify CtQ factors, assess and control risks, set QTLs, and review iteratively.',
-      citation: 'ICH E6(R3) Principles 6–7; Annex 1 §3.10 (quality management); ICH E8(R1)',
-    });
-  } else {
-    strengths.push('Risk-based, quality-by-design management is implemented (E6(R3) Principles 6–7; Annex 1 §3.10).');
-  }
-
-  if (params.recordRetentionCompliant === false) {
-    gaps.push({
-      domain: 'data_governance',
-      severity: 'moderate',
-      description: 'Record retention does not meet regulatory minimums.',
-      remediation: 'Retain essential records per 21 CFR 312.62(c) (2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
-      citation: '21 CFR 312.62(c); ICH E6(R3) Annex 1 §2.12 (investigator records) and §3.16 (sponsor data and records), retention',
-    });
-  }
+  const { gaps, strengths } = gcpGaps(params);
 
   // ── Scoring ──
-  const conformingPrinciples = principleAssessments.filter(
-    (p: PrincipleAssessment) => p.conforms === 'conforms',
-  ).length;
-  const complianceScore = round((conformingPrinciples / principleAssessments.length) * 100, 0);
-
-  const hasCritical = gaps.some((g: GCPGap) => g.severity === 'critical');
-  const majorCount = gaps.filter((g: GCPGap) => g.severity === 'major').length;
-
-  // 2026-10-15: 'compliant' used to allow one principle to be a gap or
-  // unverified (8/9 scores 89); P3 sharing P1's flag hid that for a lapsed
-  // ethics approval. It now requires every principle to conform.
-  let overallStatus: GCPComplianceResult['overallStatus'];
-  if (hasCritical) overallStatus = 'critical_gaps';
-  else if (majorCount >= 2 || complianceScore < 55) overallStatus = 'major_gaps';
-  else if (gaps.length > 0 || conformingPrinciples < principleAssessments.length) overallStatus = 'minor_gaps';
-  else overallStatus = 'compliant';
+  // 2026-11-02 (S5c): `{}` scored 0, 'major_gaps'; nine true principles with the other seven facts omitted were
+  // 'minor_gaps' on two gaps for facts nobody stated; null or 'false' earned a strength, and an omitted
+  // safetyReportingCompliant left 'compliant'. A stated true never worsens the status, so the unstated facts all
+  // true and all false bound it: it is given only when both give the same one.
+  const conformingPrinciples = principleAssessments.filter((p: PrincipleAssessment) => p.conforms === 'conforms').length;
+  const complianceScore = principleAssessments.some((p: PrincipleAssessment) => p.conforms === 'unverified')
+    ? null
+    : round((conformingPrinciples / principleAssessments.length) * 100, 0);
+  const notAssessed = GCP_FLAGS.filter((k) => inputStates[k] === 'not_stated');
+  const statusIfAll = (answer: boolean): GCPStatus => {
+    const p: GCPComplianceParams = { ...params, ...Object.fromEntries(notAssessed.map((k) => [k, answer])) };
+    return gcpStatus(gcpGaps(p).gaps, GCP_FLAGS.slice(0, 9).filter((k) => p[k] === true).length);
+  };
+  const [best, worst] = [statusIfAll(true), statusIfAll(false)];
+  const overallStatus: GCPComplianceResult['overallStatus'] = best === worst ? best : 'not_assessed';
+  if (overallStatus === 'not_assessed') {
+    notes.push(`Overall status not assessed: ${notAssessed.join(', ')} not stated; the answers could make it anything from ${best} to ${worst}.`);
+  } else if (notAssessed.length > 0) {
+    notes.push(`${notAssessed.join(', ')} not stated; no answer to them changes the overall status.`);
+  }
 
   if (gaps.some((g: GCPGap) => g.severity === 'critical')) {
     notes.push('One or more critical gaps affect participant protection or result reliability and should be remediated before continued conduct.');
@@ -1216,10 +1173,147 @@ export function assessGCPCompliance(params: GCPComplianceParams): GCPComplianceR
     complianceScore,
     principleAssessments,
     gaps,
-    strengths: uniq(strengths),
+    strengths,
     regulatoryCitations,
+    notAssessed,
+    inputStates,
     notes,
   };
+}
+
+/**
+ * The cross-cutting gap a stated false raises, and the strength a stated true earns, in output order. Before
+ * 2026-11-02 an omitted sponsor-oversight, delegation, data-governance, systems-validation or quality-management
+ * fact raised a gap one step milder than a stated false, null earned the strength, and
+ * protocolFollowedWithChangeControl was never read. An unstated fact now raises neither; it is in notAssessed.
+ */
+const GCP_GAP_RULES: Array<{ fact: keyof GCPComplianceParams; gap: GCPGap; strength?: string }> = [
+  {
+    fact: 'sponsorOversightDocumented',
+    gap: {
+      domain: 'oversight',
+      severity: 'major',
+      description: 'Sponsor oversight of trial conduct and delegated activities is not documented.',
+      remediation: 'Document an oversight framework: governance meetings, KPIs/KRIs, escalation paths and review of delegated-party performance.',
+      citation: 'ICH E6(R3) Annex 1 §3.9 (sponsor oversight); 21 CFR 312.50',
+    },
+    strength: 'Sponsor oversight of delegated activities is documented (E6(R3) Annex 1 §3.9).',
+  },
+  {
+    fact: 'vendorOversightDocumented',
+    gap: {
+      domain: 'oversight',
+      severity: 'major',
+      description: 'Oversight of service providers / CROs is not documented despite delegation of obligations.',
+      remediation: 'Maintain written transfer-of-obligation agreements (21 CFR 312.52) and documented governance of each delegated obligation.',
+      citation: 'ICH E6(R3) Annex 1 §3.3 (allocation of activities) and §3.9 (sponsor oversight); 21 CFR 312.52',
+    },
+  },
+  {
+    fact: 'delegationDocumented',
+    gap: {
+      domain: 'delegation',
+      severity: 'major',
+      description: 'Delegation of authority is not adequately documented and reconciled with qualification/training.',
+      remediation: 'Maintain a current delegation-of-authority log mapping each task to a qualified, trained individual.',
+      citation: 'ICH E6(R3) Annex 1 §2.3 (investigator responsibilities); 21 CFR 312.60',
+    },
+    strength: 'Delegation of authority is documented and reconciled with qualifications.',
+  },
+  {
+    fact: 'protocolFollowedWithChangeControl',
+    gap: {
+      domain: 'protocol_compliance',
+      severity: 'major',
+      description: 'The protocol is not followed with change control: changes or deviations are made outside the approved protocol and its amendments.',
+      remediation: 'Make protocol changes only through IRB/IEC-approved amendments (except to eliminate an immediate hazard), and log, assess and report each deviation.',
+      citation: 'ICH E6(R3) Annex 1 §2.5 (compliance with protocol); 21 CFR 312.60; 312.66',
+    },
+  },
+  {
+    fact: 'dataGovernanceAlcoaPlus',
+    gap: {
+      domain: 'data_governance',
+      severity: 'major',
+      description: 'Data governance across the data life cycle (ALCOA+) is not evidenced.',
+      remediation: 'Define data-flow and governance: source identification, certified copies, retention, and controls ensuring attributable/contemporaneous/original/accurate records.',
+      citation: 'ICH E6(R3) Principle 9; Annex 1 §4 (data governance)',
+    },
+    strength: 'ALCOA+ data governance is evidenced across the data life cycle.',
+  },
+  {
+    fact: 'computerizedSystemsValidated',
+    gap: {
+      domain: 'computerized_systems',
+      severity: 'major',
+      description: 'Computerised systems holding trial data are not evidenced as validated and access-controlled.',
+      remediation: 'Provide validation evidence, role-based access control, and enabled audit trails per E6(R3) Annex 1 §4.3 and 21 CFR Part 11.',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
+    },
+    strength: 'Computerised systems are validated with access controls and audit trails.',
+  },
+  {
+    fact: 'auditTrailReviewPerformed',
+    gap: {
+      domain: 'computerized_systems',
+      severity: 'moderate',
+      description: 'Audit-trail review is not performed, weakening detection of unauthorized or implausible data changes.',
+      remediation: 'Institute risk-based audit-trail review focused on critical data and on metadata indicative of data-integrity concerns.',
+      citation: 'ICH E6(R3) Annex 1 §4.3 (computerised systems); 21 CFR Part 11',
+    },
+  },
+  {
+    fact: 'safetyReportingCompliant',
+    gap: {
+      domain: 'safety',
+      severity: 'critical',
+      description: 'Safety reporting is non-compliant — AE/SAE/SUSAR ascertainment or timelines are deficient.',
+      remediation: 'Remediate pharmacovigilance SOPs and reconcile the safety database; treat as a participant-protection priority.',
+      citation: '21 CFR 312.32; 312.64(b)',
+    },
+  },
+  {
+    fact: 'informedConsentProcessCompliant',
+    gap: {
+      domain: 'consent',
+      severity: 'critical',
+      description: 'Informed-consent process is non-compliant.',
+      remediation: 'Halt affected enrollment; remediate the consent process; consult IRB on re-consent and reportability.',
+      citation: '21 CFR 50.20; 50.25; 50.27',
+    },
+  },
+  {
+    fact: 'riskBasedQualityManagement',
+    gap: {
+      domain: 'quality_management',
+      severity: 'moderate',
+      description: 'Risk-based quality management (CtQ identification, risk control, QTLs) is not evidenced.',
+      remediation: 'Implement the E8(R1)/E6(R3) quality-by-design cycle: identify CtQ factors, assess and control risks, set QTLs, and review iteratively.',
+      citation: 'ICH E6(R3) Principles 6–7; Annex 1 §3.10 (quality management); ICH E8(R1)',
+    },
+    strength: 'Risk-based, quality-by-design management is implemented (E6(R3) Principles 6–7; Annex 1 §3.10).',
+  },
+  {
+    fact: 'recordRetentionCompliant',
+    gap: {
+      domain: 'data_governance',
+      severity: 'moderate',
+      description: 'Record retention does not meet regulatory minimums.',
+      remediation: 'Retain essential records per 21 CFR 312.62(c) (2 years after a marketing application is approved for the indication or, if none is filed or approved, 2 years after the investigation is discontinued and FDA is notified) and ICH E6(R3) Annex 1 §2.12 and Appendix C.',
+      citation: '21 CFR 312.62(c); ICH E6(R3) Annex 1 §2.12 (investigator records) and §3.16 (sponsor data and records), retention',
+    },
+  },
+];
+
+/** The gaps the stated false facts raise and the strengths the stated true ones earn. */
+function gcpGaps(p: GCPComplianceParams): { gaps: GCPGap[]; strengths: string[] } {
+  const gaps: GCPGap[] = [];
+  const strengths: string[] = [];
+  for (const rule of GCP_GAP_RULES) {
+    if (p[rule.fact] === false) gaps.push({ ...rule.gap });
+    else if (p[rule.fact] === true && rule.strength) strengths.push(rule.strength);
+  }
+  return { gaps, strengths };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1251,6 +1345,24 @@ export interface InformedConsentParams {
   organizationId?: string | number;
 }
 
+/** involvesRandomization and futureResearchUse are not read: they change nothing in the result. */
+const CONSENT_FLAGS: ReadonlyArray<keyof InformedConsentParams> = [
+  'involvesPlacebo', 'moreThanMinimalRisk', 'collectsBiospecimens', 'genomicData', 'electronicConsent',
+  'remoteConsent', 'commercialProfitPotential', 'applicableClinicalTrial',
+];
+const VULNERABLE_POPULATIONS = ['children', 'pregnant', 'cognitively_impaired', 'prisoners', 'non_english', 'emergency'];
+
+/** The stated vulnerable populations; undefined when left out. Anything but a list of known ones is refused. */
+function statedPopulations(value: unknown): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value) && value.every((v: unknown) => typeof v === 'string' && VULNERABLE_POPULATIONS.includes(v))) return value;
+  throw new ComputationRefusal(
+    'invalid_input',
+    `vulnerablePopulations must be a list from ${VULNERABLE_POPULATIONS.join(', ')} (an empty list for none). Leave it out if it is not known.`,
+    'vulnerablePopulations',
+  );
+}
+
 export interface VulnerabilitySafeguard {
   population: string;
   safeguards: string[];
@@ -1267,6 +1379,8 @@ export interface InformedConsentResult {
   electronicConsentConsiderations: string[];
   documentationRequirements: string[];
   regulatoryCitations: string[];
+  /** Each boolean input it reads: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   warnings: string[];
 }
 
@@ -1296,6 +1410,14 @@ const ADDITIONAL_CONSENT_ELEMENTS: ConsentElement[] = INFORMED_CONSENT_ELEMENTS
  */
 export function designInformedConsent(params: InformedConsentParams): InformedConsentResult {
   const warnings: string[] = [];
+  // 2026-11-02 (S5c): an omitted feature read as false (no unforeseeable-risks or biospecimen element, no placebo
+  // disclosure, "Paper consent process selected"), and a malformed value was read, ignored or clamped (studyType
+  // 'Observational', ['Children'], a grade of 20). An undecided element, consent method or placebo disclosure is now
+  // said to be one; a malformed value is refused.
+  const inputStates = booleanInputStates(params, CONSENT_FLAGS);
+  statedOneOf('studyType', params.studyType, ['interventional', 'observational', 'device', 'gene_therapy']);
+  const statedVp = statedPopulations(params.vulnerablePopulations);
+  const statedGrade = statedNumber('targetReadingGradeLevel', params.targetReadingGradeLevel, (n) => n >= 4 && n <= 12, 'a reading grade level from 4 to 12');
 
   // Select applicable additional elements based on study characteristics.
   const applicable: ConsentElement[] = [];
@@ -1303,16 +1425,23 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
     const el = ADDITIONAL_CONSENT_ELEMENTS.find((e: ConsentElement) => e.id === id);
     if (el) applicable.push(el);
   };
-  if (params.moreThanMinimalRisk === true) add('unforeseeable_risks');
+  // An element an unstated fact decides is undecided, and named (2026-11-02).
+  const undecided: string[] = [];
+  const addIf = (id: string, applies: boolean | undefined, ...facts: Array<keyof InformedConsentParams>): void => {
+    if (applies === true) add(id);
+    else if (applies === undefined) undecided.push(`${id} (${facts.filter((f) => unstated(params[f])).join(', ')} not stated)`);
+  };
+  addIf('unforeseeable_risks', anyOf(params.moreThanMinimalRisk), 'moreThanMinimalRisk');
   add('investigator_termination'); // investigator-initiated termination is broadly appropriate
   add('costs');
   add('withdrawal_consequences');
   add('new_findings'); // new findings disclosure
   add('number_subjects');
   // Common Rule-only elements (45 CFR 46.116(c)(7)–(9)), for HHS-conducted or -supported research.
-  if (params.collectsBiospecimens === true && params.commercialProfitPotential === true) add('commercial_profit');
-  if (params.collectsBiospecimens === true) add('return_of_results');
-  if (params.genomicData === true || params.collectsBiospecimens === true) add('genome_sequencing');
+  addIf('commercial_profit', allOf(params.collectsBiospecimens, params.commercialProfitPotential), 'collectsBiospecimens', 'commercialProfitPotential');
+  addIf('return_of_results', anyOf(params.collectsBiospecimens), 'collectsBiospecimens');
+  addIf('genome_sequencing', anyOf(params.genomicData, params.collectsBiospecimens), 'genomicData', 'collectsBiospecimens');
+  if (undecided.length > 0) warnings.push(`Not assessed, so not listed as applicable: ${undecided.join('; ')}.`);
   // 50.25(c) is required for an applicable clinical trial; the study type does not decide that.
   const requiredElements = REQUIRED_CONSENT_ELEMENTS.map((e) => ({ ...e }));
   if (params.applicableClinicalTrial === true) requiredElements.push({ ...ACT_STATEMENT });
@@ -1321,9 +1450,8 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
   }
 
   // ── Readability ──
-  const targetGrade = clamp(num(params.targetReadingGradeLevel, 8), 4, 12);
   const readabilityGuidance: string[] = [
-    `Target a reading level at or below grade ${targetGrade} (6th–8th grade is the common standard); use plain language and short sentences.`,
+    `Target a reading level at or below grade ${statedGrade ?? 8} (${statedGrade === undefined ? 'no target stated; ' : ''}6th–8th grade is the common standard); use plain language and short sentences.`,
     'Lead with a concise summary of key information that a reasonable person would want to make a decision (2018 Common Rule “key information” requirement).',
     'Avoid technical jargon; define unavoidable terms; use second person and active voice.',
     'Organize with headings, white space and a logical flow; avoid exculpatory language (no waiver of legal rights — 21 CFR 50.20).',
@@ -1332,7 +1460,10 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
 
   // ── Vulnerable populations ──
   const vulnerablePopulationSafeguards: VulnerabilitySafeguard[] = [];
-  const vp = params.vulnerablePopulations ?? [];
+  const vp = statedVp ?? [];
+  if (statedVp === undefined) {
+    warnings.push('vulnerablePopulations not stated: no population safeguards are listed. State the populations enrolled, or an empty list for none.');
+  }
   if (vp.includes('children')) {
     vulnerablePopulationSafeguards.push({
       population: 'Children',
@@ -1408,7 +1539,8 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
 
   // ── Electronic / remote consent ──
   const electronicConsentConsiderations: string[] = [];
-  if (params.electronicConsent === true || params.remoteConsent === true) {
+  const eConsent = anyOf(params.electronicConsent, params.remoteConsent);
+  if (eConsent === true) {
     electronicConsentConsiderations.push(
       'Comply with 21 CFR Part 11 for electronic signatures and records (identity verification, audit trail, system validation).',
       'Follow FDA/OHRP guidance "Use of Electronic Informed Consent" (2016): present information in a manner the subject can understand and retain.',
@@ -1421,8 +1553,11 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
         'For remote consent, document the method of LAR/witness participation where required and confirm a private, uncoerced setting.',
       );
     }
-  } else {
+  } else if (eConsent === false) {
     electronicConsentConsiderations.push('Paper consent process selected — ensure signed/dated original is retained and a copy is provided to the subject (50.27).');
+  } else {
+    const open = (['electronicConsent', 'remoteConsent'] as const).filter((k) => unstated(params[k]));
+    electronicConsentConsiderations.push(`Consent method not assessed: ${open.join(', ')} not stated. Electronic or remote consent needs 21 CFR Part 11 controls; on paper, retain the signed, dated original and give the subject a copy (50.27).`);
   }
 
   // ── Documentation ──
@@ -1439,6 +1574,8 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
   }
   if (params.involvesPlacebo === true) {
     warnings.push('Placebo-controlled design: clearly disclose the probability of receiving placebo and the implications for the subject’s usual care.');
+  } else if (unstated(params.involvesPlacebo)) {
+    warnings.push('Placebo use not stated: if the design is placebo-controlled, clearly disclose the probability of receiving placebo and the implications for the subject’s usual care.');
   }
   if (params.studyType === 'gene_therapy' && params.genomicData !== true) {
     warnings.push('Gene-therapy study: address long-term follow-up, germline considerations and genomic-data handling explicitly.');
@@ -1467,6 +1604,7 @@ export function designInformedConsent(params: InformedConsentParams): InformedCo
     electronicConsentConsiderations,
     documentationRequirements,
     regulatoryCitations,
+    inputStates,
     warnings,
   };
 }
@@ -1525,6 +1663,8 @@ export interface DeviationClassificationResult {
   regulatoryCitations: string[];
   /** Deciding facts that were not stated. */
   notAssessed: Array<keyof ProtocolDeviationParams>;
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   notes: string[];
 }
 
@@ -1539,6 +1679,10 @@ const DEVIATION_FACTS: Array<keyof ProtocolDeviationParams> = [
   'affectsEligibilityCriticalCriterion',
   'deviationFromIRBApprovedProtocol',
   'isRecurring',
+];
+const DEVIATION_CATEGORIES: readonly DeviationCategory[] = [
+  'eligibility', 'consent', 'safety_reporting', 'study_procedure', 'visit_window',
+  'investigational_product', 'randomization', 'gcp_general', 'other',
 ];
 
 /** An impact level: the highest the stated facts establish, 'none' only when every deciding fact is false. */
@@ -1561,7 +1705,11 @@ export function classifyProtocolDeviation(
   // true fact still settles a verdict; a negative one now needs every deciding
   // fact stated false, else 'not_assessed' / 'undetermined' (see notAssessed).
   const notes: string[] = [];
-  const affected = num(params.numberOfParticipantsAffected, 1);
+  // 2026-11-02 (S5c): a malformed fact was read as a stated one: affectsParticipantSafety 'true' as false
+  // (non-important, no IRB report), category 'Safety reporting' as another category. Each is now refused by field.
+  const inputStates = booleanInputStates(params, DEVIATION_FACTS.slice(1)); // every deciding fact but category
+  statedOneOf('category', params.category, DEVIATION_CATEGORIES);
+  const affected = statedCount('numberOfParticipantsAffected', params.numberOfParticipantsAffected, 1);
   const notAssessed = DEVIATION_FACTS.filter((k) => unstated(params[k]));
   const isCategory = (...categories: DeviationCategory[]): boolean | undefined =>
     stated(params.category, (c) => categories.includes(c));
@@ -1613,7 +1761,7 @@ export function classifyProtocolDeviation(
     severity = 'moderate';
     notes.push('Recurrence elevated a minor deviation to moderate — a systemic pattern requires CAPA.');
   }
-  if (affected > 1 && severity === 'minor') {
+  if (affected !== undefined && affected > 1 && severity === 'minor') {
     notes.push(`Deviation affects ${affected} participants; assess for a systemic cause even if individually minor.`);
   }
 
@@ -1727,6 +1875,7 @@ export function classifyProtocolDeviation(
     preventiveActions,
     regulatoryCitations,
     notAssessed,
+    inputStates,
     notes,
   };
 }
@@ -1745,6 +1894,10 @@ export interface EssentialDocumentsParams {
   organizationId?: string | number;
 }
 
+const ESSENTIAL_DOCUMENT_FLAGS: ReadonlyArray<keyof EssentialDocumentsParams> = [
+  'includeInvestigatorSiteFile', 'includeSponsorTmf', 'electronicTmf', 'usesInvestigationalDevice', 'multiSite',
+];
+
 export interface QcCheckItem {
   check: string;
   citation: string;
@@ -1761,6 +1914,8 @@ export interface EssentialDocumentsResult {
   completenessAndQcPlan: QcCheckItem[];
   retentionGuidance: string[];
   regulatoryCitations: string[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   notes: string[];
 }
 
@@ -1772,7 +1927,10 @@ export function planEssentialDocuments(
   params: EssentialDocumentsParams,
 ): EssentialDocumentsResult {
   const notes: string[] = [];
-  const stageFilter: TrialStage | 'all' = params.stage ?? 'all';
+  // 2026-11-02 (S5c): stage 'Before' filtered out every document and returned an empty plan, a malformed include
+  // flag read as include, and an omitted device status as no device. Each is now refused or noted.
+  const inputStates = booleanInputStates(params, ESSENTIAL_DOCUMENT_FLAGS);
+  const stageFilter: TrialStage | 'all' = statedOneOf('stage', params.stage, ['before', 'during', 'after', 'all'] as const) ?? 'all';
 
   let documents = ESSENTIAL_DOCUMENTS.map((d) => ({ ...d, heldBy: [...d.heldBy] }));
 
@@ -1805,6 +1963,8 @@ export function planEssentialDocuments(
     if (stageFilter === 'all' || stageFilter === deviceDoc.stage) {
       documents = [...documents, deviceDoc];
     }
+  } else if (unstated(params.usesInvestigationalDevice) && stageFilter !== 'during') {
+    notes.push('usesInvestigationalDevice not stated: an investigational-device trial also needs the IDE application/approval and device-specific records (21 CFR Part 812), which are not listed.');
   }
 
   const byStage = {
@@ -1855,6 +2015,7 @@ export function planEssentialDocuments(
     completenessAndQcPlan,
     retentionGuidance,
     regulatoryCitations,
+    inputStates,
     notes,
   };
 }

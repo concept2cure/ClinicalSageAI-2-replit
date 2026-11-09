@@ -1,0 +1,133 @@
+[
+ {
+  "case": "pane-1440-light",
+  "open": {
+   "paneOpen": true,
+   "placement": "pane",
+   "convWidth": 447,
+   "paneWidth": 729,
+   "visibleBars": 1,
+   "barHeight": 111,
+   "escChip": false,
+   "close": {
+    "label": "Back to conversation",
+    "keys": "Escape",
+    "visible": true
+   },
+   "openFullWidth": {
+    "label": "Open full width",
+    "visible": true
+   },
+   "status": true,
+   "outlineToggle": true,
+   "sideways": false
+  },
+  "afterEscape": {
+   "paneOpen": false,
+   "placement": "pane",
+   "convWidth": 792,
+   "paneWidth": 0,
+   "visibleBars": 0,
+   "barHeight": null,
+   "escChip": false,
+   "close": null,
+   "openFullWidth": null,
+   "status": false,
+   "outlineToggle": false,
+   "sideways": false
+  }
+ },
+ {
+  "case": "pane-1440-dark",
+  "open": {
+   "paneOpen": true,
+   "placement": "pane",
+   "convWidth": 447,
+   "paneWidth": 729,
+   "visibleBars": 1,
+   "barHeight": 111,
+   "escChip": false,
+   "close": {
+    "label": "Back to conversation",
+    "keys": "Escape",
+    "visible": true
+   },
+   "openFullWidth": {
+    "label": "Open full width",
+    "visible": true
+   },
+   "status": true,
+   "outlineToggle": true,
+   "sideways": false
+  },
+  "afterEscape": {
+   "paneOpen": false,
+   "placement": "pane",
+   "convWidth": 792,
+   "paneWidth": 0,
+   "visibleBars": 0,
+   "barHeight": null,
+   "escChip": false,
+   "close": null,
+   "openFullWidth": null,
+   "status": false,
+   "outlineToggle": false,
+   "sideways": false
+  }
+ },
+ {
+  "case": "pane-1280-light",
+  "open": {
+   "paneOpen": true,
+   "placement": "pane",
+   "convWidth": 420,
+   "paneWidth": 596,
+   "visibleBars": 1,
+   "barHeight": 111,
+   "escChip": false,
+   "close": {
+    "label": "Back to conversation",
+    "keys": "Escape",
+    "visible": true
+   },
+   "openFullWidth": {
+    "label": "Open full width",
+    "visible": true
+   },
+   "status": true,
+   "outlineToggle": true,
+   "sideways": false
+  },
+  "afterEscape": {
+   "paneOpen": false,
+   "placement": "pane",
+   "convWidth": 632,
+   "paneWidth": 0,
+   "visibleBars": 0,
+   "barHeight": null,
+   "escChip": false,
+   "close": null,
+   "openFullWidth": null,
+   "status": false,
+   "outlineToggle": false,
+   "sideways": false
+  }
+ },
+ {
+  "case": "pane-390-light",
+  "open": {
+   "paneOpen": false,
+   "placement": null,
+   "convWidth": 390,
+   "paneWidth": 0,
+   "visibleBars": 0,
+   "barHeight": null,
+   "escChip": false,
+   "close": null,
+   "openFullWidth": null,
+   "status": false,
+   "outlineToggle": false,
+   "sideways": false
+  }
+ }
+]

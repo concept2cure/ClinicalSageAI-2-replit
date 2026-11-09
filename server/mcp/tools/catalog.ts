@@ -17,9 +17,9 @@ export const listProjects = defineTool({
   name: 'c2c_list_projects',
   title: 'List projects',
   description:
-    'List the regulatory programs (projects) in your organisation: id, code, type (IND/NDA/BLA/510K/…), ' +
+    'List the regulatory programs (projects) you can open in your organisation: id, code, type (IND/NDA/BLA/510K/…), ' +
     'product, agency, status, phase, lead and target submission date. Use a project id from here for ' +
-    'vault document listings. Returns an honest empty list when the organisation has no programs.',
+    'vault document listings. Returns an honest empty list when you can open no program.',
   inputSchema: {
     program_type: z.string().max(20).optional().describe('Filter by program type, e.g. IND, NDA, BLA, 510K, CER.'),
     limit: z.number().int().min(1).max(200).default(50),
@@ -27,10 +27,27 @@ export const listProjects = defineTool({
   annotations: READ,
   scope: MCP_SCOPES.read,
   governed: false,
-  implementation: 'server/services/regulatory-programs.service.ts listPrograms',
+  implementation: 'server/services/regulatory-programs.service.ts listPrograms, held to getCurrentAccessibleProgramScope',
   async run(input, ctx) {
+    /* It listed every program in the organisation, a private project's
+       included (F1, 2026-11-05; docs/evidence/F1/2026-11-05-listing-doors-scope/).
+       It now lists the verified accessible programs, the scope the Vault tools
+       below read by. A scope that cannot be read is a refusal, never a list. */
+    if (!ctx.sqlClient) return refused('Request-scoped project access could not be verified.', { code: 'REQUEST_DB_CONTEXT_REQUIRED' });
     const { listPrograms } = await import('../../services/regulatory-programs.service');
-    const rows = await listPrograms(ctx.principal.organizationId, { programType: input.program_type });
+    const { getCurrentAccessibleProgramScope } = await import('../../services/c2c/current-program-access');
+    let accessible: Set<string>;
+    try {
+      const scope = await getCurrentAccessibleProgramScope(ctx.sqlClient, {
+        organizationId: ctx.principal.organizationId, userId: ctx.principal.userId,
+      });
+      accessible = new Set(scope.programIds.map((id) => id.toLowerCase()));
+    } catch (err) {
+      const code = (err as { code?: unknown }).code;
+      return refused(errorMessage(err), { code: typeof code === 'string' ? code : 'PROJECT_ACCESS_UNAVAILABLE' });
+    }
+    const rows = (await listPrograms(ctx.principal.organizationId, { programType: input.program_type }))
+      .filter((r) => accessible.has(String(r.id).toLowerCase()));
     const projects = rows.slice(0, input.limit).map((r) => ({
       id: r.id,
       code: r.code,
@@ -47,9 +64,9 @@ export const listProjects = defineTool({
     }));
     return ok(
       projects.length === 0
-        ? 'No regulatory programs exist in this organisation yet.'
+        ? 'No regulatory program you can open exists in this organisation.'
         : `${projects.length} of ${rows.length} program(s): ${projects.map((p) => `${p.code} (${p.programType})`).join(', ')}.`,
-      { organizationId: ctx.principal.organizationId, total: rows.length, projects },
+      { scope: 'verified-accessible-programs', organizationId: ctx.principal.organizationId, total: rows.length, projects },
     );
   },
 });
@@ -95,7 +112,7 @@ export const listSequences = defineTool({
   description:
     'List the eCTD sequences (0000, 0001, …) of one submission: id, region, sequence number, type, status ' +
     '(draft|assembling|validated|frozen|dispatched), validation and dispatch status. Refuses when the ' +
-    'submission is not in your organisation.',
+    'submission is not in your organisation. Sequences in use only; c2c_get_sequence_status reports a retired one.',
   inputSchema: { submission_id: z.number().int().positive().describe('A submission id from c2c_list_submissions.') },
   annotations: READ,
   scope: MCP_SCOPES.read,
@@ -119,7 +136,7 @@ export const listSequences = defineTool({
       }));
       return ok(
         sequences.length === 0
-          ? `Submission #${input.submission_id} has no sequences yet.`
+          ? `Submission #${input.submission_id} has no sequence in use.`
           : `${sequences.length} sequence(s): ${sequences.map((s) => `${s.sequenceNumber} [${s.status}] id=${s.id}`).join(', ')}.`,
         { submissionId: input.submission_id, sequences },
       );
@@ -128,6 +145,36 @@ export const listSequences = defineTool({
     }
   },
 });
+
+type SubmissionService = typeof import('../../services/submission-service/submission-service');
+
+/**
+ * A sequence of this organisation that is no longer in use, said plainly
+ * (P-86): retired, with when, by whom and why; or not in use with no
+ * retirement recorded. Undefined when the id is not found at all, or was
+ * refused for another reason, so the caller keeps its own refusal.
+ */
+async function notInUseAnswer(svc: SubmissionService, id: number, orgId: number, err: unknown) {
+  if (!(err instanceof svc.SubmissionError) || err.code !== 'NOT_FOUND') return undefined;
+  let answer: Awaited<ReturnType<SubmissionService['readRetiredSequence']>>;
+  try {
+    answer = await svc.readRetiredSequence(id, { organizationId: orgId });
+  } catch (readErr) {
+    return refused(`Sequence #${id} is not in use in this organisation, and whether it was retired could not be read: ${errorMessage(readErr)}`);
+  }
+  if (!answer) return undefined;
+  const { sequenceNumber, region } = answer;
+  if (answer.state === 'removed') {
+    return ok(`Sequence ${sequenceNumber} (${region}) is not in use; no retirement is recorded for it.`,
+      { sequence: { id, sequenceNumber, region, inUse: false, retired: false } });
+  }
+  const by = answer.retiredBy ?? 'a person the record no longer names';
+  return ok(
+    `Sequence ${sequenceNumber} (${region}) was retired on ${answer.retiredOn} UTC by ${by}${answer.meaning ? ` (${answer.meaning})` : ''}. ` +
+      `${answer.reason ? `Reason: ${answer.reason}${/[.!?]$/.test(answer.reason) ? '' : '.'} ` : ''}It is kept as history; it is not sent, filed or built on.`,
+    { sequence: { id, sequenceNumber, region, inUse: false, retired: true, retiredOn: answer.retiredOn, retiredBy: answer.retiredBy, meaning: answer.meaning, reason: answer.reason } },
+  );
+}
 
 export const getSequenceStatus = defineTool({
   name: 'c2c_get_sequence_status',
@@ -149,7 +196,7 @@ export const getSequenceStatus = defineTool({
     try {
       sequence = await svc.getSequence(input.sequence_id, { organizationId: orgId });
     } catch (err) {
-      return refused(errorMessage(err));
+      return (await notInUseAnswer(svc, input.sequence_id, orgId, err)) ?? refused(errorMessage(err));
     }
     const leaves = await svc.listLeaves(sequence.id, { organizationId: orgId });
     let releaseSignature: Record<string, unknown>;

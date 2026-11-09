@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-11-06T21:27:06.045308+00:00",
+  "elapsedSeconds": 0.22,
+  "argv": [
+    "node",
+    "--test",
+    "scripts/ci/__tests__/dev-port-selection.test.mjs"
+  ],
+  "exitCode": 0,
+  "sourceFreeze": "port-green-inputs.json",
+  "sourcesBefore": {
+    "package-lock.json": "f18b36fa7f32fe2be23d51ac3f9266ddbd006756bac7c39479c9bc874f9a9542",
+    "package.json": "af28ba6ac01790095784a6c04a8a288d256470915898fe003f9289cc6e69fe75",
+    "scripts/ci/__tests__/dev-port-selection.test.mjs": "8721914b05b33c0ba8ecdf02b4b98607c3e9403f7d7befcb9f086158b61f2088",
+    "scripts/startup.sh": "6fa61b2280e2db604cc858408b9ad9c4408e919b448b5872ef0c83fd7ae68cd0",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "sourcesAfter": {
+    "package-lock.json": "f18b36fa7f32fe2be23d51ac3f9266ddbd006756bac7c39479c9bc874f9a9542",
+    "package.json": "af28ba6ac01790095784a6c04a8a288d256470915898fe003f9289cc6e69fe75",
+    "scripts/ci/__tests__/dev-port-selection.test.mjs": "8721914b05b33c0ba8ecdf02b4b98607c3e9403f7d7befcb9f086158b61f2088",
+    "scripts/startup.sh": "6fa61b2280e2db604cc858408b9ad9c4408e919b448b5872ef0c83fd7ae68cd0",
+    "tests/setup.ts": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  },
+  "sourceDrift": [],
+  "rawOutput": "port-green.log.gz",
+  "rawGzipSha256": "385ec814728c60ef29e2b0d8440feb6db32a58a38ea3a4416889a3f45e58974b",
+  "testSummary": [],
+  "nodeVersion": "v22.23.4"
+}

@@ -84,7 +84,7 @@ const freezeButton = () =>
  * assertion ran before or after the payload rendered was down to how fast the
  * mock resolved, and after a crash it could match the loading screen.
  */
-const rendered = () => waitFor(() => expect(text()).toMatch(/Dispatch gate|Dispatch blocked/));
+const rendered = () => waitFor(() => expect(text()).toMatch(/Cleared to dispatch\?/));
 
 beforeEach(() => apiRequest.mockReset());
 afterEach(() => cleanup());

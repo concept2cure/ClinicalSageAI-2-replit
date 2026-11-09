@@ -1,0 +1,9 @@
+## MUTATION: a subtask may be a parent (more than one level)
+admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4) 108ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## MUTATION: the parent may be another project's task
+admits a subtask under a task of the same project, and refuses every other parent the same way (P-111 item 4) 120ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)

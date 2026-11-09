@@ -34,30 +34,46 @@ import { ensureProtocol } from './biotech-protocol.mjs';
 import { ensureQms } from './biotech-qms.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray, makeTally } from './biotech-shared.mjs';
 import { ensureSubmission } from './biotech-submission.mjs';
-import { BIOTECH_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
-import { ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { BIOTECH_CMC, BIOTECH_IR_LETTER, BIOTECH_SM, BIOTECH_SM_CMC, BIOTECH_STUDY_DESIGN, BIOTECH_TASKS } from './biotech-work-content.mjs';
+import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 
 /* ───────────────────────── 1. Projects ───────────────────────── */
 
-async function createProgram({ api, run, tally, clientWorkspaceId }) {
+/**
+ * The two programmes this pack seeds, as the canonical intake takes them.
+ *
+ * C2C-101 is the monoclonal antibody the pack was built around. C2C-201 is a
+ * fictional small molecule from the same fictional sponsor, added because the
+ * Module 3 build is composed only for a small-molecule US IND (P-28) and with
+ * no such programme the demo could not show the build at all (J5-13). An
+ * ordinary thing for a biotech to have beside a biologic; the demo then shows
+ * both halves — a dossier that composes, and a refusal that names ICH Q6B.
+ *
+ * `productType` is stated because an IND alone cannot determine the product
+ * class in the canonical intake.
+ */
+const PROGRAMS = {
+  mab: { name: PROGRAM_NAME, productName: PRODUCT_NAME, productType: 'biologic', indication: INDICATION, label: 'C2C-101' },
+  smallMolecule: { name: BIOTECH_SM.programName, productName: BIOTECH_SM.productName, productType: 'drug', indication: BIOTECH_SM.indication, label: BIOTECH_SM.molecule },
+};
+
+async function createProgram({ api, run, tally, clientWorkspaceId }, spec) {
   const j = must(await api('POST', '/api/c2c/projects', {
-    name: T(PROGRAM_NAME),
-    productName: PRODUCT_NAME,
+    name: T(spec.name),
+    productName: spec.productName,
     programType: 'ind',
     // The filing the project prepares: Plan reads its lifecycle guide from it.
     submissionTypeId: 'us_ind',
-    // C2C-101 is the fictional monoclonal antibody defined by this pack.
-    // IND alone cannot determine product class in the canonical intake.
-    productType: 'biologic',
+    productType: spec.productType,
     ...(clientWorkspaceId !== undefined ? { clientWorkspaceId } : {}),
     primaryAgency: 'FDA',
-    indication: INDICATION,
+    indication: spec.indication,
     priority: 'high',
     targetSubmissionDate: inDays(180),
     teamMembers: [],
   }), 201, 'create program');
-  run.record('program.intakeMeta', j.meta ?? null);
-  run.note('Program creation uses the canonical project intake, explicitly identifies the fictional biologic, and passes the selected client workspace when supplied. With no selection, intake alone decides whether a unique workspace is available. Sponsor and phase are not fabricated by the seed.');
+  run.record(`program.intakeMeta.${spec.label}`, j.meta ?? null);
+  run.note(`Program creation uses the canonical project intake, explicitly identifies the fictional ${spec.productType === 'biologic' ? 'biologic' : 'small molecule'}, and passes the selected client workspace when supplied. With no selection, intake alone decides whether a unique workspace is available. Sponsor and phase are not fabricated by the seed.`);
   tally.created('program');
   return { row: j.data, spineSubmissionId: j.meta?.submissionId ?? null };
 }
@@ -77,11 +93,11 @@ function describeProgram(d, row) {
   };
 }
 
-async function ensureProgram(ctx) {
+async function ensureProgram(ctx, spec = PROGRAMS.mab, recordAs = 'program') {
   const { api, run, tally } = ctx;
   const program = {};
-  run.record('program', program);
-  await run.step('Projects: program C2C-101 (IND)', async () => {
+  run.record(recordAs, program);
+  await run.step(`Projects: program ${spec.label} (IND)`, async () => {
     let row = null;
     let offset = 0;
     for (let page = 0; page < 100; page += 1) {
@@ -90,7 +106,7 @@ async function ensureProgram(ctx) {
       if (!Array.isArray(list.data) || list.meta?.pendingStore === true || list.meta?.reconciliationRequired === true) {
         throw new Error('The project list is unavailable or requires access reconciliation; no demo program was created.');
       }
-      row = findDemoByTitle(list.data, PROGRAM_NAME);
+      row = findDemoByTitle(list.data, spec.name);
       if (row || list.meta?.hasMore !== true) break;
       if (!list.data.length || page === 99) {
         throw new Error('The project lookup did not finish; no duplicate demo program was created.');
@@ -100,7 +116,7 @@ async function ensureProgram(ctx) {
     let spineSubmissionId = null;
     const created = !row;
     if (row) tally.found('program');
-    else ({ row, spineSubmissionId } = await createProgram(ctx));
+    else ({ row, spineSubmissionId } = await createProgram(ctx, spec));
     const detail = must(await api('GET', `/api/c2c/projects/${row.id}`), 200, 'read program');
     const recorded = detail.data ?? detail;
     if (ctx.clientWorkspaceId !== undefined && Number(recorded.client_workspace_id) !== ctx.clientWorkspaceId) {
@@ -110,6 +126,29 @@ async function ensureProgram(ctx) {
     return `${created ? 'created' : 'found'} ${row.id} (${program.code ?? '?'})`;
   });
   return program;
+}
+
+/**
+ * Compile the project's Module 3 from the registers just recorded, so the demo
+ * shows the composed §3.2 rather than an empty board.
+ *
+ * `POST /module3-os/compile/:projectId` refuses a project with no canonical
+ * sources (409) and refuses one outside the composition boundary by name, so a
+ * misordered or out-of-scope call fails the step with the server's own words
+ * instead of reporting a build that did not happen.
+ */
+async function ensureModule3Build({ api, run, tally }, program, label) {
+  await run.step(`CMC / Module 3: compile the dossier on ${label}`, async () => {
+    const j = must(await api('POST', `/api/cmc/module3-os/compile/${encodeURIComponent(program.id)}`, {}), [200, 201], `compile Module 3 for ${label}`);
+    const sections = Array.isArray(j.data?.sections) ? j.data.sections : Array.isArray(j.sections) ? j.sections : [];
+    const listed = must(await api('GET', `/api/cmc/module3-os/sections/${encodeURIComponent(program.id)}`), 200, 'list Module 3 sections');
+    const rows = Array.isArray(listed.data) ? listed.data : [];
+    const withData = rows.filter((r) => Number(r.completeness ?? 0) > 0).length;
+    tally.created('module3-compile');
+    /* The honest number: how many sections the registers actually fed, not how
+       many the composer returned (it returns one per section either way). */
+    return `${rows.length || sections.length} section(s) composed, ${withData} with recorded data`;
+  });
 }
 
 /* ───────────────────────── 2. Vault ───────────────────────── */
@@ -264,8 +303,18 @@ export async function seed(ctx) {
   await ensureSubmission(c, program, vaultDocs);
   await ensureQms(c, program);
   await ensureCmc(c, program, BIOTECH_CMC, 'C2C-101');
+  /* C2C-201: the pack's small-molecule programme, CMC-only, and the one demo
+     programme whose Module 3 this product composes (J5-13). Its build runs
+     here so the demo's §3.2 board has content a person can read; C2C-101's
+     build is refused by the boundary, which is correct and is the other half
+     of what the demo shows. */
+  const smallMolecule = await ensureProgram(c, PROGRAMS.smallMolecule, 'programSmallMolecule');
+  await ensureCmc(c, smallMolecule, BIOTECH_SM_CMC, BIOTECH_SM.molecule);
+  await ensureModule3Build(c, smallMolecule, BIOTECH_SM.molecule);
   await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');
   await ensurePlanDocuments(c, program, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan', 'Quality Overall Summary'], 'C2C-101');
+  // A fictional information request, so the agency inbox proposes its numbered questions (G3).
+  run.record('informationRequest', await ensureAgencyLetter(c, program, BIOTECH_IR_LETTER, 'C2C-101'));
   await run.step('Audit trail: ledger after the run', () => auditAfterRun(c, before, startedAt));
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);

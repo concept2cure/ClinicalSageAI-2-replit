@@ -93,3 +93,43 @@ export function ProjectPortfolioFilters({ workstream, pathway, counts, hasDevice
     </select>}
   </>;
 }
+
+/* Moved here from Projects.tsx unchanged (2026-11-05), beside the other portfolio controls, to keep Projects.tsx under
+   the 100 kB file ceiling. */
+/** True when the list route said there is more than the page it returned. */
+export function readIsPaged(meta: Record<string, unknown> | undefined): boolean {
+  return meta !== undefined && meta.hasMore === true;
+}
+
+/** A count read from one page of a longer list is a floor, and reads as one. */
+export function countFloor(n: number, paged: boolean): string {
+  return paged ? `${n}+` : String(n);
+}
+
+export function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
+  if (!paged || !settled) return null;
+  return (
+    <div role="status" className="scaf-note">
+      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
+    </div>
+  );
+}
+
+/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
+ *  for no date or an unreadable one. */
+export function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
+  if (!m) return null;
+  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((due - now) / 86_400_000);
+}
+
+/** What the search covers, in its placeholder: the loaded page, which is the
+ *  whole portfolio unless the read was paged ("the first n"). No count while the
+ *  read is in flight or failed. */
+export function searchPlaceholder(loaded: number, paged: boolean, settled: boolean): string {
+  if (!settled || loaded === 0) return 'Search projects';
+  if (paged) return `Search the first ${loaded} projects`;
+  return loaded === 1 ? 'Search 1 project' : `Search ${loaded} projects`;
+}

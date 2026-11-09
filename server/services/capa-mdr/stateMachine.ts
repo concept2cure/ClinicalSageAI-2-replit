@@ -84,8 +84,8 @@ const MDR_TRANSITIONS: Record<MdrState, readonly MdrState[]> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class InvalidTransitionError extends Error {
-  constructor(entity: string, from: string, to: string) {
-    super(`Invalid ${entity} transition: ${from} → ${to}`);
+  constructor(entity: string, from: string, to: string, prerequisite?: string) {
+    super(prerequisite ?? `Invalid ${entity} transition: ${from} → ${to}`);
     this.name = 'InvalidTransitionError';
   }
 }

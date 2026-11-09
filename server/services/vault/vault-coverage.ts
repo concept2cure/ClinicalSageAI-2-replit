@@ -24,7 +24,7 @@ import {
   type RequiredSectionProvenance,
   type RequiredSectionSet,
 } from '../ectd/required-sections.js';
-import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { vaultSpineLabel, type VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { filingDocumentClassOf } from '../../../shared/regulatory/filing-document-classes.js';
 
 export interface FiledSection {
@@ -48,7 +48,8 @@ export type VaultCoverage =
       covered: number;
     }
   | { state: 'unavailable'; reason: string }
-  | { state: 'not_applicable'; reason: string };
+  /** `outlineInLibrary`: the filing has its own outline, whose required sections the Library marks (S6, 2026-11-05). */
+  | { state: 'not_applicable'; reason: string; outlineInLibrary?: true };
 
 /** Which required sections a confirmed filing covers. Pure. */
 export function coverageOf(set: RequiredSectionSet, filings: ReadonlyArray<FiledSection>): Extract<VaultCoverage, { state: 'available' }> {
@@ -78,6 +79,22 @@ export function coverageOf(set: RequiredSectionSet, filings: ReadonlyArray<Filed
 }
 
 /**
+ * A device or diagnostic filing (510(k), De Novo, PMA, IVDR, …) is organised by its own outline, which its filing
+ * document's rule pack carries and the Library marks Required or Optional. The Vault counts documents filed at CTD
+ * sections and places none at an outline's sections, so it gives no count. It names the filing and says where its
+ * requirement is read, and claims that outline only when the Library holds it (S6, 2026-11-05). It read "there is
+ * no required-section list", which a 510(k) has.
+ */
+function deviceFilingCoverage(input: { view: VaultViewId; programType: string | null | undefined; filingOutlineInLibrary?: boolean }): VaultCoverage {
+  const filing = `This project’s filing (${vaultSpineLabel(input.view, input.programType)}) has its own outline, not CTD sections. `;
+  const noCount = 'The Vault counts documents filed at CTD sections, so it shows no count for this filing.';
+  if (!input.filingOutlineInLibrary) {
+    return { state: 'not_applicable', reason: `${filing}The Library shows that outline, with its required sections marked, once the project has the filing’s document. ${noCount}` };
+  }
+  return { state: 'not_applicable', outlineInLibrary: true, reason: `${filing}Its required sections are marked Required in the Library. ${noCount}` };
+}
+
+/**
  * The coverage block for one program's Vault. Never throws: a store that cannot
  * be read is `unavailable` with the reason, never a count of zero.
  *
@@ -94,8 +111,11 @@ export async function readVaultCoverage(
     primaryAgency: string | null | undefined;
     programId: string;
     organizationId: number;
+    /** The Library holds a filing document whose rule pack lists its sections (the Vault read knows). */
+    filingOutlineInLibrary?: boolean;
   },
 ): Promise<VaultCoverage> {
+  if (input.view === 'device' || input.view === 'ivd') return deviceFilingCoverage(input);
   if (input.view !== 'pharma' && input.view !== 'biotech') {
     return {
       state: 'not_applicable',

@@ -58,9 +58,8 @@ import type {
   StatisticalDocumentType,
 } from './types';
 
-function calculateContentHash(content: string): string {
-  return crypto.createHash('sha256').update(content).digest('hex');
-}
+/** The content hash the integrator and the statistical document save both record. */
+export const calculateContentHash = (content: string): string => crypto.createHash('sha256').update(content).digest('hex');
 
 export class WorkflowIntegrator {
 

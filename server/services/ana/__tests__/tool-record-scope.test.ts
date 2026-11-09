@@ -25,6 +25,11 @@ vi.mock('../../c2c/program-access.js', async importOriginal => ({
 const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+// The registry's mandatory-skill check (governed-tool-gate.ts, P-104) reads the
+// organisation's rules from the database; here the organisation has none, so the
+// program check is what these cases see (_standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 
 import { foreignProgramRefusal, foreignRecordRefusal, RECORD_SCOPES } from '../tool-record-scope';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
@@ -103,8 +108,18 @@ describe('the registry wrapper', () => {
   });
 
   it('covers the real tools too: a read for another tenant is refused before it reads', async () => {
-    const out = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId: THEIRS }, { organizationId: 7 } as never));
+    const out = JSON.parse(await getToolHandler('list_project_documents')!({ program_id: THEIRS }, CTX as never));
     expect(out.code).toBe('PROGRAM_NOT_IN_ORGANIZATION');
+  });
+
+  // Since b602ecad97 (2026-10-30) an RBM tool is admitted by RBM's own gate first
+  // (rbm-access.ts rbmToolAdmissionRefusal: an identified member, the RBM
+  // entitlement, the program's admission). Another tenant's program is not found there.
+  it("an RBM read for another tenant's program is refused by RBM's own admission, before it reads", async () => {
+    const out = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId: THEIRS }, CTX as never));
+    expect(out.code).toBe('PROJECT_NOT_FOUND');
+    const anonymous = JSON.parse(await getToolHandler('get_rbm_attention')!({ programId: THEIRS }, { organizationId: 7 } as never));
+    expect(anonymous.code).toBe('RBM_ACTOR_REQUIRED');
   });
 });
 

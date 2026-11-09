@@ -27,7 +27,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import path from 'path';
 import { createScopedLogger } from '../utils/logger';
 import * as schema from '../../shared/schema';
-import { getSslConfig } from './ssl';
+import { getSslConfig, verifiedPgConnectionString } from './ssl';
 import { getRuntimeDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
 import { assertRlsEnforcementForProduction } from './rlsEnforcement';
@@ -57,7 +57,7 @@ try {
     // RLS enforcement plus jit=off (runtimeStartupOptions.ts).
     const runtimeStartupOptions = buildRuntimeStartupOptions(process.env, process.env.PGOPTIONS);
     pool = new Pool({
-      connectionString: databaseUrl,
+      connectionString: verifiedPgConnectionString(databaseUrl),
       ssl: getSslConfig(databaseUrl),
       // 40 everywhere, and a wait for a free connection long enough to outlast a
       // cold start (2026-10-31): with 20 and 5 s, a development server's first

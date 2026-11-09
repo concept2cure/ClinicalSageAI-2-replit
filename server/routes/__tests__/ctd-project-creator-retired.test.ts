@@ -11,7 +11,7 @@ vi.mock('../../auth.js', () => ({
 }));
 vi.mock('../../services/ctd-ingestion-service.js', () => ({
   createCTDProject: h.create, listCTDProjects: h.list, getCTDProjectStatus: h.status,
-  validateCTDCompleteness: h.validate, uploadCTDDocument: vi.fn(), detectCTDSection: vi.fn(),
+  validateCTDCompleteness: h.validate, detectCTDSection: vi.fn(),
 }));
 import router from '../ctd-onboarding';
 

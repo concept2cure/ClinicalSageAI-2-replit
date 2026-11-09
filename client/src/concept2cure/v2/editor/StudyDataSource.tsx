@@ -23,6 +23,10 @@ const STUDY_DATA = '/api/submission-orchestrator/csr/study-data';
 const RUNS = '/api/submission-orchestrator/runs';
 const TABLE_KEYS = ['disposition', 'analysisPopulations', 'demographics', 'primaryEfficacy', 'aeOverallSummary', 'aeBySOC', 'aeTopPT', 'deathsSAEsDiscontinuations'] as const;
 interface SourceChoice { documentId: string; documentTitle: string; version: string; sha256: string; approved: boolean }
+/** A Vault file the server could not read, so could not check as a clinical source (D2-CSR F5, 2026-11-05). */
+interface UnreadFile { documentId: string; documentTitle: string; version: string }
+/** The project's clinical sources, the files it could not read, and how many other JSON files are not sources. */
+interface SourceList { list: SourceChoice[]; limitReached: boolean; unreadable: UnreadFile[]; notClinicalSources: number }
 interface Table { title: string; headers: string[]; rows: string[][] }
 type Tables = Record<string, Table>;
 interface Preview { source: CsrSourceReceipt; approved: boolean; tables: Tables }
@@ -35,6 +39,17 @@ const uuid = (value: unknown): value is string => typeof value === 'string' && /
 const sha = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 function isChoice(value: unknown): value is SourceChoice {
   return record(value) && uuid(value.documentId) && text(value.documentTitle) && text(value.version) && sha(value.sha256) && typeof value.approved === 'boolean';
+}
+function isUnreadFile(value: unknown): value is UnreadFile {
+  return record(value) && uuid(value.documentId) && text(value.documentTitle) && typeof value.version === 'string';
+}
+/** The list the server returns, checked whole. A server before F5 sends neither `unreadable` nor the count: it read no file. */
+function sourceList(value: unknown): SourceList | null {
+  if (!record(value) || value.format !== FORMAT || typeof value.limitReached !== 'boolean' || !Array.isArray(value.sources) || !value.sources.every(isChoice)) return null;
+  const unreadable = value.unreadable ?? [];
+  const notClinicalSources = value.notClinicalSources ?? 0;
+  if (!Array.isArray(unreadable) || !unreadable.every(isUnreadFile) || !Number.isSafeInteger(notClinicalSources) || (notClinicalSources as number) < 0) return null;
+  return { list: value.sources, limitReached: value.limitReached, unreadable, notClinicalSources: notClinicalSources as number };
 }
 function isReceipt(value: unknown): value is CsrSourceReceipt {
   return record(value) && value.adapter === FORMAT && uuid(value.documentId) && text(value.documentTitle) && text(value.version)
@@ -88,7 +103,9 @@ function ClinicalTable({ table }: { table: Table }) {
   const start = page * 50;
   return <details>
     <summary>{table.title}</summary>
-    <div style={{ overflowX: 'auto' }}><table>
+    {/* The product's data table (R-3, rehearsal 2026-11-05: unstyled, the header read "Synthetic LMN201 armSynthetic
+        CONTROL armTotal", every column run together). */}
+    <div style={{ overflowX: 'auto' }}><table className="reg-tbl">
       <caption>{table.title}</caption>
       <thead><tr>{table.headers.map((header, index) => <th key={index} scope="col">{header}</th>)}</tr></thead>
       <tbody>{table.rows.slice(start, start + 50).map((row, index) => <tr key={start + index}>{row.map((cell, column) => <td key={column}>{cell}</td>)}</tr>)}</tbody>
@@ -116,7 +133,7 @@ export function StudyDataSource({ programId, documentId, onFrozen, onNav }: {
   programId: string; documentId: string; onFrozen: (entry: StudyDataEntry) => void; onNav?: (surface: string) => void;
 }) {
   const [refresh, setRefresh] = useState(0);
-  const [sources, setSources] = useState<{ list: SourceChoice[]; limitReached: boolean } | null>(null);
+  const [sources, setSources] = useState<SourceList | null>(null);
   const [sourcesError, setSourcesError] = useState<string | null>(null);
   const [choiceId, setChoiceId] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -128,8 +145,9 @@ export function StudyDataSource({ programId, documentId, onFrozen, onNav }: {
     setSources(null); setSourcesError(null); setChoiceId(''); setPreview(null); setError(null);
     void request('GET', `${SOURCES}?programId=${encodeURIComponent(programId)}`).then(value => {
       if (!live) return;
-      if (!record(value) || value.format !== FORMAT || typeof value.limitReached !== 'boolean' || !Array.isArray(value.sources) || !value.sources.every(isChoice)) throw new Error('The clinical source list was incomplete.');
-      setSources({ list: value.sources, limitReached: value.limitReached });
+      const listed = sourceList(value);
+      if (!listed) throw new Error('The clinical source list was incomplete.');
+      setSources(listed);
     }).catch(() => { if (live) setSourcesError('The project’s clinical sources could not be listed.'); });
     return () => { live = false; };
   }, [programId, refresh]);
@@ -183,15 +201,30 @@ export function StudyDataSource({ programId, documentId, onFrozen, onNav }: {
   </section>;
 }
 
+/** The files the server could not read are named; the other JSON files, counted. Never a silent omission. */
+function SourceListNotes({ sources }: { sources: SourceList }) {
+  const { unreadable, notClinicalSources: others } = sources;
+  const one = unreadable.length === 1;
+  const [files, were, them] = one ? ['This Vault file', 'it was', 'it'] : [`These ${unreadable.length} Vault files`, 'they were', 'them'];
+  return <>
+    {unreadable.length > 0 && <p role="alert">{files} could not be read, so {were} not checked as {one ? 'a clinical source' : 'clinical sources'}:{' '}
+      {unreadable.map(file => `${file.documentTitle}, version ${file.version}`).join('; ')}. Check {them} in the project’s Vault, then reload
+      clinical sources.</p>}
+    {others > 0 && <p>{others === 1 ? '1 other JSON file in this project’s Vault is not a clinical source' : `${others} other JSON files in this project’s Vault are not clinical sources`}{' '}
+      (the efficacy results or a dataset a bundle names, for example), so {others === 1 ? 'it is' : 'they are'} not offered.</p>}
+    {sources.limitReached && <p>The source list reached its limit. Review the full source inventory in the Vault.</p>}
+  </>;
+}
+
 function SourcePicker({ sources, sourcesError, busy, choiceId, choose }: {
-  sources: { list: SourceChoice[]; limitReached: boolean } | null; sourcesError: string | null; busy: boolean;
+  sources: SourceList | null; sourcesError: string | null; busy: boolean;
   choiceId: string; choose: (id: string) => void;
 }) {
   if (sourcesError) return <p role="alert">{sourcesError}</p>;
   if (!sources) return <p role="status">Listing the project’s clinical sources…</p>;
   if (sources.list.length === 0) return <>
     <p>No clinical source is in this project’s Vault yet. Add the study’s source file there, approve it, then choose it here.</p>
-    {sources.limitReached && <p>The source list reached its limit. Review the full source inventory in the Vault.</p>}
+    <SourceListNotes sources={sources} />
   </>;
   return <>
     <label>Clinical source{' '}
@@ -199,7 +232,7 @@ function SourcePicker({ sources, sourcesError, busy, choiceId, choose }: {
         <option value="">Choose a source</option>
         {sources.list.map(source => <option key={source.documentId} value={source.documentId}>{source.documentTitle} · v{source.version} · {source.approved ? 'approved' : 'not approved'}</option>)}
       </select></label>
-    {sources.limitReached && <p>The source list reached its limit. Review the full source inventory in the Vault.</p>}
+    <SourceListNotes sources={sources} />
   </>;
 }
 

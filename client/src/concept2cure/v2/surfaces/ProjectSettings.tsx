@@ -8,9 +8,13 @@ import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmD
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { captureShellProjectGuard, shellProgramId, useShellProject } from '../shellProject';
 import { projectSettingsHeaders, requestProjectArchive, requestProjectSettings } from './projectSettingsRequest';
+import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import '../styles/project-settings.css';
 
-interface Props { programId: string; onSaved: () => void }
+/** A request to open the drawer, focused on one field once it renders: a change of `n` opens it (D3.md §4.9). */
+export interface ProjectSettingsRequest { n: number; focus?: 'description' | 'priority' | 'targetSubmissionDate' }
+interface Props { programId: string; onSaved: () => void; request?: ProjectSettingsRequest }
 interface Draft { description: string; priority: ProjectSettingsData['priority']; targetSubmissionDate: string }
 const id = (value: unknown) => typeof value === 'string' && /^[1-9]\d*$/.test(value) ? Number(value) : value;
 const draftOf = (data: ProjectSettingsData): Draft => ({ description: data.description ?? '', priority: data.priority, targetSubmissionDate: data.targetSubmissionDate ?? '' });
@@ -73,8 +77,11 @@ async function loadSettings(context: Context) {
   if (!retained(context) || serial !== s.reads.current) return;
   s.setLoading(false);
   if (answer.kind !== 'confirmed') { s.setNote({ error: true, text: answer.message }); return; }
+  const afterRefusal = s.blocked;
   s.setSaved(answer.envelope.data); s.setDraft(draftOf(answer.envelope.data)); s.setBlocked(false);
-  s.setNote({ error: false, text: 'Current saved settings loaded. This read does not confirm an earlier uncertain save or audit.' });
+  /* Said only when it means something: after a save that could not be confirmed, a reload shows what is saved but does
+     not confirm that save. Opening the settings said it too, to a tester who had saved nothing (human test J1). */
+  s.setNote(afterRefusal ? { error: false, text: 'Current saved settings loaded. This read does not confirm an earlier uncertain save or audit.' } : null);
 }
 function diff(saved: ProjectSettingsData | null, draft: Draft | null): ProjectSettingsPatch {
   if (!saved || !draft) return {};
@@ -118,26 +125,42 @@ async function saveSettings(context: Context, reason: string) {
     if (s.mounted.current) s.setSaving(false);
   }
 }
-function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: ProjectSettingsScope; isCurrent: () => boolean }) {
+/** Opens the drawer when the page asks (About's "Edit"), then focuses the asked field once the saved settings
+ *  have been read and the fields render. A request seen at mount is not acted on: only a change of `n` opens. */
+function useSettingsRequest(request: ProjectSettingsRequest | undefined, s: State, prefix: string, toggle: () => void) {
+  const seen = useRef(request?.n ?? 0);
+  const wanted = useRef<ProjectSettingsRequest['focus'] | null>(null);
+  const n = request?.n ?? 0;
+  useEffect(() => {
+    if (n === seen.current) return;
+    seen.current = n;
+    wanted.current = request?.focus ?? null;
+    if (!s.open) toggle();
+  }); /* no dependency list: it runs each render and acts only on a change of n, guarded by `seen` */
+  useEffect(() => {
+    const field = wanted.current;
+    if (!field || !s.open || s.loading || !s.draft) return;
+    const element = document.getElementById(`${prefix}-${field}`);
+    if (element) { element.focus(); wanted.current = null; }
+  });
+}
+function SettingsSession({ scope, isCurrent, onSaved, request }: Props & { scope: ProjectSettingsScope; isCurrent: () => boolean }) {
   const s = useSettingsState(); const prefix = useId();
-  const { open, review, pending, mounted, setOpen } = s;
+  const { mounted } = s;
   const visit = useMemo(() => captureShellProjectGuard(), []);
   const live = useRef(isCurrent); live.current = isCurrent;
   const current = useCallback(() => mounted.current && visit() && live.current(), [mounted, visit]);
   const context: Context = { state: s, scope, current, onSaved };
   const close = () => { if (!s.pending.current) s.setOpen(false); };
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, [mounted]);
-  useEffect(() => {
-    if (!open || review) return;
-    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape' && !pending.current) setOpen(false); };
-    document.addEventListener('keydown', escape);
-    return () => document.removeEventListener('keydown', escape);
-  }, [open, review, pending, setOpen]);
+  /* Escape and focus are the drawer's (useDialog, in SettingsPanel), handed to the
+     governed confirm dialog while it is open; close() still refuses during a save. */
   const toggle = () => {
     if (s.pending.current || !retained(context)) return;
     if (s.open) close();
     else { s.setOpen(true); if (!s.blocked) void loadSettings(context); }
   };
+  useSettingsRequest(request, s, prefix, toggle);
   const patch = diff(s.saved, s.draft);
   const editable = s.saved?.canChange === true && !s.saving && !s.loading && !s.blocked;
   if (s.retired) return <p className="pj-settings-note" role="status">{RETIRED}</p>;
@@ -145,7 +168,10 @@ function SettingsSession({ scope, isCurrent, onSaved }: Props & { scope: Project
     ? <ArchiveControl scope={scope} current={current} disabled={!editable} onArchived={onSaved} />
     : null;
   return <div className="pj-settings">
-    <button className="btn ghost" onClick={toggle} aria-expanded={s.open} aria-controls={`${prefix}-panel`} disabled={s.saving}>Project settings</button>
+    {/* D3 (2026-11-06, D3.md §4.9): an icon button beside the project's name that opens a drawer, not a
+        full-width panel pushing the page down. */}
+    <button type="button" className="btn ghost pj-settings-btn" onClick={toggle} aria-expanded={s.open} aria-controls={`${prefix}-panel`}
+      aria-haspopup="dialog" aria-label="Project settings" title="Project settings" disabled={s.saving}>{I.settings}</button>
     {s.open && <SettingsPanel state={s} prefix={prefix} editable={editable} patch={patch} onClose={close} archive={archive}
       onReload={() => void loadSettings(context)} onReview={() => { if (retained(context)) s.setReview(patch); }} />}
     <GovernedConfirmDialog open={!!s.review && !s.retired} action="Save project settings" target={settingsReviewTarget(s.review)} minReason={GOVERNED_REASON_MIN}
@@ -157,17 +183,28 @@ function SettingsPanel({ state: s, prefix, editable, patch, archive, onClose, on
   state: State; prefix: string; editable: boolean; patch: ProjectSettingsPatch; archive: React.ReactNode;
   onClose: () => void; onReload: () => void; onReview: () => void;
 }) {
-  return <section className="pj-settings-panel" id={`${prefix}-panel`} aria-label="Project settings">
-      <div className="pj-sec-h"><h2>Project settings</h2><button className="btn ghost small" onClick={onClose} disabled={s.saving}>Close settings</button></div>
-      {s.loading && <p role="status">Reading current project settings…</p>}
-      {s.saved && s.draft && <SettingsFields state={s} editable={editable} prefix={prefix} />}
-      {s.note && <p className="pj-settings-note" role={s.note.error ? 'alert' : 'status'}>{s.note.text}</p>}
-      {!s.loading && <div className="pj-settings-actions">
-        <button className="btn ghost" disabled={s.saving} onClick={onReload}>Reload saved settings</button>
-        {s.saved?.canChange && <button className="btn primary" disabled={!editable || !isProjectSettingsPatch(patch)} onClick={onReview}>Review settings change</button>}
+  /* D0's drawer (.de-bd / .de): focus on open, Tab kept inside, Escape closes, focus back to the button on
+     close; while the governed confirm dialog is open the drawer releases both to it. */
+  const dialogRef = useDialog(onClose, !s.review);
+  return <div className="de-bd" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="de pj-settings-panel" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true"
+      aria-labelledby={`${prefix}-h`} id={`${prefix}-panel`}>
+      <div className="de-h">
+        <div><div className="de-h-eye">Project</div><div className="de-h-t" id={`${prefix}-h`}>Project settings</div></div>
+        <button type="button" className="de-x" onClick={onClose} disabled={s.saving} aria-label="Close settings">{I.close}</button>
+      </div>
+      <div className="de-body">
+        {s.loading && <p role="status">Reading current project settings…</p>}
+        {s.saved && s.draft && <SettingsFields state={s} editable={editable} prefix={prefix} />}
+        {s.note && <p className="pj-settings-note" role={s.note.error ? 'alert' : 'status'}>{s.note.text}</p>}
+        {!s.loading && s.saved && archive}
+      </div>
+      {!s.loading && <div className="de-f pj-settings-actions">
+        <button type="button" className="btn ghost" disabled={s.saving} onClick={onReload}>Reload saved settings</button>
+        {s.saved?.canChange && <button type="button" className="btn primary" disabled={!editable || !isProjectSettingsPatch(patch)} onClick={onReview}>Review settings change</button>}
       </div>}
-      {!s.loading && s.saved && archive}
-    </section>;
+    </div>
+  </div>;
 }
 
 /* ── Archive (2026-10-31) ─────────────────────────────────────────────────────
@@ -209,11 +246,11 @@ function SettingsFields({ state: s, editable, prefix }: { state: State; editable
   return <div className="npw-fields">
     {!s.saved?.canChange && <p className="pj-settings-note npw-field-wide">Your current project permissions allow reading these settings. Editing is unavailable.</p>}
     <label className="npw-field npw-field-wide"><span className="npw-field-l">Project description</span>
-      <textarea className="c2c-input" value={draft.description} rows={3} maxLength={4000} disabled={!editable} onChange={event => change('description', event.target.value)} /></label>
-    <label className="npw-field"><span className="npw-field-l">Project priority</span><select className="c2c-input" value={draft.priority} disabled={!editable} onChange={event => change('priority', event.target.value)}>
+      <textarea id={`${prefix}-description`} className="c2c-input" value={draft.description} rows={3} maxLength={4000} disabled={!editable} onChange={event => change('description', event.target.value)} /></label>
+    <label className="npw-field"><span className="npw-field-l">Project priority</span><select id={`${prefix}-priority`} className="c2c-input" value={draft.priority} disabled={!editable} onChange={event => change('priority', event.target.value)}>
       <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
     </select></label>
-    <label className="npw-field"><span className="npw-field-l">Target submission date</span><input className="c2c-input" type="date" aria-label="Target submission date" min="0001-01-01" max="9999-12-31" value={draft.targetSubmissionDate} disabled={!editable} aria-describedby={`${prefix}-date-help`} onChange={event => change('targetSubmissionDate', event.target.value)} />
+    <label className="npw-field"><span className="npw-field-l">Target submission date</span><input id={`${prefix}-targetSubmissionDate`} className="c2c-input" type="date" aria-label="Target submission date" min="0001-01-01" max="9999-12-31" value={draft.targetSubmissionDate} disabled={!editable} aria-describedby={`${prefix}-date-help`} onChange={event => change('targetSubmissionDate', event.target.value)} />
       <span className="npw-field-help" id={`${prefix}-date-help`}>Recorded target only. Replanning milestones is a separate action.</span></label>
   </div>;
 }

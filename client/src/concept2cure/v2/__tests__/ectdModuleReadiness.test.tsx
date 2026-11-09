@@ -15,7 +15,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -23,6 +23,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
+import { ApiRequestError } from '@/lib/queryClient';
 import { EctdCompile } from '../surfaces/EctdCompile';
 import { ok, STATUS, props } from './ectdCompile.fixtures';
 
@@ -71,6 +72,19 @@ describe('eCTD module readiness says what it counted', () => {
     expect(card().textContent).toContain('1 of 2 required sections placed in sequence 0000');
   });
 
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): an empty
+     sequence 0000 read "0% · Partial" on every module, as if work were part done. */
+  it('a module with nothing of its required set placed reads "none placed", not "partial"', async () => {
+    serveStatus({
+      ...STATUS, readinessBasis: 'placed', totalRequired: 9, totalCompleted: 0,
+      sequence: { sequenceNumber: '0000', region: 'fda', leafCount: 0 },
+      modules: [{ moduleCode: 'm1', moduleName: 'Module 1 — Administrative', totalSections: 0, requiredSections: 9, completedRequired: 0, completionPct: 0, ready: false }],
+    });
+    render(<EctdCompile {...props()} />);
+    const row = (await screen.findByText('Module 1 — Administrative')).closest('tr')!;
+    expect(row.querySelector('.rd-chip')?.textContent).toBe('none placed');
+  });
+
   it('a market with no required set says why, with no figure', async () => {
     const note = 'Sequence 0000 is for the ZZ market, which has no required-section set for a NDA here, so placement is not measured.';
     serveStatus({ ...STATUS, overallReadiness: null, readinessBasis: 'unavailable', readinessNote: note, modules: [], totalRequired: 0, totalCompleted: 0 });
@@ -86,5 +100,39 @@ describe('eCTD module readiness says what it counted', () => {
     render(<EctdCompile {...props()} />);
     expect(await screen.findByText('Compilation readiness could not be read')).toBeTruthy();
     expect(screen.queryByText('No module readiness yet')).toBeNull();
+  });
+});
+
+/* 3b slice 3 (c), under founder decision P-97: the server refuses compile,
+   status and validate for a project that is not an application with 422
+   ECTD_NOT_APPLICABLE and says why. That is the project's kind, not a failed
+   read: the card says it is not compiled as an eCTD sequence and gives the
+   server's reason, never "could not be read" or "sign in and retry". */
+describe('a project that is not an application is not compiled as an eCTD sequence', () => {
+  const WHY = "This project is a clinical study report, authored here and not compiled as an eCTD sequence. The clinical study report is a harmonised (ICH) document filed in an application's sequence.";
+  const refused = () => new ApiRequestError(WHY, 422, { error: { code: 'ECTD_NOT_APPLICABLE', message: WHY } }, 'ECTD_NOT_APPLICABLE');
+  function serveRefusal() {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url === '/api/ectd-compile/42/status' || url === '/api/ectd-compile/42/validate') throw refused();
+      if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: [] });
+      return ok({});
+    });
+  }
+
+  it('the readiness card says so and gives the reason, never a failed read', async () => {
+    serveRefusal();
+    render(<EctdCompile {...props()} />);
+    expect(await screen.findByText('Not compiled as an eCTD sequence')).toBeTruthy();
+    expect(card().textContent).toContain(WHY);
+    expect(card().textContent).not.toMatch(/could not be read|Sign in/);
+  });
+
+  it('validation says the reason, not an HTTP status', async () => {
+    serveRefusal();
+    render(<EctdCompile {...props()} />);
+    await screen.findByText('Not compiled as an eCTD sequence');
+    fireEvent.click(screen.getByRole('button', { name: /Validate/ }));
+    await waitFor(() => expect(document.body.textContent).toContain(WHY));
+    expect(document.body.textContent).not.toMatch(/HTTP 422/);
   });
 });

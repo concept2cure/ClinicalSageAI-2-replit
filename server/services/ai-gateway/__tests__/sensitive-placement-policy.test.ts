@@ -2,9 +2,37 @@ import { describe, expect, it } from 'vitest';
 import {
   assertSensitivePlacementConfiguration,
   decideSensitivePlacement,
+  decideInputTierPlacement,
+  sensitivityTierForClassification,
   readProviderPlacementApprovals,
   type SensitivePlacementInput,
 } from '../sensitive-placement-policy';
+
+describe('input sensitivity tiers (spec v0.5 §24)', () => {
+  it.each([['PUBLIC', 0], ['INTERNAL', 1], ['CONFIDENTIAL', 2], ['CONTROLLED', 3], ['RESTRICTED', 3], [null, 3], ['unrecognized', 3]])(
+    'maps persisted classification %s conservatively', (classification, tier) => {
+      expect(sensitivityTierForClassification(classification)).toBe(tier);
+    },
+  );
+  it('uses the highest input tier, even without any personal information', () => {
+    expect(decideInputTierPlacement({ tiers: [0, 1, 3, 0], provider: 'anthropic', detectedDataClass: 'none' }))
+      .toEqual({ allowed: false, tierMax: 3, reasonCode: 'DENY_INPUT_TIER' });
+  });
+  it.each(['openai', 'anthropic', 'bedrock', 'vertex', 'azure'])('keeps raw confidential and restricted inputs away from %s', provider => {
+    for (const tier of [2, 3] as const) expect(decideInputTierPlacement({ tiers: [tier], provider }).allowed).toBe(false);
+  });
+  it('allows local processing and ordinary low-tier placement without bypassing existing policy', () => {
+    expect(decideInputTierPlacement({ tiers: [3], provider: 'local' }).allowed).toBe(true);
+    expect(decideInputTierPlacement({ tiers: [0, 1], provider: 'anthropic' }).allowed).toBe(true);
+  });
+  it('tiers up empty, malformed, and detector-uncertain bundles', () => {
+    for (const tiers of [[], [4], [NaN], [undefined]] as unknown as Array<readonly (0 | 1 | 2 | 3)[]>) {
+      expect(decideInputTierPlacement({ tiers, provider: 'anthropic' })).toMatchObject({ allowed: false, tierMax: 3 });
+    }
+    expect(decideInputTierPlacement({ tiers: [0], provider: 'anthropic', detectedDataClass: 'phi' }).allowed).toBe(false);
+    expect(decideInputTierPlacement({ tiers: [0], provider: 'anthropic', detectedDataClass: 'unknown' }).allowed).toBe(false);
+  });
+});
 
 /** A test fixture, not an agreement: no provider has a signed zero-retention agreement today (D6). */
 const AGREEMENT = { reference: 'TEST-ZDR-ADDENDUM-0001', effectiveFrom: '2026-01-01' };

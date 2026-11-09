@@ -19,12 +19,13 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import { Vault } from '../surfaces/Vault';
-import { libraryHeadline } from '../surfaces/VaultLibraryResults';
+import { libraryHeadline, VaultLibraryResults } from '../surfaces/VaultLibraryResults';
 import { PID, ok, vaultPayload, props } from './_vault-surface-fixtures';
 
 const OTHER = '99999999-9999-4999-8999-999999999999';
 const DOC = '44444444-4444-4444-8444-444444444444';
-const LIB = '/api/c2c/project-vault/search?q=stability&limit=50';
+/* From inside a project, the library asks within that project's sponsor (F1, S6 V2). */
+const LIB = `/api/c2c/project-vault/search?q=stability&limit=50&sameClientAs=${PID}`;
 
 const hit = (over: Record<string, unknown> = {}) => ({
   id: DOC, title: 'Stability report', documentType: 'OTHER', size: '2 KB', version: '2.0', current: true,
@@ -60,7 +61,7 @@ describe('library search (critique 15)', () => {
     });
     await searchLibrary();
     const list = await screen.findByTestId('vault-library-results');
-    expect(apiRequest).toHaveBeenCalledWith('GET', LIB);
+    expect(apiRequest).toHaveBeenCalledWith('GET', LIB, undefined, undefined, expect.any(AbortSignal));
     expect(within(list).getByRole('status').textContent).toBe('2 documents in projects you can access match “stability”.');
     expect(list.textContent).toContain('BX-302');
     expect(list.textContent).toContain('BX-301 (this project)');
@@ -107,5 +108,39 @@ describe('library search (critique 15)', () => {
     const list = await screen.findByTestId('vault-library-results');
     expect((await within(list).findByRole('alert')).textContent).toContain('not a result of zero matches');
     expect(within(list).queryByRole('status')).toBeNull();
+  });
+});
+
+/* F1, S6 V2 (2026-11-05): a CRO works for several sponsors in one organisation. Inside a project, "All my projects"
+   is that project's sponsor's projects, and the headline says whose; across every project, each row names its
+   sponsor. The server half: tests/db/vault-library-search.dbtest.ts. */
+describe("a CRO's sponsors never mix in one list", () => {
+  const SPONSOR_A = { id: 7, name: 'Northwind Bio' };
+  const SPONSOR_B = { id: 9, name: 'Contoso Pharma' };
+
+  it("inside a project, the library is its sponsor's projects, and the headline names the sponsor once", async () => {
+    onLibrary = () => ok({
+      success: true,
+      data: { scope: 'verified-accessible-programs', query: 'stability', total: 1, limit: 50, offset: 0, client: SPONSOR_A,
+        results: [hit({ client: SPONSOR_A })] },
+    });
+    await searchLibrary();
+    const list = await screen.findByTestId('vault-library-results');
+    expect(apiRequest).toHaveBeenCalledWith('GET', LIB, undefined, undefined, expect.any(AbortSignal));
+    expect(within(list).getByRole('status').textContent).toBe('1 document in Northwind Bio projects you can access matches “stability”.');
+    expect(list.querySelector('.vd-lib-proj')?.textContent).toBe('BX-302');
+  });
+
+  it('across every project, each row says whose project it is', async () => {
+    onLibrary = () => ok({
+      success: true,
+      data: { scope: 'verified-accessible-programs', query: 'stability', total: 2, limit: 50, offset: 0,
+        results: [hit({ client: SPONSOR_A }), hit({ id: 'd-2', title: 'Stability summary', program: { id: PID, name: 'BX-301' }, client: SPONSOR_B })] },
+    });
+    render(<VaultLibraryResults query="stability" includeEarlier={false} currentProjectId={null} onDownload={vi.fn()} downloadingId="" />);
+    const list = await screen.findByTestId('vault-library-results');
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('sameClientAs'))).toBe(false);
+    expect(within(list).getByRole('status').textContent).toBe('2 documents in projects you can access match “stability”.');
+    expect([...list.querySelectorAll('.vd-lib-proj')].map(e => e.textContent)).toEqual(['BX-302 · Northwind Bio', 'BX-301 · Contoso Pharma']);
   });
 });

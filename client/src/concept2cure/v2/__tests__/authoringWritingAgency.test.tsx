@@ -117,3 +117,75 @@ describe('the editor writing agency follows the admitted recorded filing', () =>
     expect(update).not.toHaveBeenCalled();
   });
 });
+
+describe('exact current filing writing context', () => {
+  it.each([['pmda', 'PMDA'], ['hc', 'Health Canada']])('uses bound agency %s instead of the primary project', async (agency, expected) => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { registryId: 'US_IND', verifiedFilingAgency: agency,
+      boundDocumentType: 'nda', draftingRegionState: 'not-recorded', state: 'ready' } })} />);
+    expect(region().value).toBe(expected); await draft();
+    expect(generation()[0][2]).toEqual({ tone: 'professional', region: expected });
+  });
+
+  it.each(['EU_MDR_TECHDOC', 'EU_CER', 'EU_IVDR'])('does not infer EMA from an unbound %s project region', async registryId => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { registryId, draftingRegionState: 'not-recorded', state: 'ready' } })} />);
+    expect(region().value).toBe(''); await draft(); expect(generation()).toHaveLength(0);
+    expect(screen.getByTestId('ai-draft-region-note').textContent).toMatch(/Notified Body.*not supported/);
+  });
+
+  it.each(['loading', 'error'] as const)('holds %s bound scope even with a saved section projection and explicit preference', async state => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { verifiedFilingAgency: null, draftingRegion: 'PMDA', draftingRegionState: 'recorded', state } })} />);
+    fireEvent.change(region(), { target: { value: 'FDA' } }); await draft();
+    expect(generation()).toHaveLength(0);
+    expect(screen.getByTestId('ai-draft-generate').hasAttribute('disabled')).toBe(true);
+  });
+
+  it('retains a supported human preference and discloses the bound-agency mismatch', () => {
+    const view = render(<AuthoringAiDraft {...props({ recordedFiling: { verifiedFilingAgency: null, state: 'loading' } })} />);
+    fireEvent.change(region(), { target: { value: 'FDA' } });
+    view.rerender(<AuthoringAiDraft {...props({ recordedFiling: { registryId: 'US_IND', verifiedFilingAgency: 'pmda',
+      boundDocumentType: 'jnda', draftingRegionState: 'not-recorded', state: 'ready' } })} />);
+    expect(region().value).toBe('FDA');
+    expect(screen.getByTestId('ai-draft-region-note').textContent).toMatch(/FDA.*differs.*PMDA/);
+  });
+
+  it('retains legitimate saved-template precedence over a different bound agency', async () => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { verifiedFilingAgency: 'fda', boundDocumentType: 'ind',
+      draftingRegion: 'PMDA', draftingRegionState: 'recorded', state: 'ready' } })} />);
+    expect(region().value).toBe('PMDA'); await draft();
+    expect(generation()[0][2]).toEqual({ tone: 'professional', region: 'PMDA' });
+  });
+});
+
+describe('EU device storage keys do not establish an EMA receiving authority', () => {
+  it.each(['cer', 'mdr', 'ivdr'])('holds a recorded EMA projection for bound %s', async boundDocumentType => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { verifiedFilingAgency: 'ema', boundDocumentType,
+      draftingRegion: 'EMA', draftingRegionState: 'recorded', state: 'ready' } })} />);
+    expect(region().value).toBe('');
+    expect(screen.getByTestId('ai-draft-generate').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByTestId('ai-draft-region-note').textContent).toMatch(/EMA.*not a verified receiving agency/);
+    fireEvent.change(region(), { target: { value: 'PMDA' } }); await draft(); expect(generation()).toHaveLength(0);
+  });
+
+  it('keeps an unsupported stored device key blank but allows an explicit preference after verified scope', async () => {
+    render(<AuthoringAiDraft {...props({ recordedFiling: { registryId: 'US_IND', verifiedFilingAgency: 'ema', boundDocumentType: 'ivdr',
+      draftingRegionState: 'not-recorded', state: 'ready' } })} />);
+    expect(region().value).toBe('');
+    expect(screen.getByTestId('ai-draft-region-note').textContent).toMatch(/stored IVDR rule-pack key, not a receiving authority/);
+    fireEvent.change(region(), { target: { value: 'Health Canada' } }); await draft();
+    expect(generation()[0][2]).toEqual({ tone: 'professional', region: 'Health Canada' });
+  });
+
+  it('retains arrived review while holding generation for a false EMA projection', async () => {
+    const state = { draft: { sectionId: SECTION, generated: 'Original text.', draftId: 'arrived-candidate', metadata: {}, check: null },
+      body: 'Human-reviewed text.', changeReason: 'Checked sources.', refusal: null,
+      generationInputs: { tone: 'professional', region: 'EMA', context: '', requirements: '' } };
+    const update = vi.fn();
+    render(<AuthoringAiDraft {...props({ recordedFiling: { verifiedFilingAgency: 'ema', boundDocumentType: 'ivdr',
+      draftingRegion: 'EMA', draftingRegionState: 'recorded', state: 'ready' }, reviewSession: { state, update, isCurrent: () => true } })} />);
+    await act(async () => { fireEvent.click(screen.getByTestId('ai-draft-regenerate')); });
+    expect(generation()).toHaveLength(0);
+    expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toBe('Human-reviewed text.');
+    expect(screen.getByTestId('ai-draft-accept').hasAttribute('disabled')).toBe(false);
+    expect(update).not.toHaveBeenCalled();
+  });
+});

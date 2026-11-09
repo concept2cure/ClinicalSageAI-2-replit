@@ -89,6 +89,9 @@ describe('the governance boundary', () => {
       'master-licensing.grant-module',
       'licensing.open-checkout',
       'licensing.purchase-plan',
+      // P-86 (2026-11-01): a sequence is retired by a signed act whose statement
+      // the signer makes; the id someone would try is the act's own name.
+      'submissions.retire-sequence',
     ]) {
       expect(GOVERNED_VERB_PATTERN.test(bad), bad).toBe(true);
       expect(() => assertUngovernedActionId(bad)).toThrow(/governed/);

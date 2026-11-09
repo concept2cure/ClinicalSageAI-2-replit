@@ -1,0 +1,485 @@
+# Red: the new suite against the unchanged handlers (server/services/ana/AnaToolExecutor.ts at HEAD 1d4c4dcdeb, working tree unmodified for that file)
+# Command: npx vitest run server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+# Run: 2026-11-05T14:06:51Z, ANSI stripped
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:06:23.316Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:06:23.318Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:06:23.319Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:06:23.771Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project 19ms
+   → expected [ 'a-a1', 'a-a2', 'a-b', 'a-priv' ] to deeply equal [ 'a-a1', 'a-a2', 'a-b' ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor 6ms
+   → expected { id: 1, artifact_id: 'a-a1', …(9) } to match object { project_id: 10, …(2) }
+(11 matching properties omitted from actual)
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one 5ms
+   → read_vault_document: {"ok":true,"document":{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"content_hash":null,"created_at":"2026-11-05T14:06:40.375Z","updated_at":"2026-11-05T10:06:40.375Z","locked_at":null,"original_file_available":true,"source_availability":"Original file available."},"content":"body","totalChars":4,"truncated":false,"evidence_source_id":null,"citation_hint":"This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence."}: expected true to be undefined
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions 3ms
+   → expected { id: 3, artifact_id: 'a-b', …(12) } to match object { artifact_id: 'a-b', project: 'CT-1' }
+(13 matching properties omitted from actual)
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one 3ms
+   → expected [ 'doc_a1', 'doc_b', 'doc_priv' ] to deeply equal [ 'doc_a1', 'doc_b' ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one 10ms
+   → read_governed_document: {"ok":true,"document":{"id":"doc_priv","doc_type":"ind","agency":"fda","title":"Private IND","status":"draft","readiness":0},"outline":[{"document_id":"doc_priv","section_key":"2.5","parent_key":null,"label":"Clinical overview","status":"drafted","mandatory":true,"version":1,"path_order":1,"counted":true}],"message":"Outline with 1 sections; readiness 0% counts 1 of them (0 approved or locked). Call again with section_key to read a section's content."}: expected true to be undefined
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only 7ms
+   → expected [ 'Contoso device memo', …(3) ] to deeply equal [ 'Contoso device memo', …(2) ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid) 3ms
+   → expected [ 'a-a1', 'a-a2', 'a-b', 'a-priv' ] to deeply equal [ 'a-a1', 'a-a2' ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id) 3ms
+   → expected [ 'a-a1', 'a-a2', 'a-b', 'a-priv' ] to deeply equal [ 'a-a1', 'a-a2' ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one 4ms
+   → read_vault_document: {"ok":true,"document":{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"content_hash":null,"created_at":"2026-11-05T14:06:40.375Z","updated_at":"2026-11-05T11:06:40.375Z","locked_at":null,"original_file_available":true,"source_availability":"Original file available."},"content":"body","totalChars":4,"truncated":false,"evidence_source_id":null,"citation_hint":"This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence."}: expected true to be undefined
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read 2ms
+   → expected [ 'doc_a1', 'doc_b', 'doc_priv' ] to deeply equal [ 'doc_a1' ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts 3ms
+   → expected [ 'Contoso device memo', …(3) ] to deeply equal [ …(2) ]
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed 2ms
+   → {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so 2ms
+   → list_vault_documents: {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused 1ms
+   → list_vault_documents: {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project
+AssertionError: expected [ 'a-a1', 'a-a2', 'a-b', 'a-priv' ] to deeply equal [ 'a-a1', 'a-a2', 'a-b' ]
+
+- Expected
++ Received
+
+  [
+    "a-a1",
+    "a-a2",
+    "a-b",
++   "a-priv",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:151:30
+    149|     const out = await run('list_vault_documents', {}, MEMBER_CTX);
+    150|     expect(out.ok, JSON.stringify(out)).toBe(true);
+    151|     expect(artifactIds(out)).toEqual(['a-a1', 'a-a2', 'a-b']);
+       |                              ^
+    152|     expect(JSON.stringify(out)).not.toMatch(/a-priv|Private memo|a-the…
+    153|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor
+AssertionError: expected { id: 1, artifact_id: 'a-a1', …(9) } to match object { project_id: 10, …(2) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "client": {
+-     "id": 100,
+-     "name": "Northwind Bio",
+-   },
+-   "project": "NW-1",
+-   "project_id": 10,
++   "artifact_id": "a-a1",
++   "category": "document",
++   "ctd_section": null,
++   "id": 1,
++   "original_file_available": true,
++   "source_availability": "Original file available.",
++   "status": "draft",
++   "title": "Northwind clinical overview memo",
++   "type": "document",
++   "updated_at": "2026-11-05T13:06:40.375Z",
++   "version": 2,
+  }
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:158:30
+    156|     const out = await run('list_vault_documents', {}, MEMBER_CTX);
+    157|     const byId = new Map((out.documents as Array<Record<string, unknow…
+    158|     expect(byId.get('a-a1')).toMatchObject({ project_id: 10, project: …
+       |                              ^
+    159|     expect(byId.get('a-b')).toMatchObject({ project_id: 13, project: '…
+    160|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one
+AssertionError: read_vault_document: {"ok":true,"document":{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"content_hash":null,"created_at":"2026-11-05T14:06:40.375Z","updated_at":"2026-11-05T10:06:40.375Z","locked_at":null,"original_file_available":true,"source_availability":"Original file available."},"content":"body","totalChars":4,"truncated":false,"evidence_source_id":null,"citation_hint":"This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence."}: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ expectAnsweredAsMissing server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:142:59
+    140|   const missing = await run(name, { ...input, [key]: 'no-such-id' }, c…
+    141|   expect(missing.error, `${name}: a missing id is an error`).toBeTruth…
+    142|   expect(hidden.ok, `${name}: ${JSON.stringify(hidden)}`).toBeUndefine…
+       |                                                           ^
+    143|   expect(Object.keys(hidden), name).toEqual(Object.keys(missing));
+    144|   expect(without(hidden.error, String(input[key])), name).toBe(without…
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:163:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions
+AssertionError: expected { id: 3, artifact_id: 'a-b', …(12) } to match object { artifact_id: 'a-b', project: 'CT-1' }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "artifact_id": "a-b",
+-   "project": "CT-1",
+  }
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:171:27
+    169|     const read = await run('read_vault_document', { artifact_id: 'a-b'…
+    170|     expect(read.ok, JSON.stringify(read)).toBe(true);
+    171|     expect(read.document).toMatchObject({ artifact_id: 'a-b', project:…
+       |                           ^
+    172|     expect((await run('get_document_versions', { artifact_id: 'a-b' },…
+    173|     expect((await run('compare_vault_versions', { artifact_id: 'a-b', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one
+AssertionError: expected [ 'doc_a1', 'doc_b', 'doc_priv' ] to deeply equal [ 'doc_a1', 'doc_b' ]
+
+- Expected
++ Received
+
+  [
+    "doc_a1",
+    "doc_b",
++   "doc_priv",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:179:30
+    177|     const out = await run('list_governed_documents', {}, MEMBER_CTX);
+    178|     expect(out.ok, JSON.stringify(out)).toBe(true);
+    179|     expect(documentIds(out)).toEqual(['doc_a1', 'doc_b']);
+       |                              ^
+    180|     const byId = new Map((out.documents as Array<Record<string, unknow…
+    181|     expect(byId.get('doc_b')).toMatchObject({ project_id: P_B, project…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one
+AssertionError: read_governed_document: {"ok":true,"document":{"id":"doc_priv","doc_type":"ind","agency":"fda","title":"Private IND","status":"draft","readiness":0},"outline":[{"document_id":"doc_priv","section_key":"2.5","parent_key":null,"label":"Clinical overview","status":"drafted","mandatory":true,"version":1,"path_order":1,"counted":true}],"message":"Outline with 1 sections; readiness 0% counts 1 of them (0 approved or locked). Call again with section_key to read a section's content."}: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ expectAnsweredAsMissing server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:142:59
+    140|   const missing = await run(name, { ...input, [key]: 'no-such-id' }, c…
+    141|   expect(missing.error, `${name}: a missing id is an error`).toBeTruth…
+    142|   expect(hidden.ok, `${name}: ${JSON.stringify(hidden)}`).toBeUndefine…
+       |                                                           ^
+    143|   expect(Object.keys(hidden), name).toEqual(Object.keys(missing));
+    144|   expect(without(hidden.error, String(input[key])), name).toBe(without…
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:186:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only
+AssertionError: expected [ 'Contoso device memo', …(3) ] to deeply equal [ 'Contoso device memo', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "Contoso device memo",
+    "Northwind clinical overview memo",
+    "Northwind protocol memo",
++   "Private memo",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:195:20
+    193|     expect(out.ok, JSON.stringify(out)).toBe(true);
+    194|     const titles = (out.hits as Array<{ title?: string }>).map((x) => …
+    195|     expect(titles).toEqual(['Contoso device memo', 'Northwind clinical…
+       |                    ^
+    196|     const programs = await run('global_search', { q: 'Northwind' }, ME…
+    197|     const names = (programs.hits as Array<{ type: string; name?: strin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid)
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id)
+AssertionError: expected [ 'a-a1', 'a-a2', 'a-b', 'a-priv' ] to deeply equal [ 'a-a1', 'a-a2' ]
+
+- Expected
++ Received
+
+  [
+    "a-a1",
+    "a-a2",
++   "a-b",
++   "a-priv",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:208:32
+    206|       const out = await run('list_vault_documents', {}, ctx);
+    207|       expect(out.ok, JSON.stringify(out)).toBe(true);
+    208|       expect(artifactIds(out)).toEqual(['a-a1', 'a-a2']);
+       |                                ^
+    209|       expect(JSON.stringify(out)).not.toContain('Contoso');
+    210|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one
+AssertionError: read_vault_document: {"ok":true,"document":{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"content_hash":null,"created_at":"2026-11-05T14:06:40.375Z","updated_at":"2026-11-05T11:06:40.375Z","locked_at":null,"original_file_available":true,"source_availability":"Original file available."},"content":"body","totalChars":4,"truncated":false,"evidence_source_id":null,"citation_hint":"This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence."}: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ expectAnsweredAsMissing server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:142:59
+    140|   const missing = await run(name, { ...input, [key]: 'no-such-id' }, c…
+    141|   expect(missing.error, `${name}: a missing id is an error`).toBeTruth…
+    142|   expect(hidden.ok, `${name}: ${JSON.stringify(hidden)}`).toBeUndefine…
+       |                                                           ^
+    143|   expect(Object.keys(hidden), name).toEqual(Object.keys(missing));
+    144|   expect(without(hidden.error, String(input[key])), name).toBe(without…
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:214:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read
+AssertionError: expected [ 'doc_a1', 'doc_b', 'doc_priv' ] to deeply equal [ 'doc_a1' ]
+
+- Expected
++ Received
+
+  [
+    "doc_a1",
++   "doc_b",
++   "doc_priv",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:223:30
+    221|     const out = await run('list_governed_documents', {}, INSIDE_A);
+    222|     expect(out.ok, JSON.stringify(out)).toBe(true);
+    223|     expect(documentIds(out)).toEqual(['doc_a1']);
+       |                              ^
+    224|     await expectAnsweredAsMissing('read_governed_document', { document…
+    225|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts
+AssertionError: expected [ 'Contoso device memo', …(3) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
++   "Contoso device memo",
+    "Northwind clinical overview memo",
+    "Northwind protocol memo",
++   "Private memo",
+  ]
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:230:20
+    228|     const out = await run('global_search', { q: 'memo' }, INSIDE_A);
+    229|     const titles = (out.hits as Array<{ title?: string }>).map((x) => …
+    230|     expect(titles).toEqual(['Northwind clinical overview memo', 'North…
+       |                    ^
+    231|     const programs = await run('global_search', { q: 'Contoso' }, INSI…
+    232|     expect(programs.ok).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed
+AssertionError: {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:238:44
+    236|   it('an open project the person cannot open is refused, and nothing i…
+    237|     const out = await run('list_vault_documents', {}, { organizationId…
+    238|     expect(out.error, JSON.stringify(out)).toBeTruthy();
+       |                                            ^
+    239|     expect(out.documents).toBeUndefined();
+    240|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so
+AssertionError: list_vault_documents: {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:258:60
+    256|     for (const [name, input] of READS) {
+    257|       const out = await run(name, input, MEMBER_CTX);
+    258|       expect(out.error, `${name}: ${JSON.stringify(out)}`).toBeTruthy(…
+       |                                                            ^
+    259|       expect(out.ok, name).toBeUndefined();
+    260|       expect(out.documents ?? out.hits ?? out.content ?? out.versions,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused
+AssertionError: list_vault_documents: {"ok":true,"count":4,"documents":[{"id":1,"artifact_id":"a-a1","title":"Northwind clinical overview memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T13:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":2,"artifact_id":"a-a2","title":"Northwind protocol memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T12:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":3,"artifact_id":"a-b","title":"Contoso device memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T11:06:40.375Z","original_file_available":true,"source_availability":"Original file available."},{"id":4,"artifact_id":"a-priv","title":"Private memo","type":"document","category":"document","ctd_section":null,"status":"draft","version":2,"updated_at":"2026-11-05T10:06:40.375Z","original_file_available":true,"source_availability":"Original file available."}],"message":"4 Artifacts Center document(s). Use read_vault_document with an id to open one."}: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:268:62
+    266|       for (const [name, input] of READS) {
+    267|         const out = await run(name, input, ctx);
+    268|         expect(out.error, `${name}: ${JSON.stringify(out)}`).toBeTruth…
+       |                                                              ^
+    269|         expect(out.documents ?? out.hits ?? out.content ?? out.version…
+    270|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   Start at  14:06:19
+   Duration  20.64s (transform 10.26s, setup 100ms, import 16.16s, tests 4.07s, environment 0ms)
+
+
+# ---- Addendum: the 16th case ('the projects' program anchors cannot be read'), added after the run above.
+# It was not part of the run above. It is shown failing here against a mutation of the change
+# (programReadScope's catch returning an empty program scope instead of an error, i.e. 'an error as an empty result'),
+# then the mutation was removed. Command: npx vitest run <file> -t "program anchors cannot be read"
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:13:37.924Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-05T14:13:37.926Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:13:37.927Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts
+{
+  "timestamp": "2026-11-05T14:13:38.366Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_vault_documents lists each open project of every sponsor, never a private project
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > each listed artifact names its project and its sponsor
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_vault_document, get_document_versions and compare_vault_versions answer a private artifact as a missing one
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > an artifact of an open project still reads, with its versions
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > list_governed_documents lists each open project of every sponsor, naming its project, never a private one
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > read_governed_document answers a private project's document as a missing one
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > no project open: every project the person can open, and only those > global_search finds programs and artifact titles of open projects only
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a program uuid)
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > list_vault_documents lists only the open project's sponsor (open project as a project id)
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > the three artifact reads answer another sponsor's artifact as a missing one
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > governed documents: only the open project's sponsor's are listed or read
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > global_search finds only the open project's sponsor's programs and artifacts
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > inside a project: only that project's sponsor's projects > an open project the person cannot open is refused, and nothing is listed
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the sharing policy cannot be read: every tool says so
+ × server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so 42ms
+   → list_governed_documents: {"ok":true,"count":0,"documents":[],"message":"No governed documents match the filters."}: expected undefined to be truthy
+ ↓ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > a caller who is not a current member, or no identified caller, is refused
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts > an access check that cannot run is an error, never an empty result > the projects' program anchors cannot be read: the governed-document reads and global_search say so
+AssertionError: list_governed_documents: {"ok":true,"count":0,"documents":[],"message":"No governed documents match the filters."}: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/ana-vault-tools-project-scope.pglite.test.ts:268:60
+    266|     for (const [name, input] of READS.filter(([n]) => ['list_governed_…
+    267|       const out = await run(name, input, MEMBER_CTX);
+    268|       expect(out.error, `${name}: ${JSON.stringify(out)}`).toBeTruthy(…
+       |                                                            ^
+    269|       expect(out.documents ?? out.hits ?? out.outline, name).toBeUndef…
+    270|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+   Start at  14:13:34
+   Duration  16.53s (transform 9.65s, setup 109ms, import 13.29s, tests 2.76s, environment 0ms)
+

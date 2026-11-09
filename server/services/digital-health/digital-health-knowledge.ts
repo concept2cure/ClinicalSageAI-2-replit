@@ -7,6 +7,13 @@
  * enabled device software functions. NO LLM, NO network, NO database. Shared
  * input readers validate stated facts. Identical input always yields identical output.
  *
+ * Rule 2 S5b (2026-11-08): an omitted or null boolean reads as not_stated
+ * (inputStates) and is never scored, graded or classified as true or false. A
+ * finding, recommendation, rigor level or GMLP score and verdict that an unstated
+ * fact could change says so or is null or not_assessed. The cybersecurity
+ * worksheet keeps its S3 rule: an unstated artifact counts as a gap. A required
+ * input, or a malformed value a function reads, is refused by field.
+ *
  * Grounded in (verbatim, citation-backed):
  *   - IMDRF/SaMD WG/N12 FINAL:2014 — "Software as a Medical Device: Possible
  *     Framework for Risk Categorization and Corresponding Considerations".
@@ -44,7 +51,18 @@
  */
 
 import type { DeviceClass as UsDeviceClass } from '../../../shared/regulatory/device-class.js';
-import { statedBoolean } from '../immunogenicity/immunogenicity-reference.js';
+import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine.js';
+import { booleanInputStates, oneOfInput, statedBoolean, statedOneOf } from '../immunogenicity/immunogenicity-reference.js';
+import {
+  CATEGORY_META,
+  CITATIONS,
+  GMLP_PRINCIPLES,
+  N12_MATRIX,
+  type CategoryMeta,
+  type CitationRecord,
+  type GMLPPrincipleDef,
+  type N12Cell,
+} from './digital-health-reference.js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 0 — SHARED TYPES
@@ -113,116 +131,7 @@ export interface Requirement {
 // SECTION 1 — CITATION REGISTRY (single source of truth)
 // ════════════════════════════════════════════════════════════════════════════
 
-interface CitationRecord {
-  id: string;
-  reference: string;
-  section?: string;
-}
-
-const CITATIONS: CitationRecord[] = [
-  {
-    id: 'IMDRF-N10',
-    reference:
-      'IMDRF/SaMD WG/N10 FINAL:2013 — "Software as a Medical Device (SaMD): Key Definitions"',
-  },
-  {
-    id: 'IMDRF-N12',
-    reference:
-      'IMDRF/SaMD WG/N12 FINAL:2014 — "Software as a Medical Device: Possible Framework for Risk Categorization and Corresponding Considerations"',
-  },
-  {
-    id: 'IMDRF-N23',
-    reference:
-      'IMDRF/SaMD WG/N23 FINAL:2015 — "Software as a Medical Device (SaMD): Application of Quality Management System"',
-  },
-  {
-    id: 'IMDRF-N41',
-    reference:
-      'IMDRF/SaMD WG/N41 FINAL:2017 — "Software as a Medical Device (SaMD): Clinical Evaluation"',
-  },
-  {
-    id: 'FDA-PCCP-2024',
-    reference:
-      'FDA Guidance — "Marketing Submission Recommendations for a Predetermined Change Control Plan for Artificial Intelligence-Enabled Device Software Functions" (December 2024)',
-  },
-  {
-    id: 'GMLP-2021',
-    reference:
-      'FDA / Health Canada / MHRA — "Good Machine Learning Practice for Medical Device Development: Guiding Principles" (October 2021)',
-  },
-  {
-    id: 'FDA-CYBER-2023',
-    reference:
-      'FDA Guidance — "Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions" (September 2023)',
-  },
-  {
-    id: 'FDC-524B',
-    reference:
-      'Section 524B of the Federal Food, Drug, and Cosmetic Act ("Ensuring Cybersecurity of Devices"), 21 U.S.C. 360n-2',
-  },
-  {
-    id: 'CFR-820-30',
-    reference: '21 CFR 820.30 — Design controls (Quality System Regulation)',
-  },
-  {
-    id: 'QMSR-2024',
-    reference:
-      'FDA Quality Management System Regulation (QMSR) final rule — 21 CFR Part 820 harmonized with ISO 13485:2016 (effective February 2, 2026)',
-  },
-  {
-    id: 'FDA-CDS-2022',
-    reference: 'FDA Guidance — "Clinical Decision Support Software" (September 2022)',
-  },
-  {
-    id: 'FDA-SW-2023',
-    reference:
-      'FDA Guidance — "Content of Premarket Submissions for Device Software Functions" (June 2023)',
-  },
-  {
-    id: 'FDA-AIML-DISC-2019',
-    reference:
-      'FDA Discussion Paper — "Proposed Regulatory Framework for Modifications to Artificial Intelligence/Machine Learning (AI/ML)-Based Software as a Medical Device (SaMD)" (April 2019)',
-  },
-  {
-    id: 'FDA-AIML-ACTION-2021',
-    reference:
-      'FDA — "Artificial Intelligence/Machine Learning (AI/ML)-Based Software as a Medical Device (SaMD) Action Plan" (January 2021)',
-  },
-  {
-    id: 'FDA-TRANSPARENCY-2024',
-    reference:
-      'FDA — "Transparency for Machine-Learning-Enabled Medical Devices: Guiding Principles" (June 2024)',
-  },
-  {
-    id: 'AAMI-TIR57',
-    reference: 'AAMI TIR57:2016 — "Principles for medical device security — Risk management"',
-  },
-  {
-    id: 'AAMI-SW96',
-    reference: 'ANSI/AAMI SW96:2023 — "Standard for medical device security — Security risk management for device manufacturers"',
-  },
-  {
-    id: 'ISO-14971',
-    reference: 'ANSI/AAMI/ISO 14971:2019 — "Medical devices — Application of risk management to medical devices"',
-  },
-  {
-    id: 'IEC-62304',
-    reference: 'IEC 62304:2006+A1:2015 — "Medical device software — Software life cycle processes"',
-  },
-  {
-    id: 'IEC-81001-5-1',
-    reference: 'IEC 81001-5-1:2021 — "Health software and health IT systems safety, effectiveness and security — Part 5-1: Security — Activities in the product life cycle"',
-  },
-  {
-    id: 'NTIA-SBOM',
-    reference: 'NTIA — "The Minimum Elements For a Software Bill of Materials (SBOM)" (July 2021)',
-  },
-  {
-    id: 'FDA-IMDRF-SOPDA',
-    reference:
-      'IMDRF/SaMD WG/N12 — Statement of the SaMD definition statement (intended use / intended medical purpose)',
-  },
-];
+// CitationRecord and CITATIONS are in digital-health-reference.ts (moved 2026-11-08).
 
 const CITATION_INDEX: Map<string, CitationRecord> = new Map(
   CITATIONS.map((c: CitationRecord): [string, CitationRecord] => [c.id, c]),
@@ -245,13 +154,124 @@ function resolveCitations(ids: string[]): Citation[] {
   return out;
 }
 
+// ── Stated inputs (Rule 2 S5b, 2026-11-08) ──────────────────────────────────
+
+/** A true/false fact as stated, or not_stated when it was left out. */
+type BooleanState = boolean | 'not_stated';
+
+const SITUATIONS: readonly HealthcareSituation[] = ['non-serious', 'serious', 'critical'];
+const SIGNIFICANCES: readonly InformationSignificance[] = ['inform', 'drive', 'treat-or-diagnose'];
+const SAMD_CATEGORIES: readonly SaMDCategory[] = ['I', 'II', 'III', 'IV'];
+const ALGORITHM_TYPES: readonly AlgorithmType[] = ['locked', 'adaptive', 'hybrid'];
+const AUTONOMY_LEVELS: readonly AutonomyLevel[] = ['assistive', 'augmentative', 'autonomous'];
+const MODIFICATION_TYPES: readonly PlannedModification['type'][] = [
+  'retraining', 'performance-improvement', 'input-expansion', 'output-change', 'population-expansion',
+  'architecture-change', 'other',
+];
+const GMLP_CONFORMITIES: readonly GMLPConformity[] = ['conformant', 'partial', 'non-conformant', 'not-assessed'];
+
+const SAMD_FLAGS = ['meetsSaMDDefinition', 'generalPurposePlatform'] as const;
+const AIML_FLAGS = [
+  'transparencyArtifactsProvided', 'trainingDataRepresentative', 'externalValidationPerformed', 'realWorldMonitoring',
+  'plannedPostMarketModifications', 'usesGenerativeOrFoundationModel',
+] as const;
+const PCCP_FLAGS = ['changesIntendedUse', 'expandsPopulation', 'addsNewInputModality', 'continuousLearningProposed'] as const;
+const SAMD_CV_FLAGS = [
+  'validClinicalAssociationEstablished', 'isAIML', 'referenceStandardAvailable', 'prospectiveDataPlanned',
+] as const;
+const CYBER_FLAGS = [
+  'includesSoftware', 'networkConnected', 'submissionUnder524B', 'threatModelProvided', 'sbomProvided',
+  'securityRiskManagementProvided', 'vulnerabilityHandlingProcess', 'postMarketUpdatePlan', 'handlesSensitiveData',
+] as const;
+
+/** What each PCCP scope fact does to the plan when it is true. */
+const PCCP_SCOPE_IF_TRUE: Record<(typeof PCCP_FLAGS)[number], string> = {
+  changesIntendedUse: 'a change to the intended use cannot be authorized through a PCCP',
+  expandsPopulation: 'a population expansion generally falls outside a PCCP',
+  addsNewInputModality: 'a new input modality needs its validation pre-specified in the Modification Protocol',
+  continuousLearningProposed: 'fully automated in-field learning is difficult to bound within a PCCP',
+};
+
+/** deviceName (design_pccp, assess_device_cybersecurity): text, or left out. */
+const deviceNameInput = (value: unknown): RequiredInputCheck =>
+  ({ field: 'deviceName', value, ok: value === undefined || value === null || typeof value === 'string', expected: 'text, or left out' });
+
+/** The finding for an evidence fact left out: it is neither present nor missing. */
+function notStatedFinding(topic: string, input: string, expectation: string, citations: string[]): Finding {
+  return {
+    topic,
+    detail: `Not stated: ${input} was not given, so this is not assessed as present or missing. ${expectation}`,
+    severity: 'attention',
+    citations,
+  };
+}
+
+/** A consideration for each SaMD gating fact left out, so neither reads as true (classify_samd). */
+function unstatedSaMDConsiderations(inputStates: Record<string, BooleanState>): Finding[] {
+  const out: Finding[] = [];
+  if (inputStates.meetsSaMDDefinition === 'not_stated') {
+    out.push({
+      topic: 'SaMD definition gate',
+      detail:
+        'meetsSaMDDefinition is not stated, so whether the software is SaMD or software in a medical device (SiMD) is not assessed. Per IMDRF N10, SaMD performs its medical purpose WITHOUT being part of a hardware medical device; the N12 categorization below applies to the SaMD-equivalent function either way.',
+      severity: 'attention',
+      citations: ['IMDRF-N10'],
+    });
+  }
+  if (inputStates.generalPurposePlatform === 'not_stated') {
+    out.push({
+      topic: 'Platform',
+      detail:
+        'generalPurposePlatform is not stated. If the software runs on an embedded / non-general-purpose platform, confirm whether the function is SiMD vs SaMD; its life-cycle processes then follow IEC 62304 within the embedded device.',
+      severity: 'attention',
+      citations: ['IMDRF-N10', 'IEC-62304'],
+    });
+  }
+  return out;
+}
+
+/**
+ * Refuses, by index, a GMLP entry whose principle is not a whole number from 1 to 10 or is listed twice, or whose
+ * conformity is outside the vocabulary (assess_gmlp).
+ */
+function refuseMalformedPrinciples(principleInputs: unknown): void {
+  refuseUnlessStated('assess_gmlp', [{
+    field: 'principleInputs',
+    value: principleInputs,
+    ok: Array.isArray(principleInputs),
+    expected: 'a list of principle assessments, [] if none',
+  }], 'assessed');
+  const listed = new Set<unknown>();
+  (principleInputs as unknown[]).forEach((raw: unknown, i: number): void => {
+    const item = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+    const p = item.principle;
+    const repeated = listed.has(p);
+    refuseUnlessStated('assess_gmlp', [
+      {
+        field: `principleInputs[${i}].principle`,
+        value: p,
+        ok: typeof p === 'number' && Number.isInteger(p) && p >= 1 && p <= 10 && !repeated,
+        expected: repeated ? 'a principle not listed before' : 'a whole number from 1 to 10',
+      },
+      oneOfInput(`principleInputs[${i}].conformity`, item.conformity, GMLP_CONFORMITIES),
+      {
+        field: `principleInputs[${i}].evidence`,
+        value: item.evidence,
+        ok: item.evidence === undefined || item.evidence === null || typeof item.evidence === 'string',
+        expected: 'text, or left out',
+      },
+    ], 'assessed');
+    listed.add(p);
+  });
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 2 — classifySaMD
 // IMDRF N12 risk categorization (I-IV)
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface ClassifySaMDParams {
-  /** Intended-use statement describing the SaMD's medical purpose. */
+  /** Intended-use statement describing the SaMD's medical purpose. Not read. */
   intendedUse?: string;
   /** State of the healthcare situation or condition. */
   healthcareSituation: HealthcareSituation;
@@ -261,7 +281,7 @@ export interface ClassifySaMDParams {
   meetsSaMDDefinition?: boolean;
   /** Optional: does it run on a general-purpose computing platform (vs embedded SiMD). */
   generalPurposePlatform?: boolean;
-  /** Optional free-text description of the target population. */
+  /** Optional free-text description of the target population. Not read. */
   targetPopulation?: string;
 }
 
@@ -273,7 +293,8 @@ export interface SaMDCategoryDetail {
 }
 
 export interface ClassifySaMDResult {
-  isSaMD: boolean;
+  /** null while meetsSaMDDefinition is not stated. */
+  isSaMD: boolean | null;
   category: SaMDCategory;
   categoryDetail: SaMDCategoryDetail;
   healthcareSituation: HealthcareSituation;
@@ -285,66 +306,11 @@ export interface ClassifySaMDResult {
   qmsExpectations: string[];
   clinicalEvaluationRigor: string;
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
-/**
- * IMDRF N12 4x3 categorization matrix.
- * Rows = state of healthcare situation; Columns = significance of information.
- * Category ordering (per N12): IV (highest) > III > II > I (lowest).
- */
-interface N12Cell {
-  situation: HealthcareSituation;
-  significance: InformationSignificance;
-  category: SaMDCategory;
-}
-
-const N12_MATRIX: N12Cell[] = [
-  // Critical situation
-  { situation: 'critical', significance: 'treat-or-diagnose', category: 'IV' },
-  { situation: 'critical', significance: 'drive', category: 'III' },
-  { situation: 'critical', significance: 'inform', category: 'II' },
-  // Serious situation
-  { situation: 'serious', significance: 'treat-or-diagnose', category: 'III' },
-  { situation: 'serious', significance: 'drive', category: 'II' },
-  { situation: 'serious', significance: 'inform', category: 'I' },
-  // Non-serious situation
-  { situation: 'non-serious', significance: 'treat-or-diagnose', category: 'II' },
-  { situation: 'non-serious', significance: 'drive', category: 'I' },
-  { situation: 'non-serious', significance: 'inform', category: 'I' },
-];
-
-interface CategoryMeta {
-  category: SaMDCategory;
-  impactLevel: 'low' | 'moderate' | 'high' | 'very-high';
-  description: string;
-}
-
-const CATEGORY_META: CategoryMeta[] = [
-  {
-    category: 'I',
-    impactLevel: 'low',
-    description:
-      'Category I — Lowest impact. Accurate SaMD output is important; errors carry the lowest probability of contributing to harm relative to the other categories (IMDRF N12).',
-  },
-  {
-    category: 'II',
-    impactLevel: 'moderate',
-    description:
-      'Category II — Moderate impact. SaMD information is important to inform/drive clinical management; failure could contribute to a moderate level of harm (IMDRF N12).',
-  },
-  {
-    category: 'III',
-    impactLevel: 'high',
-    description:
-      'Category III — High impact. SaMD drives clinical management of a critical situation or treats/diagnoses a serious situation; failure could contribute to serious harm (IMDRF N12).',
-  },
-  {
-    category: 'IV',
-    impactLevel: 'very-high',
-    description:
-      'Category IV — Highest impact. SaMD treats or diagnoses a critical healthcare situation/condition; failure could contribute to death or irreversible harm (IMDRF N12).',
-  },
-];
+// The IMDRF N12 matrix and the category descriptions are in digital-health-reference.ts (moved 2026-11-08).
 
 const CATEGORY_META_INDEX: Map<SaMDCategory, CategoryMeta> = new Map(
   CATEGORY_META.map((m: CategoryMeta): [SaMDCategory, CategoryMeta] => [m.category, m]),
@@ -382,7 +348,15 @@ function pathwayForCategory(cat: SaMDCategory): Pathway {
  * the significance of the information it provides. Deterministic lookup.
  */
 export function classifySaMD(params: ClassifySaMDParams): ClassifySaMDResult {
-  const isSaMD = params.meetsSaMDDefinition !== false;
+  // 2026-11-08 (S5b): meetsSaMDDefinition and generalPurposePlatform were "Default true", so an omitted one read
+  // as SaMD on a general-purpose platform with nothing said. A situation or significance outside its vocabulary
+  // ('Critical') matched no N12 cell and fell back to Category I, "Lowest impact".
+  refuseUnlessStated('classify_samd', [
+    oneOfInput('healthcareSituation', params.healthcareSituation, SITUATIONS),
+    oneOfInput('informationSignificance', params.informationSignificance, SIGNIFICANCES),
+  ], 'classified');
+  const inputStates = booleanInputStates(params, SAMD_FLAGS);
+  const isSaMD = statedBoolean('meetsSaMDDefinition', params.meetsSaMDDefinition) ?? null;
 
   const cell = N12_MATRIX.find(
     (c: N12Cell): boolean =>
@@ -411,7 +385,8 @@ export function classifySaMD(params: ClassifySaMDParams): ClassifySaMDResult {
 
   const considerations: Finding[] = [];
 
-  if (!isSaMD) {
+  considerations.push(...unstatedSaMDConsiderations(inputStates));
+  if (isSaMD === false) {
     considerations.push({
       topic: 'SaMD definition gate',
       detail:
@@ -525,6 +500,7 @@ export function classifySaMD(params: ClassifySaMDParams): ClassifySaMDResult {
     qmsExpectations,
     clinicalEvaluationRigor: rigor,
     citations,
+    inputStates,
   };
 }
 
@@ -549,7 +525,7 @@ export interface AssessAIMLDeviceParams {
   realWorldMonitoring?: boolean;
   /** Does the manufacturer intend to modify the model post-clearance. */
   plannedPostMarketModifications?: boolean;
-  /** Free-text description of intended modifications (optional). */
+  /** Free-text description of intended modifications (optional). Not read. */
   intendedModifications?: string;
   /** Foundation/large-model or generative component involved. */
   usesGenerativeOrFoundationModel?: boolean;
@@ -559,7 +535,8 @@ export interface AIMLDeviceAssessment {
   algorithmType: AlgorithmType;
   autonomyLevel: AutonomyLevel;
   autonomyNarrative: string;
-  pccpRecommended: boolean;
+  /** null for a locked algorithm while plannedPostMarketModifications is not stated. */
+  pccpRecommended: boolean | null;
   pccpRationale: string;
   transparencyFindings: Finding[];
   biasAndGeneralizabilityFindings: Finding[];
@@ -567,6 +544,8 @@ export interface AIMLDeviceAssessment {
   overallRiskFlags: Finding[];
   recommendedActions: string[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
 function autonomyNarrativeFor(level: AutonomyLevel): string {
@@ -584,6 +563,17 @@ function autonomyNarrativeFor(level: AutonomyLevel): string {
  * transparency, bias/generalizability, and whether a PCCP is appropriate.
  */
 export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAssessment {
+  // 2026-11-08 (S5b): transparency, representativeness, external validation and monitoring were read `=== false`,
+  // so an omitted one passed ("Transparency documentation is provided."); an omitted plannedPostMarketModifications
+  // made a locked model's PCCP "OPTIONAL", and an omitted generative component or SaMD category raised nothing.
+  // 'Locked' read as hybrid. Each is now not_stated, and the finding says so.
+  refuseUnlessStated('assess_ai_ml_device', [
+    oneOfInput('algorithmType', params.algorithmType, ALGORITHM_TYPES),
+    oneOfInput('autonomyLevel', params.autonomyLevel, AUTONOMY_LEVELS),
+  ], 'assessed');
+  const samdCategory = statedOneOf('samdCategory', params.samdCategory, SAMD_CATEGORIES);
+  const inputStates = booleanInputStates(params, AIML_FLAGS);
+  const plannedModifications = statedBoolean('plannedPostMarketModifications', params.plannedPostMarketModifications);
   const transparencyFindings: Finding[] = [];
   const biasFindings: Finding[] = [];
   const monitoringFindings: Finding[] = [];
@@ -618,11 +608,13 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
   }
 
   // ── PCCP recommendation logic ──────────────────────────────────────────
-  const wantsModifications =
-    params.plannedPostMarketModifications === true ||
-    params.algorithmType === 'adaptive' ||
-    params.algorithmType === 'hybrid';
-  const pccpRecommended = wantsModifications;
+  // An adaptive or hybrid algorithm, or planned modifications, settle it; a locked one needs the stated plan.
+  const pccpRecommended: boolean | null =
+    plannedModifications === true || params.algorithmType === 'adaptive' || params.algorithmType === 'hybrid'
+      ? true
+      : plannedModifications === false
+        ? false
+        : null;
   let pccpRationale: string;
   if (params.algorithmType === 'adaptive') {
     pccpRationale =
@@ -633,12 +625,15 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
   } else if (params.algorithmType === 'hybrid') {
     pccpRationale =
       'PCCP RECOMMENDED for the planned retraining cadence. The locked-at-release/offline-retrain pattern maps directly onto the PCCP modification protocol.';
-  } else {
+  } else if (plannedModifications === false) {
     pccpRationale =
       'PCCP OPTIONAL. With a locked model and no planned post-market modifications, a PCCP is not required, though one may still be filed to streamline anticipated future updates.';
+  } else {
+    pccpRationale =
+      'Not assessed: plannedPostMarketModifications is not stated. With a locked model, a PCCP is recommended when post-clearance modifications are planned and optional when none are.';
   }
 
-  if (pccpRecommended) {
+  if (pccpRecommended === true) {
     actions.push(
       'Author a Predetermined Change Control Plan (PCCP) per FDA December 2024 guidance and include it in the marketing submission (510(k)/De Novo/PMA).',
     );
@@ -656,6 +651,13 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
     actions.push(
       'Produce user-facing transparency documentation (model card / device label): intended use, inputs/outputs, training/validation population, subgroup performance, limitations, and required human oversight.',
     );
+  } else if (inputStates.transparencyArtifactsProvided === 'not_stated') {
+    transparencyFindings.push(notStatedFinding(
+      'Transparency artifacts',
+      'transparencyArtifactsProvided',
+      'FDA transparency guiding principles and GMLP Principle 9 expect users to be given clear, essential information: intended use and population, data provenance, subgroup performance, limitations and required oversight.',
+      ['FDA-TRANSPARENCY-2024', 'GMLP-2021'],
+    ));
   } else {
     transparencyFindings.push({
       topic: 'Transparency artifacts',
@@ -688,6 +690,13 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
     actions.push(
       'Characterize the intended-use population and demonstrate training/test data representativeness; report performance by clinically meaningful subgroups.',
     );
+  } else if (inputStates.trainingDataRepresentative === 'not_stated') {
+    biasFindings.push(notStatedFinding(
+      'Data representativeness',
+      'trainingDataRepresentative',
+      'GMLP Principle 3 requires datasets that represent the intended-use population; report performance by clinically meaningful subgroups.',
+      ['GMLP-2021'],
+    ));
   } else {
     biasFindings.push({
       topic: 'Data representativeness',
@@ -709,6 +718,13 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
     actions.push(
       'Perform external/multi-site validation on data independent of model development to establish generalizability.',
     );
+  } else if (inputStates.externalValidationPerformed === 'not_stated') {
+    biasFindings.push(notStatedFinding(
+      'Generalizability / external validation',
+      'externalValidationPerformed',
+      'GMLP Principles 4 and 6 require test data independent of the training data and clinically relevant test conditions.',
+      ['GMLP-2021'],
+    ));
   } else {
     biasFindings.push({
       topic: 'Generalizability / external validation',
@@ -731,6 +747,13 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
     actions.push(
       'Define a real-world performance monitoring plan (metrics, thresholds, data drift detection, complaint handling) per GMLP Principle 10.',
     );
+  } else if (inputStates.realWorldMonitoring === 'not_stated') {
+    monitoringFindings.push(notStatedFinding(
+      'Real-world performance monitoring',
+      'realWorldMonitoring',
+      'GMLP Principle 10 requires monitoring deployed models for performance and re-training risks.',
+      ['GMLP-2021', 'FDA-PCCP-2024'],
+    ));
   } else {
     monitoringFindings.push({
       topic: 'Real-world performance monitoring',
@@ -750,10 +773,26 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
       severity: 'attention',
       citations: ['ISO-14971', 'GMLP-2021', 'FDA-TRANSPARENCY-2024'],
     });
+  } else if (inputStates.usesGenerativeOrFoundationModel === 'not_stated') {
+    riskFlags.push(notStatedFinding(
+      'Generative / foundation model',
+      'usesGenerativeOrFoundationModel',
+      'A generative or foundation-model component adds non-determinism, hallucination, opaque training provenance and prompt sensitivity, to be treated as hazards in the ISO 14971 analysis.',
+      ['ISO-14971', 'GMLP-2021'],
+    ));
   }
 
   // ── SaMD category interplay ───────────────────────────────────────────
-  if (params.samdCategory === 'IV' && params.autonomyLevel === 'autonomous') {
+  if (samdCategory === undefined && params.autonomyLevel === 'autonomous') {
+    riskFlags.push({
+      topic: 'Highest combined risk',
+      detail:
+        'samdCategory is not stated. Autonomous operation in a Category IV (treat/diagnose, critical situation) context concentrates the maximum harm potential; state the category to assess it.',
+      severity: 'attention',
+      citations: ['IMDRF-N12', 'GMLP-2021'],
+    });
+  }
+  if (samdCategory === 'IV' && params.autonomyLevel === 'autonomous') {
     riskFlags.push({
       topic: 'Highest combined risk',
       detail:
@@ -788,6 +827,7 @@ export function assessAIMLDevice(params: AssessAIMLDeviceParams): AIMLDeviceAsse
     overallRiskFlags: riskFlags,
     recommendedActions: actions,
     citations,
+    inputStates,
   };
 }
 
@@ -818,7 +858,7 @@ export interface DesignPCCPParams {
   deviceName?: string;
   /** SaMD category for scaling rigor (optional). */
   samdCategory?: SaMDCategory;
-  /** Algorithm type. */
+  /** Algorithm type. Not read. */
   algorithmType?: AlgorithmType;
   /** The set of modifications to pre-authorize. */
   plannedModifications: PlannedModification[];
@@ -856,6 +896,8 @@ export interface DesignPCCPResult {
   acceptanceCriteriaGuidance: string[];
   filingGuidance: string[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
 /**
@@ -864,13 +906,41 @@ export interface DesignPCCPResult {
  * Assessment) and flags modifications that fall outside the PCCP envelope.
  */
 export function designPCCP(params: DesignPCCPParams): DesignPCCPResult {
+  // 2026-11-08 (S5b): a plannedModifications that was not a list crashed, an empty one gave "No planned
+  // modification fits within a PCCP envelope", and a type outside the vocabulary ('Population-expansion') was
+  // within the envelope. An omitted scope fact said nothing, and a deviceName of 5 crashed. Each is now refused, or
+  // named.
+  const modifications: unknown = params.plannedModifications;
+  refuseUnlessStated('design_pccp', [{
+    field: 'plannedModifications',
+    value: modifications,
+    ok: Array.isArray(modifications) && modifications.length > 0,
+    expected: 'a list of at least one modification',
+  }], 'designed');
+  (modifications as unknown[]).forEach((raw: unknown, i: number): void => {
+    const item = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+    const text = (field: string): RequiredInputCheck => ({
+      field: `plannedModifications[${i}].${field}`,
+      value: item[field],
+      ok: typeof item[field] === 'string' && (item[field] as string).trim().length > 0,
+      expected: 'non-empty text',
+    });
+    refuseUnlessStated('design_pccp', [
+      text('label'),
+      text('description'),
+      oneOfInput(`plannedModifications[${i}].type`, item.type, MODIFICATION_TYPES),
+    ], 'designed');
+  });
+  refuseUnlessStated('design_pccp', [deviceNameInput(params.deviceName)], 'designed');
+  statedOneOf('samdCategory', params.samdCategory, SAMD_CATEGORIES);
+  const inputStates = booleanInputStates(params, PCCP_FLAGS);
   const deviceName = params.deviceName && params.deviceName.trim().length > 0
     ? params.deviceName
     : 'the subject device';
 
-  // A modification stays inside the PCCP envelope only if it does NOT alter the
-  // intended use, does NOT expand the population beyond the cleared envelope,
-  // and the type is one FDA describes as amenable to a PCCP.
+  // A modification's envelope is judged by its type: an output change, a population
+  // expansion or an architecture change generally falls outside a PCCP. The scope
+  // facts (intended use, population, ...) are reported in outOfScopeModifications.
   const envelopeBreakingTypes: PlannedModification['type'][] = [
     'output-change',
     'population-expansion',
@@ -879,9 +949,9 @@ export function designPCCP(params: DesignPCCPParams): DesignPCCPResult {
 
   const descriptionOfModifications = params.plannedModifications.map(
     (m: PlannedModification) => {
-      const breaksEnvelope =
-        (m.type === 'population-expansion' && params.expandsPopulation !== false) ||
-        envelopeBreakingTypes.indexOf(m.type) !== -1;
+      // 2026-11-08 (S5b): a clause here also read an omitted expandsPopulation as true for a population-expansion
+      // modification. It decided nothing, since that type breaks the envelope anyway, and is removed.
+      const breaksEnvelope = envelopeBreakingTypes.indexOf(m.type) !== -1;
       const within = !breaksEnvelope;
       const note = within
         ? 'Eligible for inclusion in the PCCP provided the Modification Protocol fully specifies how it will be implemented, verified, validated, and rolled out.'
@@ -924,9 +994,21 @@ export function designPCCP(params: DesignPCCPParams): DesignPCCPResult {
       citations: ['FDA-PCCP-2024', 'GMLP-2021'],
     });
   }
+  const unstatedScope = PCCP_FLAGS.filter((k: (typeof PCCP_FLAGS)[number]): boolean => inputStates[k] === 'not_stated');
+  if (unstatedScope.length > 0) {
+    outOfScope.push({
+      topic: 'Scope facts not stated',
+      detail:
+        `Not assessed: ${unstatedScope.join(', ')} ${unstatedScope.length > 1 ? 'are' : 'is'} not stated. If true, ` +
+        `${unstatedScope.map((k: (typeof PCCP_FLAGS)[number]): string => PCCP_SCOPE_IF_TRUE[k]).join('; ')}. ` +
+        `State ${unstatedScope.length > 1 ? 'each' : 'it'}.`,
+      severity: 'attention',
+      citations: ['FDA-PCCP-2024'],
+    });
+  }
 
-  // PCCP is appropriate when there is at least one in-envelope modification and
-  // no fatal intended-use change consuming the whole plan.
+  // PCCP is appropriate when at least one modification is in the envelope by type. A
+  // stated intended-use change does not change it; outOfScopeModifications flags it.
   const hasInEnvelope = descriptionOfModifications.some(
     (d): boolean => d.withinPCCPEnvelope,
   );
@@ -1036,6 +1118,7 @@ export function designPCCP(params: DesignPCCPParams): DesignPCCPResult {
     acceptanceCriteriaGuidance,
     filingGuidance,
     citations,
+    inputStates,
   };
 }
 
@@ -1060,123 +1143,11 @@ export interface GMLPPrincipleInput {
 export interface AssessGMLPParams {
   /** Inputs for each principle the user wishes to assess (1-10). */
   principleInputs: GMLPPrincipleInput[];
-  /** Optional SaMD category for context. */
+  /** Optional SaMD category for context. Not read. */
   samdCategory?: SaMDCategory;
 }
 
-interface GMLPPrincipleDef {
-  principle: number;
-  title: string;
-  summary: string;
-  keyExpectations: string[];
-}
-
-const GMLP_PRINCIPLES: GMLPPrincipleDef[] = [
-  {
-    principle: 1,
-    title: 'Multi-disciplinary expertise is leveraged throughout the total product life cycle',
-    summary:
-      'In-depth understanding of a model\'s intended integration into clinical workflow, and the desired benefits and patient risks, helps ensure ML-enabled devices are safe and effective and address clinically meaningful needs over the device life cycle.',
-    keyExpectations: [
-      'Clinical, data science, software, regulatory and human-factors expertise engaged across the life cycle.',
-      'Intended clinical workflow integration understood and documented.',
-    ],
-  },
-  {
-    principle: 2,
-    title: 'Good software engineering and security practices are implemented',
-    summary:
-      'Model design is implemented with attention to the fundamentals of good software engineering practice, data quality assurance, data management, and robust cybersecurity practices.',
-    keyExpectations: [
-      'Risk management and design process (IEC 62304, ISO 14971) applied.',
-      'Cybersecurity practices integrated (AAMI SW96 / IEC 81001-5-1).',
-      'Data quality assurance and authenticity/integrity controls implemented.',
-    ],
-  },
-  {
-    principle: 3,
-    title:
-      'Clinical study participants and data sets are representative of the intended patient population',
-    summary:
-      'Data collection protocols ensure relevant characteristics of the intended patient population (e.g., age, sex, race, ethnicity), use, and measurement inputs are sufficiently represented so results can be reasonably generalized; this helps manage bias and promotes equity.',
-    keyExpectations: [
-      'Intended-use population characterized; representativeness demonstrated.',
-      'Subgroup coverage and performance reported; bias actively managed.',
-    ],
-  },
-  {
-    principle: 4,
-    title: 'Training data sets are independent of test sets',
-    summary:
-      'Training and test data sets are selected and maintained to be appropriately independent of one another. All potential sources of dependence (patient, data acquisition, site factors) are considered and addressed to assure independence.',
-    keyExpectations: [
-      'No patient/site/scanner leakage between training, tuning and test partitions.',
-      'Independence verified and documented.',
-    ],
-  },
-  {
-    principle: 5,
-    title: 'Selected reference datasets are based upon best available methods',
-    summary:
-      'Accepted, best-available methods for developing a reference dataset (i.e., a reference standard) ensure clinically relevant and well-characterized data are collected and the limitations of the reference are understood.',
-    keyExpectations: [
-      'Reference standard defined using best-available, accepted methods.',
-      'Labeling/adjudication process and its limitations documented.',
-    ],
-  },
-  {
-    principle: 6,
-    title: 'Model design is tailored to the available data and reflects the intended use',
-    summary:
-      'Model design is suited to the available data and supports the active mitigation of known risks, like overfitting, performance degradation, and security risks. Clinical benefits and risks are well understood, used to derive clinically meaningful performance goals, and support a safe and effective product.',
-    keyExpectations: [
-      'Architecture/feature choices justified by data and intended use.',
-      'Overfitting and degradation risks actively mitigated.',
-      'Clinically meaningful performance goals defined.',
-    ],
-  },
-  {
-    principle: 7,
-    title: 'Focus is placed on the performance of the Human-AI Team',
-    summary:
-      'Where the model has a "human in the loop," human factors considerations and the human interpretability of the model outputs are addressed with emphasis on the performance of the Human-AI team, rather than just the performance of the model in isolation.',
-    keyExpectations: [
-      'Human-factors / usability engineering applied (IEC 62366-1).',
-      'Output interpretability supports correct reliance and override.',
-      'Human-AI team performance (not just model) evaluated where applicable.',
-    ],
-  },
-  {
-    principle: 8,
-    title: 'Testing demonstrates device performance during clinically relevant conditions',
-    summary:
-      'Statistically sound test plans are developed and executed to generate clinically relevant device performance information independently of the training data set. Considerations include the intended population, important subgroups, clinical environment, inputs, and measurement equipment.',
-    keyExpectations: [
-      'Pre-specified, statistically sound test plan on independent data.',
-      'Performance characterized across clinically relevant conditions and subgroups.',
-    ],
-  },
-  {
-    principle: 9,
-    title: 'Users are provided clear, essential information',
-    summary:
-      'Users are provided ready access to clear, contextually relevant information appropriate for the intended audience — the product\'s intended use and indications, performance for appropriate subgroups, characteristics of the data used, acceptable inputs, known limitations, and the basis for decisions where available.',
-    keyExpectations: [
-      'Transparent labeling: intended use, population, subgroup performance, inputs, limitations.',
-      'Aligned with FDA transparency guiding principles.',
-    ],
-  },
-  {
-    principle: 10,
-    title: 'Deployed models are monitored for performance and re-training risks are managed',
-    summary:
-      'Deployed models have the capability to be monitored in "real world" use with a focus on maintained or improved safety and performance. When models are periodically or continually trained, there are appropriate controls to manage risks of overfitting, unintended bias, or degradation (e.g., dataset drift).',
-    keyExpectations: [
-      'Real-world performance monitoring with metrics and thresholds.',
-      'Data/dataset drift detection and controlled re-training (ties to PCCP).',
-    ],
-  },
-];
+// GMLPPrincipleDef and GMLP_PRINCIPLES are in digital-health-reference.ts (moved 2026-11-08).
 
 const GMLP_INDEX: Map<number, GMLPPrincipleDef> = new Map(
   GMLP_PRINCIPLES.map((p: GMLPPrincipleDef): [number, GMLPPrincipleDef] => [p.principle, p]),
@@ -1199,8 +1170,10 @@ export interface AssessGMLPResult {
   partialCount: number;
   nonConformantCount: number;
   notAssessedCount: number;
-  overallConformityScore: number; // 0-100, deterministic
-  overallVerdict: Verdict;
+  /** 0-100, deterministic; null while a principle is not assessed. */
+  overallConformityScore: number | null;
+  /** 'not_assessed' while a principle is not assessed, unless one is non-conformant. */
+  overallVerdict: Verdict | 'not_assessed';
   prioritizedGaps: Finding[];
   citations: Citation[];
 }
@@ -1208,7 +1181,7 @@ export interface AssessGMLPResult {
 function conformityWeight(c: GMLPConformity): number {
   if (c === 'conformant') return 1;
   if (c === 'partial') return 0.5;
-  return 0; // non-conformant or not-assessed
+  return 0; // non-conformant (a principle not assessed leaves the score null)
 }
 
 /**
@@ -1216,6 +1189,9 @@ function conformityWeight(c: GMLPConformity): number {
  * principles. Deterministic scoring; flags non-conformant/partial principles.
  */
 export function assessGMLP(params: AssessGMLPParams): AssessGMLPResult {
+  // 2026-11-08 (S5b): a principle of '3' or 11 was dropped, one listed twice was overwritten, and a conformity of
+  // 'Conformant' counted as not assessed while it was reported as given. Each is now refused by index.
+  refuseMalformedPrinciples(params.principleInputs);
   const inputIndex: Map<number, GMLPPrincipleInput> = new Map(
     params.principleInputs.map(
       (i: GMLPPrincipleInput): [number, GMLPPrincipleInput] => [i.principle, i],
@@ -1295,11 +1271,16 @@ export function assessGMLP(params: AssessGMLPParams): AssessGMLPResult {
     }
   }
 
-  const overallConformityScore = Math.round((weightSum / GMLP_PRINCIPLES.length) * 100);
+  // 2026-11-08 (S5b): a principle not assessed scored 0, as a non-conformant one does, so nine conformant and one
+  // left out scored 90 and "gap". The score is now null while one is not assessed, and the verdict is given only
+  // when no answer could change it: a non-conformant principle makes it critical-gap whatever the rest are.
+  const overallConformityScore =
+    notAssessedCount > 0 ? null : Math.round((weightSum / GMLP_PRINCIPLES.length) * 100);
 
-  let overallVerdict: Verdict;
+  let overallVerdict: AssessGMLPResult['overallVerdict'];
   if (nonConformantCount > 0) overallVerdict = 'critical-gap';
-  else if (partialCount > 0 || notAssessedCount > 0) overallVerdict = 'gap';
+  else if (notAssessedCount > 0) overallVerdict = 'not_assessed';
+  else if (partialCount > 0) overallVerdict = 'gap';
   else overallVerdict = 'pass';
 
   // Reference unused index map deterministically to avoid dead code while
@@ -1339,7 +1320,7 @@ export interface DesignSaMDClinicalValidationParams {
   validClinicalAssociationEstablished?: boolean;
   /** Is the SaMD an AI/ML function (adds analytical/generalizability emphasis). */
   isAIML?: boolean;
-  /** Free-text intended use. */
+  /** Free-text intended use. Not read. */
   intendedUse?: string;
   /** Is there an accepted reference standard / ground truth. */
   referenceStandardAvailable?: boolean;
@@ -1354,7 +1335,8 @@ export interface ClinicalEvaluationPillar {
   title: string;
   question: string;
   required: boolean;
-  rigor: 'leverage-existing' | 'standard' | 'high' | 'highest';
+  /** 'not_assessed' for the association pillar while validClinicalAssociationEstablished is not stated. */
+  rigor: 'leverage-existing' | 'standard' | 'high' | 'highest' | 'not_assessed';
   evidenceElements: string[];
   citations: string[];
 }
@@ -1368,6 +1350,8 @@ export interface DesignSaMDClinicalValidationResult {
   performanceMetricsGuidance: string[];
   overallNarrative: string;
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
 function rigorForCategory(
@@ -1386,11 +1370,25 @@ function rigorForCategory(
 export function designSaMDClinicalValidation(
   params: DesignSaMDClinicalValidationParams,
 ): DesignSaMDClinicalValidationResult {
+  // 2026-11-08 (S5b): each fact was read `=== true` or `=== false`, so an omitted one was an answer: an omitted
+  // validClinicalAssociationEstablished set the rigor for establishing it, isAIML read as false, an omitted reference
+  // standard as available (no CE-06), prospectiveDataPlanned as true ("Prospective data collection is planned"), and
+  // an omitted autonomy as human-in-the-loop (and no CE-08 for an omitted isAIML). Category 'V' read as standard
+  // rigor. Each now says it is not stated.
+  refuseUnlessStated('design_samd_clinical_validation', [
+    oneOfInput('samdCategory', params.samdCategory, SAMD_CATEGORIES),
+  ], 'planned');
+  const autonomy = statedOneOf('autonomyLevel', params.autonomyLevel, AUTONOMY_LEVELS);
+  const inputStates = booleanInputStates(params, SAMD_CV_FLAGS);
+  const association = statedBoolean('validClinicalAssociationEstablished', params.validClinicalAssociationEstablished);
+  const isAIML = statedBoolean('isAIML', params.isAIML);
+  const referenceStandard = statedBoolean('referenceStandardAvailable', params.referenceStandardAvailable);
+  const prospective = statedBoolean('prospectiveDataPlanned', params.prospectiveDataPlanned);
   const cat = params.samdCategory;
   const baseRigor = rigorForCategory(cat);
 
   const associationRigor: ClinicalEvaluationPillar['rigor'] =
-    params.validClinicalAssociationEstablished === true ? 'leverage-existing' : baseRigor;
+    association === true ? 'leverage-existing' : association === false ? baseRigor : 'not_assessed';
 
   const pillars: ClinicalEvaluationPillar[] = [
     {
@@ -1401,7 +1399,11 @@ export function designSaMDClinicalValidation(
       required: true,
       rigor: associationRigor,
       evidenceElements:
-        params.validClinicalAssociationEstablished === true
+        association === undefined
+          ? [
+              'validClinicalAssociationEstablished is not stated. If the association is well established in the literature or guidelines, cite that evidence and document its relevance to this intended use and population; otherwise establish it through a literature search or existing data, or generate new clinical evidence.',
+            ]
+          : association
           ? [
               'Leverage existing evidence: cite peer-reviewed literature, clinical guidelines, or original clinical research establishing the association.',
               'Document the strength and relevance of the cited evidence to the specific intended use and population.',
@@ -1422,11 +1424,13 @@ export function designSaMDClinicalValidation(
       evidenceElements: [
         'Verify the software correctly meets specifications (IEC 62304 verification; 21 CFR 820.30 verification).',
         'Characterize accuracy, precision, reliability, and repeatability/reproducibility of the output against the input specification.',
-        params.isAIML === true
+        isAIML === true
           ? 'For AI/ML: evaluate algorithm performance on data independent of training/tuning (GMLP Principles 4 & 8); characterize generalizability across sites/devices/subgroups.'
-          : 'Characterize performance across the specified input range and edge cases.',
+          : isAIML === false
+            ? 'Characterize performance across the specified input range and edge cases.'
+            : 'isAIML is not stated. For an AI/ML function, evaluate performance on data independent of training/tuning (GMLP Principles 4 & 8) and characterize generalizability; otherwise characterize performance across the specified input range and edge cases.',
       ],
-      citations: params.isAIML === true ? ['IMDRF-N41', 'GMLP-2021', 'IEC-62304'] : ['IMDRF-N41', 'IEC-62304'],
+      citations: isAIML === false ? ['IMDRF-N41', 'IEC-62304'] : ['IMDRF-N41', 'GMLP-2021', 'IEC-62304'],
     },
     {
       pillar: 'clinical-validation',
@@ -1437,9 +1441,11 @@ export function designSaMDClinicalValidation(
       rigor: baseRigor,
       evidenceElements: [
         'Demonstrate clinically meaningful performance in the intended population and use environment.',
-        params.autonomyLevel === 'autonomous'
+        autonomy === 'autonomous'
           ? 'Autonomous use: characterize stand-alone clinical performance (sensitivity/specificity/PPV/NPV at the operating point) since no clinician reviews each output.'
-          : 'Human-in-the-loop use: evaluate the Human-AI team performance, not just the model in isolation (GMLP Principle 7).',
+          : autonomy === undefined
+            ? 'autonomyLevel is not stated. For an autonomous function, characterize stand-alone clinical performance at the operating point; for a human-in-the-loop one, evaluate the Human-AI team performance (GMLP Principle 7).'
+            : 'Human-in-the-loop use: evaluate the Human-AI team performance, not just the model in isolation (GMLP Principle 7).',
         'Define and justify clinically meaningful endpoints and acceptance criteria a priori.',
       ],
       citations: ['IMDRF-N41', 'GMLP-2021'],
@@ -1486,7 +1492,18 @@ export function designSaMDClinicalValidation(
     },
   ];
 
-  if (params.referenceStandardAvailable === false) {
+  if (referenceStandard === undefined) {
+    evidencePlan.push({
+      id: 'CE-06',
+      requirement:
+        'Confirm an accepted reference standard (ground truth) exists; if none does, establish one using best-available accepted methods.',
+      rationale:
+        'referenceStandardAvailable is not stated. Without an accepted reference standard, one must be defined and its limitations documented (GMLP Principle 5).',
+      citations: ['GMLP-2021', 'IMDRF-N41'],
+      mandatory: true,
+    });
+  }
+  if (referenceStandard === false) {
     evidencePlan.push({
       id: 'CE-06',
       requirement: 'Establish a reference standard (ground truth) using best-available accepted methods.',
@@ -1508,12 +1525,14 @@ export function designSaMDClinicalValidation(
     });
   }
 
-  if (params.isAIML === true) {
+  if (isAIML !== false) {
     evidencePlan.push({
       id: 'CE-08',
       requirement:
+        (isAIML ? '' : 'If the SaMD is an AI/ML function (isAIML is not stated): ') +
         'Demonstrate generalizability via independent external/multi-site validation and subgroup performance.',
       rationale:
+        (isAIML ? '' : 'isAIML is not stated. ') +
         'AI/ML functions require evidence of generalizability and bias control (GMLP Principles 3, 4, 6, 8).',
       citations: ['GMLP-2021', 'IMDRF-N41'],
       mandatory: true,
@@ -1523,9 +1542,13 @@ export function designSaMDClinicalValidation(
   const independentReviewExpected = cat === 'IV' || cat === 'III';
 
   const studyDesignGuidance: string[] = [];
-  if (params.prospectiveDataPlanned === false) {
+  if (prospective === false) {
     studyDesignGuidance.push(
       'Retrospective/real-world data may be acceptable for clinical validation if data quality, reference standard, and independence from training data are well controlled; otherwise prospective data are preferred for higher categories.',
+    );
+  } else if (prospective === undefined) {
+    studyDesignGuidance.push(
+      'prospectiveDataPlanned is not stated. Prospective data are preferred for higher categories; retrospective/real-world data may be acceptable for clinical validation if data quality, reference standard, and independence from training data are well controlled.',
     );
   } else {
     studyDesignGuidance.push(
@@ -1555,11 +1578,11 @@ export function designSaMDClinicalValidation(
     'Report performance stratified by clinically meaningful subgroups to detect bias (GMLP Principles 3, 8).',
     'Pre-specify the primary metric, the success threshold, and the statistical analysis plan (sample size, test, confidence level).',
   ];
-  if (params.autonomyLevel === 'autonomous') {
+  if (autonomy === 'autonomous') {
     performanceMetricsGuidance.push(
       'Autonomous function: stand-alone algorithm performance is the primary evidence; characterize failure/abstain behavior and the consequences of false positives/negatives at the cleared operating point.',
     );
-  } else if (params.autonomyLevel === 'augmentative' || params.autonomyLevel === 'assistive') {
+  } else if (autonomy === 'augmentative' || autonomy === 'assistive') {
     performanceMetricsGuidance.push(
       'Human-in-the-loop function: report Human-AI team performance (reader study with vs. without the aid) in addition to stand-alone performance where applicable.',
     );
@@ -1572,9 +1595,11 @@ export function designSaMDClinicalValidation(
     (independentReviewExpected
       ? 'Independent review of the results is expected for this category. '
       : 'Independent review of results is not specifically expected at this category, though objective evidence must be retained. ') +
-    (params.isAIML === true
+    (isAIML === true
       ? 'As an AI/ML function, generalizability (independent external validation) and subgroup/bias characterization are required alongside the three pillars (GMLP).'
-      : 'Standard software verification/validation (IEC 62304) supports the analytical pillar.');
+      : isAIML === false
+        ? 'Standard software verification/validation (IEC 62304) supports the analytical pillar.'
+        : 'Whether the SaMD is an AI/ML function is not stated (isAIML); if it is, generalizability (independent external validation) and subgroup/bias characterization are also required (GMLP).');
 
   const citations = resolveCitations([
     'IMDRF-N41',
@@ -1594,6 +1619,7 @@ export function designSaMDClinicalValidation(
     performanceMetricsGuidance,
     overallNarrative,
     citations,
+    inputStates,
   };
 }
 
@@ -1628,7 +1654,10 @@ export interface AssessDeviceCybersecurityParams {
 export interface CyberRequirementResult {
   id: string;
   requirement: string;
-  /** 'not_stated': the input was omitted. It is not read as present or missing, and it counts as a gap. */
+  /**
+   * 'not_stated': the input was omitted. It is not read as present or missing. An artifact row (CY-TM, CY-SBOM,
+   * CY-SRM, CY-VULN, CY-PATCH) counts as a gap; the sensitive-data row (CY-DATA) is attention, as when stated true.
+   */
   status: 'present' | 'missing' | 'not_stated' | 'not-applicable';
   detail: string;
   severity: Verdict;
@@ -1661,6 +1690,8 @@ export interface AssessDeviceCybersecurityResult {
    */
   notStated: string[];
   citations: Citation[];
+  /** Each boolean input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
 }
 
 /**
@@ -1692,15 +1723,18 @@ function cyberRequirementState(
  * Until then each was read `!== false`, so `({})` was a cyber device with every
  * artifact provided and an overall verdict of pass. The submission date is
  * also not assumed; mandatory 524B artifacts remain critical gaps until 524B
- * is explicitly ruled out. An omitted handlesSensitiveData adds no data row.
+ * is explicitly ruled out. An omitted handlesSensitiveData adds the data-protection
+ * row as not stated, at attention (2026-11-08, S5b; it added no row).
  */
 export function assessDeviceCybersecurity(
   params: AssessDeviceCybersecurityParams,
 ): AssessDeviceCybersecurityResult {
+  refuseUnlessStated('assess_device_cybersecurity', [deviceNameInput(params.deviceName)], 'assessed');
   const deviceName =
     params.deviceName && params.deviceName.trim().length > 0
       ? params.deviceName
       : 'the subject device';
+  const inputStates = booleanInputStates(params, CYBER_FLAGS);
 
   // Section 524B "cyber device" gate: a device that (1) includes validated
   // software, (2) has the ability to connect to the internet, and (3) contains
@@ -1855,6 +1889,16 @@ export function assessDeviceCybersecurity(
       severity: 'attention',
       citations: ['FDA-CYBER-2023', 'AAMI-TIR57'],
     });
+  } else if (inputStates.handlesSensitiveData === 'not_stated') {
+    requirements.push({
+      id: 'CY-DATA',
+      requirement: 'Protection of sensitive data (ePHI) at rest and in transit.',
+      status: 'not_stated',
+      detail:
+        'Not stated: handlesSensitiveData was not given. If the device processes or stores sensitive data (ePHI), implement and document confidentiality/integrity controls (encryption at rest and in transit, authentication, access control, audit logging) and address them in the security risk management report.',
+      severity: 'attention',
+      citations: ['FDA-CYBER-2023', 'AAMI-TIR57'],
+    });
   }
 
   // Secure-by-design overarching
@@ -1929,6 +1973,7 @@ export function assessDeviceCybersecurity(
     criticalGapCount,
     notStated,
     citations,
+    inputStates,
   };
 }
 

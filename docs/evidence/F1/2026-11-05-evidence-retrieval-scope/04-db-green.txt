@@ -1,0 +1,57 @@
+# The four real-database suites, on PostgreSQL 16 with pgvector, built by install-fresh + deploy-migrate,
+# as the non-superuser runtime role with RLS enforcing (tests/db/two-tenant-fixture.ts).
+# Command:
+#   DB=platform_ci_vault_fixture_s6v2; TEST_DATABASE_URL=postgresql://postgres@localhost:55432/$DB DATABASE_URL=postgresql://postgres@localhost:55432/$DB \
+#   APP_DATABASE_URL=postgresql://app_service:<password>@localhost:55432/$DB APP_SERVICE_DB_PASSWORD=<password> RLS_ENFORCE=on \
+#   npx vitest run --config vitest.db.config.ts tests/db/atom-search.dbtest.ts tests/db/atom-search-tenant-key.dbtest.ts \
+#     tests/db/retrieval-floor.dbtest.ts tests/db/cortex-query-tenant-header.dbtest.ts
+#
+# Before these four files were updated (changed source, HEAD's tests): 13 failed | 9 passed (22),
+# each failure 'atom search refused: no project scope' or a route answering without the seeded atoms:
+#    × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 123ms
+#    × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 72ms
+#    × tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 58ms
+#    × tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 10ms
+#    × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 117ms
+#    × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 54ms
+#    × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 12ms
+#    × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 2ms
+#    × tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 2ms
+#    × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control) 9ms
+#    × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search 5ms
+#    × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused 1ms
+#    × tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter 1ms
+#   ⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+#         Tests  13 failed | 9 passed (22)
+#
+# After (changed source, updated tests; one case added to atom-search.dbtest.ts):
+
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 128ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 69ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 62ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 54ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 28ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 15ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 146ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 108ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 72ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 87ms
+ ✓ tests/db/atom-search.dbtest.ts > search_atoms_hybrid on a from-blank database > returns rows 12ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns no more rows than the limit, all the tenant’s own 83ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > weights semantic and keyword scores as the caller asked 66ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > returns a project's own atoms even when other projects' atoms score higher 48ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns an atom of a project of the same tenant that the scope does not name 98ms
+ ✓ tests/db/atom-search.dbtest.ts > searchHybrid serves a tenant's own evidence, as asked > never returns another tenant’s atom, even on a connection RLS does not filter 22370ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > serves tenant A its own atoms (positive control) 102ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses a key naming another tenant, and runs no search 1ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > refuses to run with no key at all — never the unfiltered search 1ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > resolves the session's own key when the scope carries none (the degraded membership path) 2ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > on that degraded path, a key naming another tenant is still refused 2ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > names no key outside a per-user scope 0ms
+ ✓ tests/db/atom-search-tenant-key.dbtest.ts > an atom search runs under the session's tenant key > outside any scope the key is the only boundary, and it holds on a connection RLS does not filter 20125ms
+ Test Files  4 passed (4)
+      Tests  23 passed (23)
+
+# The two ~20 s cases run on the fixture's owner connection, which keeps the server's default JIT. The runtime pool
+# opens with jit=off for exactly this statement (server/db/runtimeStartupOptions.ts, MR-02). The same searches under
+# the runtime pool take 48-102 ms above.

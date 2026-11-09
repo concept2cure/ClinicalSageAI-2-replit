@@ -22,11 +22,44 @@ export interface LoadedCsrSource { source: CsrSourceReceipt; approved: boolean; 
 export interface CsrSourceInputDeps { readBytes: (row: SourceRow, organizationId: number) => Promise<Buffer> }
 interface AdamComponentContext { requireApproval: boolean; deps: CsrSourceInputDeps }
 
-/** Candidate metadata, not a declaration that file contents have been parsed. */
-export async function listCsrVaultSources(q: RequestSqlClient, scope: CsrSourceScope) {
+/** The most one source list reads to check its candidates: five clinical sources of the largest size. */
+const MAX_LIST_CHECK_BYTES = 5 * MAX_SOURCE_BYTES;
+type CandidateRow = SourceRow & { stage?: unknown; approved_hash?: unknown };
+type CandidateKind = 'source' | 'other' | 'unreadable';
+interface ListedFile { documentId: string; documentTitle: string; version: string }
+
+/**
+ * Whether a candidate is a clinical source, by the rule preview and freeze apply (`load`, `selectedEnvelope`):
+ * its JSON declares the ADaM bundle manifest format or the supporting-source format. Preview checks the
+ * contract and names its issues, so a manifest that breaks it is still offered. The bundle's efficacy results,
+ * a Dataset-JSON dataset or any other JSON is never offered (D2-CSR F5, 2026-11-05).
+ */
+async function candidateKind(row: CandidateRow, organizationId: number, deps: CsrSourceInputDeps): Promise<CandidateKind> {
+  if (Number(row.file_size) > MAX_SOURCE_BYTES) return 'other';
+  let bytes: Buffer;
+  try { bytes = await deps.readBytes(row, organizationId); } catch { return 'unreadable'; }
+  if (bytes.length > MAX_SOURCE_BYTES) return 'other';
+  if (createHash('sha256').update(bytes).digest('hex') !== row.content_hash) return 'unreadable';
+  let raw: unknown;
+  try { raw = parseJsonBytes(bytes); } catch { return 'other'; }
+  const declared = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>).format : undefined;
+  return isAdamBundle(raw) || declared === CSR_SOURCE_FORMAT ? 'source' : 'other';
+}
+
+const listedFile = (row: CandidateRow): ListedFile =>
+  ({ documentId: String(row.id), documentTitle: String(row.document_title), version: String(row.version ?? '') });
+const lifecycleApproved = (row: CandidateRow): boolean => typeof row.stage === 'string'
+  && (STEADY_STAGES as readonly string[]).includes(row.stage) && typeof row.content_hash === 'string' && row.approved_hash === row.content_hash;
+
+/**
+ * The project's clinical sources: its current, eligible JSON files whose bytes declare a clinical source format,
+ * newest first. A file whose bytes cannot be read or fail their digest is returned in `unreadable`, never left
+ * out, so a failed read is not shown as an empty list. `notClinicalSources` counts the JSON files that are not.
+ */
+export async function listCsrVaultSources(q: RequestSqlClient, scope: CsrSourceScope, deps: CsrSourceInputDeps = { readBytes: defaultReadBytes }) {
   await authorizeCsrSourceProgram(q, scope);
-  const { rows } = await q.query(`SELECT d.id::text AS document_id, d.document_title, d.version, d.content_hash,
-      c.stage, c.content_hash AS approved_hash
+  const { rows } = await q.query(`SELECT d.id::text AS id, d.document_title, d.version, d.content_hash, d.file_name, d.mime_type,
+      d.storage_version_id, d.storage_provider, d.s3_key, d.file_size, c.stage, c.content_hash AS approved_hash
     FROM vault.documents d LEFT JOIN LATERAL (
       SELECT stage, content_hash FROM canonical_documents WHERE organization_id = $1
         AND source_refs->'vault_documents'->>'nativeId' = d.id::text ORDER BY created_at, canonical_id LIMIT 1
@@ -35,11 +68,19 @@ export async function listCsrVaultSources(q: RequestSqlClient, scope: CsrSourceS
       AND lower(d.file_name) LIKE '%.json' AND d.mime_type IN ('application/json', 'text/plain')
       AND NOT ${supersededSql('d')} AND ${vaultDataEligibleSql('d')} AND ${vaultBinaryAvailableSql('d')}
     ORDER BY d.created_at DESC, d.id LIMIT 101`, [scope.organizationId, scope.programId]);
-  return { format: CSR_SOURCE_FORMAT, limitReached: rows.length > 100, sources: rows.slice(0, 100).map(row => ({
-    documentId: String(row.document_id), documentTitle: String(row.document_title), version: String(row.version ?? ''),
-    sha256: String(row.content_hash ?? ''), approved: typeof row.stage === 'string' && (STEADY_STAGES as readonly string[]).includes(row.stage)
-      && typeof row.content_hash === 'string' && row.approved_hash === row.content_hash,
-  })) };
+  const sources: Array<ListedFile & { sha256: string; approved: boolean }> = [];
+  const unreadable: ListedFile[] = [];
+  let notClinicalSources = 0, budget = MAX_LIST_CHECK_BYTES, unchecked = false;
+  for (const row of rows.slice(0, 100) as CandidateRow[]) {
+    const size = Math.max(Number(row.file_size) || 0, 0);
+    if (size <= MAX_SOURCE_BYTES && size > budget) { unchecked = true; continue; }
+    if (size <= MAX_SOURCE_BYTES) budget -= size;
+    const kind = await candidateKind(row, scope.organizationId, deps);
+    if (kind === 'source') sources.push({ ...listedFile(row), sha256: String(row.content_hash ?? ''), approved: lifecycleApproved(row) });
+    else if (kind === 'unreadable') unreadable.push(listedFile(row));
+    else notClinicalSources += 1;
+  }
+  return { format: CSR_SOURCE_FORMAT, limitReached: rows.length > 100 || unchecked, sources, unreadable, notClinicalSources };
 }
 
 async function defaultReadBytes(row: SourceRow, organizationId: number): Promise<Buffer> {

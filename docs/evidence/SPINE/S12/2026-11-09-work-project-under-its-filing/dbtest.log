@@ -1,0 +1,12 @@
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 99ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 103ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 139ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 77ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 75ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 82ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 60ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 77ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 110ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 83ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 55ms
+      Tests  11 passed (11)

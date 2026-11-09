@@ -1,0 +1,7 @@
+# GREEN (commit 1): every test naming a changed function or the rules module, every submission-service test, the new case files, after P-93 commit 1, 2026-11-09T00:57:37Z
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 285ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 66 passed | 1 skipped (69)
+      Tests  2 failed | 970 passed | 2 skipped (974)
+# The two failures are pre-existing on trunk at a842e9603: gateway-selection's AUDIT_UNCONFIRMED case (with the coordinating session), and refused-before-wire's audited-site count, which 026c0e96f (2026-11-06) left at 2 for gateway-accounts.ts's 3 sites; the next commit in this push audits it.

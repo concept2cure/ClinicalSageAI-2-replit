@@ -64,8 +64,9 @@ describe('source libraries in the existing editor', () => {
     await screen.findByText('Later source');
     fireEvent.change(screen.getByLabelText('Search the data room catalogue'), { target: { value: 'Protocol ABC' } });
     await screen.findByText('Protocol ABC');
-    expect(apiRequest).toHaveBeenCalledWith('GET', expect.stringContaining('offset=50'));
-    expect(apiRequest).toHaveBeenCalledWith('GET', expect.stringContaining('offset=0&q=Protocol+ABC'));
+    // The data layer's read signature: no body, no options, and the read's own abort signal.
+    expect(apiRequest).toHaveBeenCalledWith('GET', expect.stringContaining('offset=50'), undefined, undefined, expect.any(AbortSignal));
+    expect(apiRequest).toHaveBeenCalledWith('GET', expect.stringContaining('offset=0&q=Protocol+ABC'), undefined, undefined, expect.any(AbortSignal));
   });
 
   it('keeps withdrawn sources visible while refusing work or grounding from them', async () => {
@@ -108,7 +109,7 @@ describe('source libraries in the existing editor', () => {
     fireEvent.click(await screen.findByText('Agency response'));
     fireEvent.click(await screen.findByRole('button', { name: 'Open Agency response · Draft' }));
     expect(onOpenDocument).toHaveBeenCalledWith('working-document-8');
-    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs?status=all&programId=${programId}`);
+    expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs?status=all&programId=${programId}`, undefined, undefined, expect.any(AbortSignal));
   });
 
   it('routes official form preparation to AnA without promising to generate the form', async () => {

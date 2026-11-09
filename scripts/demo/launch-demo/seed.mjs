@@ -3,12 +3,13 @@
  * launch-demo/seed.mjs — build the end-to-end demonstration data for the launch
  * catalog through the product's own API.
  *
- *   node scripts/demo/launch-demo/seed.mjs --pack biotech|mdx|all [--purge]
+ *   node scripts/demo/launch-demo/seed.mjs --pack biotech|mdx|lumen|faux|all [--purge]
  *     [--base-url http://localhost:5200] [--email founder@example.com]
  *     [--organization-id <id>] [--client-workspace-id <id>] (workspace: biotech only)
  *     [--plan enterprise]  (platform owner: open every demo work area to the organisation)
  *
- *   npm run demo:seed -- --pack all
+ *   npm run demo:seed -- --pack all    # excludes the dedicated Faux Biotech tenant
+ *   npm run demo:seed -- --pack faux   # only as a Faux Biotech organization member
  *
  * Authentication: DEMO_SEED_TOKEN (a bearer token for the target server) or, on
  * a local server started with ALLOW_DEV_AUTH=1, dev-login as --email /
@@ -34,21 +35,35 @@ const opt = (name, dflt) => {
 };
 const flag = (name) => args.includes(`--${name}`);
 
-const PACKS = ['biotech', 'mdx', 'lumen'];
+const PACKS = ['biotech', 'mdx', 'lumen', 'faux'];
 const chosen = opt('pack', 'all');
-const list = chosen === 'all' ? PACKS : chosen.split(',');
+// Faux Biotech is a dedicated fictional ORGANIZATION, not another pack in a
+// shared tenant. Never include it in a blanket "--pack all" invocation.
+const list = chosen === 'all' ? PACKS.filter(pack => pack !== 'faux') : chosen.split(',');
 if (list.length === 0 || list.some(p => !PACKS.includes(p)) || new Set(list).size !== list.length) {
   console.error(`--pack must be one of ${PACKS.join(', ')} or all`);
   process.exit(2);
 }
 
+if (list.includes('faux') && list.length !== 1) {
+  console.error('--pack faux must run alone under the dedicated fictional organization. No packs were run.');
+  process.exit(2);
+}
 const clientWorkspaceId = opt('client-workspace-id', process.env.DEMO_CLIENT_WORKSPACE_ID);
 if (clientWorkspaceId !== undefined && list.some(pack => pack !== 'biotech')) {
   console.error('--client-workspace-id is currently supported by the biotech pack only; no packs were run.');
   process.exit(2);
 }
+// This pack is for a separately created fictional organization; its explicit
+// numeric id is required in addition to the recorded organization-name check.
+// Never guess the target from whichever account a token happened to sign in.
+const targetOrganizationId = opt('organization-id', process.env.DEMO_EXPECTED_ORGANIZATION_ID);
+if (list.includes('faux') && !targetOrganizationId) {
+  console.error('--pack faux requires --organization-id or DEMO_EXPECTED_ORGANIZATION_ID. No demo records were written.');
+  process.exit(2);
+}
 const ctx = await connect({ baseUrl: opt('base-url'), email: opt('email'),
-  expectedOrganizationId: opt('organization-id', process.env.DEMO_EXPECTED_ORGANIZATION_ID), clientWorkspaceId });
+  expectedOrganizationId: targetOrganizationId, clientWorkspaceId });
 console.info(`Signed in as ${ctx.identity.email} (user ${ctx.identity.userId}, organisation ${ctx.identity.organizationId}) at ${ctx.baseUrl}`);
 
 /* The demo's work areas must be open to the organisation it runs in

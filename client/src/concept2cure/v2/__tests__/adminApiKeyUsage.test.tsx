@@ -13,7 +13,7 @@ describe('admin API-key usage', () => {
     render(<AdminApiKeyUsage keyId={9} name="Reporting" onClose={vi.fn()} />);
     await screen.findByText('Never used');
     expect(screen.getByText('0')).toBeTruthy();
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/api-keys/9/usage');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/api-keys/9/usage', undefined, undefined, expect.any(AbortSignal));
   });
   it('treats a refused usage read as an error, never zero requests', async () => {
     apiRequest.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Administrator required' }) });
@@ -33,6 +33,6 @@ describe('admin API-key usage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Usage for Reporting' }));
     await screen.findByRole('dialog', { name: 'Usage for Reporting' });
     await screen.findByText('23');
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/api-keys/9/usage');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/api-keys/9/usage', undefined, undefined, expect.any(AbortSignal));
   });
 });

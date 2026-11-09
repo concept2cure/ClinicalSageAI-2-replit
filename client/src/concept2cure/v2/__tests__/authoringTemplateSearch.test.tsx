@@ -64,7 +64,7 @@ describe('template search in the existing New document picker', () => {
     await screen.findByText('3 of 3 templates');
     expect(listedTemplates().map(option => option.textContent)).toEqual(['Protocol scaffold', 'Regional submission', 'Nonclinical overview']);
     expect(picker().value).toBe('(blank document)');
-    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates']]);
+    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates', undefined, undefined, expect.any(AbortSignal)]]);
   });
 
   it.each([
@@ -77,7 +77,7 @@ describe('template search in the existing New document picker', () => {
     search(query);
     expect(listedTemplates().map(option => option.textContent)).toEqual([expected]);
     expect(screen.getByText('1 of 3 templates')).toBeTruthy();
-    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates']]);
+    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates', undefined, undefined, expect.any(AbortSignal)]]);
   });
 
   it('clears a no-match query, restores browsing and keeps the typed document title', async () => {

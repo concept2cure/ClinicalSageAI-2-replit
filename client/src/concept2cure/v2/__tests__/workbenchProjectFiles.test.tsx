@@ -72,7 +72,7 @@ function mockApi(routes: Routes = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) {
-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+      return ok({ success: true, documents: [{ id: DOC, program_id: PID, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
@@ -101,8 +101,8 @@ async function openProjectFiles() {
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('Rationale');
   await waitFor(() => expect((document.querySelector('.rse-body .tiptap')?.textContent ?? '')).toContain('product rationale'));
-  fireEvent.click(openEditorControl('Project files'));
-  return screen.findByRole('complementary', { name: 'Project files' });
+  fireEvent.click(openEditorControl('Vault'));
+  return screen.findByRole('complementary', { name: 'Vault' });
 }
 
 beforeEach(() => {
@@ -121,7 +121,7 @@ describe('DocumentWorkbench — Project files', () => {
     expect(await within(rail).findByText('Module 5 — Clinical')).toBeTruthy();
     expect(within(rail).getByText('Protocol C2C-101-201 v1.0')).toBeTruthy();
     expect(within(rail).getByText('Statistical Analysis Plan C2C-101-201 v1.0')).toBeTruthy();
-    expect(within(rail).getByText(/Project files · C2C-101/)).toBeTruthy();
+    expect(within(rail).getByText(/Vault · C2C-101/)).toBeTruthy();
   });
 
   it('searches through the vault search route and shows the total', async () => {
@@ -171,7 +171,7 @@ describe('DocumentWorkbench — Project files', () => {
     mockApi();
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(openEditorControl('Project files'));
+    fireEvent.click(openEditorControl('Vault'));
     expect(await screen.findByTestId('pf-no-program')).toBeTruthy();
     expect(apiRequest.mock.calls.some(c => String(c[1]).startsWith('/api/c2c/project-vault/'))).toBe(false);
   });

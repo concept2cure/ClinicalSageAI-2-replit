@@ -24,8 +24,10 @@
  * @compliance FDA 21 CFR Part 11
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { pool } from '../db.js';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
+import { canAccessReportProject } from '../services/report-os/project-access.js';
 import {
   getAllINDSections,
   getSectionByCode,
@@ -34,6 +36,89 @@ import {
 } from '../../services/regulatory/ind-ectd-sections.js';
 
 const router = Router();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT ADMISSION (F1, 2026-11-05)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Every route here that names a project read or changed it for any project_id in
+// the organization: the section list returned a private project's artifact ids,
+// titles, status, version, open-comment and artifact counts, and its comments,
+// history, milestones and timeline, to a member who cannot open it. The project
+// a request names is now admitted first by the project sharing policy
+// (canAccessReportProject; docs/evidence/F1/2026-11-05-listing-doors-scope/).
+// One the person cannot open is answered as a project that does not exist; a
+// check that cannot run is an error with a code. The edit right on a write is
+// not decided here.
+
+/** The project ids a request names, parsed as its handler parses them (query on a read, body on a write). */
+function namedProjectIds(req: Request): number[] {
+  const named = [req.query.project_id, (req.body as Record<string, unknown> | undefined)?.project_id]
+    .filter((value) => value !== undefined && value !== null && value !== '')
+    .map((value) => parseInt(String(value), 10))
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+  return [...new Set(named)];
+}
+
+function projectNotFound(res: Response): Response {
+  return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+}
+
+function projectAccessFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
+  console.error('[ProjectSections] Project access check failed:', error instanceof Error ? error.message : error);
+  return res.status(503).json({
+    error: 'Current project access could not be verified. Nothing was read or changed.',
+    code: 'PROJECT_ACCESS_UNAVAILABLE',
+  });
+}
+
+/** Whether the person can open every one of these projects. Throws when that cannot be read. */
+async function canOpenProjects(req: Request, orgId: number, projectIds: number[]): Promise<boolean> {
+  const userId = Number(extractUserId(req));
+  const actor = await readCurrentProgramActor(pool, {
+    organizationId: orgId, userId: Number.isSafeInteger(userId) && userId > 0 ? userId : undefined,
+  });
+  for (const projectId of projectIds) {
+    if (!(await canAccessReportProject(orgId, actor, projectId, pool))) return false;
+  }
+  return true;
+}
+
+/** Admit the project a request names before any handler reads or changes it. */
+async function admitNamedProject(req: Request, res: Response, next: NextFunction) {
+  const orgId = extractOrgId(req);
+  const projectIds = namedProjectIds(req);
+  if (orgId == null || projectIds.length === 0) return next();
+  try {
+    if (!(await canOpenProjects(req, orgId, projectIds))) return projectNotFound(res);
+  } catch (error) {
+    return projectAccessFailure(res, error);
+  }
+  return next();
+}
+
+/** A milestone is changed by its id: admit the project it belongs to, and answer one outside it as a missing one. */
+async function admitMilestoneProject(req: Request, res: Response, next: NextFunction) {
+  const orgId = extractOrgId(req);
+  if (orgId == null) return next();
+  const milestoneId = parseInt(String(req.params.id), 10);
+  try {
+    const { rows } = Number.isSafeInteger(milestoneId) ? await pool.query(
+      'SELECT project_id FROM project_milestones WHERE id = $1 AND organization_id = $2',
+      [milestoneId, orgId]
+    ) : { rows: [] };
+    const projectId = Number(rows[0]?.project_id);
+    if (!(Number.isSafeInteger(projectId) && projectId > 0) || !(await canOpenProjects(req, orgId, [projectId]))) {
+      return res.status(404).json({ error: 'Milestone not found' });
+    }
+  } catch (error) {
+    return projectAccessFailure(res, error);
+  }
+  return next();
+}
+
+router.use(admitNamedProject);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -566,7 +651,7 @@ router.get('/milestones', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/milestones/:id', async (req: Request, res: Response) => {
+router.patch('/milestones/:id', admitMilestoneProject, async (req: Request, res: Response) => {
   try {
     const milestoneId = parseInt(String(req.params.id), 10);
     const { name, description, target_date, status, linked_sections } = req.body;
@@ -617,7 +702,7 @@ router.patch('/milestones/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/milestones/:id', async (req: Request, res: Response) => {
+router.delete('/milestones/:id', admitMilestoneProject, async (req: Request, res: Response) => {
   try {
     const milestoneId = parseInt(String(req.params.id), 10);
     const orgId = extractOrgId(req);

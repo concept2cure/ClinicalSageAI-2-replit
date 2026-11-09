@@ -1,0 +1,97 @@
+# Mutation 5 (staging-release-without-void): release a failed test send's claim WITHOUT voiding its signature (the RULE 3 re-check's REQUIRED fix, P-23)
+# File: server/services/submission-service/submission-service.ts   Run: 2026-11-02T04:19:03Z
+# Expected: refused-step-voids-signature.pglite.test.ts: 69's test-send signature is not void and is accepted for the production send; transmit-guard staging copies: signature not voided
+#
+# REPLACED:
+#           // A test send that failed after the wire filed nothing (above).
+#           if (attempt.testSendClaim) return true;
+# WITH:
+#   (nothing)
+
+## The mutation, as applied (diff of the file against its unmutated copy)
+diff --git aa/server/services/submission-service/submission-service.ts bb/server/services/submission-service/submission-service.ts
+index 8cbb6ed3c..7d0825d16 100644
+--- aa/server/services/submission-service/submission-service.ts
++++ bb/server/services/submission-service/submission-service.ts
+@@ -2721,8 +2721,6 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
+       { signatureActionId, sequenceId, ctx, step: 'transmit' },
+       async (err) => {
+         if (!attempt.reachedGateway) return true;
+-        // A test send that failed after the wire filed nothing (above).
+-        if (attempt.testSendClaim) return true;
+         const { refusedBeforeWire } = await import('../submission-gateways/index');
+         return refusedBeforeWire(err);
+       },
+
+## Command: npx vitest run server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+## Exit: 1
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > refuses a signature consumed by verified receipt settlement before taking another claim 8ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > rechecks the canonical spent ledger after acquiring the sequence lock, before claiming or sending 5ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 373ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 5ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 5ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when the SFTP credentials are set but the ssh2-sftp-client module is absent (MDN close) 13ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NOT_DELIVERED (FDA refuses our client certificate at the TLS handshake): row rejected, claim released 59ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — DELIVERED_UNCONFIRMED (HTTP 502 after the whole bundle) on a production send: in transit, the claim stays transmitting 46ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > the same failure on a send to the TEST environment: the claim is released and its signature voided (F1) 46ms
+   → the test send signature stayed able to file the sequence: expected false to be true // Object.is equality
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 on a production send from a separate-process server that read the whole bundle, while this process is busy: transmitting transmitted=undefined voided=false 5555ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset on a production send from a separate-process server that read the whole bundle, while this process is busy: transmitting transmitted=undefined voided=false 5547ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 on a staging send from a separate-process server that read the whole bundle, while this process is busy: pending transmitted=undefined voided=true 5489ms
+   → expected [ …(3) ] to deeply equal [ …(3) ]
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset on a staging send from a separate-process server that read the whole bundle, while this process is busy: pending transmitted=undefined voided=true 5545ms
+   → expected [ …(3) ] to deeply equal [ …(3) ]
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError on a production send keeps the claim at transmitting 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError on a production send keeps the claim at transmitting 3ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError on a send to the test environment releases the claim and voids its signature 3ms
+   → expected false to be true // Object.is equality
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError on a send to the test environment releases the claim and voids its signature 3ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes 275ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > a signature someone else names is not theirs to void 9ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits 189ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs 75ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits 176ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > the package sent names the organisation as the applicant, never a placeholder 133ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 54ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 52ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send 323ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production 166ms
+   → expected 'FDA ESG AS2 returned HTTP 502 after t…' to match /signature given for this transmit is …/
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a production send that fails after the wire still holds the claim, and its signature is not voided 151ms
+ Test Files  2 failed (2)
+      Tests  6 failed | 23 passed (29)
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production
+AssertionError: expected 'FDA ESG AS2 returned HTTP 502 after t…' to match /signature given for this transmit is …/
+- Expected:
++ Received:
+ ❯ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts:448:28
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > the same failure on a send to the TEST environment: the claim is released and its signature voided (F1)
+AssertionError: the test send signature stayed able to file the sequence: expected false to be true // Object.is equality
+- Expected
++ Received
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:471:95
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — HTTP 502 on a staging send from a separate-process server that read the whole bundle, while this process is busy: pending transmitted=undefined voided=true
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA AS2 POST, classified by the delivery classifier > NEGATIVE — a reset on a staging send from a separate-process server that read the whole bundle, while this process is busy: pending transmitted=undefined voided=true
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+- Expected
++ Received
+-   "pending transmitted=undefined voided=true",
+-   "pending transmitted=undefined voided=true",
+-   "pending transmitted=undefined voided=true",
++   "pending transmitted=undefined voided=false",
++   "pending transmitted=undefined voided=false",
++   "pending transmitted=undefined voided=false",
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:504:22
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError on a send to the test environment releases the claim and voids its signature
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError on a send to the test environment releases the claim and voids its signature
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ ❯ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts:544:35
+
+## Restore
+sha256 before mutation: 0f721f9a309e06b19e0fef542faac334f2f5959a2b0cb1e84574a0e22723c1eb
+sha256 after restore:   0f721f9a309e06b19e0fef542faac334f2f5959a2b0cb1e84574a0e22723c1eb
+restored byte for byte: True

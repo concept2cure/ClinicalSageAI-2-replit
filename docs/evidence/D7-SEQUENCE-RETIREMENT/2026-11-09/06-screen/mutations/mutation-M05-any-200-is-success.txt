@@ -1,0 +1,7 @@
+MUTATION M05-any-200-is-success in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T11:40:29.206257Z): replaced [if (done.data?.retired !== true || done.data.sequenceId !== f.seq.id) {] with [if (false) {]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 without retired: true is not a success 5354ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 for another sequence is not a success 5187ms
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a 200 an empty body is not a success 5168ms
+      Tests  3 failed | 20 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e (expected 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e)

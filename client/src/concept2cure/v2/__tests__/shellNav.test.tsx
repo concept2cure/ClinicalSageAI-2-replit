@@ -40,8 +40,19 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* One signed-in account, the same object on every render, as AuthProvider holds it; a new one only when a
+   case changes the roles or permissions. The shell reads the navigation verdicts once per account visit
+   (navEntitlements.tsx useNavigationReadOwner, 0fc881c16f): a new user object on every render was a new
+   visit on every render, and the suite read and re-rendered until the worker ran out of memory. */
+const signedIn = vi.hoisted(() => ({ roles: null as unknown, permissions: null as unknown, value: null as unknown }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: vi.fn() }),
+  useAuth: () => {
+    if (!signedIn.value || signedIn.roles !== authRoles.current || signedIn.permissions !== authRoles.permissions) {
+      signedIn.roles = authRoles.current; signedIn.permissions = authRoles.permissions;
+      signedIn.value = { user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: () => Promise.resolve() };
+    }
+    return signedIn.value;
+  },
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
@@ -127,7 +138,7 @@ function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): str
 // Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
 const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
 // Biostatistics is reached from the project (ProjectCoreWork), not the rail: RULE 4, P-79 (2026-11-01).
-const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
+const WORK_AREAS = ['CMC / Module 3', 'Biostatistics', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {
@@ -196,16 +207,16 @@ describe('the rail lists the places, then the work areas', () => {
     expect(onNav.mock.calls).toEqual([['projects']]);
   });
 
-  /* Found in the running app, 2026-10-31: with no project open, Vault, Tasks, Communication and
-     Quality are project screens, so the router lands on Projects, and from Projects the click
-     looked dead. The rail now says why. */
+  /* Found in the running app, 2026-10-31: with no project open, a project screen's click landed on
+     Projects and looked dead. The rail now says why. Since 5144702d21 (2026-11-06) the Vault opens
+     with no project (shared/navigation: scope 'global'), so Communication is the project screen here. */
   it('says a project screen needs a project when none is open, instead of doing nothing visible', async () => {
     const { clearShellProject, publishShellProject } = await import('../shellProject');
     clearShellProject();
     const { scroll, onNav } = await mountRail();
-    fireEvent.click(within(scroll).getByRole('button', { name: 'Vault' }));
-    expect(onNav).toHaveBeenCalledWith('vault');
-    expect(await screen.findByText('Open a project to see its Vault. Choose one in Projects.')).toBeTruthy();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Communication' }));
+    expect(onNav).toHaveBeenCalledWith('communication-center');
+    expect(await screen.findByText('Open a project to see its Communication. Choose one in Projects.')).toBeTruthy();
     // Tasks is not a project screen (shared/navigation: scope 'global', c5170db97f, 2026-10-31): it
     // opens everyone's board with no project open, and follows the project once one is.
     fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
@@ -215,7 +226,7 @@ describe('the rail lists the places, then the work areas', () => {
     publishShellProject({ id: '11111111-2222-4333-8444-000000000001', title: 'SYN-201 IND' });
     try {
       const open = await mountRail();
-      fireEvent.click(within(open.scroll).getByRole('button', { name: 'Vault' }));
+      fireEvent.click(within(open.scroll).getByRole('button', { name: 'Communication' }));
       expect(screen.queryByText(/Open a project to see/)).toBeNull();
     } finally { clearShellProject(); }
   });

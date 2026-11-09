@@ -28,6 +28,15 @@ import { ragRouter } from '../services/ragRouter.js';
 import { currentTenantOrgUuid } from '../db/currentTenant.js';
 import { serverError } from '../lib/api-response.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { parseIntegerProjectId } from '../lib/project-id.js';
+import { resolveOrgId } from '../types/auth-request.js';
+import { authedUserId } from '../utils/authedActor.js';
+import { readDataRoomProjectScope } from '../services/data-room-retrieval.js';
+import {
+  ProgramReadAccessError,
+  getCurrentAccessibleProgramScope,
+  verifiedProgramAnchors,
+} from '../services/c2c/current-program-access.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -108,6 +117,58 @@ export function initializeCortexAPI(dbPool: pg.Pool): void {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//                          READ SCOPE
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * What a query may read for the person asking (F1, 2026-11-05).
+ *
+ * Search and graph ranked every atom in the organization, generate and
+ * advisory read every Vault passage in it, and the body's context.projectId
+ * was unused. Now the projects are the named one if the person can open it, or
+ * with none every project they can open (readDataRoomProjectScope, the project
+ * sharing policy). The Vault is keyed by program, so generate and advisory bind
+ * those projects' verified programs (getCurrentAccessibleProgramScope).
+ */
+interface CortexReadScope {
+  organizationId: number;
+  userId: number;
+  projectIds: number[];
+}
+
+/** A named project that is malformed, missing or not the person's is one answer: not found. */
+function namedProjectId(context: CortexQueryRequest['context']): number | undefined {
+  const named = context?.projectId;
+  if (named === undefined || named === null || named === '') return undefined;
+  const id = parseIntegerProjectId(named);
+  if (id === null) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+  return id;
+}
+
+async function readCortexScope(req: Request, context: CortexQueryRequest['context']): Promise<CortexReadScope> {
+  const organizationId = resolveOrgId(req);
+  const userId = authedUserId(req);
+  const projectIds = await readDataRoomProjectScope(pool!, { organizationId, userId, projectId: namedProjectId(context) });
+  return { organizationId: organizationId!, userId: userId!, projectIds };
+}
+
+/** The verified programs of the scope's projects, for the Vault's program filter. */
+async function scopeProgramIds(scope: CortexReadScope): Promise<string[]> {
+  const identity = { organizationId: scope.organizationId, userId: scope.userId };
+  const allowed = new Set(scope.projectIds);
+  const programs = await getCurrentAccessibleProgramScope(pool!, identity);
+  return verifiedProgramAnchors(pool!, identity, programs)
+    .filter(anchor => allowed.has(anchor.projectId))
+    .map(anchor => anchor.programId);
+}
+
+/** A project the person cannot open gets a missing project's answer; a check that could not run is its own status. */
+function sendScopeRefusal(res: Response, error: ProgramReadAccessError): Response {
+  if (error.status === 404) return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+  return res.status(error.status).json({ error: error.message, code: error.code });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //                          MAIN QUERY ENDPOINT
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -153,26 +214,25 @@ router.post('/query', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Tenant context required' });
     }
 
+    const scope = await readCortexScope(req, context);
     let response: CortexQueryResponse;
 
     switch (mode) {
       case 'search':
-        response = await handleSearchMode(query, options, organizationUuid);
+        response = await handleSearchMode(query, options, organizationUuid, scope.projectIds);
         break;
       case 'generate':
         response = await handleGenerateMode(
           query,
           options,
-          context,
-          organizationUuid,
-          persistCitations
+          { organizationUuid, persistCitations, programIds: await scopeProgramIds(scope) }
         );
         break;
       case 'graph':
-        response = await handleGraphMode(query, options, organizationUuid);
+        response = await handleGraphMode(query, organizationUuid, scope.projectIds);
         break;
       case 'advisory':
-        response = await handleAdvisoryMode(query, options, context, organizationUuid);
+        response = await handleAdvisoryMode(query, context, organizationUuid, await scopeProgramIds(scope));
         break;
       default:
         return res.status(400).json({ error: `Unknown mode: ${mode}` });
@@ -181,6 +241,7 @@ router.post('/query', async (req: Request, res: Response) => {
     response.metadata.processingTimeMs = Date.now() - startTime;
     res.json(response);
   } catch (error) {
+    if (error instanceof ProgramReadAccessError) return sendScopeRefusal(res, error);
     serverError(res, log, 'answering the Cortex query', error, { processingTimeMs: Date.now() - startTime });
   }
 });
@@ -195,16 +256,19 @@ router.post('/query', async (req: Request, res: Response) => {
 async function handleSearchMode(
   query: string,
   options: CortexQueryRequest['options'],
-  organizationUuid: string
+  organizationUuid: string,
+  projectIds: readonly number[]
 ): Promise<CortexQueryResponse> {
   const embeddingService = getEmbeddingService(pool!);
 
   // Scoped to the session's tenant key; searchHybrid refuses to run without
-  // one, and refuses a key that is not the session's.
+  // one, and refuses a key that is not the session's. And to the person's
+  // projects (readCortexScope).
   const results = await embeddingService.searchHybrid(query, {
     limit: options?.limit || 10,
     semanticWeight: 0.7,
     organizationUuid,
+    projectIds,
   });
 
   return {
@@ -234,11 +298,11 @@ async function handleSearchMode(
 async function handleGenerateMode(
   query: string,
   options: CortexQueryRequest['options'],
-  context: CortexQueryRequest['context'],
-  organizationUuid?: string,
-  persistCitations?: boolean
+  read: { organizationUuid: string; persistCitations?: boolean; programIds: readonly string[] }
 ): Promise<CortexQueryResponse> {
-  // Execute RAG query with generation through the single router.
+  const { organizationUuid, persistCitations } = read;
+  // Execute RAG query with generation through the single router, over the
+  // Vault documents of the person's programs only (readCortexScope).
   const result = await ragRouter.query({
     query,
     intent: 'regulatory_qa',
@@ -251,7 +315,7 @@ async function handleGenerateMode(
     useCompression: true,
     organizationUuid,
     persistCitations: !!persistCitations,
-    filters: options?.filters ? { atomType: options.filters.atomType } : undefined,
+    filters: { atomType: options?.filters?.atomType, allowedProgramIds: read.programIds },
   });
 
   return {
@@ -284,12 +348,14 @@ async function handleGenerateMode(
  * Graph mode: Knowledge graph traversal. Org-scoped — refuses to traverse
  * when organizationUuid is missing so atoms never leak across tenants
  * (both the candidate search and the edge traversal join lumen_data_atoms
- * to the requesting org).
+ * to the requesting org). And project-scoped: the candidates and both ends of
+ * every edge are atoms of the person's projects (readCortexScope), so an edge
+ * never names an atom of a project they cannot open.
  */
 async function handleGraphMode(
   query: string,
-  options: CortexQueryRequest['options'],
-  organizationUuid?: string
+  organizationUuid: string | undefined,
+  projectIds: readonly number[]
 ): Promise<CortexQueryResponse> {
   if (!organizationUuid) {
     return {
@@ -302,7 +368,7 @@ async function handleGraphMode(
   }
 
   const embeddingService = getEmbeddingService(pool!);
-  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5, organizationUuid);
+  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5, { organizationUuid, projectIds });
 
   if (searchResults.length === 0) {
     return {
@@ -335,9 +401,13 @@ async function handleGraphMode(
     WHERE (e.source_atom_id = ANY($1) OR e.target_atom_id = ANY($1))
       AND osa.uuid = $2
       AND ota.uuid = $2
+      AND sa.source_type IN ('artifact', 'data_room_upload')
+      AND sa.source_id IN (SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = ANY($3::int[]))
+      AND ta.source_type IN ('artifact', 'data_room_upload')
+      AND ta.source_id IN (SELECT artifact_id FROM concept2cure_artifacts WHERE project_id = ANY($3::int[]))
     LIMIT 50
   `,
-    [atomIds, organizationUuid]
+    [atomIds, organizationUuid, [...projectIds]]
   );
 
   // Build graph response
@@ -388,14 +458,15 @@ async function handleGraphMode(
  */
 async function handleAdvisoryMode(
   query: string,
-  options: CortexQueryRequest['options'],
   context: CortexQueryRequest['context'],
-  organizationUuid?: string
+  organizationUuid: string,
+  programIds: readonly string[]
 ): Promise<CortexQueryResponse> {
   const gateway = getGateway();
 
   // Get relevant context (retrieve only; this mode does its own generation).
   // useMmr:false preserves the prior behaviour (MMR was not enabled here).
+  // The Vault documents of the person's programs only (readCortexScope).
   const ragContext = await ragRouter.retrieve({
     query,
     intent: 'regulatory_qa',
@@ -403,6 +474,7 @@ async function handleAdvisoryMode(
     useReranking: true,
     useMmr: false,
     organizationUuid,
+    filters: { allowedProgramIds: programIds },
   });
 
   // Build advisory prompt

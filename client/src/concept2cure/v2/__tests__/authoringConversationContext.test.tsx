@@ -36,12 +36,17 @@ const sections = [
   { id: SECOND_SECTION, doc_id: FLOW_DOC, code: '3.2.S.2', title: 'Section B', content: '<p>Saved section B.</p>', order_index: 1, updated_at: B_AT },
 ];
 const ok = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 beforeEach(() => {
   setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [doc] }));
     // The current read names its project (`?programId=`, authoringCurrentReadPath); the route is the path.
     if (url.split('?')[0] === `/api/authoring/docs/${FLOW_DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${FLOW_DOC}/sections`) return ok({ sections });

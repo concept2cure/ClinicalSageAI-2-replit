@@ -26,6 +26,15 @@ import { getTenantScope } from '../../../db/tenantStore';
 import { GOVERNED_WRITE_ROLES } from '../../../middleware/orgMembership';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../../c2c/current-program-access';
 import { canAccessReportProject } from '../../report-os/project-access';
+import { stableStringify } from '../../../../shared/canonical-json';
+import {
+  loadStrictProjectTaskGraph, monitorBasis, monitorState, monitorReference, monitorWork,
+  monitorGateStates, monitorGoal, monitorBlockers, monitorHash,
+  type StrictProjectTaskGraph, type ProjectObjectiveReference, type MonitorRead,
+} from '../../tasking/task-planning';
+export type { ProjectObjectiveReference } from '../../tasking/task-planning';
+import { readDossier } from '../../c2c/dossier-read';
+import type { ProjectTeamGoal, ProjectTeamMonitor } from '../../../../shared/ana/turn-timeline';
 import { createNotification } from '../../notifications/notification-service';
 import { generateSchedule, type GeneratedSchedule, type GeneratorGoal } from './generator';
 import {
@@ -51,6 +60,334 @@ const activeScheduleConnections = new WeakSet<RequestSqlClient>();
 export interface ScheduleExecutionContext {
   actorUserId: number;
   executor: RequestSqlClient;
+}
+
+export interface ProjectMonitorBinding {
+  organizationId: number; projectId: number; programId: string | null;
+  snapshotRevisionId: number; inputHeadHash: string; objective: ProjectObjectiveReference;
+}
+export interface ProjectObjectiveMonitor {
+  schemaVersion: 1; organizationId: number; projectId: number; programId: string | null;
+  snapshotRevisionId: number | null; inputHeadHash: string; measuredAt: string;
+  state: 'current' | 'stale' | 'unavailable'; goal: ProjectTeamGoal | null;
+  basisCurrent: boolean;
+  objective: ProjectObjectiveReference | null; graph: StrictProjectTaskGraph | null;
+  work: { total: number; completed: number; percentage: number | null };
+  gates: ProjectTeamMonitor['gates']; blockers: string[];
+  humanDecisions: { state: 'available' | 'unavailable'; pending: number | null; runReferences: string[] };
+  basis: Record<string,{ state: 'available' | 'unavailable'; digest: string }>;
+  observation?: ProjectGateObservation;
+}
+
+export interface ProjectGateObservation {
+  kind:'canonical_service_observation';basisHash:string;asOf:string;
+  actor:{organizationId:number;userId:number}|null;
+  consistency:'bracketed_heads_not_atomic';authorizesRelease:false;
+  checks:Record<'source'|'document'|'filing',{state:ProjectTeamMonitor['gates']['source'];unresolved:number|null;codes:string[]}>;
+}
+
+/** Fresh, actor-admitted projection. It is never a signature, a release verdict or a clinical certification. */
+export async function readProjectObjectiveMonitor(orgId: number, projectId: number, context: ScheduleExecutionContext): Promise<ProjectObjectiveMonitor> {
+  const captured = humanExecution(orgId,projectId,context);
+  return scheduleTransaction(captured.executor, async () => {
+    await admitHumanSchedule(orgId,projectId,captured);
+    const monitor = await observeProjectGates(captured.executor,await buildProjectMonitor(captured.executor,orgId,projectId),captured.actorUserId);
+    await admitHumanSchedule(orgId,projectId,captured);
+    return monitor;
+  });
+}
+
+/** Records a deterministic observation only; does not amend a goal, task, document, approval or filing. */
+export async function reconcileProjectObjectiveMonitor(orgId: number, projectId: number, context: ScheduleExecutionContext): Promise<ProjectObjectiveMonitor> {
+  const captured = humanExecution(orgId,projectId,context);
+  return scheduleTransaction(captured.executor,async () => {
+    await admitHumanSchedule(orgId,projectId,captured);
+    await captured.executor.query('SELECT id FROM projects WHERE organization_id=$1 AND id=$2 FOR UPDATE',[orgId,projectId]);
+    const monitor = await persistProjectMonitor(captured.executor,orgId,projectId,captured.actorUserId);
+    await admitHumanSchedule(orgId,projectId,captured);
+    return monitor;
+  });
+}
+
+/** An already-admitted phase must still match its durable objective/source/task heads when it executes or is accepted. */
+export async function assertProjectMonitorCurrent(binding: ProjectMonitorBinding, context: ScheduleExecutionContext): Promise<void> {
+  requireValidMonitorBinding(binding);
+  const current = await readProjectObjectiveMonitor(binding.organizationId,binding.projectId,context);
+  requireProjectMonitorBinding(binding,current);
+}
+
+/** Coordination already owns this transaction. Never BEGIN or COMMIT its connection. */
+export async function assertProjectMonitorCurrentOnExecutor(binding: ProjectMonitorBinding, context: ScheduleExecutionContext): Promise<void> {
+  requireValidMonitorBinding(binding);
+  const captured=humanExecution(binding.organizationId,binding.projectId,context);
+  await admitHumanSchedule(binding.organizationId,binding.projectId,captured);
+  const current=await observeProjectGates(captured.executor,await buildProjectMonitor(captured.executor,binding.organizationId,binding.projectId),captured.actorUserId);
+  await admitHumanSchedule(binding.organizationId,binding.projectId,captured);
+  requireProjectMonitorBinding(binding,current);
+}
+
+function requireProjectMonitorBinding(binding:ProjectMonitorBinding,current:ProjectObjectiveMonitor):void {
+  requireValidMonitorBinding(binding);
+  if (current.state !== 'current' || current.snapshotRevisionId !== binding.snapshotRevisionId || current.inputHeadHash !== binding.inputHeadHash ||
+    current.programId !== binding.programId || stableStringify(current.objective) !== stableStringify(binding.objective)) {
+    throw new ProgramReadAccessError(409,'PROJECT_MONITOR_STALE','The project objective or its source and work records changed. Reconcile before continuing.');
+  }
+}
+function requireValidMonitorBinding(binding:ProjectMonitorBinding):void {
+  if (!binding || !Number.isSafeInteger(binding.snapshotRevisionId) || binding.snapshotRevisionId <= 0 || !/^[a-f0-9]{64}$/.test(binding.inputHeadHash)) {
+    throw new ProgramReadAccessError(409,'PROJECT_MONITOR_STALE','A current recorded project objective snapshot is required.');
+  }
+}
+
+export function projectMonitorBinding(monitor: ProjectObjectiveMonitor): ProjectMonitorBinding | null {
+  if (monitor.state !== 'current' || !monitor.objective || !monitor.snapshotRevisionId) return null;
+  return { organizationId: monitor.organizationId,projectId: monitor.projectId,programId: monitor.programId,
+    snapshotRevisionId: monitor.snapshotRevisionId,inputHeadHash: monitor.inputHeadHash,objective: monitor.objective };
+}
+
+export function projectMonitorForTeam(monitor: ProjectObjectiveMonitor): ProjectTeamMonitor {
+  return { state: monitor.state,snapshotRevisionId: monitor.snapshotRevisionId,work: monitor.work,gates: monitor.gates,blockers: [...monitor.blockers] };
+}
+
+async function monitorRead<T>(sql: RequestSqlClient, read: () => Promise<T>): Promise<MonitorRead<T>> {
+  await sql.query('SAVEPOINT project_monitor_source');
+  try {
+    const value = await read(); await sql.query('RELEASE SAVEPOINT project_monitor_source');
+    return { state: 'available',value,digest: monitorHash(value) };
+  } catch {
+    await sql.query('ROLLBACK TO SAVEPOINT project_monitor_source'); await sql.query('RELEASE SAVEPOINT project_monitor_source');
+    return { state: 'unavailable',value: null,digest: monitorHash({ state: 'unavailable' }) };
+  }
+}
+
+async function projectMonitorIdentity(sql: RequestSqlClient, orgId: number, projectId: number): Promise<string | null> {
+  const parent = await sql.query(`SELECT to_jsonb(p)->>'regulatory_program_id' AS program_id FROM projects p WHERE p.organization_id=$1 AND p.id=$2`,[orgId,projectId]);
+  const programId = parent.rows[0]?.program_id;
+  if (programId == null) return null;
+  if (typeof programId !== 'string' || !/^[a-f0-9-]{36}$/i.test(programId)) throw new Error('The monitor program identity is invalid.');
+  const linked = await sql.query(`SELECT p.id FROM projects p JOIN regulatory_programs r ON r.id=p.regulatory_program_id AND r.organization_id=p.organization_id
+    WHERE p.organization_id=$1 AND p.regulatory_program_id=$2::uuid AND r.deleted_at IS NULL ORDER BY p.id LIMIT 2`,[orgId,programId]);
+  if (linked.rows.length !== 1 || linked.rows[0].id !== projectId) throw new ProgramReadAccessError(409,'PROJECT_ANCHOR_UNRESOLVED','The project requires one exact program anchor.');
+  return programId.toLowerCase();
+}
+
+async function buildProjectMonitor(sql: RequestSqlClient, organizationId: number, projectId: number): Promise<ProjectObjectiveMonitor> {
+  const programId = await projectMonitorIdentity(sql,organizationId,projectId);
+  const objective = await monitorRead(sql,async () => {
+    const {readProjectObjectivesOnExecutor}=await import('../../c2c/charter-objectives');
+    return readProjectObjectivesOnExecutor(sql,{orgId: organizationId,projectId});
+  });
+  const graph = await monitorRead(sql,() => loadStrictProjectTaskGraph(sql,{organizationId,projectId}));
+  const schedule = await monitorRead(sql,() => projectScheduleHeads(sql,organizationId,projectId));
+  const source = await monitorRead(sql,() => projectSourceHeads(sql,organizationId,programId));
+  const documents = await monitorRead(sql,() => projectDocumentHeads(sql,organizationId,projectId,programId));
+  const filing = await monitorRead(sql,() => projectFilingHeads(sql,organizationId,projectId,programId));
+  const decisions = await monitorRead(sql,() => projectDecisionHeads(sql,organizationId,projectId,programId));
+  const basis = { objective,graph,schedule,source,documents,filing,decisions };
+  const capturedBasis = monitorBasis(basis);
+  const inputHeadHash = monitorHash({ organizationId,projectId,programId,basis: capturedBasis });
+  const goal = monitorGoal(objective.value);
+  const blockers = monitorBlockers({programId,goal,graph: graph.value,source: source.state,documents: documents.state,filing: filing.state});
+  const latest = await sql.query(`SELECT id,detail FROM project_schedule_revisions WHERE organization_id=$1 AND project_id=$2
+    AND revision_type='objective_monitor' ORDER BY id DESC LIMIT 1`,[organizationId,projectId]);
+  const prior = asObject(latest.rows[0]?.detail);
+  const snapshotRevisionId = latest.rows.length ? Number(latest.rows[0].id) : null;
+  if (snapshotRevisionId !== null && (!Number.isSafeInteger(snapshotRevisionId) || snapshotRevisionId <= 0)) throw new Error('The project monitor revision identity is invalid.');
+  const unavailable = Object.values(basis).some(item => item.state === 'unavailable');
+  return { schemaVersion: 1,organizationId,projectId,programId,snapshotRevisionId,inputHeadHash,measuredAt: new Date().toISOString(),
+    state: monitorState(unavailable,prior.inputHeadHash === inputHeadHash,goal),goal,basisCurrent: prior.inputHeadHash === inputHeadHash,
+    objective: monitorReference(goal),graph: graph.value,work: monitorWork(graph.value),
+    gates: monitorGateStates(source.state,documents,filing.state),blockers,basis: capturedBasis,
+    humanDecisions: {state:decisions.state,pending:decisions.value?.length ?? null,runReferences:decisions.value ?? []} };
+}
+
+type MonitorGateCheck=ProjectGateObservation['checks']['source'];
+const unassessedCheck=(code:string):MonitorGateCheck=>({state:'not_assessed',unresolved:null,codes:[code]});
+function observerIdentity(organizationId:number,userId:number|undefined):ProjectGateObservation['actor'] {
+  const scope=getTenantScope();
+  return typeof userId==='number' && Number.isSafeInteger(userId) && userId>0 && scope?.tenantId===String(organizationId) && scope.accountId===userId && scope.role!=='app_super_admin'
+    ? {organizationId,userId} : null;
+}
+async function observedGate(read:()=>Promise<void>,code:string):Promise<MonitorGateCheck> {
+  try { await read(); return {state:'satisfied',unresolved:0,codes:[]}; }
+  catch(error) {
+    const status=Number((error as {status?:unknown})?.status);
+    return {state:[400,403,404,409,422].includes(status)?'blocked':'unavailable',unresolved:null,codes:[code]};
+  }
+}
+
+/** A read-only observation of existing gates, never a release capability or an atomic filing snapshot. */
+async function observeProjectGates(sql:RequestSqlClient,monitor:ProjectObjectiveMonitor,actorUserId?:number):Promise<ProjectObjectiveMonitor> {
+  const actor=observerIdentity(monitor.organizationId,actorUserId);
+  const checks:ProjectGateObservation['checks']={source:actorRequiredCheck(monitor.gates.source),
+    document:actorRequiredCheck(monitor.gates.document),filing:actorRequiredCheck(monitor.gates.filing)};
+  if (actor && monitor.programId && monitor.state!=='unavailable') {
+    const clinical=await monitorRead(sql,()=>observeProjectClinicalGates(sql,monitor,actor.userId));
+    if (clinical.value) Object.assign(checks,clinical.value);
+    else { checks.source={state:'unavailable',unresolved:null,codes:['CSR_GATE_READ_UNAVAILABLE']};checks.document={...checks.source}; }
+    checks.filing=await observeProjectFilingGate(sql,monitor);
+    const after=await buildProjectMonitor(sql,monitor.organizationId,monitor.projectId);
+    if (after.inputHeadHash!==monitor.inputHeadHash) throw new ProgramReadAccessError(409,'PROJECT_MONITOR_STALE','The project records changed during readiness assessment. Reconcile before continuing.');
+  }
+  const observation:ProjectGateObservation={kind:'canonical_service_observation',basisHash:monitor.inputHeadHash,asOf:new Date().toISOString(),actor,
+    consistency:'bracketed_heads_not_atomic',authorizesRelease:false,checks};
+  const blockers=monitor.blockers.filter(code=>!['SCIENTIFIC_SOURCE_VERIFICATION_NOT_ASSESSED','DOCUMENT_RELEASE_NOT_ASSESSED','LIVE_DISPATCH_ASSESSMENT_REQUIRED'].includes(code));
+  blockers.push('CURRENT_EXECUTION_GATES_REQUIRED',...Object.values(checks).flatMap(check=>check.codes));
+  return {...monitor,gates:{source:checks.source.state,document:checks.document.state,filing:checks.filing.state},observation,blockers:[...new Set(blockers)].sort()};
+}
+function actorRequiredCheck(state:MonitorGateCheck['state']):MonitorGateCheck {
+  return {state:state==='not_assessed'?'not_assessed':state,unresolved:null,codes:['CURRENT_ACTOR_REQUIRED']};
+}
+
+async function observeProjectClinicalGates(sql:RequestSqlClient,monitor:ProjectObjectiveMonitor,userId:number):Promise<Pick<ProjectGateObservation['checks'],'source'|'document'>> {
+  const [{getCurrentAuthoringReadScope,requireAuthoringReadScopeStillCurrent},{requiresCsrScientificReview,assertCsrScientificRelease},
+    {assertWorkflowImportRelease}]=await Promise.all([import('../../authoring/authoring-read-scope'),import('../../authoring/csr-scientific-review'),import('../../authoring/workflow-import-governance')]);
+  const input={organizationId:monitor.organizationId,userId,programId:monitor.programId};
+  const access=await getCurrentAuthoringReadScope(sql,input);
+  const documents=await sql.query(`SELECT d.* FROM authoring_documents d WHERE d.tenant_id=$1 AND d.client_program_id=$2::uuid
+    AND d.id=ANY($3::uuid[]) ORDER BY d.id LIMIT 101`,[monitor.organizationId,monitor.programId,access.documentIds]);
+  if (documents.rows.length>100) return {source:unassessedCheck('CSR_TARGET_LIMIT'),document:unassessedCheck('DOCUMENT_TARGET_LIMIT')};
+  const candidates:Record<string,unknown>[]=[];
+  for (const document of documents.rows) {
+    if (typeof document.id!=='string') throw new Error('The project document identity could not be read.');
+    if (await requiresCsrScientificReview(sql,{tenantId:monitor.organizationId,document,snapshot:{id:document.id}})) candidates.push(document);
+  }
+  await requireAuthoringReadScopeStillCurrent(sql,input,access);
+  if (candidates.length!==1) return {source:unassessedCheck(candidates.length?'CSR_TARGET_AMBIGUOUS':'CSR_TARGET_REQUIRED'),
+    document:unassessedCheck('DOCUMENT_TARGET_NOT_ASSESSED')};
+  const document=candidates[0]; const id=String(document.id);
+  const sections=await sql.query(`SELECT id::text,code,title,content FROM authoring_sections WHERE tenant_id=$1 AND doc_id=$2 ORDER BY order_index,created_at,id LIMIT 1001`,[monitor.organizationId,id]);
+  const framed=monitorClinicalDocument(document,sections.rows);
+  const governance={organizationId:monitor.organizationId,doc:framed.doc,sections:framed.sections,actor:{id:String(userId),email:access.actor.email}};
+  const source=await observedGate(()=>assertCsrScientificRelease(sql,governance),'CSR_SCIENTIFIC_REVIEW_BLOCKED');
+  let release=await observedGate(()=>assertWorkflowImportRelease(sql,governance),'DOCUMENT_RELEASE_CONTROLS_BLOCKED');
+  if (release.state==='satisfied' && !['APPROVED','FROZEN'].includes(String(document.status).toUpperCase())) release={state:'blocked',unresolved:1,codes:['DOCUMENT_NOT_RELEASED']};
+  await requireAuthoringReadScopeStillCurrent(sql,input,access);
+  return {source,document:release};
+}
+
+function monitorClinicalDocument(document:Record<string,unknown>,sections:Record<string,unknown>[]) {
+  if (typeof document.id!=='string' || sections.length>1000) throw new Error('The clinical document could not be framed.');
+  return {doc:{...document,id:document.id},sections:sections.map(section=>{
+    if (typeof section.id!=='string' || typeof section.code!=='string' || section.content!=null && typeof section.content!=='string') throw new Error('The clinical section could not be framed.');
+    return {id:section.id,code:section.code,title:section.title,content:typeof section.content==='string'?section.content:null};
+  })};
+}
+
+async function observeProjectFilingGate(sql:RequestSqlClient,monitor:ProjectObjectiveMonitor):Promise<MonitorGateCheck> {
+  try {
+    const targets=await projectFilingHeads(sql,monitor.organizationId,monitor.projectId,monitor.programId);
+    if (targets.sequences.length!==1) return unassessedCheck(targets.sequences.length?'FILING_TARGET_AMBIGUOUS':'FILING_TARGET_REQUIRED');
+    const id=targets.sequences[0].id;
+    if (typeof id!=='number' || !Number.isSafeInteger(id) || id<=0) throw new Error('The filing identity could not be read.');
+    const {assessSequenceDispatchReadiness}=await import('../../ectd/assess-dispatch-readiness');
+    const actual=await assessSequenceDispatchReadiness({organizationId:monitor.organizationId,sequenceId:id});
+    if (actual.sequenceId!==id || typeof actual.gate?.cleared!=='boolean' || !Array.isArray(actual.gate.blockers)) throw new Error('The canonical dispatch observation could not be verified.');
+    return {state:actual.gate.cleared?'satisfied':'blocked',unresolved:actual.gate.blockers.length,
+      codes:actual.gate.cleared?[]:['CANONICAL_DISPATCH_GATE_BLOCKED']};
+  } catch { return {state:'unavailable',unresolved:null,codes:['CANONICAL_DISPATCH_GATE_UNAVAILABLE']}; }
+}
+
+async function projectSourceHeads(sql: RequestSqlClient, organizationId: number, programId: string | null) {
+  if (!programId) return { state: 'unanchored' };
+  const source = await sql.query(`SELECT d.id::text AS id,d.version,d.content_hash,d.deleted_at,to_jsonb(d)->>'updated_at' AS updated_at
+    FROM vault.documents d WHERE d.organization_id=$1 AND d.program_id=$2 ORDER BY d.id LIMIT 1001`,[organizationId,programId]);
+  if (source.rows.length > 1000) throw new Error('Project source head limit reached.');
+  return source.rows;
+}
+
+/** Excludes monitor-written timestamps/metadata so recording an observation cannot invalidate its own basis. */
+async function projectScheduleHeads(sql:RequestSqlClient,organizationId:number,projectId:number) {
+  const milestones=await sql.query(`SELECT id,status,start_date,due_date,metadata FROM project_workflow_stages
+    WHERE organization_id=$1 AND project_id=$2 ORDER BY id LIMIT 1001`,[organizationId,projectId]);
+  const goals=await sql.query(`SELECT id,title,status,target_date,metric,current_context FROM project_schedule_goals
+    WHERE organization_id=$1 AND project_id=$2 ORDER BY id LIMIT 1001`,[organizationId,projectId]);
+  if (milestones.rows.length>1000 || goals.rows.length>1000) throw new Error('The project schedule exceeds this bounded projection.');
+  return {milestones:milestones.rows,goals:goals.rows};
+}
+
+async function projectDocumentHeads(sql: RequestSqlClient, organizationId: number, projectId: number, programId: string | null) {
+  if (!programId) return { state: 'unanchored',pending: false };
+  const dossier = await readDossier(sql,organizationId,programId);
+  const canonical = await sql.query(`SELECT canonical_id,version,stage,content_hash,review_signature,approval_signature,packaging_validated
+    FROM canonical_documents WHERE organization_id=$1 AND (project_id=$2 OR project_id=$3) ORDER BY canonical_id LIMIT 1001`,[organizationId,programId,String(projectId)]);
+  const authoring = await sql.query(`SELECT d.id::text AS id,to_jsonb(d)->>'updated_at' AS updated_at,to_jsonb(d)->>'version' AS version,
+    to_jsonb(d)->>'status' AS status FROM authoring_documents d WHERE d.tenant_id=$1 AND d.client_program_id=$2::uuid ORDER BY d.id LIMIT 1001`,[organizationId,programId]);
+  const sections=await sql.query(`SELECT s.id::text,s.doc_id::text,s.code,encode(sha256(convert_to(COALESCE(s.content,''),'UTF8')),'hex') AS content_sha256,
+    to_jsonb(s)->>'updated_at' AS updated_at FROM authoring_sections s JOIN authoring_documents d ON d.id=s.doc_id AND d.tenant_id=s.tenant_id
+    WHERE d.tenant_id=$1 AND d.client_program_id=$2::uuid ORDER BY s.id LIMIT 1001`,[organizationId,programId]);
+  const reviews=await sql.query(`SELECT r.id::text,r.doc_id::text,r.review_status,r.reviewed_snapshot_hash,r.review_binding_basis,
+    to_jsonb(r)->>'reviewed_at' AS reviewed_at FROM authoring_reviews r JOIN authoring_documents d ON d.id=r.doc_id AND d.tenant_id=r.tenant_id
+    WHERE d.tenant_id=$1 AND d.client_program_id=$2::uuid ORDER BY r.id LIMIT 1001`,[organizationId,programId]);
+  if ([canonical,authoring,sections,reviews].some(result=>result.rows.length>1000)) throw new Error('Project document head limit reached.');
+  const pending = dossier.rows.some(row => row.complete < row.counted) || canonical.rows.some(row => ['authoring','draft','review'].includes(String(row.stage)));
+  return { dossier: { home: dossier.home,rows: dossier.rows },canonical: canonical.rows,authoring: authoring.rows,sections:sections.rows,reviews:reviews.rows,pending };
+}
+
+/** The project's filing heads: its live sequences and their leaves. A removed sequence is not a filing target, so
+ *  neither it nor its leaves are read (F1, 2026-11-09): a project whose only sequence was removed has none. */
+async function projectFilingHeads(sql: RequestSqlClient, organizationId: number, projectId: number, programId: string | null) {
+  const rows = await sql.query(`SELECT s.id,to_jsonb(s)->>'validation_status' AS validation_status,to_jsonb(s)->>'status' AS status,
+    to_jsonb(s)->>'updated_at' AS updated_at FROM ectd_sequences s JOIN submissions p ON p.id=s.submission_id
+    WHERE s.organization_id=$1 AND p.organization_id=$1 AND s.deleted_at IS NULL
+    AND (to_jsonb(p)->>'program_id'=$2 OR to_jsonb(p)->>'project_id'=$3) ORDER BY s.id LIMIT 1001`,[organizationId,programId,String(projectId)]);
+  if (rows.rows.length > 1000) throw new Error('Project filing head limit reached.');
+  const leaves = await sql.query(`SELECT l.id,to_jsonb(l)->>'sha256' AS sha256,to_jsonb(l)->>'md5' AS md5,
+    to_jsonb(l)->>'document_content_sha256' AS document_content_sha256,to_jsonb(l)->>'checksum' AS checksum,
+    to_jsonb(l)->>'document_table' AS document_table,to_jsonb(l)->>'document_id' AS document_id,to_jsonb(l)->>'document_uuid' AS document_uuid,
+    to_jsonb(l)->>'lifecycle_op' AS lifecycle_op,to_jsonb(l)->>'section_code' AS section_code,to_jsonb(l)->>'title' AS title,
+    to_jsonb(l)->>'updated_at' AS updated_at,to_jsonb(l)->>'deleted_at' AS deleted_at
+    FROM submission_leaves l JOIN ectd_sequences s ON s.id=l.sequence_id AND s.organization_id=l.organization_id AND s.deleted_at IS NULL
+    JOIN submissions p ON p.id=s.submission_id AND p.organization_id=s.organization_id WHERE l.organization_id=$1
+    AND (to_jsonb(p)->>'program_id'=$2 OR to_jsonb(p)->>'project_id'=$3) ORDER BY l.id LIMIT 1001`,[organizationId,programId,String(projectId)]);
+  if (leaves.rows.length > 1000) throw new Error('Project filing leaf head limit reached.');
+  return { sequences: rows.rows,leaves: leaves.rows };
+}
+
+async function projectDecisionHeads(sql: RequestSqlClient, organizationId: number, projectId: number, programId: string|null): Promise<string[]> {
+  const refs = [String(projectId),...(programId ? [programId] : [])];
+  const rows = await sql.query(`SELECT id FROM ana_runs WHERE organization_id=$1 AND project_id=ANY($2::text[])
+    AND status='awaiting_approval' ORDER BY id LIMIT 101`,[organizationId,refs]);
+  if (rows.rows.length > 100 || rows.rows.some(row => typeof row.id !== 'string')) throw new Error('The pending project decisions could not be completely read.');
+  return rows.rows.map(row => String(row.id));
+}
+
+async function persistProjectMonitor(sql: RequestSqlClient, organizationId: number, projectId: number,actorUserId?:number): Promise<ProjectObjectiveMonitor> {
+  await sql.query(`SELECT pg_advisory_xact_lock(hashtext('project-objective-monitor:' || $1::text || ':' || $2::text))`,[organizationId,projectId]);
+  const monitor = await observeProjectGates(sql,await buildProjectMonitor(sql,organizationId,projectId),actorUserId);
+  if (monitor.basisCurrent && monitor.snapshotRevisionId) return monitor;
+  let plan = await loadPlan(organizationId,projectId,sql);
+  if (!plan) {
+    await sql.query(`INSERT INTO project_schedule_of_events(organization_id,project_id,status,basis_summary,generated_by_ana,metadata)
+      VALUES ($1,$2,'active','Project objective monitoring; no milestone schedule has been generated.',false,'{"monitorOnly":true}')`,[organizationId,projectId]);
+    plan = await loadPlan(organizationId,projectId,sql);
+  }
+  if (!plan) throw new Error('The project monitor schedule header could not be retained.');
+  const confirmed = await buildProjectMonitor(sql,organizationId,projectId);
+  if (confirmed.inputHeadHash !== monitor.inputHeadHash) throw new ProgramReadAccessError(409,'PROJECT_MONITOR_STALE','The project changed while its objective snapshot was being recorded.');
+  if (monitor.state !== 'unavailable' && monitor.goal) monitor.state = 'current';
+  const inserted = await sql.query(`INSERT INTO project_schedule_revisions(organization_id,project_id,schedule_id,revision_type,summary,detail,triggered_by,created_by_ana)
+    VALUES($1,$2,$3,'objective_monitor','Deterministic project objective and gate observation.',$4::json,'project_monitor',false) RETURNING id`,
+    [organizationId,projectId,plan.id,JSON.stringify(monitor)]);
+  monitor.snapshotRevisionId = Number(inserted.rows[0]?.id);
+  if (!Number.isSafeInteger(monitor.snapshotRevisionId) || monitor.snapshotRevisionId <= 0) throw new Error('The project monitor revision was not confirmed.');
+  monitor.basisCurrent = true;
+  await sql.query(`UPDATE project_schedule_of_events SET last_reviewed_by_ana_at=now(),metadata=(COALESCE(metadata,'{}'::json)::jsonb || $3::jsonb)::json
+    WHERE organization_id=$1 AND project_id=$2`,[organizationId,projectId,JSON.stringify({ objectiveMonitorDirty:false,objectiveMonitor: {revisionId: monitor.snapshotRevisionId,inputHeadHash: monitor.inputHeadHash} })]);
+  return monitor;
+}
+
+/** Trusted source writers can make the existing bounded sweep eligible after a recorded change. */
+export async function markProjectObjectiveMonitorDirty(sql: RequestSqlClient, organizationId: number, projectId: number): Promise<void> {
+  requireScheduleIds(organizationId,projectId);
+  const scope = getTenantScope();
+  if (scope?.tenantId !== String(organizationId) || scope.role === 'app_super_admin') throw new ProgramReadAccessError(403,'SCHEDULE_SCOPE_INVALID','A matching project writer scope is required.');
+  await markMonitorDirtyOnExecutor(sql,organizationId,projectId);
+}
+async function markMonitorDirtyOnExecutor(sql:ScheduleQuery,organizationId:number,projectId:number):Promise<void> {
+  await sql.query(`UPDATE project_schedule_of_events SET last_reviewed_by_ana_at=NULL,
+    metadata=(COALESCE(metadata,'{}'::json)::jsonb || '{"objectiveMonitorDirty":true}'::jsonb)::json
+    WHERE organization_id=$1 AND project_id=$2`,[organizationId,projectId]);
 }
 
 function requireScheduleIds(orgId: number, projectId: number): void {
@@ -155,6 +492,7 @@ async function withHumanScheduleWrite<T>(
   return scheduleTransaction(captured.executor, async () => {
     await admitHumanSchedule(orgId, projectId, captured, true);
     const result = await operation(captured.executor, captured.actorUserId);
+    await markMonitorDirtyOnExecutor(captured.executor,orgId,projectId);
     await admitHumanSchedule(orgId, projectId, captured, true);
     return result;
   });
@@ -878,6 +1216,7 @@ export interface HealthReviewResult {
   tasksCreated: number;
   alertsCreated: number;
   message: string;
+  objectiveMonitor?: ProjectObjectiveMonitor;
 }
 
 async function hasOpenScheduleTask(
@@ -980,8 +1319,9 @@ export async function reviewScheduleHealthForSweep(params: ScheduleReviewParams,
   return scheduleTransaction(sql, async () => {
     await admitScheduleJob(params.orgId, params.projectId, sql);
     const result = await reviewScheduleHealthOnExecutor(params, sql);
+    const objectiveMonitor = await persistProjectMonitor(sql,params.orgId,params.projectId);
     await admitScheduleJob(params.orgId, params.projectId, sql);
-    return result;
+    return { ...result,ok: result.ok || objectiveMonitor.snapshotRevisionId !== null,objectiveMonitor };
   });
 }
 
@@ -1139,18 +1479,20 @@ function buildAnaNarrative(health: ScheduleHealth): string {
 
 /** Active schedule plans across all tenants — used by the proactive sweep. */
 export async function listActiveSchedulePlans(): Promise<
-  Array<{ scheduleId: number; orgId: number; projectId: number }>
+  Array<{ scheduleId: number | null; orgId: number; projectId: number }>
 > {
   const scope = getTenantScope();
   if (scope?.source !== 'job' || scope.tenantId !== '0' || scope.role !== 'app_super_admin') {
     throw new ProgramReadAccessError(403, 'SCHEDULE_SYSTEM_SCOPE_REQUIRED', 'The audited estate schedule listing scope is required.');
   }
   const { rows } = await pool.query(
-    `SELECT id, organization_id, project_id FROM project_schedule_of_events WHERE status = 'active'`,
+    `SELECT s.id,p.organization_id,p.id AS project_id FROM projects p JOIN organizations o ON o.id=p.organization_id
+      LEFT JOIN project_schedule_of_events s ON s.project_id=p.id AND s.organization_id=p.organization_id
+      WHERE p.status='active' AND o.status='active' AND (s.id IS NULL OR s.status='active') ORDER BY p.organization_id,p.id`,
   );
   return rows.map((r: any) => {
     requireScheduleIds(r.organization_id, r.project_id);
-    if (!Number.isSafeInteger(r.id) || r.id <= 0) throw new Error('Invalid schedule listing identity');
+    if (r.id !== null && (!Number.isSafeInteger(r.id) || r.id <= 0)) throw new Error('Invalid schedule listing identity');
     return { scheduleId: r.id, orgId: r.organization_id, projectId: r.project_id };
   });
 }

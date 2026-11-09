@@ -1,0 +1,4 @@
+ Test Files  1 failed | 89 passed (90)
+      Tests  1 failed | 1115 passed (1116)
+
+The one failure is server/services/report-os/canvas/__tests__/suggestion-service.test.ts, which fails identically with every change in this folder stashed (13 passed, 1 failed). It is not this change's; see README.

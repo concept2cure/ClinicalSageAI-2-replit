@@ -1,0 +1,40 @@
+# 03-suites: every existing suite that reaches server/routes/ana-features.ts or the citation services, plus the new one
+# Run 2026-11-05 on the changed router, in one vitest invocation (17 files).
+# Two existing suites were extended: record-exports-recorded.test.ts and
+# ana-docx-export-refusal-names-the-ai-use-record.test.ts now admit their caller to the artifact's
+# project (policy stubbed to admit; the admission itself is ana-citations-project-scope.pglite.test.ts).
+# Before the extension, on the changed router, they failed 7 of 11 with 403 (the gate refusing an
+# unadmitted caller), which is the gate working, not a regression of what they test.
+
+# passing tests per file
+      3 ✓ server/routes/__tests__/ana-active-authoring-plan-missing-store-is-503.test.ts
+      2 ✓ server/routes/__tests__/ana-alert-lists-say-scan-history-is-not-recorded.test.ts
+     41 ✓ server/routes/__tests__/ana-citations-project-scope.pglite.test.ts
+      1 ✓ server/routes/__tests__/ana-docx-export-refusal-names-the-ai-use-record.test.ts
+      3 ✓ server/routes/__tests__/ana-guidance-webhook-reports-a-failed-update.test.ts
+     10 ✓ server/routes/__tests__/record-exports-recorded.test.ts
+     15 ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts
+      6 ✓ server/services/__tests__/report-state-memory-isolation.pglite.test.ts
+      3 ✓ server/services/ana/__tests__/authoring-plan-generator.test.ts
+      2 ✓ server/services/ana/__tests__/authoring-plan-says-consistency-not-assessed.test.ts
+      3 ✓ server/services/ana/__tests__/citation-atom-columns.test.ts
+      3 ✓ server/services/ana/__tests__/citation-engine-governed-rerank.test.ts
+     18 ✓ server/services/ana/__tests__/generate-citation-honest.test.ts
+      3 ✓ server/services/ana/__tests__/verify-citations-tool.test.ts
+      9 ✓ tests/routes/ana-apply-rewrite-signature.test.ts
+      8 ✓ tests/routes/ana-features-coded-503-containment.test.ts
+     18 ✓ tests/routes/ana-gap-analysis.test.ts
+
+ Test Files  17 passed (17)
+      Tests  148 passed (148)
+exit=0
+
+# Gates, 2026-11-05
+# node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] --since HEAD (28f6a3c89) -- 18 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+# npx eslint server/routes/ana-features.ts: 16 warnings before, 16 after
+#   (max-lines-per-function 2, complexity 12, no-unused-vars 1, max-lines 1; same lines, none in the new code).
+# The three test files: 0 warnings.
+# npm run -s ci:sql-interpolation: no finding names ana-features.ts or a citation service. Its one
+#   reported problem is server/services/enhancedEmbeddingService.ts (8, baseline 9), another lane's file.

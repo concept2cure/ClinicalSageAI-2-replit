@@ -7,11 +7,9 @@
 
 .c2c-v2 {
 
-  /* The page's own padding. Every sibling surface brings one (.reg-wrap,
-     .cc, .page-inner); without it the title sat against the rail and the
-     project picker ran off the right edge. No max-width: the docked AnA
-     column needs the page's full width. */
-  .rbm-page{padding:26px 30px 60px;}
+  /* The page's frame is `.page-inner`'s, the one page frame (D0.md §8.6, 2026-11-09): its own 26/30 padding gave
+     RBM a different left edge from its sibling work areas. With the docked AnA column open, the content keeps the
+     same two-column shape as the project page's (main column beside a fixed rail) inside the same frame. */
 
   .rbm-tabs{flex-wrap:wrap;row-gap:0;}
 
@@ -431,6 +429,10 @@
     .rbm-pt-cols{grid-template-columns:1fr;}
   }
   @media(max-width:800px){
+    /* The project picker holds a full project name; at phone width it ran off
+       the right edge (J5-08, measured right edge 487px at 390). */
+    .rbm-study{align-items:stretch;flex-shrink:1;min-width:0;max-width:100%;}
+    .rbm-study-sel{width:100%;max-width:100%;min-width:0;text-overflow:ellipsis;}
     .rbm-tiles{grid-template-columns:repeat(2,1fr);}
     .rbm-kri-grid{grid-template-columns:1fr;}
     .rbm-board{grid-template-columns:1fr;}

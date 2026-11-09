@@ -1,0 +1,86 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > saves a statistical draft and its verified basis in one atomic request 9ms
+   → expected { …(6) } to match object { ok: true, …(2) }
+(5 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never reports a statistical save whose receipt drops the calculation basis 2ms
+   → expected { …(7) } to match object { ok: false, phase: 'unknown' }
+(6 matching properties omitted from actual)
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > writes the document and its section, then reports ok 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > says so when the new document is not bound to a filing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > stays quiet when the document IS bound 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports NOT ok when the section write fails, even though the document exists 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > names the 401 as a session problem rather than a server error 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never throws — a transport failure comes back as a message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > creates the document in the open project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when no project is open (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > posts nothing and keeps the work when the open id is not a project (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > carries the caller’s module rather than defaulting it 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > saves a statistical draft and its verified basis in one atomic request
+AssertionError: expected { …(6) } to match object { ok: true, …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "bound": false,
+-   "docId": "7b9f6c2e-5d4a-4c3b-9a21-7e6f5d4c3b2a",
+-   "ok": true,
++   "ok": false,
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts:69:20
+     67|     }, governance: { bound: false, reason: 'Working document' } }));
+     68|     const result = await saveToAuthoring({ ...HANDOFF, code: statistic…
+     69|     expect(result).toMatchObject({ ok: true, docId: DOC, bound: false …
+       |                    ^
+     70|     expect(apiRequest).toHaveBeenCalledTimes(1);
+     71|     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ana-biostats…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never reports a statistical save whose receipt drops the calculation basis
+AssertionError: expected { …(7) } to match object { ok: false, phase: 'unknown' }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "ok": false,
+-   "phase": "unknown",
++   "ok": true,
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts:80:20
+     78|     const result = await saveToAuthoring({ ...HANDOFF, statisticalDraf…
+     79|       input: { effectSize: 0.5 }, expectedMarkdown: 'Calculated ration…
+     80|     expect(result).toMatchObject({ ok: false, phase: 'unknown' });
+       |                    ^
+     81|     expect(apiRequest).toHaveBeenCalledTimes(1);
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  09:18:43
+   Duration  1.13s (transform 399ms, setup 118ms, import 434ms, tests 19ms, environment 413ms)
+

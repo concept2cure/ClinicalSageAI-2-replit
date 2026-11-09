@@ -140,6 +140,35 @@ describe('library search across every project (critique 15)', () => {
     expect(res.body.data).toMatchObject({ total: 0, results: [], reason: 'EMPTY_QUERY' });
   });
 
+  /* F1, S6 V2 (2026-11-05): a CRO works for several sponsors in one organisation, each a client workspace. Asked
+     from inside a project, "All my projects" is that project's sponsor's projects, so sponsors never mix in one list;
+     each hit names its sponsor. The fixture gives every program its own client workspace (seedVaultFixtureParent). */
+  it("from inside a project, lists only its sponsor's projects, and names the sponsor", async () => {
+    const res = await library(mine, `q=${WORD}&sameClientAs=${progA}`);
+    expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
+    const d = res.body.data;
+    expect(d.total).toBe(1);
+    expect(d.results.map((h: { id: string }) => h.id)).toEqual([a2]);
+    expect(d.client).toEqual({ id: expect.any(Number), name: `${PROBE}alpha-parent` });
+    expect(d.results[0].client).toEqual(d.client);
+  });
+
+  it('across every project, each hit names its own sponsor', async () => {
+    const res = await library(mine, `q=${WORD}`);
+    const byId = new Map(res.body.data.results.map((h: { id: string; client: unknown }) => [h.id, h.client]));
+    expect(byId.get(a2)).toEqual({ id: expect.any(Number), name: `${PROBE}alpha-parent` });
+    expect(byId.get(b1)).toEqual({ id: expect.any(Number), name: `${PROBE}beta-parent` });
+    expect(res.body.data.client).toBeUndefined();
+  });
+
+  it("refuses a project that is not the caller's to scope by, and never widens to it", async () => {
+    const res = await library(mine, `q=${WORD}&sameClientAs=${progT}`);
+    expect(res.status).toBe(404);
+    expect(JSON.stringify(res.body)).not.toContain('Their study');
+    const bad = await library(mine, `q=${WORD}&sameClientAs=not-a-project`);
+    expect(bad.status).toBe(400);
+  });
+
   it('the project search still searches its project only', async () => {
     const res = await request(await appFor(mine)).get(`/api/c2c/project-vault/${progB}/search?q=${WORD}`);
     expect(res.status).toBe(200);

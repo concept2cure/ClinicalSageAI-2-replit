@@ -9,6 +9,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { syntheticCurrentPolicyClient as SQL_CLIENT } from './support/source-read-tool-fixture.js';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -67,11 +68,13 @@ function host(over: Partial<SubAgentHost> = {}): SubAgentHost & { frames: AgentE
     ...over,
   } as SubAgentHost & { frames: AgentEventFrame[] };
 }
-const SQL_CLIENT = { query: vi.fn() };
-const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: 'prog-uuid', humanConfirmed: true } as any;
+// A current open project with no mandatory rules is the premise of these
+// child-loop tests. The wrapper still reads admission and policy through this
+// client; undefined query results are a policy-store outage, not an empty set.
+const CTX = { organizationId: 7, userId: 3, sqlClient: SQL_CLIENT, projectId: null, projectRef: '10000000-0000-4000-8000-000000000001', humanConfirmed: true } as any;
 const RESEARCH = { role: 'research', objective: 'Find the pivotal trial', instructions: 'Search PubMed for the pivotal trial of drug X.' };
 const inTenant = <T>(fn: () => Promise<T>, tenantId = '7') =>
-  runWithTenantScope({ tenantId, source: 'test', caller: 'sub-agent-test' } as any, fn);
+  runWithTenantScope({ tenantId, accountId: CTX.userId, source: 'test', caller: 'sub-agent-test' }, fn);
 const run = (input: object, h = host(), ctx = CTX) => inTenant(() => runSubAgent(input as any, ctx, h)).then(s => JSON.parse(s));
 const toolCall = (name: string, input: object = {}, id = `c${Math.random()}`) => ({
   content: 'working',
@@ -156,7 +159,7 @@ describe('the child is governed', () => {
     expect(ctx.agentDepth).toBe(1);
     expect(ctx.modelCalls).toBe('refuse');
     expect(ctx.organizationId).toBe(7);
-    expect(ctx.projectRef).toBe('prog-uuid');
+    expect(ctx.projectRef).toBe(CTX.projectRef);
     expect(ctx.sqlClient).toBe(SQL_CLIENT);
     expect(ctx.signal).toBeInstanceOf(AbortSignal);
     expect(seen[0].refusal).not.toBeNull();
@@ -299,7 +302,7 @@ describe('caps', () => {
     };
     const org = (id: number) => ({ ...CTX, organizationId: id });
     const runAs = (id: number) =>
-      runWithTenantScope({ tenantId: String(id), source: 'test' } as any, () => runSubAgent(RESEARCH, org(id), host({ organizationId: id })));
+      runWithTenantScope({ tenantId: String(id), accountId: CTX.userId, source: 'test' }, () => runSubAgent(RESEARCH, org(id), host({ organizationId: id })));
     const live = [...Array.from({ length: 6 }, () => runAs(7)), ...Array.from({ length: 4 }, () => runAs(8))];
     await vi.waitFor(() => expect(liveAgentCounts().total).toBe(10));
     expect(JSON.parse(await runAs(9)).error).toBe('AGENTS_BUSY');
@@ -508,4 +511,49 @@ describe('the record and the view', () => {
     expect(h.frames.map(f => f.phase)).toEqual(['started', 'step', 'step', 'finished']);
     expect(h.frames.at(-1)).toMatchObject({ status: 'completed' });
   });
+});
+
+
+describe('exact stored source spans (multi-agent specification §14.4)', () => {
+  const text = 'Response was 42%.';
+  const span = { artifact_id: 'source-1', source_start: 7, source_end: 23, draft_start: 0, draft_end: 16 };
+  const verify = (source_spans: unknown = [span]) => ({ ...RESEARCH, role: 'verify', text_to_check: text, source_spans });
+  const withSource = () => host({ governedTools: [...GOVERNED, TOOL('read_vault_document')] });
+  const sourceReading = (r: any) => r.checks.find((c: any) => c.check === 'source_spans');
+  it('compares actual stored source bytes before the model, keeping the scoped read and hashes in the run record', async () => {
+    const reads: any[] = [];
+    registerToolHandler('read_vault_document', async (input, ctx) => {
+      reads.push({ input, ctx, refusal: modelCallRefusal(), modelCallsBefore: gw.calls.length });
+      return JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.', document: { artifact_id: 'source-1' } });
+    });
+    const r = await run(verify(), withSource());
+    expect(sourceReading(r).outcome).toBe('pass');
+    expect(reads).toEqual([expect.objectContaining({ ctx: expect.objectContaining({ organizationId: 7, projectRef: CTX.projectRef, agentDepth: 1 }), refusal: expect.any(Object), modelCallsBefore: 0 })]);
+    expect(r.trace).toMatchObject({ steps: [expect.objectContaining({ round: 0, tool: 'read_vault_document', ok: true })], checkOutputs: expect.arrayContaining([expect.objectContaining({ check: 'source_spans' })]) });
+    expect(JSON.parse(r.trace.checkOutputs.find((o: any) => o.check === 'source_spans').output).evidence[0]).toMatchObject({ sourceReadHash: expect.stringMatching(/^[a-f0-9]{64}$/), quoteHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(r.notChecked.join(' ')).toContain('semantic support');
+  });
+  it('a one-character mismatch blocks even when the model declares the quote correct', async () => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 43%.' }));
+    gw.script = [{ content: 'All citations are correct.', toolUses: [], usage: {}, provider: 'anthropic', model: 'm', requestId: 'r' }];
+    const r = await run({ ...verify([{ ...span, draft_start: 4, draft_end: 20 }]), text_to_check: '[1] Response was 42%.' }, withSource());
+    expect({ check: sourceReading(r), verdict: r.verdict }).toMatchObject({ check: { outcome: 'fail' }, verdict: 'issues_found' });
+  });
+  it.each([
+    { error: 'No document in this project.' },
+    { ok: true, content: 'short' },
+    { ok: false, content: 'Prefix:Response was 42%.' },
+    { ok: true, error: 'Source read failed.', content: 'Prefix:Response was 42%.' },
+  ])('an unavailable, out-of-range or refused source is never a pass: %j', async source => {
+    registerToolHandler('read_vault_document', async () => JSON.stringify(source));
+    expect(sourceReading(await run(verify(), withSource())).outcome).toBe('error');
+  });
+  it('does not use a source tool the parent was not offered', async () => {
+    const read = vi.fn(async () => JSON.stringify({ ok: true, content: 'Prefix:Response was 42%.' }));
+    registerToolHandler('read_vault_document', read);
+    const r = await run(verify());
+    expect(read).not.toHaveBeenCalled();
+    expect(sourceReading(r).outcome).toBe('error');
+  });
+
 });

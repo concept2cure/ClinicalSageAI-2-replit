@@ -1,0 +1,94 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T18:08:41.605Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T18:08:41.608Z","pid":38,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T18:08:41.608Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/data-room-capture-provenance.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":40,"time":"2026-11-08T18:08:55.488Z","pid":38,"hostname":"8e30f1e3f944","context":{"filename":"vr16b-stability-note.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T18:08:55.666Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794161335489_a9i1zp",
+    "method": "utf8",
+    "chars": 56
+  }
+}
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T18:08:55.772Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794161335489_a9i1zp",
+    "sourceId": 183,
+    "supersededId": null
+  }
+}
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 4ms org=10 user=- caller=embedding-provider req=13c42f3e-8e0b-4ca4-ab91-2abb8573b4b7
+
+{"level":40,"time":"2026-11-08T18:08:55.860Z","pid":38,"hostname":"8e30f1e3f944","context":{"sourceId":"cre_source:183","atomId":3,"err":"Model provider request failed."},"msg":"[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet"}
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+{
+  "timestamp": "2026-11-08T18:08:55.860Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794161335489_a9i1zp",
+    "sourceId": 183,
+    "atomId": 3,
+    "programId": "9a87d0a9-1230-4e40-8a6b-140f88acaf8c",
+    "embeddedChars": 56,
+    "extractedChars": 56,
+    "truncated": false
+  }
+}
+
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 401ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 13ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 4ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 7ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 3ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T18:08:56.706Z","pid":67,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T18:08:56.707Z","pid":67,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T18:08:56.707Z","pid":67,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > two overlapping initial captures of identical bytes commit one identity and one capture audit 116ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > overlapping distinct revisions form one chain without losing captured bytes or audit history 190ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > same-named files for two studies remain current and unrelated under contention 88ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > rechecks the current actor after a real lock wait 36ms
+ ✓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > an active organization member without the private project grant cannot capture or resolve its source 42ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  10:08:39
+   Duration  17.66s (transform 11.51s, setup 80ms, import 801ms, tests 16.33s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

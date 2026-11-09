@@ -1,15 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
-import { useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
+import { readRefusalWords, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
 import { isProgramId } from './draftToDocument';
 import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourceRecord } from './projectSourceCatalog';
+import { errorCodeOf } from '@/lib/apiErrorCode';
 
 export type SourceReadState = 'idle' | 'loading' | 'ready' | 'error';
-interface Snapshot { programId: string | null; state: SourceReadState; sources: ProjectSourceRecord[]; loaded: number; total: number | null; error: string | null }
+/** `retryable` is false for a refusal (not licensed, not in this release, a role, not found, an expired
+ *  session): a retry cannot change it, so the host offers none. */
+interface Snapshot { programId: string | null; state: SourceReadState; sources: ProjectSourceRecord[]; loaded: number; total: number | null; error: string | null; retryable: boolean }
 interface OwnedSnapshot { visit: DataReadVisit | null; snapshot: Snapshot }
 const PAGE_SIZE = 200;
-const empty = (programId: string | null): Snapshot => ({ programId, state: programId ? 'loading' : 'idle', sources: [], loaded: 0, total: null, error: null });
+const empty = (programId: string | null): Snapshot => ({ programId, state: programId ? 'loading' : 'idle', sources: [], loaded: 0, total: null, error: null, retryable: true });
 const CHANGED = 'The source catalogue changed while it was being read. Retry to read its current complete contents.';
+
+const UNREAD = 'The project source catalogue could not be read.';
+
+/* Why the catalogue was not read, said as what happened (2026-11-06). The founder, 2026-11-05: not
+   licensed, not relevant, missing evidence and unavailable to this user are never one generic failure.
+   A refused read showed the gate's raw "Module access denied" with Try again. A refusal is worded by the
+   shared rule (readRefusalWords, dataConnect.tsx) and is not retryable; only a failure to answer keeps the
+   server's words (or the generic ones) and the retry. */
+function readFailure(status: number | undefined, code: string | undefined, fallback: string) {
+  const refusal = readRefusalWords({ status, code }, 'the project source catalogue');
+  return refusal ? { ok: false as const, message: refusal.message, retryable: refusal.retryable }
+    : { ok: false as const, message: fallback, retryable: true };
+}
 
 async function readPage(programId: string, offset: number, current: () => boolean) {
   try {
@@ -18,11 +34,13 @@ async function readPage(programId: string, offset: number, current: () => boolea
     if (!current()) return null;
     const body: unknown = await response.json().catch(() => null);
     if (!current()) return null;
-    if (!response.ok) return { ok: false as const, message: serverMessage(body) ?? 'The project source catalogue could not be read.' };
+    if (!response.ok) return readFailure(response.status, errorCodeOf(body), serverMessage(body) ?? UNREAD);
     return parseProjectSourcePage(body, { programId, limit: PAGE_SIZE, offset });
   } catch (error) {
     if (!current()) return null;
-    return { ok: false as const, message: redactInternals(error instanceof Error ? error.message : '', 'The project source catalogue could not be read.') };
+    const { status, code } = (error ?? {}) as { status?: unknown; code?: unknown };
+    return readFailure(typeof status === 'number' && status > 0 ? status : undefined, typeof code === 'string' ? code : undefined,
+      redactInternals(error instanceof Error ? error.message : '', UNREAD));
   }
 }
 
@@ -57,14 +75,16 @@ export function useProjectSourceCatalog(programId: string | null, owner?: DataRe
         if (!current() || !result) return;
         const changed = result.ok && ((total !== null && total !== result.page.total) || result.page.sources.some(row => seen.has(row.id)));
         if (!result.ok || changed) {
-          publish({ programId, state: 'error', sources: [], loaded: sources.length, total, error: result.ok ? CHANGED : result.message });
+          // Only a refusal says retryable: false; a changed or unparseable page can be read again.
+          const retryable = result.ok || (result as { retryable?: boolean }).retryable !== false;
+          publish({ programId, state: 'error', sources: [], loaded: sources.length, total, error: result.ok ? CHANGED : result.message, retryable });
           return;
         }
         total = result.page.total;
         result.page.sources.forEach(row => { seen.add(row.id); sources.push(row); });
         offset += result.page.sources.length;
         const complete = !result.page.window.truncated;
-        publish({ programId, state: complete ? 'ready' : 'loading', sources: complete ? sources : [], loaded: sources.length, total, error: null });
+        publish({ programId, state: complete ? 'ready' : 'loading', sources: complete ? sources : [], loaded: sources.length, total, error: null, retryable: true });
         if (complete) return;
       }
     };

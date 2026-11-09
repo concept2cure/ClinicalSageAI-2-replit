@@ -1,0 +1,22 @@
+# Red at 785f56d73 (before the change; the widened fixture and the new tests in place): P-86 C1
+# npx vitest run server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts server/services/submission-service/__tests__/sequence-retirement-rules.test.ts
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > lets a sequence go when nothing keeps it
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > judges its own record before the sequences after it, and those before a twin read from compiles
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > names a later sequence that is kept, and why, never telling anyone to retire what cannot be
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > dates every send it names as a UTC day, and treats a send with no environment as a production one
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > counts IND records by kind
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the statement names every route, the platform's own package route among them
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the payload carries notFiledElsewhere and the statement, word for word
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the meaning is responsibility, and only it
+ × server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > the audit row's sealed instant > an unreadable instant is refused before anything is read or written
+ FAIL  server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts [ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts ]
+TypeError: applySequenceRemovalGuard is not a function
+ FAIL  server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts [ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts ]
+TypeError: applySequenceRemovalGuard is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > lets a sequence go when nothing keeps it
+TypeError: retirementRefusal is not a function
+ FAIL  server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > judges its own record before the sequences after it, and those before a twin read from compiles
+TypeError: retirementRefusal is not a function
+ FAIL  server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > names a later sequence that is kept, and why, never telling anyone to retire what cannot be
+TypeError: retirementRefusal is not a function

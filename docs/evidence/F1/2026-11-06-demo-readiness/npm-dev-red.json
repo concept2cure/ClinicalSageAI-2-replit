@@ -1,0 +1,10 @@
+{
+  "sourceHead": "9c047a1ff919981d8b6e13f2a4c383294fb8a745",
+  "actualCommand": "npm run dev",
+  "codespacesFlags": true,
+  "databaseRole": "app_service",
+  "outcome": "Failed after the real Codespaces preflight passed; bash could not find tsx",
+  "rawOutput": "npm-dev-red.log.gz",
+  "rawGzipSha256": "fa88ea73a608501c9da600bff4c68cc0b9d281ff147aa2f54a026ec35cabdb08",
+  "outerExit": "rehearsal.json records process exit1; startup server child exited before readyz"
+}

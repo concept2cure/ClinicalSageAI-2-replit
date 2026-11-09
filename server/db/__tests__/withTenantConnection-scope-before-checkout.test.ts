@@ -98,6 +98,32 @@ describe('a caller with NO ambient tenant scope (the nightly consolidation job)'
 });
 
 describe('the checkout carries the scope withTenantConnection was asked for', () => {
+  it('stamps an explicit trusted job target owner at both LOCAL and session scope and clears it', async () => {
+    await withTenantConnection({ tenantId: 42, accountId: 7, source: 'job', caller: 'owner-targeted-test' }, async client => {
+      expect(getTenantScope()).toMatchObject({ tenantId: '42', accountId: 7, source: 'job' });
+      await client.query('BEGIN');
+      await client.query('SELECT 1');
+      await client.query('COMMIT');
+    });
+    expect(driverLog.find(entry => entry.sql.includes("set_config('app.current_account_id', $4, false)"))?.params).toEqual(['42', '', '', '7']);
+    expect(driverLog.find(entry => entry.sql.startsWith(TENANT_LOCAL_SQL_PREFIX))?.params).toEqual(['42', '', '', '7']);
+    expect(driverLog.some(entry => entry.sql === CLEAR_SESSION_SCOPE_SQL && entry.sql.includes("set_config('app.current_account_id', '', false)"))).toBe(true);
+  });
+
+  it('does not borrow an ambient request owner for a generic job', async () => {
+    await runWithTenantScope({ tenantId: '42', accountId: 7, source: 'request' }, () =>
+      withTenantConnection({ tenantId: 42, caller: 'generic-job' }, async client => {
+        expect(getTenantScope()?.accountId).toBeNull();
+        await client.query('BEGIN');
+        await client.query('COMMIT');
+      }));
+    expect(driverLog.find(entry => entry.sql.startsWith(TENANT_LOCAL_SQL_PREFIX))?.params).toEqual(['42', '', '', '']);
+  });
+
+  it.each([-1, 0, 1.5, 2147483648])('refuses malformed owner %s before checkout', async accountId => {
+    await expect(withTenantConnection({ tenantId: 42, accountId }, async () => undefined)).rejects.toThrow(/account id/);
+    expect(driverConnect).not.toHaveBeenCalled();
+  });
   it('a transaction opened inside the callback gets the requested tenant, not the ambient one', async () => {
     // Ambient: a request in tenant 5 as an ordinary member. Requested: the
     // super-admin scope the audit-chain verifier asks for.

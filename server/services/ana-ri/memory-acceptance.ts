@@ -16,6 +16,8 @@
  * @module server/services/ana-ri/memory-acceptance
  */
 
+import { createHash } from 'node:crypto';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface MemoryCandidate {
@@ -143,21 +145,21 @@ function scoreConfidence(params: {
 
 // ── Deduplication ─────────────────────────────────────────────────────────────
 
+/** Preserve the existing case/whitespace equivalence without discarding the tail. */
+function normalizeMemoryContent(content: string): string {
+  return content.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 /**
- * Generate a deduplication key from content.
- * Uses a simple hash of the first 200 chars of normalized content + category.
+ * A versioned fingerprint of the complete category/content tuple. The former
+ * 200-character, 32-bit key discarded changed conclusions and also collided
+ * on different short texts. Duplicate admission below compares the full text,
+ * never a hash alone. Existing records are compared by content, so no stored
+ * key migration is required.
  */
 function generateDedupeKey(content: string, category: string): string {
-  const normalizedContent = content.toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 200);
-
-  // Simple string hash (djb2)
-  let hash = 5381;
-  const combined = `${category}:${normalizedContent}`;
-  for (let i = 0; i < combined.length; i++) {
-    hash = ((hash << 5) + hash + (combined.codePointAt(i) ?? 0)) & 0xffffffff;
-  }
-
-  return `mem_${hash.toString(36)}`;
+  const identity = JSON.stringify([category, normalizeMemoryContent(content)]);
+  return `mem_v2_${createHash('sha256').update(identity).digest('hex')}`;
 }
 
 // ── Contradiction Checking ────────────────────────────────────────────────────
@@ -175,7 +177,7 @@ export function checkForContradictions(
   const contradictions: string[] = [];
   const conflictingIds: number[] = [];
 
-  const candidateNormalized = candidate.toLowerCase();
+  const candidateNormalized = normalizeMemoryContent(candidate);
 
   const negationPairs = [
     { positive: 'is sufficient', negative: 'is insufficient' },
@@ -189,7 +191,7 @@ export function checkForContradictions(
   ];
 
   for (const existing of existingMemories) {
-    const existingNormalized = existing.content.toLowerCase();
+    const existingNormalized = normalizeMemoryContent(existing.content);
     checkPairContradictions(
       candidateNormalized,
       existingNormalized,
@@ -207,6 +209,24 @@ export function checkForContradictions(
   };
 }
 
+/** A configured phrase is a whole phrase, not a fragment of another word. */
+function phrasePattern(phrase: string, global = false): RegExp {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\p{L}\\p{M}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{M}\\p{N}_])`, global ? 'gu' : 'u');
+}
+
+/**
+ * Do not read "compliant" inside "non-compliant" as a second assertion.
+ * Only the matched negative phrase is masked, preserving any separate positive
+ * assertion. This remains the existing conservative phrase check, not subject
+ * resolution, temporal reasoning or a semantic contradiction verdict.
+ */
+function phrasePresence(text: string, positive: string, negative: string) {
+  const hasNegative = phrasePattern(negative).test(text);
+  const withoutNegative = text.replace(phrasePattern(negative, true), '$1 ');
+  return { positive: phrasePattern(positive).test(withoutNegative), negative: hasNegative };
+}
+
 /** Helper to reduce cognitive complexity in contradiction checking */
 function checkPairContradictions(
   candidateNorm: string,
@@ -217,18 +237,18 @@ function checkPairContradictions(
   conflictingIds: number[]
 ): void {
   for (const { positive, negative } of pairs) {
-    const candidateHasPositive = candidateNorm.includes(positive);
-    const candidateHasNegative = candidateNorm.includes(negative);
-    const existingHasPositive = existingNorm.includes(positive);
-    const existingHasNegative = existingNorm.includes(negative);
+    const { positive: candidateHasPositive, negative: candidateHasNegative } =
+      phrasePresence(candidateNorm, positive, negative);
+    const { positive: existingHasPositive, negative: existingHasNegative } =
+      phrasePresence(existingNorm, positive, negative);
 
     const isContradiction =
       (candidateHasPositive && existingHasNegative) ||
       (candidateHasNegative && existingHasPositive);
 
     if (isContradiction) {
-      const candidateAssertion = candidateHasPositive ? positive : negative;
-      const existingAssertion = existingHasPositive ? positive : negative;
+      const candidateAssertion = candidateHasPositive && existingHasNegative ? positive : negative;
+      const existingAssertion = candidateAssertion === positive ? negative : positive;
       contradictions.push(
         `New memory says "${candidateAssertion}" but existing memory #${existingId} says "${existingAssertion}"`
       );
@@ -312,18 +332,19 @@ export function evaluateMemoryCandidate(params: {
   // Step 3: Generate dedupe key
   const dedupeKey = generateDedupeKey(content, category);
 
-  // Step 4: Check deduplication
-  const existingDedupes = existingMemories.filter(
-    m => generateDedupeKey(m.content, m.category) === dedupeKey
+  // Step 4: Full normalized equality, not a matching prefix or fingerprint.
+  const normalizedContent = normalizeMemoryContent(content);
+  const existingDuplicate = existingMemories.find(
+    m => m.category === category && normalizeMemoryContent(m.content) === normalizedContent
   );
-  if (existingDedupes.length > 0) {
+  if (existingDuplicate) {
     return buildRejection(
       content,
       category,
       provenance,
       threadId,
       messageWindow,
-      `Duplicate of existing memory #${existingDedupes[0].id}`
+      `Duplicate of existing memory #${existingDuplicate.id}`
     );
   }
 

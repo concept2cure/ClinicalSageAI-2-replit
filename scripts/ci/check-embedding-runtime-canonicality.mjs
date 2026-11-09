@@ -88,6 +88,15 @@ const APPROVED = new Set([
   // correct. It is listed rather than pattern-excluded so that the exception is
   // visible and someone can challenge it.
   'server/services/ai-gateway/embeddings/embedding-provider.ts',
+  // THE SEAM'S PER-TENANT TRANSPORT, allowlisted 2026-11-08. Since e6a7c391c
+  // (client-owned model credentials, P-104) embedding-provider.ts gets its client
+  // from createTenantProviderClient(provider, organizationId, …, 'embedding') in
+  // this file, after gateway.authorizeEmbedding and before
+  // recheckEmbeddingAuthorization. The `embeddings.create` here is that client's
+  // wrapper around the SDK (fresh per tenant and request, credential rechecked
+  // on every call, provider errors made safe). It is reached only through the
+  // seam above, so it is the same governed call, not a second runtime.
+  'server/services/ai-gateway/providers/clients.ts',
 ]);
 
 // See scripts/ci/lib/allowlist-paths.mjs. Two entries here were orphaned by

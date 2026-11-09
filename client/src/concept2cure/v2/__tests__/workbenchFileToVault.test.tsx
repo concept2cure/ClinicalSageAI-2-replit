@@ -58,7 +58,7 @@ function mockApi() {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) {
-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+      return ok({ success: true, documents: [{ id: DOC, program_id: PID, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
     }
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
@@ -289,18 +289,25 @@ describe('canvas current-access refusal preserves a sent vault outcome', () => {
     expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
   });
 
-  function canvas(refreshKey: number, fireToast: FireToast) {
+  function CanvasHost({ refreshKey, fireToast }: { refreshKey: number; fireToast: FireToast }) {
+    const [expanded, setExpanded] = React.useState(false);
     return <DocumentCanvas docId={DOC} programId={PID} conversationId={null} fromThisConversation={false}
-      expanded={false} onExpandedChange={vi.fn()} onNav={vi.fn()} onAsk={vi.fn()} fireToast={fireToast} refreshKey={refreshKey} />;
+      expanded={expanded} onExpandedChange={setExpanded} onNav={vi.fn()} onAsk={vi.fn()} fireToast={fireToast} refreshKey={refreshKey} />;
   }
+  const canvas = (refreshKey: number, fireToast: FireToast) => <CanvasHost refreshKey={refreshKey} fireToast={fireToast} />;
+  /* D4-5b: the card became a chip; File to vault is opened from the open document's More menu, and the open
+     document announces the outcome in its own toast. */
   it.each(['unsent', 'pending'])('keeps the %s dialog generic and blocks new confirmation after a refused current read', async phase => {
     const fireToast = vi.fn<FireToast>();
     let release!: (response: Response) => void;
     const pending = new Promise<Response>(resolve => { release = resolve; });
     if (phase === 'pending') fileToVault = () => pending;
     const view = render(canvas(0, fireToast));
-    await screen.findByText('The product rationale.');
-    fireEvent.click(screen.getByTestId('dc-file-to-vault'));
+    const open = await screen.findByTestId('dc-open-editor');
+    await waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(open);
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('The product rationale.'));
+    fireEvent.click(openEditorControl('File to vault…'));
     const dialog = await screen.findByTestId('file-to-vault-dialog');
     if (phase === 'pending') {
       fireEvent.click(within(dialog).getByTestId('ftv-submit'));
@@ -316,8 +323,10 @@ describe('canvas current-access refusal preserves a sent vault outcome', () => {
     if (phase === 'pending') {
       await act(async () => { release(ok(FILED,201)); await pending; });
       await within(dialog).findByTestId('ftv-result');
-      expect(fireToast).toHaveBeenCalledOnce();
-      expect(fireToast.mock.calls[0][0]).not.toContain('Module 2.5 Clinical Overview');
+      const toasts = document.querySelectorAll('.de-toast');
+      expect(toasts).toHaveLength(1);
+      expect(toasts[0].textContent).toContain('to the vault');
+      expect(toasts[0].textContent).not.toContain('Module 2.5 Clinical Overview');
     } else {
       expect(within(dialog).getByTestId('ftv-submit')).toHaveProperty('disabled',true);
       expect(apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);

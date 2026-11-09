@@ -31,6 +31,7 @@ import {
   customType,
   jsonb,
   numeric,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -7575,6 +7576,9 @@ export const unifiedTasks = pgTable(
       .references(() => organizations.id),
     clientWorkspaceId: integer('client_workspace_id').references(() => clientWorkspaces.id),
     projectId: integer('project_id').references(() => projects.id),
+    /** P-111 item 4: one level of subtasks (migrations/20261109_unified_tasks_parent_task.sql); the write path
+     *  (tasking/task-project.ts admitParentTask) holds it to one level, the same organisation and the same project. */
+    parentTaskId: integer('parent_task_id').references((): AnyPgColumn => unifiedTasks.id, { onDelete: 'set null' }),
 
     // Module Information
     moduleType: text('module_type').notNull(), // CMC, IND, MedicalDevice, eCTD, Vault, ProtocolDesign
@@ -19044,6 +19048,8 @@ export const rbmPatientProfiles = pgTable(
     orgIdx:        index('rbm_patient_profiles_org_idx').on(table.organizationId),
     orgProgramIdx: index('rbm_patient_profiles_org_program_idx').on(table.organizationId, table.programId),
     statusIdx:     index('rbm_patient_profiles_status_idx').on(table.organizationId, table.status),
+    identityIdx:   uniqueIndex('rbm_patient_profiles_organization_id_program_id_subject_id_key')
+      .on(table.organizationId, table.programId, table.subjectId),
   }),
 );
 export type RbmPatientProfile = InferSelectModel<typeof rbmPatientProfiles>;
