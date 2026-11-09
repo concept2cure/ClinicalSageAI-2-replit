@@ -46,7 +46,8 @@ const LIST_URL = `/api/mdx/gateways/transmittals?program_id=${PROGRAM}&region=fd
 const ROWS = [
   { id: 42, region: 'fda', gateway: 'esg', status: 'ack3_received', transmission_id: 'MDN-0042', submitted_at: '2026-10-08T09:00:00Z',
     ack_received_at: '2026-10-08T09:30:00Z', submitted_by: 5, submitted_by_name: 'Dana Approver',
-    metadata: { sequence: '0001', environment: 'staging' } },
+    // Bound to this sequence (F1 slice 1): marked "(this one)" by the binding, not the number (P-86 C3).
+    metadata: { sequence: '0001', environment: 'staging', dispatchBinding: { sequenceId: 21 } } },
   { id: 40, region: 'fda', gateway: 'esg', status: 'submitted', transmission_id: null, submitted_at: '2026-10-01T09:00:00Z',
     ack_received_at: null, submitted_by: 6, submitted_by_name: null, metadata: { sequence: '0000', environment: 'production' } },
 ];

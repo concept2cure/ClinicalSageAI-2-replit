@@ -1860,8 +1860,9 @@ no screen, route, service, table or component file.
 1. F1, in the coordinating session's order of 2026-11-08: P-93, P-94, P-86, P-92 with P-99, then P-96. P-93's four
    open questions went to the coordinating session on 2026-11-09; the build proceeds on its design's defaults.
    - P-86 is carried under L1, as the founder's record files it (launch row D7). Its C1, the signed retirement and
-     the database's removal guard, landed on 2026-11-09 (`docs/evidence/D7-SEQUENCE-RETIREMENT/2026-11-09/`). C2
-     follows; C3 waits for D7-A2.
+     the database's removal guard, landed on 2026-11-09, and so did C2 (the door and its precheck) and C3 (on screen,
+     at the foot of the Dispatch tab), after D7-A2 (`docs/evidence/D7-SEQUENCE-RETIREMENT/2026-11-09/`). Owed: C1b,
+     and a walk of a test-sent 0000 where staging credentials exist.
 2. P-87 with P-106 (R1).
 3. P-103, the submission-ops package routes.
 4. S10.

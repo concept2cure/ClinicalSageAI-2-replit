@@ -285,6 +285,23 @@ export function retirementMeaningRefusal(meaning: unknown): string | null {
   return meaning === 'responsibility' ? null : 'retiring a sequence is signed with the meaning responsibility';
 }
 
+/**
+ * Who may sign the retirement, as the precheck tells it before anyone signs (C2): the answer of
+ * separation-of-duties.ts signerIndependenceOf, which the act's own check gives too. A creator who cannot be
+ * resolved, or a check that failed, is said so; neither is taken as independence, nor called authorship.
+ */
+export function retirementSignerRefusal(sequenceNumber: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') {
+    return `You created sequence ${sequenceNumber}, so you cannot sign its retirement. Another person with signing authority signs it.`;
+  }
+  if (state === 'unresolved') {
+    return `Who created sequence ${sequenceNumber} cannot be resolved from its record, so no one can be shown to be independent of its creator, ` +
+      'and its retirement cannot be signed.';
+  }
+  return `Whether you created sequence ${sequenceNumber} could not be checked, so its retirement cannot be signed now. Try again.`;
+}
+
 /** Gate 1's payload check: the signature carries the statement for this sequence, exactly. */
 export function retirementPayloadRefusal(sequenceNumber: string) {
   const statement = retirementStatement(sequenceNumber);
@@ -319,6 +336,8 @@ export interface RetirementFacts extends KeptFacts {
   /** Check 5b: a filed sequence of the same number whose record is read from compiles. */
   compileReadTwin: boolean;
   stagingTransmittalIds: number[];
+  /** The same sends, by the UTC day each was recorded, for the precheck to show (C2). */
+  stagingSends: Array<{ sentOn: string }>;
   numberFreed: boolean;
 }
 
@@ -415,7 +434,7 @@ export async function readRetirementFacts(
     later.push({ sequenceNumber: l.sequenceNumber, kept: keptRefusal(await keptFacts(q, org, l))?.reason ?? null });
   }
   const staging = await q.query(
-    `SELECT id FROM submission_transmittals
+    `SELECT id, created_at FROM submission_transmittals
       WHERE organization_id = $1 AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata->>'environment' = 'staging'
       ORDER BY id`,
     [org, s.id],
@@ -424,6 +443,7 @@ export async function readRetirementFacts(
     ...own, later,
     compileReadTwin: await filedTwin(s.sequenceNumber),
     stagingTransmittalIds: staging.rows.map((r) => Number(r.id)),
+    stagingSends: staging.rows.map((r) => ({ sentOn: day(r.created_at) })),
     numberFreed: !siblings.some((x) => x.sequenceNumber === s.sequenceNumber),
   };
 }
@@ -489,7 +509,7 @@ export function retirementRefusal(f: RetirementFacts): string | null {
 /** A removed sequence's retirement record, or null when it was removed some other way (or is live). */
 export async function retiredSequenceRecord(q: BaselineQueryable, org: number, id: number) {
   const { rows } = await q.query(
-    `SELECT s.sequence_number, a.occurred_at, a.actor_id FROM ectd_sequences s
+    `SELECT s.sequence_number, s.region, a.occurred_at, a.actor_id, a.reason, a.new_values::jsonb ->> 'meaning' AS meaning FROM ectd_sequences s
        JOIN audit_logs a ON a.tenant_id = s.organization_id AND a.table_name = 'ectd_sequence'
         AND a.record_id = s.id::text AND a.action = $3
       WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NOT NULL
@@ -497,5 +517,17 @@ export async function retiredSequenceRecord(q: BaselineQueryable, org: number, i
     [id, org, ECTD_SEQUENCE_RETIRED_ACTION],
   );
   const r = rows[0];
-  return r ? { sequenceNumber: String(r.sequence_number), retiredDay: day(r.occurred_at), actorId: Number(r.actor_id) || null } : null;
+  return r ? {
+    sequenceNumber: String(r.sequence_number), region: String(r.region), retiredDay: day(r.occurred_at), actorId: Number(r.actor_id) || null,
+    meaning: (r.meaning as string | null) ?? null, reason: (r.reason as string | null) ?? null,
+  } : null;
+}
+
+/** A sequence of this organisation that is no longer in use, whatever removed it; null when it is live or not its. */
+export async function removedSequenceOf(q: BaselineQueryable, org: number, id: number) {
+  const { rows } = await q.query(
+    `SELECT sequence_number, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NOT NULL`,
+    [id, org],
+  );
+  return rows[0] ? { sequenceNumber: String(rows[0].sequence_number), region: String(rows[0].region) } : null;
 }
