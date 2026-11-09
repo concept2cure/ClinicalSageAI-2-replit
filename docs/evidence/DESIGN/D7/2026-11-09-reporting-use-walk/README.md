@@ -58,6 +58,45 @@ At 1440 and 390:
   Readiness Digest schedule".
 - Page overflow 0 at both widths, no script errors and no 4xx or 5xx.
 
+## Pre-deploy step, production: required before `deploy-migrate` runs at `22256c6750` or later
+
+**Owner:** whoever runs the production deploy (the D1 lane, with the founder's AWS and Neon access). This session has
+no production access.
+
+From `22256c6750`, every `deploy-migrate` runs `migrations/0014_report_os_foundation.sql`. Its preflight raises
+`REPORT_GROUP_MEMBERSHIP_TENANT_RECONCILIATION_REQUIRED` and stops the deploy, rewriting nothing, if any report group
+membership has one of these:
+- a missing group or project;
+- a group or project with no organisation;
+- a group and project in different organisations;
+- an existing `organization_id` that disagrees with its group.
+
+Before the deploy, run this read-only query on the production database, as the owner role:
+
+```sql
+SELECT member.id, member.program_group_id, member.project_id,
+       parent.organization_id AS group_org, project.organization_id AS project_org
+  FROM public.report_program_group_projects member
+  LEFT JOIN public.report_program_groups parent ON parent.id = member.program_group_id
+  LEFT JOIN public.projects project ON project.id = member.project_id
+ WHERE parent.id IS NULL OR project.id IS NULL
+    OR parent.organization_id IS NULL OR project.organization_id IS NULL
+    OR parent.organization_id IS DISTINCT FROM project.organization_id
+ ORDER BY member.id;
+```
+
+On a database that already has the column (installed on or after 2026-10-13), add this condition to the WHERE clause:
+`OR (member.organization_id IS NOT NULL AND member.organization_id IS DISTINCT FROM parent.organization_id)`.
+
+- **No rows:** deploy.
+- **Any row:** do not deploy. The membership's tenancy must be reconciled first, by the people who own that data. The
+  migration will not relabel or delete it, and neither should the deploy.
+
+Checked so far, both with no rows:
+- the local `clinicalsage` database (0 memberships);
+- the coordinating session's earlier-installed demo database (0 memberships). There it ran the file in a rolled-back
+  transaction, exit 0.
+
 ## Not covered here
 
 - **A finalize that succeeds.** On this database every run of the digest is held by its 23 critical blockers, so no
