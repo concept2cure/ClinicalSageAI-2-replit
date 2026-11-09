@@ -81,20 +81,38 @@ export function stableStringify(value: unknown): string {
 }
 
 /**
- * Compute SHA-256 hash of a string (server-side only).
- * Returns lowercase hex string.
+ * SHA-256 of a string, lowercase hex.
+ *
+ * ── Why this refuses instead of hashing (2026-11-09) ─────────────────────────
+ * It reached `node:crypto` through a dynamic `require`, so that this module —
+ * which five client files import for `stableStringify` — would not pull crypto
+ * into the browser bundle. But `require` does not exist in an ESM runtime, so
+ * the function could not run on the server either: calling it from the batch
+ * release path answered `500 ReferenceError: require is not defined` from
+ * inside a hash, on the one path that reaches a §11.50 signature
+ * (`docs/evidence/F1/2026-11-09-batch-release-fingerprint/`). One lane had
+ * already worked around it by hand and written down why
+ * (`server/services/ana/skills/library/index.ts`).
+ *
+ * A function that cannot run anywhere is worse than no function: its callers
+ * type-check, and they fail at the moment they are used. So it says so, at the
+ * call site, naming what to do instead. Hashing is server work; `import
+ * { createHash } from 'node:crypto'` in the server module and hash
+ * `stableStringify(value)` — which is what this module is for.
  */
-export function sha256Hex(input: string): string {
-  // Dynamic require to avoid bundling crypto in client
-   
-  const { createHash } = require('crypto');
-  return createHash('sha256').update(input, 'utf8').digest('hex');
+export function sha256Hex(_input: string): never {
+  throw new Error(
+    'shared/canonical-json: sha256Hex cannot run here. It reached node:crypto through `require`, which does not ' +
+      'exist in an ESM runtime, and a static import would put crypto in the client bundle (five client files ' +
+      "import stableStringify from this module). In a server module: import { createHash } from 'node:crypto' " +
+      "and hash stableStringify(value) — createHash('sha256').update(stableStringify(value), 'utf8').digest('hex').",
+  );
 }
 
 /**
  * Compute deterministic hash of any JSON-serializable object.
  * stableStringify → SHA-256 → hex
  */
-export function stableHash(value: unknown): string {
+export function stableHash(value: unknown): never {
   return sha256Hex(stableStringify(value));
 }

@@ -25,8 +25,20 @@ export interface CmcBatch {
   yield: number;
   dev: number;
   st: string;
-  /** Numeric primary key — the address for PUT/release. Absent on optimistic-only rows. */
-  dbId?: number;
+  /**
+   * The id the server gave this batch — the address for PUT and release.
+   * Absent on an optimistic-only row the server has not answered for yet.
+   *
+   * `cmc_batch_records.id` is a **uuid**, and this was typed `number` and
+   * coerced with `Number()`, so every row carried `NaN`: the Release button
+   * posted to `/api/cmc/batch-records/NaN/release`, `key={r.dbId ?? r.id}`
+   * gave every row the same key, and the `dbId == null` guard that exists to
+   * refuse a row with no server identity did not fire, because `NaN == null`
+   * is false. The same defect `CmcSpecRow.id` had
+   * (`__tests__/cmcSpecRowIdentity.test.ts`); a legacy numeric id is still
+   * carried as a number, so an older row addresses itself as it always did.
+   */
+  dbId?: string | number;
   _new?: boolean;
 }
 
@@ -103,10 +115,25 @@ export function batchDisposition(status: string | null | undefined): string {
   return 'pending';
 }
 
+/**
+ * The server's own id for a batch, or undefined when it gave none.
+ *
+ * A blank string is "none" too: it addresses no row, and letting it through
+ * would rebuild the defect this function exists to end one layer up.
+ */
+export function batchIdentity(id: unknown): string | number | undefined {
+  if (typeof id === 'number') return Number.isFinite(id) ? id : undefined;
+  if (typeof id === 'string') return id.trim() === '' ? undefined : id;
+  return undefined;
+}
+
 /** cmc_batch_records row → display row (null-safe, nothing fabricated). */
 export function batchRowFromApi(row: BatchApiRow): CmcBatch {
   return {
-    dbId: typeof row.id === 'number' ? row.id : Number(row.id),
+    /* The id AS GIVEN. No coercion: a uuid stays a uuid, a legacy integer
+       stays an integer, and anything the server did not send stays absent so
+       the caller's `== null` guard still means what it says. */
+    dbId: batchIdentity(row.id),
     id: row.batch_number ?? String(row.id),
     stage: row.product_name ?? '',
     yield: yieldPercent(row.yield_data),

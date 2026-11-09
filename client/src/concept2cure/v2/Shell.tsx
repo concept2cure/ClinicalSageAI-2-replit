@@ -135,7 +135,7 @@ const PROJECT_PAGE_IDS: ReadonlySet<string> = new Set([
 /** The project's work areas that have no rail entry of their own: they are opened
  *  from the project's page (ProjectCoreWork.tsx) and work on the open project.
  *  Biostatistics left the rail for the project (RULE 4); its calculators are its own. */
-const PROJECT_WORK_IDS: ReadonlySet<string> = new Set(['protocol-dev', 'biostatistics', 'biostat-workbench']);
+const PROJECT_WORK_IDS: ReadonlySet<string> = new Set(['protocol-dev', 'biostatistics']);
 
 /**
  * The rail entry a screen is shown under. A screen with its own entry is its own.

@@ -4,7 +4,8 @@
  * canonical task board.
  *
  * Mounted at `/api/biostat-bridge` behind `authMiddleware`, so every handler
- * runs tenant-scoped. Endpoints:
+ * runs tenant-scoped, and behind `requireEditorAccessForWrites`, so the two
+ * governed writes need a writing role while the three reads do not. Endpoints:
  *
  *   GET  /designs?program_id=              this tenant's designs with statistical readiness
  *   GET  /designs/:studyId/assessment      read-only: engine input + result + judgment, gaps,
@@ -42,9 +43,29 @@ import {
    Every caller below already refuses a falsy id, so the canonical resolveUserId
    admitting 0 changes no behaviour here. */
 import { resolveOrgId, resolveUserId } from '../types/auth-request';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 const logger = createScopedLogger('biostat-bridge');
+
+/* Every write below is ROLE-GATED; the three reads stay open to a viewer.
+ *
+ * Until 2026-11-09 this router had no gate at all. It is mounted behind
+ * `authMiddleware` alone (bootstrap/register-inline-routes.ts), so an
+ * organization `viewer` — the one role whose meaning is "does not write" —
+ * could apply a sample size to a study design and raise tasks on the canonical
+ * board, both with Part 11 ledger rows attributing the change to them.
+ *
+ * That broke an invariant this repo states in the module the other two task
+ * routers share (services/tasking/governed-task-write.ts): "Both gate each
+ * write with requireEditorAccess ... so a refusal has to read the same
+ * whichever URL the caller used." This was the third URL.
+ *
+ * The gate is mounted here rather than per route, which is what
+ * `requireEditorAccessForWrites` is for: a write route added later is gated
+ * without anyone remembering to gate it. Same repair as T2 on
+ * /api/task-management (task-management-governed-writes.test.ts). */
+router.use(requireEditorAccessForWrites);
 
 // ─── Request context (polymorphic per the auth middleware, as study-design.ts) ─
 
