@@ -78,7 +78,7 @@ describe('the input-tier wall judges the copy that is dispatched (founder decisi
     return parts;
   };
   const sent = (dispatch: ReturnType<typeof instrumented>['dispatch']) =>
-    JSON.stringify((dispatch.mock.calls[0]?.[1] as GatewayRequest | undefined)?.messages ?? null);
+    JSON.stringify(((dispatch.mock.calls[0] as unknown[] | undefined)?.[1] as GatewayRequest | undefined)?.messages ?? null);
   it('an email the PII pass removes, and a phone number it sends by design, no longer refuse a Tier 1 turn', async () => {
     const { gw, dispatch } = withPiiDetection();
     await runWithSourceAuthority(createRunSourceAuthority(SOURCE_ACTOR), async () => {
