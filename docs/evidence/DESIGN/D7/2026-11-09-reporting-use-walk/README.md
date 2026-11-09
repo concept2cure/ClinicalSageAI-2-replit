@@ -30,6 +30,7 @@ was made through the API, and no walk had used the actions:
 | 3 | **A schedule showed a type id and a database id**: "readiness.executive_digest", "project — 1", and the form's "Runs over project — 1" (`found/schedule-raw-ids-1440.png`). | `e710bc3d3f` (D7) | `red/red-schedules.txt` |
 | 4 | **Twenty Catalog buttons were each named "Run"**, and every Run history row "Open" and every schedule "Pause". A screen reader could not tell them apart. A run with no recorded scope name read "project — 11". | `8a1feba597` (D7) | `red/red-names.txt` (3 cases) |
 | 5 | Found on the re-walk at 390: **Run history and Schedules pushed the page sideways** by 138px and 133px. Their tables are about 510px wide. | `2135d3f9dd` (D7): each register scrolls in its own focusable, named region. | 2 cases, recorded in the commit |
+| 6 | Found walking a finalize that succeeds: **the signature's meaning was a stored token, and the PDF's time was raw.** The seal line said "Signed by JM Smith as authorship", the seal section "Meaning authorship", and the PDF "Final. Signed by JM Smith as authorship, 2026-11-09T18:53:45.935Z (UTC)." (`found/seal-line-as-authorship-1440.png`, `found/pdf-signed-line-before.txt`). | `39d5f74d32` (D7) and `0e5706a308` (F1). The meaning now comes from the signing dialog's own list, and the time from the canonical manifestation formatter. | The PDF suites failed 4 of 20 on the new words; the seal-section case failed too |
 
 ## Proof
 
@@ -57,6 +58,37 @@ At 1440 and 390:
 - **Schedules:** "Executive Readiness Digest · Every week on Monday at 08:00 UTC · C2C-101", with "Pause the Executive
   Readiness Digest schedule".
 - Page overflow 0 at both widths, no script errors and no 4xx or 5xx.
+
+## A finalize that succeeds (`finalize-ok/`)
+
+Each of the 20 reports the Catalog runs here was run once, with its `finalEligibility` read back. 19 are held, each
+saying why:
+- critical or outstanding blockers;
+- a confidence the type requires and none was computed;
+- a gaps section the type requires.
+
+Only the **Research Administration Scorecard** can be finalized.
+
+Walked at the head (`0e5706a308`) with `scripts/finalize-ok.cjs` and `scripts/reopen-seal.cjs`, as the demo user with
+the demo password:
+- **Before signing**, the report offers "Export PDF" and "Finalize…".
+- **The dialog** offers the meanings Authorship, Approval and Responsibility, and takes the reason and the password.
+- **After "Sign and commit"**, it says "Signature applied", with the signer, meaning, reason, time and chain hash, and a
+  Done button.
+- **The seal line:** "Final. Signed by JM Smith, meaning Authorship, 2026-11-09 18:58:15 UTC. Sealed sha256 f5c8f7187b55…
+  over 100 provenance atoms". Finalize is no longer offered.
+- **The PDF** (run 81) reads "Final. Signed by JM Smith, meaning Authorship, 2026-11-09 18:58:15 UTC." and "Seal
+  verification at export: intact." (`finalize-ok/pdf-signed-line-after.txt`).
+- **Run history** lists the run as Final. Reopened, its "Seal, signature and sources" section says "Seal verified":
+  - the sealed document hashes to the seal the audit chain recorded;
+  - the stored seal agrees field by field;
+  - the signature signed that seal.
+  It names the signer, time, meaning and reason. No audit HMAC key is configured here, and the section says so.
+- No script errors, and no 4xx or 5xx.
+
+**One difference, not fixed here.** Right after signing, the seal line sits under the report. A reopened sealed run
+shows the same facts only inside the "Seal, signature and sources" section, which is closed until opened. The PDF
+carries the line either way.
 
 ## Pre-deploy step, production: required before `deploy-migrate` runs at `22256c6750` or later
 
@@ -99,10 +131,6 @@ Checked so far, both with no rows:
 
 ## Not covered here
 
-- **A finalize that succeeds.** On this database every run of the digest is held by its 23 critical blockers, so no
-  signature was taken. The ceremony and seal are covered by `insightsFinalizeSigned.test.tsx` and the route suites. The
-  form was opened and filled with the demo password (`found/finalize-form-1440.png`), and the server refused it as
-  above.
 - **A schedule firing.** The sweep runs about every ten minutes, and the walk did not wait for it.
 - **Deploying the 0014 fix.** It is held, unpushed, until the coordinating session lifts the 2026-11-09 demo freeze.
   Its preflight fails the deploy, by design, on any group membership whose group and project disagree. Such a row on
