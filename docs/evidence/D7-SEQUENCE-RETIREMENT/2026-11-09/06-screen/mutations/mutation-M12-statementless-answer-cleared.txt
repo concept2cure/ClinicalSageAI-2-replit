@@ -1,0 +1,5 @@
+MUTATION M12-statementless-answer-cleared in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T11:41:09.129043Z): replaced [if (kind !== 'retire') return { refusal: null };] with [if (kind !== 'retire' || kind === 'retire') return { refusal: null };]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T2 — the one signature, Responsibility only, the statement word for word > a cleared precheck without the statement opens no signature 5304ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e (expected 2f387068faf71317cc2ff69866ccedc9cf3257e7bd8111905fef2c7dd46c456e)

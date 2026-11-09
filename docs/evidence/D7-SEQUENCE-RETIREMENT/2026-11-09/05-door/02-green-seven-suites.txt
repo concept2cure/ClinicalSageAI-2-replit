@@ -1,0 +1,75 @@
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: a sequence never filed is retired by its signed act, and its number is freed > retires a dispatched sequence whose only sends were to the test environment; the row is otherwise unchanged 95ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: a sequence never filed is retired by its signed act, and its number is freed > records one instant: the answer's retiredAt, the row's deleted_at and the sealed occurred_at 48ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: a sequence never filed is retired by its signed act, and its number is freed > a duplicate live 0000 (a legacy row) is retired, and says the number is not freed 43ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: a sequence never filed is retired by its signed act, and its number is freed > after a retirement, the same signature is answered "already retired", and it stays in force 63ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence that is sent, the agency holds it 46ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence that is acknowledged, the agency holds it 31ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence whose send is in flight 30ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence with a production send bound to it, and one bound with no environment named 70ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > P-108 2(a): a production attempt the sequence records as blocked before any connection does not keep it 51ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > P-108 2(a): a blocked record that names no signature proves nothing, so the attempt still keeps it 28ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence recorded as transmitted to production before sends carried a binding 31ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > 3b fails closed: its number sent to production as a package for this application keeps it 68ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > 3b admits a package sent to the test environment, one of another application, and one of another region 45ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > a later sequence still in use is retired first; one the agency may hold keeps the number for good 67ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > 5b: a filed twin of the same number read from compiles keeps it 46ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence that holds an IND record recorded as filed in it 37ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the signature, and what a refusal does to it > refuses a signature for another act, of another meaning, without the statement, or with it changed by one character 68ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the signature, and what a refusal does to it > refuses the sequence's creator, and a signature with no reason 26ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the signature, and what a refusal does to it > P-23: a refused retirement voids its signature, and that signature is then refused as void 33ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the signature, and what a refusal does to it > a fact that cannot be read is "could not be checked", never a pass 24ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the signature, and what a refusal does to it > the facts are judged again under the lock: a production send recorded after the first read refuses it 40ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a retirable sequence: cleared, its test sends by UTC day, its number freed, the statement to sign; nothing changes 11ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > the sequence's creator is told another person signs it 9ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a sequence something keeps is refused in the words the act refuses it with, before the creator rule 34ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a legacy duplicate is answered with its number not freed 9ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a retired sequence is answered with when and by whom it was retired 38ms
+ ✓ server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > no tool is declared to retire a sequence 2ms
+ ✓ server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > no AnA or MCP source reaches the retirement 76ms
+ ✓ server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > the pattern does not take the QMS document's retirement for this one 1ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > refuses a removal with no reason, and removes nothing 35ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > passes the trimmed reason to the service and answers 204 21ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > removing a leaf takes its reason > says on a header when the removal returned a Validated sequence to Assembling 5ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > answers the refusal with 200, from the step’s own gates 10ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a finding disposition precheck the finding and the disposition it names (P-35) 4ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a retirement precheck (P-86) to the retirement's own rule, with nothing else from the body 3ms
+ ✓ server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > refuses an unknown step 3ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action operates a screen the navigation registry knows 3ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every action id is namespaced to its surface and unique 4ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > registry totality > every enum param has non-empty values and required params have descriptions 4ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > no registered action names governed work 5ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > REFUSES a governed id — the check shown failing on what it exists to catch 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > ungoverned view verbs pass the pattern (no false positives on the registry style) 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > the governance boundary > deep-research actions carry no credit-spend pre-arm params 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > unknown action → typed refusal listing the valid ids 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > missing required param → refusal naming the param 1ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > out-of-enum param → refusal naming the legal values 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > a sound request → the registry directive, params stringified and filtered 0ms
+ ✓ shared/navigation/__tests__/surface-actions.test.ts > resolveSurfaceAction — fail closed > discovery filters by surface 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retired sequence: when, by whom, with what meaning and why; kept as history 7ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retirer the record no longer names is said so, not left blank 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a removed sequence with no retirement record is not in use, and nothing more is claimed 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > another organisation's id, or none at all, keeps the existing refusal 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a refusal other than not-found is not looked up as a retirement 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retirement record that cannot be read is a refusal, never "not in use" 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_list_sequences lists the sequences in use > says so when there is none, and points to the status tool for a retired one 1ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > lets a sequence go when nothing keeps it 2ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > judges its own record before the sequences after it, and those before a twin read from compiles 1ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > names a later sequence that is kept, and why, never telling anyone to retire what cannot be 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > dates every send it names as a UTC day, and treats a send with no environment as a production one 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > retirementRefusal: what keeps a sequence, first reason first > counts IND records by kind 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the statement names every route, the platform's own package route among them 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the payload carries notFiledElsewhere and the statement, word for word 1ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > what the signer states, and what the signature must carry > the meaning is responsibility, and only it 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > who may sign the retirement, as the precheck tells it (C2) > the creator is told another person signs it; an independent signer is not stopped 1ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > who may sign the retirement, as the precheck tells it (C2) > a creator who cannot be resolved, or a check that failed, is said so, never taken as independence or as authorship 0ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-rules.test.ts > the audit row's sealed instant > an unreadable instant is refused before anything is read or written 2ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > refuses a body without the signature, and retires nothing 51ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > refuses an id that is not a sequence id 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > hands only the signature to the service, with the session context, and answers the record 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > SEQUENCE_NOT_RETIRABLE is 409, with the sentence 4ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > GOVERNED_REQUIRED is 403, with the sentence 3ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > FORBIDDEN is 403, with the sentence 5ms
+ ✓ server/routes/__tests__/submissions-sequence-retire.test.ts > the retire door > INVALID_STATE is 409, with the sentence 3ms
+ Test Files  7 passed (7)
+      Tests  73 passed (73)
