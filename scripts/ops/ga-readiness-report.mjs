@@ -165,7 +165,7 @@ const RECOGNIZED_STANDARDS_FILE = 'fda-recognized-consensus-standards.json';
 // server/services/submission-gateways/index.ts — REGISTRY, and each gateway's
 // credential preflight (the vars whose absence throws CredentialError).
 const GATEWAY_CREDENTIALS = [
-  { key: 'fda:esg', label: 'FDA ESG (AS2/SFTP)', vars: ['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH'] },
+  { key: 'fda:esg', label: 'FDA ESG (AS2)', vars: ['FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH'] },
   { key: 'ema:cesp', label: 'EMA CESP', vars: ['EMA_CESP_URL', 'EMA_CESP_CLIENT_ID', 'EMA_CESP_CLIENT_SECRET', 'EMA_CESP_ORG_ID'] },
   { key: 'ema:eudamed', label: 'EUDAMED', vars: ['EUDAMED_URL', 'EUDAMED_BEARER'] },
   // 2026-10-05 (g-pmda-transmit-unverified): the PMDA gateway reads no

@@ -1,0 +1,10 @@
+MUTATION 14-route-limit-not-judged in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T01:54:55.489583Z): replaced [  if (!gatewayRegion) return { gaps: [], size: null };] with [  if (gatewayRegion || !gatewayRegion) return { gaps: [], size: null };]
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed 231ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > one byte over CESP’s 600 MiB is refused 120ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > at exactly CESP’s 600 MiB it is not refused on size 110ms
+      Tests  2 failed | 1 passed | 12 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over CESP’s 600 MiB is refused by the guard’s own sentence, and nothing is signed
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > one byte over CESP’s 600 MiB is refused
+restored sha256 8d0c5c54a65407fc38d39f5383157c6a208d3755bf6cc9e407541ccc98f1f17a (expected 8d0c5c54a65407fc38d39f5383157c6a208d3755bf6cc9e407541ccc98f1f17a)

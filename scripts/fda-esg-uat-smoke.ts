@@ -182,9 +182,6 @@ interface EnvSet {
   certPath?:        string;
   keyPath?:         string;
   fdaCertPath?:     string;
-  sftpHost?:        string;
-  sftpUser?:        string;
-  sftpKeyPath?:     string;
   missing:          string[];
 }
 
@@ -200,9 +197,6 @@ function readEnvSet(prod: boolean): EnvSet {
     certPath:     e('CERT_PATH'),
     keyPath:      e('KEY_PATH'),
     fdaCertPath:  e('FDA_CERT_PATH'),
-    sftpHost:     e('SFTP_HOST'),
-    sftpUser:     e('SFTP_USER'),
-    sftpKeyPath:  e('SFTP_KEY_PATH'),
     missing:      [],
   };
   if (!set.endpointUrl) set.missing.push(prefix + 'URL');
@@ -288,9 +282,6 @@ async function main(): Promise<void> {
   row(envSet.prefix + 'CERT_PATH',     envSet.certPath      ?? '<unset>', envSet.certPath      ? 'ok' : 'err');
   row(envSet.prefix + 'KEY_PATH',      envSet.keyPath       ?? '<unset>', envSet.keyPath       ? 'ok' : 'err');
   row(envSet.prefix + 'FDA_CERT_PATH', envSet.fdaCertPath   ?? '<unset>', envSet.fdaCertPath   ? 'ok' : 'err');
-  row(envSet.prefix + 'SFTP_HOST',     envSet.sftpHost      ?? '<unset; SFTP fallback unavailable>', envSet.sftpHost     ? 'ok' : 'warn');
-  row(envSet.prefix + 'SFTP_USER',     envSet.sftpUser      ?? '<unset>', envSet.sftpUser     ? 'ok' : 'warn');
-  row(envSet.prefix + 'SFTP_KEY_PATH', envSet.sftpKeyPath   ?? '<unset>', envSet.sftpKeyPath  ? 'ok' : 'warn');
 
   if (envSet.missing.length > 0) {
     process.stdout.write(err(`\nMissing required env vars: ${envSet.missing.join(', ')}\n`));
@@ -381,9 +372,6 @@ async function main(): Promise<void> {
     process.stdout.write(err(`Missing required --transmit args: ${missing.map((m) => '--' + String(m).replace(/[A-Z]/g, (l) => '-' + l.toLowerCase())).join(', ')}\n`));
     process.exit(1);
   }
-  if (!args.application || !args.sequence) {
-    process.stdout.write(warn('--application and --sequence not set; SFTP path will fall back to placeholders.\n'));
-  }
 
   let FdaEsgGateway: typeof import('../server/services/submission-gateways/fda-esg').FdaEsgGateway;
   try {
@@ -444,12 +432,6 @@ async function main(): Promise<void> {
       result.transport === 'as2' && result.status === 'received' ? 'ok' : 'warn');
     row('ack2 (virus + structure check)', '<async; observe in WebTrader>', 'warn');
     row('ack3 (center acceptance)',       '<async; observe in WebTrader>', 'warn');
-
-    if (result.transport === 'sftp') {
-      process.stdout.write('\n');
-      process.stdout.write(warn('  SFTP path: status is honestly in_transit. FDA picks the file up async\n'));
-      process.stdout.write(warn('  and emits ack1/2/3 via /outgoing/. See runbook §8.\n'));
-    }
 
     process.exit(0);
   } catch (e: unknown) {

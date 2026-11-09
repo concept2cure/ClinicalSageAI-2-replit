@@ -1,9 +1,9 @@
 /**
- * FDA Electronic Submissions Gateway (ESG) — AS2 over HTTPS + SFTP fallback.
+ * FDA Electronic Submissions Gateway (ESG) — AS2 over HTTPS.
  *
  * AS2 (RFC 4130) transport scaffolding over mTLS. It makes a REAL network call
  * to the configured FDA AS2 endpoint (no simulation), credential-gated and
- * fail-closed. Two transports:
+ * fail-closed. Transports:
  *
  *   1. AS2 over HTTPS (preferred for IND/NDA/BLA, 510(k), DMF):
  *      - mTLS handshake against the FDA AS2 endpoint
@@ -11,9 +11,12 @@
  *      - Synchronous MDN (Message Disposition Notification) returned in
  *        the HTTP response body, persisted verbatim (mdnRaw)
  *
- *   2. SFTP (used for very large submissions + by orgs without AS2):
- *      - SSH key auth against esg-sftp.fda.gov, PUT to /incoming/…
- *      - FDA picks up and emits ack1/ack2/ack3 over /outgoing/ later
+ *   An SFTP branch took every bundle over 1 GiB until 2026-11-09. No FDA source
+ *   on file documents an SFTP channel, and its module was never installed, so
+ *   every such send was refused after the signature. Founder decision P-93
+ *   retired it: an FDA package over 1 GiB is out of scope for launch, refused
+ *   before anyone signs (sequenceTransmitReadiness) and, for every caller that
+ *   reaches this class, in `transmit` before any transmittal row.
  *
  * AS2 messages are CMS-signed and AES-256-CBC encrypted with OpenSSL. The
  * synchronous receipt must verify against the pinned agency MDN certificate,
@@ -21,10 +24,9 @@
  * FDA AS2 User Guide v2.2 (July 2026) supports AES-128/192/256 and excludes
  * AES-256-GCM; the chosen CBC cipher is within that documented set. Engineering
  * checks do not qualify an account: FDA UAT and agency acceptance remain required.
- * OpenSSL is an explicit runtime dependency. Large-bundle SFTP still requires
- * the optional ssh2-sftp-client dependency and its own account credentials.
+ * OpenSSL is an explicit runtime dependency.
  *
- *   3. ESG NextGen REST API (`FDA_ESG_TRANSPORT=rest`; W5 2026-09-20, runbook
+ *   2. ESG NextGen REST API (`FDA_ESG_TRANSPORT=rest`; W5 2026-09-20, runbook
  *      B16 / competitive delta §3): FDA retired WebTrader in April 2025 and
  *      offers a REST API beside AS2. The adapter resolves its credentials from
  *      the environment and sits behind the same SubmissionGateway interface,
@@ -39,10 +41,9 @@
  * Production reads `FDA_ESG_*`; staging reads `FDA_ESG_STAGING_*` (same suffixes).
  *
  *   FDA_ESG_TRANSPORT        'as2' (default) | 'rest'. Which transport
- *                            `transmit` uses; bundles > 1 GB fall to SFTP on the
- *                            AS2 path. Any other value is refused as a
+ *                            `transmit` uses. Any other value is refused as a
  *                            configuration error.
- *   AS2 / SFTP path:
+ *   AS2 path:
  *   FDA_ESG_URL              FDA AS2 endpoint (https://…)
  *   FDA_ESG_AS2_FROM         Sponsor AS2 id assigned by FDA
  *   FDA_ESG_AS2_TO           FDA's AS2 identifier for this environment, as
@@ -55,7 +56,6 @@
  *   FDA_ESG_FDA_CERT_PATH    FDA AS2 recipient encryption certificate (PEM path)
  *   FDA_ESG_MDN_CERT_PATH    pinned MDN signing certificate, if different
  *   FDA_ESG_TLS_CA_PATH      optional TLS CA override (otherwise system trust)
- *   FDA_ESG_SFTP_HOST / FDA_ESG_SFTP_USER / FDA_ESG_SFTP_KEY_PATH  SFTP fallback
  *   REST (NextGen) path:
  *   FDA_ESG_REST_URL         ESG NextGen API base URL (https://…)
  *   FDA_ESG_REST_CLIENT_ID   API client id issued with the ESG NextGen account
@@ -75,12 +75,11 @@
 
 import { promises as fs } from 'fs';
 import { createHash, randomUUID } from 'crypto';
-import { createRequire } from 'node:module';
 import { pool } from '../../db';
 import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
-import { usableIdentifier } from '../ectd/regulatory-identifiers';
+import { launchSequenceSizeRefusal } from '../ectd/ectd-regional-rules';
 import {
   attemptDelivery, buildAs2Headers, classifyVerifiedAs2Delivery, postAs2, type DeliveryOutcome, type DeliveryAttempt, type As2Response,
 } from './as2-transport';
@@ -90,7 +89,6 @@ import {
   resolveToRegistryEntry,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
-  requiredAgencyMetadata,
   ValidationError
 } from './types';
 import { createScopedLogger } from '../../utils/logger';
@@ -108,9 +106,6 @@ interface FdaEsgCredentials {
   fdaCertPem:    string;       // FDA's AS2 public cert (encrypts AS2 to FDA)
   mdnCertPem?: string;         // FDA's pinned MDN signing cert, when distinct
   tlsCaPem?: string;           // Optional TLS CA override; AS2 cert is not a TLS CA
-  sftpHost?:     string;
-  sftpUser?:     string;
-  sftpKeyPem?:   string;
 }
 
 function envFor(env: 'staging' | 'production', key: string): string | undefined {
@@ -224,11 +219,6 @@ async function loadFdaCredentials(
     as2From: as2From!,
     as2To: as2To!,
     clientCertPem, clientKeyPem, fdaCertPem,
-    sftpHost: envFor(environment, 'SFTP_HOST'),
-    sftpUser: envFor(environment, 'SFTP_USER'),
-    sftpKeyPem: envFor(environment, 'SFTP_KEY_PATH')
-      ? await fs.readFile(envFor(environment, 'SFTP_KEY_PATH')!, 'utf8')
-      : undefined,
   };
 }
 
@@ -237,13 +227,11 @@ async function loadFdaCredentials(
 export type FdaEsgConfiguredTransport = 'as2' | 'rest';
 
 /** Engineering capability only. Account registration and agency UAT are separate facts. */
-export function fdaEsgTransportImplementation(environment: 'staging' | 'production'): { transport: FdaEsgConfiguredTransport; implemented: boolean; reason: string; sftpAvailable: boolean; missingDependencies: string[] } {
+export function fdaEsgTransportImplementation(environment: 'staging' | 'production'): { transport: FdaEsgConfiguredTransport; implemented: boolean; reason: string; missingDependencies: string[] } {
   const transport = resolveFdaEsgTransport(environment);
-  let sftpAvailable = false;
-  try { createRequire(import.meta.url).resolve('ssh2-sftp-client'); sftpAvailable = true; } catch { /* Optional large-bundle fallback is absent. */ }
   const cmsAvailable = as2CmsAvailable();
-  return { transport, implemented: transport === 'as2' && cmsAvailable, sftpAvailable,
-    missingDependencies: [...(!cmsAvailable ? ['openssl'] : []), ...(!sftpAvailable ? ['ssh2-sftp-client (large-bundle SFTP fallback)'] : [])],
+  return { transport, implemented: transport === 'as2' && cmsAvailable,
+    missingDependencies: !cmsAvailable ? ['openssl'] : [],
     reason: transport === 'rest' ? 'The FDA NextGen REST wire contract has not been verified; transmit is refused.' : cmsAvailable ? 'CMS signing/encryption and pinned MDN verification are implemented. FDA account UAT and agency acceptance remain unverified.' : 'AS2 CMS requires OpenSSL, which is unavailable in this runtime.',
   };
 }
@@ -333,34 +321,9 @@ function transmitViaNextGenRest(
    receipt interpretation live in ./as2-transport.ts. The E2B(R3) ICSR caller
    uses these same primitives. Agency UAT remains separately unverified. */
 
-/**
- * The agency application number the SFTP path is filed under: it names the
- * /incoming/<application>/<sequence>/ directory the PUT writes to and is part
- * of the stored transmission id. Held to the repo's one identifier rule
- * (ectd/regulatory-identifiers) — it was only trimmed, so '../', '/' or a
- * space reached the destination path (2026-10-01, W5/D7, sweep F18). Refused
- * when absent, unusable or a placeholder. A pure check of the request, made
- * before the transmittal row and any connection, so it carries the proof that
- * nothing was sent.
- */
-function sftpApplicationId(req: GatewayTransmitRequest): string {
-  const applicationId = usableIdentifier('applicationNumber', req.metadata?.applicationId);
-  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
-    throw new ValidationError(
-      'FDA ESG SFTP transmit requires the agency application number (a letter or digit, then letters, digits, ".", "_" or "-"); nothing is sent without it.',
-      [],
-      NOTHING_TRANSMITTED,
-    );
-  }
-  return applicationId;
-}
-
 /* ─── Transmittal helpers ────────────────────────────────────────── */
 
-async function createTransmittalRow(
-  req: GatewayTransmitRequest,
-  transport: 'as2' | 'sftp',
-): Promise<number> {
+async function createTransmittalRow(req: GatewayTransmitRequest): Promise<number> {
   const binding = req.dispatchBinding;
   if (binding && (binding.organizationId !== req.organizationId || binding.bundleSha256 !== req.bundle.sha256 || !Number.isSafeInteger(binding.sequenceId) || binding.sequenceId <= 0 || typeof binding.attemptId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(binding.attemptId) || req.authorization?.kind !== 'governed-signature' || req.authorization.signatureActionId !== binding.signatureActionId)) throw new ValidationError('The internal sequence dispatch binding does not identify this authorized bundle.', [], NOTHING_TRANSMITTED);
   const { rows } = await pool.query<{ id: number }>(
@@ -372,7 +335,7 @@ async function createTransmittalRow(
      RETURNING id`,
     [
       req.organizationId, req.programId, req.packageId, req.bundle.format,
-      req.submissionType ?? null, transport, req.bundle.path,
+      req.submissionType ?? null, 'as2', req.bundle.path,
       req.bundle.sha256, req.bundle.sizeBytes, req.userId,
       // These are server-owned receipt proofs, never caller-supplied metadata.
       JSON.stringify({ ...(req.metadata ?? {}), dispatchBinding: binding ?? undefined, as2: undefined, as2Receipt: undefined, as2ReceiptHistory: [] }),
@@ -618,72 +581,6 @@ async function recordTransmitFailure(
   return err;
 }
 
-/* ─── SFTP fallback ──────────────────────────────────────────────── */
-
-async function transmitViaSftp(
-  creds: FdaEsgCredentials,
-  environment: 'staging' | 'production',
-  bundlePath: string,
-  applicationId: string,
-  sequence: string,
-): Promise<{ transmissionId: string; transport: 'sftp' }> {
-  if (!creds.sftpHost || !creds.sftpUser || !creds.sftpKeyPem) {
-    // 2026-09-23 (W5/D7, MDN close): named 'production' and the non-STAGING
-    // variables whatever environment the credentials were resolved for, so a
-    // staging operator was told to set FDA_ESG_SFTP_*. `environment` is the
-    // one loadFdaCredentials resolved `creds` for.
-    throw new CredentialError(
-      'fda', 'esg', environment,
-      [envVarName(environment, 'SFTP_HOST'), envVarName(environment, 'SFTP_USER'), envVarName(environment, 'SFTP_KEY_PATH')],
-    );
-  }
-  /* SFTP transport uses `ssh2-sftp-client` — kept as a dynamic import so
-     the package is optional (orgs that only use AS2 don't pay the
-     install). Throws TransportError when the package is missing. The
-     module name is built at runtime so TS doesn't try to resolve type
-     defs that may not be installed in this environment. */
-  let sftpModule: { default: new () => unknown };
-  try {
-    const moduleName = 'ssh2-sftp-client';
-    sftpModule = await import(/* @vite-ignore */ moduleName) as { default: new () => unknown };
-  } catch {
-    // 2026-09-23 (W5/D7, MDN close; the round-3 skeptic's deferred change):
-    // refused before any connection is opened, so it carries the typed
-    // transmitted:false proof and refusedBeforeWire releases the caller's
-    // claim; recordTransmitFailure still records the row rejected/transport.
-    // The connect()/put() failure below must NOT carry it: a partial upload is
-    // possible there.
-    throw new TransportError(
-      "FDA ESG SFTP transport requires 'ssh2-sftp-client' package; nothing was sent. " +
-      "Install it (npm install ssh2-sftp-client) and retry.",
-      undefined,
-      NOTHING_TRANSMITTED,
-    );
-  }
-  const Client = sftpModule.default as new () => {
-    connect: (opts: Record<string, unknown>) => Promise<void>;
-    put: (src: string, dest: string) => Promise<void>;
-    end: () => Promise<void>;
-  };
-  const client = new Client();
-  try {
-    await client.connect({
-      host:       creds.sftpHost,
-      port:       22,
-      username:   creds.sftpUser,
-      privateKey: creds.sftpKeyPem,
-    });
-    const transmissionId = `sftp-${applicationId}-${sequence}-${Date.now()}`;
-    const remotePath = `/incoming/${applicationId}/${sequence}/${transmissionId}.zip`;
-    await client.put(bundlePath, remotePath);
-    return { transmissionId, transport: 'sftp' };
-  } catch (err: unknown) {
-    throw new TransportError(`FDA ESG SFTP transmit failed: ${err instanceof Error ? err.message : String(err)}`, err);
-  } finally {
-    await client.end().catch(() => undefined);
-  }
-}
-
 /* ─── Gateway implementation ─────────────────────────────────────── */
 
 async function writeAs2Metadata(transmittalId: number, organizationId: number, key: 'as2' | 'as2Receipt', value: Record<string, unknown>): Promise<void> {
@@ -700,9 +597,8 @@ async function writeAs2Metadata(transmittalId: number, organizationId: number, k
 export class FdaEsgGateway implements SubmissionGateway {
   readonly region    = 'fda' as const;
   readonly gateway   = 'esg' as const;
-  /* `transport` here is the default; per-transmit selection is dynamic
-     based on bundle size and credential availability (large bundles
-     prefer SFTP; AS2 when configured). */
+  /* AS2 is the one transport this class sends on (FDA_ESG_TRANSPORT=rest is
+     refused before any row; see transmitViaNextGenRest). */
   readonly transport = 'as2' as const;
 
   async isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean> {
@@ -741,22 +637,21 @@ export class FdaEsgGateway implements SubmissionGateway {
 
     /* Operator-selected transport. When FDA_ESG_TRANSPORT=rest the NextGen
        adapter refuses with a typed error before a transmittal row exists — see
-       transmitViaNextGenRest; otherwise this is a no-op and AS2/SFTP follows. */
+       transmitViaNextGenRest; otherwise this is a no-op and AS2 follows. */
     transmitViaNextGenRest(req.environment);
 
-    /* Bundles larger than 1 GB go via SFTP; smaller can use AS2. The
-       FDA ESG AS2 path has a documented 1 GB message limit. */
-    const useSftp = normalizedReq.bundle.sizeBytes > 1_073_741_824;
-    const transport: 'as2' | 'sftp' = useSftp ? 'sftp' : 'as2';
-    // The SFTP path is filed under /incoming/<application>/<sequence>/, so both
-    // are required there; the AS2 envelope carries neither (an eSTAR has no
-    // eCTD sequence). Refuse before a transmittal row exists: a refused
-    // request is not a transmittal. Checked once, here, so no throw site
-    // after the row carries the proof that nothing was sent.
-    const sftpTarget = transport === 'sftp'
-      ? { applicationId: sftpApplicationId(normalizedReq), sequence: requiredAgencyMetadata(normalizedReq).sequenceNumber }
-      : null;
-    const transmittalId = await createTransmittalRow(normalizedReq, transport);
+    /* P-93 (founder, 2026-11-02): an FDA package over 1 GiB is out of scope for
+       launch. It replaces, in place, the switch that sent such a bundle to the
+       retired SFTP branch. Refused before a transmittal row exists, with the
+       proof that nothing was sent, so every caller of this class (the sequence
+       spine, the package spine, AnA's 510(k) transmit, an unguarded script)
+       is refused the same way and AS2 is never handed more than 1 GiB. The
+       sequence spine refuses earlier, before anyone signs. */
+    const overCeiling = launchSequenceSizeRefusal(normalizedReq.bundle.sizeBytes);
+    if (overCeiling) {
+      throw new ValidationError(`Refusing to transmit to FDA: ${overCeiling}. Nothing was sent.`, [], NOTHING_TRANSMITTED);
+    }
+    const transmittalId = await createTransmittalRow(normalizedReq);
     /* 2026-09-23 (W5/D7, round-3 review, third pass): what has left for FDA,
        once FDA may hold it. The catch below records any failure after that
        point (a database write after FDA answered) as delivered-unconfirmed
@@ -771,41 +666,6 @@ export class FdaEsgGateway implements SubmissionGateway {
       const account = req.account ?? await resolveGatewayAccount(pool, req.organizationId, 'fda', 'esg', req.environment);
       const creds = await credentialsFor(req.organizationId, req.environment, account);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
-
-      if (sftpTarget) {
-        // The application number and sequence name the /incoming/ path FDA
-        // files the bundle under. These defaulted to `APP-<packageId>` and
-        // '0001', so a bundle with no application number was deposited under
-        // a name FDA could not route.
-        // Verify the on-disk bytes match the signed descriptor before SFTP
-        // streams the file by path.
-        await readVerifiedBundle(req.bundle);
-        const result = await transmitViaSftp(creds, req.environment, req.bundle.path, sftpTarget.applicationId, sftpTarget.sequence);
-        sent = {
-          delivery: `The bundle was deposited over SFTP (${result.transmissionId})`,
-          transmissionId: result.transmissionId, errorClass: 'transport',
-        };
-        // An SFTP PUT only deposits the bundle in FDA's /incoming/ directory —
-        // it is NOT an acknowledgment. FDA picks the file up asynchronously and
-        // emits ack1/ack2/ack3 over /outgoing/ later (see the ack notes at the
-        // top of this file). The honest post-upload state is therefore
-        // `in_transit` with NO ack timestamp; marking it `received` with an
-        // ackReceivedAt of `now` would fabricate an FDA acknowledgment that
-        // never arrived. checkStatus() reconciles the real ack once it lands.
-        await updateTransmittal(transmittalId, {
-          status: 'in_transit',
-          transmissionId: result.transmissionId,
-        });
-        return {
-          transmittalId,
-          transmissionId: result.transmissionId,
-          status: 'in_transit',
-          transport: 'sftp',
-          httpStatus: null,
-          ackReceivedAt: null,
-          message: `FDA ESG SFTP upload complete; awaiting FDA receipt. Tracking: ${result.transmissionId}.`,
-        };
-      }
 
       /* AS2 transmit. */
       const body = await readVerifiedBundle(req.bundle);
@@ -869,11 +729,10 @@ export class FdaEsgGateway implements SubmissionGateway {
   }
 
   async checkStatus(transmittalId: number): Promise<GatewayStatusResult> {
-    /* FDA ESG status polling — the gateway emits ack1/ack2/ack3 via
-       async MDN or via SFTP /outgoing/<applicant>/. Real implementation
-       polls the SFTP /outgoing/ directory or subscribes to the AS2
-       async-MDN webhook. Until the credentials are wired, return the
-       last-known row state from our DB. */
+    /* FDA ESG status: the row's last recorded state (`source: 'stored'`).
+       FDA's ack1/ack2/ack3 reach the record as verified AS2 receipts
+       (downloadAcknowledgment, fda-esg-receipts.ts); nothing here polls the
+       agency. */
     const { rows } = await pool.query<{
       transmission_id: string | null; status: string; ack_received_at: Date | null;
     }>(
@@ -899,9 +758,7 @@ export class FdaEsgGateway implements SubmissionGateway {
        raw bytes verbatim so the auditor sees what FDA actually said
        (§11.10(e) audit trail). For pre-migration rows where mdn_raw is NULL,
        fall back to a synthesised text summary so the kit's UI still has
-       something to render. A future async-MDN poller can fetch
-       /outgoing/<applicant>/ over SFTP and back-fill mdn_raw for rows whose
-       MDN arrived asynchronously. */
+       something to render. */
     const { rows } = await pool.query<{
       transmission_id: string; status: string; ack_received_at: Date | null;
       http_status: number | null;

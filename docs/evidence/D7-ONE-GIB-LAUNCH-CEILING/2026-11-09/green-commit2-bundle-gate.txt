@@ -1,0 +1,13 @@
+# GREEN (commit 2): the gate after RUNTIME_EXCEPTIONS drops ssh2-sftp-client, on the rebuilt bundle, and its selftest, 2026-11-09T01:06:50Z
+[server-bundle-prod-imports] ok — dist/index.js: all 64 packages imported at load time are shipped by npm ci --omit=dev; 20 imported at run time, 1 of them not shipped, each by written exception:
+  citation-js — citation-js (dynamic-import): server/integrations/citationjs/client.ts — optional citation normalization. Absence logs "Citation.js normalization unavailable" and returns no normalization, never a made-up one.
+exit=0
+ok   — a written RUN-time exception imported at LOAD time: exit 1, 1 finding(s)
+
+[server-bundle-prod-imports:selftest] the gate fails on all 5 cuts and passes the intact bundle.
+exit=0
+ssh2-sftp-client occurrences in dist/index.js: 0
+package.json and package-lock.json unchanged
+concept2cure-riai@1.0.0 /home/user/ClinicalSageAI-2-replit
+`-- (empty)
+
