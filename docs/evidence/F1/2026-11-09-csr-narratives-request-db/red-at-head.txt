@@ -1,0 +1,8 @@
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > the narrative reads run on the request connection, never the shared pool > reads status, QC and text through requestDb and touches the shared Drizzle instance not at all 25ms
+   → expected 12 to be +0 // Object.is equality
+ × server/routes/__tests__/csr-jobs-narratives.pglite.test.ts > the narrative reads run on the request connection, never the shared pool > refuses a read with no request connection instead of falling back to the shared pool 11ms
+   → expected 200 to be 500 // Object.is equality
+      Tests  2 failed | 16 passed (18)
+    unclassified              : 0
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 210. New tenant-facing routes must use requestDb(req):
+  server/routes/csr-jobs-narratives.ts
