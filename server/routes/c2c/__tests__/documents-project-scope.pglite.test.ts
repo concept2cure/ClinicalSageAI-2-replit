@@ -345,7 +345,7 @@ describe('a submit takes a sequence as evidence only once the agency has receive
         [c.id, c.dispatchStatus, c.number]);
     }
     await h.pg.query(`INSERT INTO ectd_sequences VALUES (35, 1, 'dispatched', 'acknowledged', '0005', 'us', NULL)`);
-    initialStatus = (await documentState('doc_file'))[0].status;
+    initialStatus = ((await documentState('doc_file'))[0] as { status: string }).status;
   });
   // Each case starts from the document as it was made, so no case reads another's outcome.
   let initialStatus = '';
@@ -368,7 +368,7 @@ describe('a submit takes a sequence as evidence only once the agency has receive
     const res = await submitWith(35);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ status: 'submitted', filing: { sequence: { sequenceId: 35, dispatchStatus: 'acknowledged' } } });
-    expect((await documentState('doc_file'))[0].status).toBe('submitted');
+    expect(((await documentState('doc_file'))[0] as { status: string }).status).toBe('submitted');
     expect(h.ledger).toEqual(['document:doc_file']);
   });
 });
