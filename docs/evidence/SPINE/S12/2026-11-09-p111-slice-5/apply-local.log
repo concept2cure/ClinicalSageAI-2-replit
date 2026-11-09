@@ -1,0 +1,2 @@
+[{"column_name":"parent_task_id","data_type":"integer"}]
+[{"conname":"unified_tasks_parent_not_self"},{"conname":"unified_tasks_parent_task_id_fk"}]

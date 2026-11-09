@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-management-parent-task.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-parent-task.test.ts
+{
+  "timestamp": "2026-11-09T12:51:53.668Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > asks the one decider on the request's transaction, with the admitted project and the body's parent 50ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ × server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > refuses a parent the decider refuses: 409 in its own words, nothing written 14ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > never asks for a task with no parent, and refuses a malformed parent before anything is read 21ms
+   → expected 200 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > asks the one decider on the request's transaction, with the admitted project and the body's parent
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ server/routes/__tests__/task-management-parent-task.test.ts:35:24
+     33|     const res = await request(makeApp('member', 7)).post(`${BASE}/task…
+     34|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+     35|     expect(decider.fn).toHaveBeenCalledOnce();
+       |                        ^
+     36|     const [, input] = decider.fn.mock.calls[0] as [unknown, Record<str…
+     37|     expect(input).toEqual({ organizationId: 2, projectId: 14, parentTa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > refuses a parent the decider refuses: 409 in its own words, nothing written
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/task-management-parent-task.test.ts:46:24
+     44|       'A subtask goes under a task of the same project that is not its…
+     45|     const res = await request(makeApp('member', 7)).post(`${BASE}/task…
+     46|     expect(res.status).toBe(409);
+       |                        ^
+     47|     expect(JSON.stringify(res.body)).toContain('PARENT_TASK_REFUSED');
+     48|     expect(wrote()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > never asks for a task with no parent, and refuses a malformed parent before anything is read
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/task-management-parent-task.test.ts:56:119
+     54|     expect((await request(makeApp('member', 7)).post(`${BASE}/tasks`).…
+     55|     expect(decider.fn).not.toHaveBeenCalled();
+     56|     expect((await request(makeApp('member', 7)).post(`${BASE}/tasks`).…
+       |                                                                                                                       ^
+     57|     expect(decider.fn).not.toHaveBeenCalled();
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  12:51:52
+   Duration  2.18s (transform 1.20s, setup 63ms, import 1.86s, tests 88ms, environment 0ms)
+

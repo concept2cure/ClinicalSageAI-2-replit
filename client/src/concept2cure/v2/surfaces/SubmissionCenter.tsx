@@ -47,7 +47,7 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { assessmentStateFor } from '../assessmentState';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState, ProjectBack } from '../dataConnect';
-import { EsignModal } from '../../_shared/components/EsignModal';
+import { EsignModal, type EsignModalProps } from '../../_shared/components/EsignModal';
 import { FiledBaselineSlot, nextAfterFiled, numberingKnown, useFiledBaseline, type FiledBaselineView } from './FiledElsewhereBaseline';
 import { useShellProject, shellProgramId, type ShellProject } from '../shellProject';
 import { isUsInd, notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
@@ -70,19 +70,24 @@ import {
   ShadowReviewWorkspace,
   ValidationWorkspace,
   VerdictNote,
+  blockerForDisplay,
   clause,
   environmentWords,
   mutateVerbatim,
+  retirementOf,
+  settlementOf,
   TEST_SEND_NOT_A_FILING,
   type GovernedKind,
   type GovernedPrecheck,
+  type HeldSendOverview,
+  type SettlementRequest,
   type Notice,
   type SeqRow,
   type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
 import { NewSubmissionForm } from './NewSubmissionForm';
-import { gatewayLabel } from '../gatewayLabels';
+import { gatewayLabel, heldSendDay } from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
 import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
 import { useSurfaceAvailable } from '../surfaceAvailable';
@@ -295,24 +300,171 @@ function NextSequenceControl({ sub, rows, baseline, type, onType, busy, onStart 
         onChange={(e) => onType(e.target.value)}>
         {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
-      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
-        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      {/* Not the view's primary (the header's "New submission" is, D0 §7 check 2), and it asks nothing of AnA, so it
+          carries no spark (D0 §8.1; the coordinating session, 2026-11-09). The hairline secondary, not the bare `.btn`,
+          which has no border and read as text in the running app. */}
+      <button type="button" className="btn ghost" disabled={busy} onClick={() => onStart(next)}>
+        {busy ? 'Creating…' : `Start sequence ${next}`}
       </button>
     </div>
   );
 }
 
 /** A governed step in flight: what is signed, for a transmit where it goes, for
- *  a Shadow Review waiver (P-34) the failed run it answers, and for a finding
- *  disposition (P-35) the finding and how it is closed. */
-type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest };
+ *  a Shadow Review waiver (P-34) the failed run it answers, for a finding
+ *  disposition (P-35) the finding and how it is closed, and for a retirement
+ *  (P-86) the statement the server gave, signed word for word. */
+type GovernedFlow = {
+  seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest; statement?: string;
+  /** A held send's settlement (P-92): the way and its ground, and the server's answer it is signed over. */
+  settlement?: SettlementRequest; heldSend?: HeldSendOverview;
+};
 const GOVERNED_LABEL: Record<GovernedKind, string> = {
   freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit', 'shadow-waiver': 'Shadow Review waiver',
-  'shadow-finding-disposition': 'Closing a critical finding',
+  'shadow-finding-disposition': 'Closing a critical finding', retire: 'Retirement', 'held-send-settlement': 'Settling a held send',
 };
 const GOVERNED_PAST: Record<GovernedKind, string> = {
   freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted', 'shadow-waiver': 'waived', 'shadow-finding-disposition': 'closed',
+  retire: 'retired', 'held-send-settlement': 'settled',
 };
+/** What a governed step needs beyond its kind: where a transmit goes, the run a waiver answers (P-34), the finding a
+ *  disposition closes (P-35), or the way a held send is settled (P-92). */
+type GovernedRequest = { transmit?: TransmitRequest; waiver?: WaiverRequest; disposition?: DispositionRequest; settlement?: SettlementRequest };
+/** A cleared answer that carried no statement: nothing can be signed over it. */
+const NO_STATEMENT = 'Whether the server would accept this could not be checked — the answer carried no statement to sign. Nothing was signed.';
+const STATEMENT_CHANGED = 'What you would state changed since this dialog opened. Nothing was signed; close it and open it again.';
+
+/** What a settlement's precheck asks: the way and its ground. */
+function settlementBody(r: SettlementRequest | undefined): Record<string, string> {
+  if (!r) return {};
+  return { outcome: r.outcome, evidenceKind: r.evidenceKind, ...(r.evidenceDocumentId ? { evidenceDocumentId: r.evidenceDocumentId } : {}) };
+}
+/** What a settlement's signature carries beyond its intent and meaning (P-92 §3.1): the way, the transmission and attempt
+ *  it settles, the evidence and the statement, all as the server answered them, compared by the server word for word. */
+function settlementFields(f: GovernedFlow): Record<string, unknown> {
+  if (f.kind !== 'held-send-settlement' || !f.settlement || !f.heldSend) return {};
+  return {
+    outcome: f.settlement.outcome, transmittalId: f.heldSend.transmittalId, transmitAttemptId: f.heldSend.attemptId,
+    evidence: f.heldSend.evidence, statement: f.statement,
+  };
+}
+/** The step's own statement, from a cleared answer: a retirement's (P-86) or a settlement's (P-92); none for the others. */
+function clearedAnswer(kind: GovernedKind, data: GovernedPrecheck): { refusal: string | null; statement?: string; heldSend?: HeldSendOverview } {
+  if (kind === 'retire') {
+    const retirement = retirementOf(data);
+    return retirement ? { refusal: null, statement: retirement.statement } : { refusal: NO_STATEMENT };
+  }
+  if (kind === 'held-send-settlement') {
+    const held = settlementOf(data);
+    return held ? { refusal: null, statement: held.statement, heldSend: held } : { refusal: NO_STATEMENT };
+  }
+  return { refusal: null };
+}
+/** The page's word that a held send was settled (P-92 C2, S8), with no signature id. */
+function settledNotice(f: GovernedFlow, signer: string, meaning: string): string {
+  const n = f.seq.sequenceNumber;
+  const kind = f.settlement?.evidenceKind;
+  if (f.settlement?.outcome === 'received') {
+    return `Sequence ${n} is recorded as received by FDA, on its ${kind === 'ack3' ? 'Ack3' : 'Ack2'} kept in the Vault, signed by ${signer} (${meaning}).`;
+  }
+  const ground = kind === 'platform-proof' ? "the platform's own record that it never left" : "FDA's written confirmation kept in the Vault";
+  return `Sequence ${n}'s held send is released as not received, on ${ground}, signed by ${signer} (${meaning}). It can be sent again, under a new signature.`;
+}
+
+/** What a retirement's signature carries beyond its intent and meaning (P-86 D6): that the sequence was filed by no
+ *  other route, and the server's statement, which the server compares word for word. The client holds no copy. */
+function retirementFields(f: GovernedFlow): { notFiledElsewhere?: true; statement?: string } {
+  return f.kind === 'retire' ? { notFiledElsewhere: true, statement: f.statement } : {};
+}
+
+type SigningWords = Pick<EsignModalProps, 'action' | 'targetMeta' | 'defaultMeaning' | 'meanings' | 'renderMeaningDetails' | 'signedRows'>;
+
+/** The retirement's one signature (P-86 C3): Responsibility only; a target line that says what the act does and
+ *  carries no record key (plan §2's retired patterns); and the server's statement, shown and recorded word for word. */
+function retirementSigning(flow: GovernedFlow, region: string): SigningWords {
+  const statement = flow.statement ?? '';
+  return {
+    action: 'Retire sequence',
+    targetMeta: `${region} · takes the sequence out of use; nothing is sent to the agency; cannot be undone`,
+    defaultMeaning: 'responsibility',
+    meanings: ['responsibility'],
+    renderMeaningDetails: () => (
+      <div className="sc-mb" data-testid="retire-statement">
+        <span className="tl-spec-k">By signing, you state:</span>
+        <p><q>{statement}</q></p>
+      </div>
+    ),
+    signedRows: [{ label: 'Stated', value: statement }],
+  };
+}
+
+/** A held send's one signature (P-92 C2): Responsibility only; a target line that says what the act does and carries
+ *  no record key; the server's statement, shown and recorded word for word; and the FDA document it rests on, if any. */
+function settlementSigning(flow: GovernedFlow, region: string): SigningWords {
+  const statement = flow.statement ?? '';
+  const n = flow.seq.sequenceNumber;
+  const day = heldSendDay(flow.heldSend?.sentAt);
+  const document = flow.settlement?.documentLabel;
+  return {
+    action: flow.settlement?.outcome === 'received' ? `Record sequence ${n} as received` : `Release sequence ${n}'s held send`,
+    targetMeta: `${region} · settles the held send${day ? ` of ${day}` : ''}; nothing is sent to FDA`,
+    defaultMeaning: 'responsibility',
+    meanings: ['responsibility'],
+    renderMeaningDetails: () => (
+      <div className="sc-mb" data-testid="held-send-statement">
+        <span className="tl-spec-k">By signing, you state:</span>
+        <p><q>{statement}</q></p>
+      </div>
+    ),
+    signedRows: [...(document ? [{ label: 'FDA document', value: document }] : []), { label: 'Stated', value: statement }],
+  };
+}
+
+/** The words of the one signing dialog, for the step in flight. */
+function governedSigning(flow: GovernedFlow, region: string): SigningWords {
+  if (flow.kind === 'retire') return retirementSigning(flow, region);
+  if (flow.kind === 'held-send-settlement') return settlementSigning(flow, region);
+  return {
+    action:
+      flow.kind === 'shadow-waiver'
+        ? SHADOW_WAIVER_ACTION
+        : flow.kind === 'shadow-finding-disposition'
+          ? shadowDispositionAction(flow.disposition)
+          : `${GOVERNED_LABEL[flow.kind]} sequence`,
+    targetMeta: `${region} · ectd-sequence:${flow.seq.id} · ${
+      flow.kind === 'freeze'
+        ? 'irreversible content lock'
+        : flow.kind === 'dispatch'
+          ? 'records dispatch; the package is sent by a separate, signed transmit'
+          : flow.kind === 'shadow-waiver'
+            ? shadowWaiverTargetLine(flow.waiver)
+            : flow.kind === 'shadow-finding-disposition'
+              ? shadowDispositionTargetLine(flow.disposition)
+              : transmitTargetLine(flow.transmit)
+    }`,
+    defaultMeaning:
+      flow.kind === 'freeze'
+        ? 'approval'
+        : flow.kind === 'shadow-waiver'
+          ? 'responsibility'
+          : flow.kind === 'shadow-finding-disposition'
+            ? shadowDispositionDefaultMeaning(flow.disposition)
+            : 'release',
+    // Freeze and dispatch are approval and release acts. "Authorship"
+    // is not offered: the sign route skips separation of duties for it,
+    // and the step refuses a signature that declares it (Gate 1). A
+    // Shadow Review waiver is responsibility or approval (P-34), and so is
+    // closing a critical finding (P-35).
+    meanings:
+      flow.kind === 'shadow-waiver'
+        ? SHADOW_WAIVER_MEANINGS
+        : flow.kind === 'shadow-finding-disposition'
+          ? SHADOW_DISPOSITION_MEANINGS
+          : flow.kind === 'freeze'
+            ? ['approval', 'responsibility']
+            : ['release', 'approval', 'responsibility'],
+  };
+}
 
 /** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
  *  transmit that sent nothing, whether the signature given for it is now void
@@ -855,49 +1007,50 @@ export function SubmissionCenter({
    *  opened the e-signature with no gate shown, the signature was recorded, and
    *  only then did the freeze refuse. A refusal or an unreadable answer is
    *  returned as the sentence to show; null means the gates clear. */
-  const precheckRefusal = async (
+  const precheckAnswer = async (
     s: SeqRow,
     kind: GovernedKind,
-    transmit?: TransmitRequest,
-    waiver?: WaiverRequest,
-    disposition?: DispositionRequest,
-  ): Promise<string | null> => {
+    { transmit, waiver, disposition, settlement }: GovernedRequest = {},
+  ): Promise<{ refusal: string | null; statement?: string; heldSend?: HeldSendOverview }> => {
     // A waiver answers one failed run; without it there is nothing to sign (P-34).
-    if (kind === 'shadow-waiver' && !waiver) return 'No failed Shadow Review run is named for this waiver. Nothing was signed.';
-    // A disposition closes one named finding (P-35).
-    if (kind === 'shadow-finding-disposition' && !disposition) return 'No finding is named to close. Nothing was signed.';
+    if (kind === 'shadow-waiver' && !waiver) return { refusal: 'No failed Shadow Review run is named for this waiver. Nothing was signed.' };
+    // A disposition closes one named finding (P-35); a settlement settles the held send one way, on one ground (P-92).
+    if (kind === 'shadow-finding-disposition' && !disposition) return { refusal: 'No finding is named to close. Nothing was signed.' };
+    if (kind === 'held-send-settlement' && !settlement) return { refusal: 'No way to settle the held send is chosen. Nothing was signed.' };
     // A transmit's typed number is judged against the program record here,
     // before the signature, by the rule transmit applies (P-23).
     const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
       step: kind,
       ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
       ...dispositionFields(disposition),
+      ...settlementBody(settlement),
     });
     if (!r.data || typeof r.data.cleared !== 'boolean') {
-      return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
+      return { refusal: `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.` };
     }
-    return r.data.cleared ? null : `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.`;
+    if (!r.data.cleared) return { refusal: `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.` };
+    // A retirement (P-86 D6) and a settlement (P-92) sign the server's statement word for word: a cleared answer without
+    // one is unreadable.
+    return clearedAnswer(kind, r.data);
   };
 
   /** Open the e-signature for a governed step only when its gates clear. The
    *  Sequences row and the Dispatch tab both come here: one path to a signature. */
-  const requestGoverned = async (
-    s: SeqRow,
-    kind: GovernedKind,
-    transmit?: TransmitRequest,
-    waiver?: WaiverRequest,
-    disposition?: DispositionRequest,
-  ) => {
+  const requestGoverned = async (s: SeqRow, kind: GovernedKind, req: GovernedRequest = {}) => {
     if (acting != null || flow != null) return;
     setActing(s.id);
     setNotice(null);
-    const refusal = await precheckRefusal(s, kind, transmit, waiver, disposition);
+    const { transmit, waiver, disposition, settlement } = req;
+    const { refusal, statement, heldSend } = await precheckAnswer(s, kind, req);
     setActing(null);
     if (refusal) {
       setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
       return;
     }
-    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}) });
+    setFlow({
+      seq: s, kind, ...(transmit ? { transmit } : {}), ...(waiver ? { waiver } : {}), ...(disposition ? { disposition } : {}),
+      ...(statement ? { statement } : {}), ...(settlement ? { settlement } : {}), ...(heldSend ? { heldSend } : {}),
+    });
   };
 
   /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
@@ -911,12 +1064,17 @@ export function SubmissionCenter({
    *       sequence and that the deterministic dispatch gate is clear, atomically.
    *  Any failure throws with the server's words; the modal shows it inline and
    *  no success is fabricated. */
+  const askAgain = async (f: GovernedFlow) => {
+    const again = await precheckAnswer(f.seq, f.kind, { transmit: f.transmit, waiver: f.waiver, disposition: f.disposition, settlement: f.settlement });
+    if (again.refusal) throw new Error(again.refusal);
+    // A settlement is signed over the statement the dialog shows; the server's answer now must be the same (P-92 C2).
+    if (f.kind === 'held-send-settlement' && again.statement !== f.statement) throw new Error(STATEMENT_CHANGED);
+  };
   const runGoverned = async (
     f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
-    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit, f.waiver, f.disposition);
-    if (refusal) throw new Error(refusal);
+    await askAgain(f);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
       '/api/c2c/actions/sign',
@@ -925,7 +1083,10 @@ export function SubmissionCenter({
         reason: input.reason,
         // A disposition's signature names the finding and how it is closed (P-35);
         // a transmit's names where the package goes (F1, row D7, 2026-11-08).
-        payload: { intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition), ...transmitEnvironmentField(f) },
+        payload: {
+          intent: f.kind, meaning: input.meaning, ...dispositionFields(f.disposition), ...transmitEnvironmentField(f), ...retirementFields(f),
+          ...settlementFields(f),
+        },
         reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
       },
     );
@@ -934,12 +1095,15 @@ export function SubmissionCenter({
         `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
     }
-    // Transmit, the Shadow Review waiver (P-34) and closing a finding (P-35)
-    // each have their own act after the signature; freeze and dispatch share one.
+    // Transmit, the Shadow Review waiver (P-34), closing a finding (P-35) and
+    // retirement (P-86) each have their own act after the signature; freeze and
+    // dispatch share one.
     const ownAct: Partial<Record<GovernedKind, typeof runTransmit>> = {
       transmit: runTransmit,
       'shadow-waiver': runWaiver,
       'shadow-finding-disposition': runDisposition,
+      retire: runRetire,
+      'held-send-settlement': runSettlement,
     };
     const act = ownAct[f.kind];
     if (act) return act(f, sign.data.actionId, input, sign.data.sha256Chain);
@@ -1012,7 +1176,7 @@ export function SubmissionCenter({
     input: { meaning: EsigMeaning; reason: string },
     hash: string | undefined,
   ) => {
-    // precheckRefusal refused a waiver flow without its run before anything was signed.
+    // precheckAnswer refused a waiver flow without its run before anything was signed.
     if (!f.waiver) throw new Error('No failed Shadow Review run is named for this waiver. Nothing was waived.');
     try {
       const done = await submitShadowWaiver(f.seq, signatureActionId, f.waiver);
@@ -1033,11 +1197,64 @@ export function SubmissionCenter({
     input: { meaning: EsigMeaning; reason: string },
     hash: string | undefined,
   ) => {
-    // precheckRefusal refused a disposition flow without its finding before anything was signed.
+    // precheckAnswer refused a disposition flow without its finding before anything was signed.
     if (!f.disposition) throw new Error('No finding is named to close. Nothing was closed.');
     try {
       const done = await submitFindingDisposition(f.seq, signatureActionId, f.disposition);
       setNotice({ tone: 'ok', text: `${done} — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setReadinessBump((b) => b + 1);
+    }
+  };
+
+  /** Retirement (P-86 C3): POST /sequences/:id/retire with the signature. Only the server saying that THIS sequence
+   *  was retired is a success; any other answer throws its words (the modal shows them inline) and nothing is said
+   *  retired. The notice carries no signature id and no record key (plan §2's retired patterns): the id stays in the
+   *  audit trail. The sequences are read again whatever the answer, so a retired one leaves the picker. */
+  const runRetire = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const n = f.seq.sequenceNumber;
+    try {
+      const done = await mutateVerbatim<{ retired?: unknown; sequenceId?: unknown; numberFreed?: unknown }>(
+        'POST', `/api/submissions/sequences/${f.seq.id}/retire`, { signatureActionId },
+      );
+      if (done.error) throw new Error(blockerForDisplay(done.error));
+      if (done.data?.retired !== true || done.data.sequenceId !== f.seq.id) {
+        throw new Error(`The server did not confirm that sequence ${n} was retired. Check whether it is still listed before signing again.`);
+      }
+      const number = done.data.numberFreed === true
+        ? ` Its number is free: start sequence ${n} again from the Sequences tab.`
+        : done.data.numberFreed === false ? ` Another sequence ${n} is in use, so the number stays taken.` : '';
+      setNotice({ tone: 'ok', text: `Sequence ${n} is retired, signed by ${signerLabel} (${input.meaning}).${number}` });
+      return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
+    } finally {
+      setSeqBump((b) => b + 1);
+    }
+  };
+
+  /** The settlement's act (P-92 C2): only a server answer that says this sequence's held send was settled, the way it
+   *  was signed, is a success; any other answer is the server's words, or that it did not confirm. */
+  const runSettlement = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const outcome = f.settlement?.outcome;
+    try {
+      const done = await mutateVerbatim<{ settled?: unknown; sequenceId?: unknown; outcome?: unknown }>(
+        'POST', `/api/submissions/sequences/${f.seq.id}/held-send/settle`, { signatureActionId, outcome },
+      );
+      if (done.error) throw new Error(blockerForDisplay(done.error));
+      if (done.data?.settled !== true || done.data.sequenceId !== f.seq.id || done.data.outcome !== outcome) {
+        throw new Error(`The server did not confirm that sequence ${f.seq.sequenceNumber}'s held send was settled. Check its Dispatch tab before signing again.`);
+      }
+      setNotice({ tone: 'ok', text: settledNotice(f, signerLabel, input.meaning) });
       return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
     } finally {
       setReadinessBump((b) => b + 1);
@@ -1781,7 +1998,7 @@ export function SubmissionCenter({
                   key={seq.id}
                   seq={seq}
                   reread={readinessBump}
-                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', undefined, undefined, d)}
+                  onDisposition={(s, d) => void requestGoverned(s, 'shadow-finding-disposition', { disposition: d })}
                 />
               )}
               {ws === 'required-deliverables' && <SubmissionRequiredDeliverables
@@ -1795,7 +2012,7 @@ export function SubmissionCenter({
                   sub={sub}
                   seq={seq}
                   onNav={onNav}
-                  onGoverned={(s, kind, transmit, waiver) => void requestGoverned(s, kind, transmit, waiver)}
+                  onGoverned={(s, kind, transmit, waiver, settlement) => void requestGoverned(s, kind, { transmit, waiver, settlement })}
                 />
               )}
             </>
@@ -1842,13 +2059,14 @@ export function SubmissionCenter({
                       hint="Create the first eCTD sequence (0000) to begin assembling this submission."
                     />
                     <div className="cm-pushbar sc-mt">
+                      {/* The hairline secondary, as NextSequenceControl's: not the view's primary, and no spark. */}
                       <button
                         type="button"
-                        className="sp-primary sc-btn"
+                        className="btn ghost"
                         onClick={() => void startSequence(sub, '0000', 'original')}
                         disabled={creatingSeq}
                       >
-                        {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
+                        {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
                       </button>
                     </div>
                   </>
@@ -1960,48 +2178,8 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={
-            flow.kind === 'shadow-waiver'
-              ? SHADOW_WAIVER_ACTION
-              : flow.kind === 'shadow-finding-disposition'
-                ? shadowDispositionAction(flow.disposition)
-                : `${GOVERNED_LABEL[flow.kind]} sequence`
-          }
+          {...governedSigning(flow, regL(flow.seq.region))}
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
-          targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
-            flow.kind === 'freeze'
-              ? 'irreversible content lock'
-              : flow.kind === 'dispatch'
-                ? 'records dispatch; the package is sent by a separate, signed transmit'
-                : flow.kind === 'shadow-waiver'
-                  ? shadowWaiverTargetLine(flow.waiver)
-                  : flow.kind === 'shadow-finding-disposition'
-                    ? shadowDispositionTargetLine(flow.disposition)
-                    : transmitTargetLine(flow.transmit)
-          }`}
-          defaultMeaning={
-            flow.kind === 'freeze'
-              ? 'approval'
-              : flow.kind === 'shadow-waiver'
-                ? 'responsibility'
-                : flow.kind === 'shadow-finding-disposition'
-                  ? shadowDispositionDefaultMeaning(flow.disposition)
-                  : 'release'
-          }
-          // Freeze and dispatch are approval and release acts. "Authorship"
-          // is not offered: the sign route skips separation of duties for it,
-          // and the step refuses a signature that declares it (Gate 1). A
-          // Shadow Review waiver is responsibility or approval (P-34), and so is
-          // closing a critical finding (P-35).
-          meanings={
-            flow.kind === 'shadow-waiver'
-              ? SHADOW_WAIVER_MEANINGS
-              : flow.kind === 'shadow-finding-disposition'
-                ? SHADOW_DISPOSITION_MEANINGS
-                : flow.kind === 'freeze'
-                  ? ['approval', 'responsibility']
-                  : ['release', 'approval', 'responsibility']
-          }
           signer={esignSigner}
           // The server's re-authentication demands the authenticator code
           // whenever the signer has one enrolled; without this the modal never

@@ -1,0 +1,5 @@
+MUTATION C2M8-declare-reads-as-text in client/src/concept2cure/v2/surfaces/FiledElsewhereBaseline.tsx (on the final code and tests, 2026-11-09T14:24:33.472455Z): replaced [className="btn ghost" onClick={() => setOpen(true)}] with [className="sc-btn" onClick={() => setOpen(true)}]
+ × client/src/concept2cure/v2/__tests__/filedElsewhereBaseline.test.tsx > Sequences filed before this platform > opens from a hairline secondary button, not a line of text, with no spark and no orange 184ms
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 21b3882f2e5b3664700b4c24698a55ace81bcc3077dcc6f0c319c6bc18070fac (expected 21b3882f2e5b3664700b4c24698a55ace81bcc3077dcc6f0c319c6bc18070fac)

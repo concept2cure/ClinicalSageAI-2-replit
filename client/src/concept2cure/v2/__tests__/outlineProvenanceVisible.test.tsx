@@ -129,7 +129,8 @@ afterEach(() => {
 
 /** The rendered basis band, once the outline has loaded. */
 async function bandText(): Promise<string> {
-  const chip = await screen.findByText(/outline basis/i);
+  // D4-4: the basis is a disclosure, "{headline} · About this outline" (D4.md §D4.C).
+  const chip = await screen.findByText('About this outline');
   const band = chip.closest('.ed-basis');
   expect(band).toBeTruthy();
   return band!.textContent ?? '';

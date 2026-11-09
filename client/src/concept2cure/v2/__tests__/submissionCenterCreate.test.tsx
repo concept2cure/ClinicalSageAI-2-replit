@@ -184,6 +184,23 @@ describe('SubmissionCenter — the next sequence', () => {
     await waitFor(() => expect(seqPosts).toEqual([{ region: 'fda', sequenceNumber: '0042', type: 'amendment' }]));
   });
 
+  /* D0 §7 check 2 and §8.1 (the coordinating session, 2026-11-09): the header's "New submission" is the view's one
+     orange fill, and starting a sequence asks nothing of AnA, so it is the hairline secondary with no spark, in both
+     places. */
+  it.each([
+    ['the first sequence, on an empty submission', [] as unknown[], 'Start sequence 0000'],
+    ['the next sequence', [seq(9, '0000')], 'Start sequence 0001'],
+  ])('%s is started from a hairline button: not orange, no spark', async (_label, rows, name) => {
+    serve(rows);
+    render(<SubmissionCenter {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Sequences' }));
+    const start = await screen.findByRole('button', { name });
+    expect(start.className).toBe('btn ghost');
+    expect(start.querySelector('svg')).toBeNull();
+    // The view's one orange fill is the header's.
+    expect(Array.from(document.querySelectorAll('.sp-primary, .btn.primary')).map((b) => b.textContent?.trim())).toEqual(['New submission']);
+  });
+
   it('an empty submission with nothing declared offers 0000, or a declaration', async () => {
     serve([]);
     render(<SubmissionCenter {...props()} />);

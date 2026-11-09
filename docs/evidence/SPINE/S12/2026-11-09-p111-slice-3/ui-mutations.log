@@ -1,0 +1,9 @@
+## MUTATION: a bound work project is used even when it is not a listed project
+never files on a bound work project that is not a listed project: it falls back to the open project 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## MUTATION: the task context is bound before the binding is proven
+puts a proven binding in the task context, and only a proven one, and clears it on unbind (P-111 slice 3) 29ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)

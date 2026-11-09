@@ -1,0 +1,218 @@
+[
+ {
+  "case": "review-1440-light",
+  "page": {
+   "eyebrow": false,
+   "title": "The review board",
+   "primaries": [],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "review": {
+   "scopes": {
+    "cls": "seg",
+    "items": [
+     {
+      "t": "Awaiting my review",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "Requested by me",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "All open",
+      "pressed": "true",
+      "title": null,
+      "bg": "rgb(250, 249, 245)"
+     }
+    ],
+    "scroll": [
+     359,
+     359
+    ],
+    "right": 691
+   },
+   "projects": {
+    "cls": "seg rv-scope-program",
+    "items": [
+     {
+      "t": "This project",
+      "pressed": "true",
+      "title": "Show [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) only",
+      "bg": "rgb(250, 249, 245)"
+     },
+     {
+      "t": "All projects",
+      "pressed": "false",
+      "title": "Show every project",
+      "bg": "rgba(0, 0, 0, 0)"
+     }
+    ],
+    "scroll": [
+     197,
+     197
+    ],
+    "right": 1372
+   },
+   "inboxHeading": "Threads and change requests assigned to you",
+   "inboxCounts": "0 threads · 0 tasks",
+   "inboxTransform": "none",
+   "accent": "#ad5132"
+  },
+  "afterRequested": {
+   "pressed": "true",
+   "newBoardCalls": [
+    "/api/review/board?scope=requested&programId=c2ed888d-2958-4332-b186-e81482f2ceec"
+   ]
+  }
+ },
+ {
+  "case": "review-1440-dark",
+  "page": {
+   "eyebrow": false,
+   "title": "The review board",
+   "primaries": [],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "review": {
+   "scopes": {
+    "cls": "seg",
+    "items": [
+     {
+      "t": "Awaiting my review",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "Requested by me",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "All open",
+      "pressed": "true",
+      "title": null,
+      "bg": "rgb(61, 61, 58)"
+     }
+    ],
+    "scroll": [
+     359,
+     359
+    ],
+    "right": 691
+   },
+   "projects": {
+    "cls": "seg rv-scope-program",
+    "items": [
+     {
+      "t": "This project",
+      "pressed": "true",
+      "title": "Show [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) only",
+      "bg": "rgb(61, 61, 58)"
+     },
+     {
+      "t": "All projects",
+      "pressed": "false",
+      "title": "Show every project",
+      "bg": "rgba(0, 0, 0, 0)"
+     }
+    ],
+    "scroll": [
+     197,
+     197
+    ],
+    "right": 1372
+   },
+   "inboxHeading": "Threads and change requests assigned to you",
+   "inboxCounts": "0 threads · 0 tasks",
+   "inboxTransform": "none",
+   "accent": "#e8916f"
+  }
+ },
+ {
+  "case": "review-390-light",
+  "page": {
+   "eyebrow": false,
+   "title": "The review board",
+   "primaries": [],
+   "uppercase": [],
+   "sideScroll": false
+  },
+  "review": {
+   "scopes": {
+    "cls": "seg",
+    "items": [
+     {
+      "t": "Awaiting my review",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "Requested by me",
+      "pressed": "false",
+      "title": null,
+      "bg": "rgba(0, 0, 0, 0)"
+     },
+     {
+      "t": "All open",
+      "pressed": "true",
+      "title": null,
+      "bg": "rgb(250, 249, 245)"
+     }
+    ],
+    "scroll": [
+     359,
+     358
+    ],
+    "right": 374
+   },
+   "projects": {
+    "cls": "seg rv-scope-program",
+    "items": [
+     {
+      "t": "This project",
+      "pressed": "true",
+      "title": "Show [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) only",
+      "bg": "rgb(250, 249, 245)"
+     },
+     {
+      "t": "All projects",
+      "pressed": "false",
+      "title": "Show every project",
+      "bg": "rgba(0, 0, 0, 0)"
+     }
+    ],
+    "scroll": [
+     197,
+     197
+    ],
+    "right": 374
+   },
+   "inboxHeading": "Threads and change requests assigned to you",
+   "inboxCounts": "0 threads · 0 tasks",
+   "inboxTransform": "none",
+   "accent": "#ad5132"
+  }
+ },
+ {
+  "case": "journey-1440-light",
+  "error": "TimeoutError: page.waitForSelector: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.reg-wrap') to be visible\u001b[22m\n"
+ },
+ {
+  "case": "journey-1440-dark",
+  "error": "TimeoutError: page.waitForSelector: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.reg-wrap') to be visible\u001b[22m\n"
+ },
+ {
+  "case": "engine-1440-light",
+  "error": "TimeoutError: page.waitForSelector: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.ae') to be visible\u001b[22m\n"
+ }
+]

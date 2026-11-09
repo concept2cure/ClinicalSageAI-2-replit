@@ -141,6 +141,7 @@ import { artifactStatusUpdate, reviewQuorumVerdict } from '../../../services/art
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { bridgeCompileToArtifact } from '../../../services/module3-convergence-service';
+import { moveArtifactToSection } from '../../../services/artifact-approval-act';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -158,6 +159,10 @@ const DDL = [
     'db/migrations/20260314_phase12_multi_user_review.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
   extractTableDdl('db/migrations/20260401_cmc_convergence_os.sql', ['cmc_provenance_events']),
+  // GET …/reviews/status names reviewers through public.actor_name (migrations/20260929_actor_names.sql);
+  // its tenant scoping is pinned elsewhere, so here it reads the users table, as other pglite suites do.
+  `CREATE FUNCTION public.actor_name(p_user_id integer) RETURNS TABLE (name text, email text) LANGUAGE sql
+     AS $$ SELECT u.name, u.email FROM users u WHERE u.id = p_user_id $$;`,
 ].join('\n');
 
 const ORG = 99;
@@ -218,6 +223,21 @@ const snapshots = async () => (await run(`SELECT version_id FROM concept2cure_su
  * round-1 review approving `version`, by a reviewer who is neither the signer
  * nor an author (Q1), for the cases that approve to test something else.
  */
+/** P-95 Q2: completed round-1 reviews approving `version` by each of `reviewers` (a placed artifact needs two). */
+async function reviewedBy(reviewers: number[], version = 2) {
+  for (const [i, reviewer] of reviewers.entries()) {
+    await run(
+      `WITH a AS (
+         INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, review_round, status)
+         SELECT 'asgn_reviewed_' || $5::text, id, organization_id, $2::int, $3::int, 1, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1
+         RETURNING id, artifact_id, organization_id)
+       INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+       SELECT 'dec_reviewed_' || $5::text, a.id, a.artifact_id, a.organization_id, $2::int, 1, 'approve', $4::int FROM a`,
+      [ARTIFACT, reviewer, USER, version, String(i)],
+    );
+  }
+}
+
 async function reviewed(version = 2, reviewer = ADA) {
   await run(
     `WITH a AS (
@@ -1121,15 +1141,15 @@ describe('a Module 3 section bridged from a compile', () => {
   const versionRows = async (id: number) =>
     (await run(`SELECT version, content, content_hash FROM concept2cure_artifact_versions WHERE artifact_id = $1 ORDER BY version`, [id])).rows;
 
-  it('stores sha256 of its text, so the signed act approves it after an independent review', async () => {
+  it('stores sha256 of its text, so the signed act approves it after two independent reviews (placed: P-95 Q2)', async () => {
     expect(await bridge('Specifications for the drug substance.')).toMatchObject({ bridged: true, isNew: true });
     const row = await bridged();
     expect(row.content_hash).toBe(sha256(row.content));
     expect(await versionRows(row.id)).toEqual([{ version: 1, content: row.content, content_hash: sha256(row.content) }]);
 
-    // Under the suite's artifact id, in review, with an approving review by Ada.
+    // Under the suite's artifact id, in review, with approving reviews by Ada and Ben: it is placed in 3.2.S.4.
     await run(`UPDATE concept2cure_artifacts SET artifact_id = $1, status = 'review' WHERE id = $2`, [ARTIFACT, row.id]);
-    await reviewed(row.version);
+    await reviewedBy([ADA, BEN], row.version);
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -1174,6 +1194,176 @@ describe('a Module 3 section bridged from a compile', () => {
 
     expect(await bridge('A later compile.')).toMatchObject({ bridged: false, reason: 'artifact_locked' });
     expect(await bridged()).toMatchObject({ id: published.id, status: 'published', version: 1, content: published.content });
+  });
+});
+
+/**
+ * P-95 Q2 (ruled 2026-11-09 by the coordinating session, COORDINATION.md row
+ * 38): two independent reviewers where the contract names
+ * regulated_dual_review, read only from fields no request can lower. That
+ * means a CTD section set in any module (a placed artifact is a
+ * submission_component), or type 'section'. Every other artifact keeps one. A
+ * ctd_section change on an artifact with review decisions voids them, as an
+ * edit does. The refusal names the count. Review readiness is the quorum's
+ * own answer.
+ */
+describe('P-95 Q2: two independent reviewers for a placed document', () => {
+  beforeAll(addReviewers);
+  const placeAt = (section: string | null) => run(`UPDATE concept2cure_artifacts SET ctd_section = $2 WHERE artifact_id = $1`, [ARTIFACT, section]);
+  const reviewStatus = () => request(app()).get(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/reviews/status`);
+
+  it('placed in a CTD section, one independent reviewer: refused 409 REVIEW_REQUIRED, naming the count, before the password', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewed();
+    let reauthAsked = false;
+    holder.duringReauth = async () => { reauthAsked = true; };
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is placed in CTD 2\.5; 1 has approved this version/);
+    expect(reauthAsked).toBe(false);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+
+  it('placed in Module 1 too (any module): one reviewer is refused, two are approved', async () => {
+    await seed('review');
+    await placeAt('1.3.1');
+    await reviewed();
+    expect((await putStatus(APPROVE)).status).toBe(409);
+
+    await run(`DELETE FROM concept2cure_review_assignments`);
+    await reviewedBy([ADA, BEN]);
+    const res = await putStatus(APPROVE);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('not placed: one independent reviewer still approves', async () => {
+    await seed('review');
+    await reviewed();
+    expect((await putStatus(APPROVE)).status).toBe(200);
+  });
+
+  it.each([['unassigned'], ['ana-ri.risk_memo']])('a section AnA writes to mean "none" (%s) is not a placement: one reviewer approves', async section => {
+    await seed('review');
+    await placeAt(section);
+    await reviewed();
+    expect((await putStatus(APPROVE)).status).toBe(200);
+  });
+
+  it('type section, not placed: one reviewer is refused', async () => {
+    await seed('review');
+    await run(`UPDATE concept2cure_artifacts SET type = 'section' WHERE artifact_id = $1`, [ARTIFACT]);
+    await reviewed();
+    const res = await putStatus(APPROVE);
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is a dossier section/);
+  });
+
+  it('review status says not ready, with the same sentence, while the floor is unmet; ready once it is met', async () => {
+    await seed('review');
+    await placeAt('3.2.P.5');
+    await reviewed();
+    const one = await reviewStatus();
+    expect(one.status, JSON.stringify(one.body)).toBe(200);
+    expect(one.body.data).toMatchObject({ allApproved: true, readyForApproval: false });
+    expect(one.body.data.notReadyReason).toMatch(/needs 2 independent reviewers.*1 has approved this version/);
+
+    await run(`DELETE FROM concept2cure_review_assignments`);
+    await reviewedBy([ADA, BEN]);
+    const two = await reviewStatus();
+    expect(two.body.data).toMatchObject({ readyForApproval: true });
+    expect(two.body.data.notReadyReason).toBeUndefined();
+  });
+
+});
+
+/** P-95 Q2, the second half of the ruling: a ctd_section change on an artifact with review decisions voids them, as an edit does. */
+describe('P-95 Q2: moving a reviewed document voids its review, as an edit does', () => {
+  beforeAll(addReviewers);
+  const placeAt = (section: string | null) => run(`UPDATE concept2cure_artifacts SET ctd_section = $2 WHERE artifact_id = $1`, [ARTIFACT, section]);
+  const versionOf = async () => Number((await run(`SELECT version FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows[0].version);
+
+  it('moving the document through placement voids its review: the version moves on, and the approval is refused until it is reviewed again', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewedBy([ADA, BEN]);
+    const moved = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/placement`)
+      .send({ operation: 'relocate', toSection: '2.7.3', reason: 'Belongs with the clinical efficacy summary' });
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(await versionOf()).toBe(3);
+
+    const res = await putStatus(APPROVE);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/recorded against version 2; the artifact is now version 3/);
+  });
+
+  it('moving it through the ctd-section route voids its review the same way', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewedBy([ADA, BEN]);
+    const moved = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/ctd-section`).send({ ctdSection: '2.6' });
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(await versionOf()).toBe(3);
+    expect((await putStatus(APPROVE)).status).not.toBe(200);
+  });
+
+  it('moving it through the editor\'s save (PUT …/artifacts/:id with ctdSection) voids its review', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewedBy([ADA, BEN]);
+    const moved = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}`).send({ ctdSection: '2.6' });
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(await versionOf()).toBe(3);
+    expect(JSON.stringify(moved.body)).toContain('"version":3');
+  });
+
+  it('an edit and a move in one save, with decisions on the current version, move the version on once', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewedBy([ADA, BEN]);
+    const both = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}`).send({ ctdSection: '2.7', content: 'revised body' });
+    expect(both.status, JSON.stringify(both.body)).toBe(200);
+    expect(await versionOf()).toBe(3);
+  });
+
+  it('a move with no review decisions, or to the same section, does not move the version on', async () => {
+    await seed('review');
+    await placeAt('2.5');
+    const unreviewed = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/ctd-section`).send({ ctdSection: '2.6' });
+    expect(unreviewed.status, JSON.stringify(unreviewed.body)).toBe(200);
+    expect(await versionOf()).toBe(2);
+
+    await reviewedBy([ADA, BEN]);
+    const same = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/ctd-section`).send({ ctdSection: '2.6' });
+    expect(same.status, JSON.stringify(same.body)).toBe(200);
+    expect(await versionOf()).toBe(2);
+  });
+
+  it('moving an approved document (unplaced, one reviewer) into a filing: the approval no longer covers the version', async () => {
+    await seed('review');
+    await reviewed();
+    expect((await putStatus(APPROVE)).status).toBe(200);
+    const moved = await request(app()).put(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/ctd-section`).send({ ctdSection: '2.5' });
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(await run(`SELECT status, version, approved_version_id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT]).then(r => r.rows[0]))
+      .toMatchObject({ status: 'approved', version: 3, approved_version_id: 2 });
+  });
+
+  it("AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on", async () => {
+    await seed('review');
+    await placeAt('2.5');
+    await reviewedBy([ADA, BEN]);
+    const [{ id }] = (await run(`SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const moveTo = (section: string) => moveArtifactToSection({ query: (text, params) => run(text, params ?? []) }, id, ORG, section);
+    expect(await moveTo('2.7.4')).toEqual({ ctd_section: '2.7.4', version: 3 });
+    expect(await moveTo('2.7.3'), 'decisions on an earlier version are already void').toEqual({ ctd_section: '2.7.3', version: 3 });
+    expect(await moveArtifactToSection({ query: (text, params) => run(text, params ?? []) }, id, ORG + 1, '2.5'), 'another organization').toBeNull();
+
+    await run(`UPDATE concept2cure_artifacts SET status = 'locked', version = 2 WHERE artifact_id = $1`, [ARTIFACT]);
+    expect(await moveTo('2.5')).toMatchObject({ version: 2 });
   });
 });
 

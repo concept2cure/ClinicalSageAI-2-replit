@@ -15,6 +15,10 @@
  *   · a new `refreshKey` (the thread bumps it when AnA's turn ends) re-reads
  *     the record quietly, and the sections whose text changed are marked
  *     updated, with a status line saying so.
+ *
+ * D4-5b (D4.md §D4.I): the card became a chip. Its meta line carries the type,
+ * the module and the count drafted; the outline, the chosen section and the
+ * whole-document acts are in the open document (DocumentWorkbench).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,6 +56,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { clearEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000001';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -121,6 +126,24 @@ function LiveHost({ refreshKey, programId = PID }: { refreshKey: number; program
   );
 }
 
+/** The chip's Open, then the open document once its editor is up (D4-5b). */
+async function openDocument() {
+  const open = await screen.findByTestId('dc-open-editor');
+  await waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(open);
+  const region = await screen.findByTestId('dc-expanded');
+  await waitFor(() => expect(region.querySelector('.ed')).not.toBeNull());
+  return region;
+}
+/** Choose a section in the open document's outline (closed in the canvas until its toggle opens it). */
+async function chooseSection(region: HTMLElement, name: RegExp) {
+  const toggle = within(region).getByTestId('ed-outline-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+  fireEvent.click(await within(region).findByRole('button', { name }));
+}
+const describedBy = (el: Element) => (el.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean)
+  .map(id => document.getElementById(id)?.textContent ?? '').join(' ');
+
 beforeEach(() => {
   mockApi();
   nav.mockReset();
@@ -132,59 +155,67 @@ afterEach(() => {
 });
 
 describe('DocumentCanvas — what the document is, and how far along', () => {
+  // D4-5b: the card became a chip; the type is the first fact of its meta line (`.dcv-meta`).
   it('names the document type in the type line', async () => {
     render(<LiveHost refreshKey={0} />);
     const card = await screen.findByTestId('document-canvas');
-    await within(card).findByRole('article', { name: /2\.5\.1/ });
-    expect(card.querySelector('.dcv-kind')?.textContent).toContain('Clinical overview');
+    await within(card).findByTestId('dc-progress');
+    expect(card.querySelector('.dcv-meta > span')?.textContent).toBe('Clinical overview');
   });
 
   /* A document created without a module (AnA's draft tool without one, or a
      draft opened as a document) is stored as M2 with provenance
      moduleDefaulted: the server assumed it. The type line said "M2" as if it
-     had been chosen, so a statistical analysis plan read as Module 2. */
+     had been chosen, so a statistical analysis plan read as Module 2.
+     D4-5b: the card became a chip; the module is a fact of its meta line (`.dcv-meta`). */
   it('says an assumed module was assumed, and a chosen one plainly', async () => {
     mockApi({
       doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document, provenance: { ...DOC_ROW.document.provenance, moduleDefaulted: true } } }),
     });
     render(<LiveHost refreshKey={0} />);
     const card = await screen.findByTestId('document-canvas');
-    await within(card).findByRole('article', { name: /2\.5\.1/ });
-    const kind = card.querySelector('.dcv-kind') as HTMLElement;
-    expect(kind.textContent).toContain('M2 (assumed)');
-    expect(kind.querySelector('[title]')?.getAttribute('title')).toMatch(/No module was chosen/);
+    await within(card).findByTestId('dc-progress');
+    const assumed = within(card.querySelector('.dcv-meta') as HTMLElement).getByText('M2 (assumed)');
+    expect(assumed.getAttribute('title')).toMatch(/No module was chosen/);
     cleanup();
 
     mockApi();
     render(<LiveHost refreshKey={0} />);
     const plain = await screen.findByTestId('document-canvas');
-    await within(plain).findByRole('article', { name: /2\.5\.1/ });
-    expect(plain.querySelector('.dcv-kind')?.textContent).toContain('· M2 ·');
-    expect(plain.querySelector('.dcv-kind')?.textContent).not.toContain('assumed');
+    await within(plain).findByTestId('dc-progress');
+    const facts = Array.from(plain.querySelectorAll('.dcv-meta > span')).map(s => s.textContent);
+    expect(facts.slice(0, 3)).toEqual(['Clinical overview', 'M2', 'Draft']);
+    expect(plain.querySelector('.dcv-meta')?.textContent).not.toContain('assumed');
+    expect(plain.querySelector('.dcv-meta [title]')).toBeNull();
   });
 
+  // D4-5b: the chip says the count drafted; every section, drafted or not, is in the open document's Document view.
   it('outlines every section, drafted or not, with the count drafted', async () => {
     render(<LiveHost refreshKey={0} />);
-    const outline = await screen.findByRole('list', { name: 'Sections' });
-    const items = within(outline).getAllByRole('listitem');
-    expect(items.map(li => li.getAttribute('data-drafted'))).toEqual(['true', 'true', 'false']);
-    expect(within(items[2]).getByText('Not drafted')).toBeTruthy();
-    expect(screen.getByTestId('dc-progress').textContent).toBe('2 of 3 sections drafted');
+    expect((await screen.findByTestId('dc-progress')).textContent).toBe('2 of 3 sections drafted');
+    const region = await openDocument();
+    fireEvent.click(within(region).getByRole('button', { name: 'Document' }));
+    await waitFor(() => expect(region.querySelectorAll('section.ed-full-sec')).toHaveLength(3));
+    const secs = Array.from(region.querySelectorAll('section.ed-full-sec'));
+    expect(secs.map(s => s.getAttribute('aria-label'))).toEqual(SECTIONS.sections.map(s => `${s.code} ${s.title}`));
+    expect(secs.map(s => !!s.querySelector('.ed-full-sec-empty'))).toEqual([false, false, true]);
+    expect(secs[2].textContent).toContain('Not drafted yet.');
   });
 
+  // D4-5b: the card's outline is gone; a section is chosen in the open document's outline and opens in its editor.
   it('shows the section chosen in the outline', async () => {
     render(<LiveHost refreshKey={0} />);
-    const outline = await screen.findByRole('list', { name: 'Sections' });
-    fireEvent.click(within(outline).getByRole('button', { name: /2\.5\.2/ }));
-    const card = screen.getByTestId('document-canvas');
-    expect(await within(card).findByText('Subcutaneous administration.')).toBeTruthy();
+    const region = await openDocument();
+    await chooseSection(region, /^2\.5\.2\s*Overview of Biopharmaceutics/);
+    await waitFor(() => expect(region.querySelector('.tiptap')?.textContent).toContain('Subcutaneous administration.'));
   });
 });
 
 describe('DocumentCanvas — keeps up while AnA works', () => {
+  // D4-5b: the card became a chip; the changed sections are named in its refresh line (`dc-updated`), only those.
   it('re-reads on a new refreshKey and marks the sections whose text changed', async () => {
     const { rerender } = render(<LiveHost refreshKey={0} />);
-    await screen.findByRole('list', { name: 'Sections' });
+    await screen.findByTestId('dc-progress');
     const reads = () => apiRequest.mock.calls.filter(c => String(c[1]).split('?')[0] === `/api/authoring/docs/${DOC}/sections`).length;
 
     const revised = JSON.parse(JSON.stringify(SECTIONS));
@@ -193,26 +224,27 @@ describe('DocumentCanvas — keeps up while AnA works', () => {
     rerender(<LiveHost refreshKey={1} />);
 
     await waitFor(() => expect(reads()).toBe(1));
-    const outline = await screen.findByRole('list', { name: 'Sections' });
-    await waitFor(() => expect(within(outline).getAllByRole('listitem')[2].getAttribute('data-updated')).toBe('true'));
-    expect(within(outline).getAllByRole('listitem')[0].getAttribute('data-updated')).toBeNull();
+    await screen.findByTestId('dc-updated');
     expect(screen.getByTestId('dc-progress').textContent).toBe('3 of 3 sections drafted');
     expect(screen.getByTestId('dc-updated').textContent).toBe('Updated after AnA\u2019s last turn: 2.5.3');
   });
 
+  // D4-5b: the card became a chip; the record already read stays as the chip's title and progress.
   it('a quiet re-read that fails keeps the document on screen and says the refresh failed', async () => {
     const { rerender } = render(<LiveHost refreshKey={0} />);
-    await screen.findByRole('list', { name: 'Sections' });
+    await screen.findByTestId('dc-progress');
     mockApi({ sections: () => ok({ error: 'boom' }, 500) });
     rerender(<LiveHost refreshKey={1} />);
     expect(await screen.findByTestId('dc-refresh-failed')).toBeTruthy();
     // The record already read stays: a failed refresh is not an empty document.
-    expect(screen.getByRole('list', { name: 'Sections' })).toBeTruthy();
+    expect(screen.getByTestId('dc-progress').textContent).toBe('2 of 3 sections drafted');
+    expect(screen.getByText('Module 2.5 Clinical Overview — C2C-101')).toBeTruthy();
     expect(screen.queryByTestId('dc-error')).toBeNull();
   });
 });
 
 describe('DocumentCanvas — current partial reads', () => {
+  // D4-5b: the card became a chip; the current programme's read shows as its title and progress, never the old one.
   it('masks a same-document prior-programme record and rejects its deferred JSON body', async () => {
     const nextProgram = '5ac45b38-a1d8-4a41-9488-fac39a57b853';
     let releaseBody!: (body: unknown) => void;
@@ -233,7 +265,8 @@ describe('DocumentCanvas — current partial reads', () => {
     const view = render(<LiveHost refreshKey={0} />);
     await waitFor(() => expect(decodingOldBody).toBe(true));
     view.rerender(<LiveHost refreshKey={0} programId={nextProgram} />);
-    await screen.findByText('Current-programme admitted section.');
+    await screen.findByText('Current-programme record');
+    expect(screen.getByTestId('dc-progress').textContent).toBe('1 of 1 section drafted');
     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}?programId=${nextProgram}`);
     expect(apiRequest).toHaveBeenCalledWith('GET', `/api/authoring/docs/${DOC}/sections?programId=${nextProgram}`);
     await act(async () => { releaseBody({ document: { ...DOC_ROW.document, title: 'Old programme private title' } }); await oldBody; });
@@ -241,18 +274,24 @@ describe('DocumentCanvas — current partial reads', () => {
     expect(document.body.textContent).not.toContain('Old programme private title');
     expect(screen.queryByTestId('dc-provenance')).toBeNull();
   });
+  // D4-5b: the chip withdraws the read's facts; File to vault is in the open document, which a refused read cannot open.
   it('withdraws cached prose after a quiet refresh confirms current access was refused', async () => {
     const view = render(<LiveHost refreshKey={0} />);
-    await screen.findByRole('list', { name: 'Sections' });
+    await screen.findByTestId('dc-progress');
     mockApi({ doc: () => ok({ error: { code: 'AUTHORING_READ_FORBIDDEN', message: 'Current access does not admit this document.' } }, 403) });
     view.rerender(<LiveHost refreshKey={1} />);
     await screen.findByTestId('dc-error');
-    expect(screen.queryByRole('list', { name: 'Sections' })).toBeNull();
+    expect(screen.queryByTestId('dc-progress')).toBeNull();
     expect(document.body.textContent).not.toContain('C2C-101 is a humanized');
+    expect(document.body.textContent).not.toContain('Module 2.5 Clinical Overview');
     expect(screen.queryByTestId('dc-provenance')).toBeNull();
     expect((screen.getByTestId('dc-open-editor') as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    expect(screen.queryByTestId('ed-more')).toBeNull();
+    expect(screen.queryByText('File to vault…')).toBeNull();
   });
+
+  // D4-5b: the chip keeps scope and progress; whole-document acts are refused in the open document's More menu.
   it.each(['unavailable', 'available'])('preserves admitted sections without guessing origin when partial metadata says %s', async sourceMetadataState => {
     mockApi({
       doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document, section_count: 99,
@@ -262,26 +301,34 @@ describe('DocumentCanvas — current partial reads', () => {
       sections: () => ok({ ...SECTIONS, readScope: 'sections', sections: SECTIONS.sections.slice(0, 2) }),
     });
     render(<LiveHost refreshKey={0} />);
-    await screen.findByRole('list', { name: 'Sections' });
+    await screen.findByTestId('dc-progress');
     expect(screen.queryByTestId('dc-provenance')).toBeNull();
     expect(screen.getByTestId('dc-read-scope').textContent).toMatch(/only.*sections|sections.*current access/i);
     expect(screen.getByTestId('dc-progress').textContent).toContain('2 of 2 accessible sections drafted');
     expect((screen.getByTestId('dc-open-editor') as HTMLButtonElement).disabled).toBe(false);
-    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(true);
-    expect((screen.getByTestId('dc-assign-review') as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: /2\.5\.2/ }));
-    expect(screen.getByText('Subcutaneous administration.')).toBeTruthy();
+    const region = await openDocument();
+    for (const name of ['File to vault…', 'Send for review…']) {
+      const item = openEditorControl(name);
+      expect(item.getAttribute('aria-disabled')).toBe('true');
+      expect(describedBy(item)).toMatch(/only accessible sections/);
+      fireEvent.click(item);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    }
+    await chooseSection(region, /^2\.5\.2\s*Overview of Biopharmaceutics/);
+    await waitFor(() => expect(region.querySelector('.tiptap')?.textContent).toContain('Subcutaneous administration.'));
   });
 
+  // D4-5b: the chip's meta line claims no assumed module; File to vault, in the open document's More menu, stays enabled.
   it('does not inherit stored origin or assumed-module claims from unavailable metadata', async () => {
     mockApi({ doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document,
       readScope: 'document', sourceMetadataState: 'unavailable',
       provenance: { ...DOC_ROW.document.provenance, moduleDefaulted: true },
     } }) });
     render(<LiveHost refreshKey={0} />);
-    await screen.findByRole('list', { name: 'Sections' });
+    await screen.findByTestId('dc-progress');
     expect(screen.queryByTestId('dc-provenance')).toBeNull();
-    expect(document.querySelector('.dcv-kind')?.textContent).not.toContain('assumed');
-    expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(false);
+    expect(document.querySelector('.dcv-meta')?.textContent).not.toContain('assumed');
+    await openDocument();
+    expect(openEditorControl('File to vault…').getAttribute('aria-disabled')).toBeNull();
   });
 });

@@ -1,0 +1,5 @@
+MUTATION C2M11-creator-offered-a-way in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T14:24:52.185266Z): replaced [      {h.signerRefusal ? <p role="note">{blockerForDisplay(h.signerRefusal)}</p> : (] with [      {false ? <p role="note">{blockerForDisplay(h.signerRefusal ?? '')}</p> : (]
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1 — "Settle the held send…" where the send is told > S4: the sequence's creator is told why, and offered no way; the MDN sentence stays 5138ms
+      Tests  1 failed | 27 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc (expected cc8e6fd2277a9e2819e99cfadfa66fb29e15668bf829b5053fd5739969b26acc)

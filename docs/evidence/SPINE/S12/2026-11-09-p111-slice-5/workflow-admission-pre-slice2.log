@@ -1,0 +1,551 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/workflow-project-admission.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-09T13:03:43.906Z","pid":5403,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T13:03:43.907Z","pid":5403,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T13:03:43.907Z","pid":5403,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/workflow-project-admission.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/workflow-project-admission.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > current workflow project admission counterexamples > refuses the same-organization private project outsider without any workflow write 75ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > current workflow project admission counterexamples > records the actual project workspace on every created workflow task 68ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > refuses an explicit private project the ordinary task creator cannot edit 58ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > persists the explicit project actual workspace on an ordinary task 50ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary task project admission counterexamples > refuses stale claimed write permission on an unfiled ordinary task 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > refuses the unified creator outside the private explicit project 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > saves the admitted project actual workspace when the body omits it 51ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > rejects the actual viewer despite claimed write permission on unfiled work 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified task project admission counterexamples > rejects an explicitly supplied foreign workspace for unfiled work 48ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project null 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 0 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project -1 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 1.5 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project "11" 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project "11x" 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project true 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project undefined 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project {} 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects malformed explicit unified project 2147483648 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects foreign or missing unified project 13 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects foreign or missing unified project 999999 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects the actual archived unified parent 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rejects the actual deleted unified parent 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual membership for unified unfiled work 56ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual user for unified unfiled work 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > rechecks actual organization for unified unfiled work 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > does not promote a project use share into unified create authority 49ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > refuses an actually inactive unified edit share 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified creation retains current actor and project authority > admits the actual active project editor 50ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses mismatched body workspace on a project 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses mismatched request workspace on a project 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses an explicit workspace on an actual null-workspace parent 49ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > keeps an actual null project workspace null 58ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a parent whose actual workspace is foreign 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a parent whose recorded workspace is missing 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > accepts a supplied actual project workspace without a request claim 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim 71 alone 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim 81 alone 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > does not invent unfiled scope from request claim "malformed" alone 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim 71 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim null 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > retains an admitted workspace-only task with request claim "71" 49ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a missing explicit unfiled workspace 48ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > refuses a request claim that redirects explicit workspace-only work 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope null 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 0 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope -1 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 1.5 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope "71" 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope "71x" 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope true 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope undefined 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope {} 22ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > rejects invalid explicit workspace-only scope 2147483648 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified project workspace and workspace-only compatibility > sanitizes a real workspace read failure and creates nothing 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps unfiled authoring_document metadata without deriving a project 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps unfiled canonical_document metadata without deriving a project 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > keeps explicit unified scope independent of source metadata 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves CMC module defaults 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves IND module defaults 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves MedicalDevice module defaults 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves eCTD module defaults 48ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves Vault module defaults 55ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves ProtocolDesign module defaults 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves unified fields and atomic lineage through /api/regulatory/tasks 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > preserves unified fields and atomic lineage through /api/unified-tasks 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewRouteId before writes 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewRole before writes 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input reviewStep before writes 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeSignatureId before writes 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeActId before writes 26ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > rolls back actual unified task/action when its audit insert fails
+{
+  "timestamp": "2026-11-09T13:03:47.895Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "cfd8d712-a79e-41fc-9c41-597950734125",
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, target_type, target_id, reason, payload_hash,\n        ana_action_id, sha256_chain, occurred_at, hmac_seal)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\nparams: f4b81c8c-fe3f-4a8f-9958-04458c189510,9,7,c2c.work.task.create,task,cfd8d712-a79e-41fc-9c41-597950734125,7,task:cfd8d712-a79e-41fc-9c41-597950734125,task,cfd8d712-a79e-41fc-9c41-597950734125,,126a7b87561db4121eff1ee75a34fe36c2f443713c3185dd668550e24cdb53cc,act_ed29b7e5c9d44f118c9eb7481a4f573b,dc7614478b14ae73d95a1a18f2785215cfd61aa8efb445f6b161f0038be09170,2026-11-09T13:03:47.892Z,a0712c2fd88514f20aef38ed138197113d4170a67a30d9a3d579283e1c4a73e6"
+  }
+}
+
+{"level":50,"time":"2026-11-09T13:03:47.951Z","pid":5403,"hostname":"vm","context":{"err":"Failed query: commit\nparams: "},"msg":"[unified-tasks] creating the task: COMMIT lost, outcome unknown"}
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > refuses unified RR1 input routeAuthoringSignatureId before writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > rolls back actual unified task/action when its audit insert fails 43ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project null
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received null"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > unified service defaults, metadata and governed commit remain intact > reports a committed but lost unified COMMIT and discards the uncertain request lease 56ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project null 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 0 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project -1 27ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11"
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received string"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11x"
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received string"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 1.5 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11" 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project "11x" 40ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project true
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received boolean"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project undefined
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received array"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project {}
+Error creating task: ZodError: [
+  {
+    "expected": "number",
+    "code": "invalid_type",
+    "path": [
+      "projectId"
+    ],
+    "message": "Invalid input: expected number, received object"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:255:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project true 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project undefined 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project {} 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses invalid explicit project 2147483648 23ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses foreign or missing ordinary parent 13 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses foreign or missing ordinary parent 999999 48ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses the actual archived ordinary parent 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > refuses the actual deleted ordinary parent 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > does not turn a use share into ordinary create permission 40ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects the current revoked edit share 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects a different workspace claim on an ordinary task 34ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rejects a workspace claim on a parent with actual null workspace 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual membership for unfiled work 35ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual user for unfiled work 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary creation retains actual actor and project authority > rechecks actual organization for unfiled work 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > admits and stamps the actual authoring_document source project 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > admits and stamps the actual canonical_document source project 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > refuses a private authoring_document source project before writes 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > refuses a private canonical_document source project before writes 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {} without inventing workspace 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {"sourceEntityType":"unknown_kind","sourceEntityId":"11111111-1111-4111-8111-111111111111"} without inventing workspace 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > keeps valid unfiled intake {"sourceEntityType":"authoring_document","sourceEntityId":"33333333-3333-4333-8333-333333333333"} without inventing workspace 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary source-derived project and unfiled compatibility > preserves explicit project precedence over source metadata 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewRouteId before writes 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewRole before writes 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input reviewStep before writes 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeSignatureId before writes 26ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > rolls back the task and action when actual audit persistence fails
+{
+  "timestamp": "2026-11-09T13:03:49.220Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1794229429204-d5c46f7f",
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, target_type, target_id, reason, payload_hash,\n        ana_action_id, sha256_chain, occurred_at, hmac_seal)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\nparams: 090e92f4-ff42-427a-8504-319ec0c8e226,9,7,c2c.work.task.create,task,TASK-1794229429204-d5c46f7f,7,task:TASK-1794229429204-d5c46f7f,task,TASK-1794229429204-d5c46f7f,,a83018171cb736776f4167c2d32cadeafaebf75868cb501b589f1963717da41a,act_7302ebca7241499f884494c0d6718ee8,a4d28a69473626ea9694c21203cfba7f5102fdebb77155695c7849754f5ff95d,2026-11-09T13:03:49.217Z,4d53ab88847f970c5b424e23144fe15ebd0b33c63e705ae8dc8bec1065313432"
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeActId before writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > refuses ordinary protected input routeAuthoringSignatureId before writes 24ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > rolls back the task and action when actual audit persistence fails 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > notifies another named assignee only after confirmed COMMIT 42ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > discards an actually committed lost acknowledgement and sends no success notice 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > keeps ordinary metadata, provenance and atomic lineage through /api/task-management 60ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > ordinary canonical write, RR1 and COMMIT boundary > keeps ordinary metadata, provenance and atomic lineage through /api/tasks 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project undefined without writes 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project null without writes 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 0 without writes 31ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project -1 without writes 29ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 1.5 without writes 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project "11" without writes 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project "11x" without writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project true without writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project undefined without writes 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project {} without writes 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses invalid project 2147483648 without writes 32ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses foreign or missing project 13 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses foreign or missing project 999999 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual archived parent 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual deleted parent 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > does not trust a claimed administrator whose actual organization role is viewer 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > does not trust a removed organization member 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses the actual inactive actor even with a claimed administrator role 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses an inactive organization 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses a project use/read share as task-create authority 36ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > refuses an inactive edit share 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > uses the actual current edit share, recording its real creator and parent 56ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow creation requires its actual project and current authority > keeps the existing authenticated viewer role gate 30ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 72 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim "71x" 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 0 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim -1 39ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 1.5 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim true 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim {} 38ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses mismatched or malformed client claim 2147483648 41ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > records actual workspace with an absent or normalized claim null 51ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > records actual workspace with an absent or normalized claim "71" 45ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > keeps an actually unfiled project workspace null 59ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses an explicit client claim on a project with no workspace 44ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses a project whose actual workspace belongs to another organization 43ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > refuses a project whose recorded workspace is missing 37ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > the project determines workspace scope > does not let body client, organization or creator values redirect admitted tasks 46ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > keeps the existing legacy envelope and atomic lineage through /api/task-management 49ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > keeps the existing legacy envelope and atomic lineage through /api/tasks 49ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewRouteId before project or workflow writes 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewRole before project or workflow writes 26ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column reviewStep before project or workflow writes 25ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeSignatureId before project or workflow writes 28ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeActId before project or workflow writes 27ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses protected request column routeAuthoringSignatureId before project or workflow writes 33ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow transaction and review-route protections remain canonical > still refuses a stored task definition naming a protected review column 35ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual unified_tasks persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: insert into "unified_tasks" ("id", "task_id", "organization_id", "client_workspace_id", "project_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id") values (default, $1, $2, $3, $4, $5, default, default, $6, $7, $8, default, default, default, default, default, default, default, default, $9, $10, $11, $12, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $13, default, default, default, default, default, default, default, default, default, default, default) returning "id", "task_id", "organization_id", "client_workspace_id", "project_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id"
+params: TASK-1794229431226-dd1ec897,9,71,11,general,NATIVE-PROJECT-WORKFLOW,taskTemplate,Record the conclusion,pending,medium,0,0,7
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+    ... 2 lines matching cause stack trace ...
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+  query: 'insert into "unified_tasks" ("id", "task_id", "organization_id", "client_workspace_id", "project_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id") values (default, $1, $2, $3, $4, $5, default, default, $6, $7, $8, default, default, default, default, default, default, default, default, $9, $10, $11, $12, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, default, $13, default, default, default, default, default, default, default, default, default, default, default) returning "id", "task_id", "organization_id", "client_workspace_id", "project_id", "module_type", "module_icon", "module_color", "source_entity_id", "source_entity_type", "title", "description", "category", "task_type", "assignee_id", "assignee_name", "assigned_by", "assigned_at", "team_id", "status", "priority", "progress", "completion_percentage", "start_date", "due_date", "completed_at", "estimated_hours", "actual_hours", "linked_tasks", "dependencies", "blocked_by", "blocks", "module_source", "module_data", "cross_module_links", "automation_rules", "escalation_path", "approval_required", "approvers", "approval_status", "approval_history", "impact_score", "risk_level", "critical_path", "regulatory_impact", "notification_settings", "automation_enabled", "ai_suggestions", "tags", "attachments", "comments", "metadata", "lifecycle_phase", "market", "filing_type", "study_id", "deliverable_id", "client_visibility", "created_by_id", "last_modified_by", "created_at", "updated_at", "deleted_at", "deleted_by", "review_route_id", "review_role", "review_step", "route_signature_id", "route_act_id", "route_authoring_signature_id"',
+  params: [
+    'TASK-1794229431226-dd1ec897',
+    9,
+    71,
+    11,
+    'general',
+    'NATIVE-PROJECT-WORKFLOW',
+    'taskTemplate',
+    'Record the conclusion',
+    'pending',
+    'medium',
+    0,
+    0,
+    7
+  ],
+  cause: error: new row for relation "unified_tasks" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:86:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:124:18
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:117:22
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:928:27
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+    length: 218,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_5403_mw99vfn0',
+    table: 'unified_tasks',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_dependencies persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: insert into "task_dependencies" ("id", "dependency_id", "organization_id", "predecessor_task_id", "successor_task_id", "dependency_type", "lag_time", "status", "is_critical", "is_blocking", "impact_score", "risk_level", "cascade_effect", "validation_rules", "violation_reason", "bypass_reason", "bypassed_by", "bypassed_at", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, default, default, default, default, default, default, default, default, default, default, default)
+params: DEP-1794229431285-3ab62ece,9,TASK-1794229431278-6f3c3c13,TASK-1794229431282-e490b141,finish-to-start,0,active
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:981:13
+    at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+  query: 'insert into "task_dependencies" ("id", "dependency_id", "organization_id", "predecessor_task_id", "successor_task_id", "dependency_type", "lag_time", "status", "is_critical", "is_blocking", "impact_score", "risk_level", "cascade_effect", "validation_rules", "violation_reason", "bypass_reason", "bypassed_by", "bypassed_at", "metadata", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, default, default, default, default, default, default, default, default, default, default, default, default, default)',
+  params: [
+    'DEP-1794229431285-3ab62ece',
+    9,
+    'TASK-1794229431278-6f3c3c13',
+    'TASK-1794229431282-e490b141',
+    'finish-to-start',
+    0,
+    'active'
+  ],
+  cause: error: new row for relation "task_dependencies" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:86:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:113:20
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:981:13
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+    length: 226,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_5403_mw99vfn0',
+    table: 'task_dependencies',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual unified_tasks persistence fails 55ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_dependencies persistence fails 56ms
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual c2c_ana_actions persistence fails
+{
+  "timestamp": "2026-11-09T13:03:51.344Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-1794229431340-a1f2db00",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_80ae90a3a98a4784959c860e8c01b07e,9,tasking,tasking-api,task.create,task:TASK-1794229431340-a1f2db00,low,{\"moduleType\":\"general\",\"title\":\"Review source data\",\"priority\":\"medium\",\"status\":\"pending\",\"templateId\":\"NATIVE-PROJECT-WORKFLOW\",\"summary\":\"Created from workflow template \\\"Native project workflow\\\"\"},suggest,executed,2026-11-09T13:03:51.341Z,7,2026-11-09T13:03:51.341Z,7,,2026-11-09T13:03:51.341Z,1344afef-1080-4c5a-8a45-aeb1223b910a,"
+  }
+}
+
+stderr | tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_templates persistence fails
+Error creating tasks from template: DrizzleQueryError: Failed query: update "task_templates" set "usage_count" = "task_templates"."usage_count" + 1, "last_used_at" = $1, "updated_at" = $2 where ("task_templates"."template_id" = $3 and "task_templates"."organization_id" = $4)
+params: 2026-11-09T13:03:51.390Z,2026-11-09T13:03:51.390Z,NATIVE-PROJECT-WORKFLOW,9
+    at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:9
+    at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+  query: 'update "task_templates" set "usage_count" = "task_templates"."usage_count" + 1, "last_used_at" = $1, "updated_at" = $2 where ("task_templates"."template_id" = $3 and "task_templates"."organization_id" = $4)',
+  params: [
+    '2026-11-09T13:03:51.390Z',
+    '2026-11-09T13:03:51.390Z',
+    'NATIVE-PROJECT-WORKFLOW',
+    9
+  ],
+  cause: error: new row for relation "task_templates" violates check constraint "native_workflow_failure"
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+      at processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/workflow-project-native-fixture.ts:86:26)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:113:20
+      at NodePgPreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:39:16)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:898:9
+      at NodePgSession.transaction (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/node-postgres/session.js:186:22)
+      at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:891:26 {
+    length: 220,
+    severity: 'ERROR',
+    code: '23514',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'dbwfproject_5403_mw99vfn0',
+    table: 'task_templates',
+    column: undefined,
+    dataType: undefined,
+    constraint: 'native_workflow_failure',
+    file: 'execMain.c',
+    line: '2109',
+    routine: 'ExecConstraints'
+  }
+}
+
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual c2c_ana_actions persistence fails 57ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > rolls back every workflow fact when actual task_templates persistence fails 47ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > reports an actually committed lost acknowledgement as unknown and discards its request connection 59ms
+ ✓ tests/db/workflow-project-admission.dbtest.ts > workflow rollback and uncertain acknowledgement > keeps built-in template creation on the admitted parent without inventing stored usage 59ms
+ × tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > rechecks the edit membership after a real parent-lock wait instead of retaining an earlier grant 5064ms
+   → expected false to be true // Object.is equality
+stderr | tests/db/workflow-project-admission.dbtest.ts
+[dbsched] runtime role left behind: permission denied to reassign objects
+
+ × tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > retains actual edit membership until its workflow transaction commits, before a waiting revocation 5039ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > rechecks the edit membership after a real parent-lock wait instead of retaining an earlier grant
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/workflow-project-admission.dbtest.ts:421:148
+    419|       pending = create({ projectId: 11 }, 8).then(answer => answer);
+    420|       expect(await waitFor(async () => (await env.owner.query(`SELECT …
+    421|         WHERE usename=$1 AND wait_event_type='Lock' AND $2::int=ANY(pg…
+       |                                                                                                                                                    ^
+    422|       await holder.query(`DELETE FROM ${env.t('project_members')} WHER…
+    423|       await holder.query('COMMIT'); open = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/workflow-project-admission.dbtest.ts > workflow admission retains current project permissions > retains actual edit membership until its workflow transaction commits, before a waiting revocation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/workflow-project-admission.dbtest.ts:446:18
+    444|           WHERE usename=$1 AND wait_event_type='Lock' AND $2::int=ANY(…
+    445|         requestPid = Number(rows[0]?.pid ?? 0); return requestPid > 0;
+    446|       }, 5_000)).toBe(true);
+       |                  ^
+    447|       await revoker.query('BEGIN'); revokerOpen = true;
+    448|       const revokerPid = Number((await revoker.query('SELECT pg_backen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 167 passed (169)
+   Start at  13:03:42
+   Duration  21.87s (transform 1.42s, setup 56ms, import 1.08s, tests 20.56s, environment 0ms)
+

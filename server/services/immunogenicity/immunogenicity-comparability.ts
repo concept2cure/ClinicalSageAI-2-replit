@@ -14,6 +14,7 @@ import { ComputationRefusal } from '../ana-biostats/computation-engine';
 import {
   CITATIONS,
   RISK_TIERS,
+  booleanInputStates,
   dedupeCitations,
   statedBoolean,
   statedOneOf,
@@ -66,6 +67,8 @@ export interface ComparabilityNotAssessed {
 export interface ComparabilityResult {
   drugName: string;
   context: ComparabilityContext;
+  /** Each true/false input as stated, or not_stated. */
+  inputStates: Record<string, boolean | 'not_stated'>;
   /** 'undetermined' while an input in notAssessed could change it. */
   changeImpact: ChangeImpact | 'undetermined';
   /** null while an input in notAssessed could change it. */
@@ -274,6 +277,9 @@ export function assessImmunogenicityComparability(params: ComparabilityParams): 
   return {
     drugName,
     context,
+    inputStates: booleanInputStates(params, [
+      'analyticalComparable', ...TRIGGERS.map((t) => t.input), 'comparativeClinicalStudyPlanned',
+    ]),
     changeImpact: impact,
     clinicalImmunogenicityStudyRequired: clinicalRequired,
     studyRecommendation,

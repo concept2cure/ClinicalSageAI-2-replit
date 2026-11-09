@@ -1,0 +1,1580 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'approved' } reads "Reviewers approved, sign-off pending", never the raw code
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'APPROVED', state: 'approved' } reads "Approved", never the raw code
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'changes-requested' } reads "Changes requested", never the raw code
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'rejected' } reads "Declined", never the raw code
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'in-review' } reads "In review", never the raw code
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > shows the reviewer as signed, by whom it was asked, and offers no review decision
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > a queue whose every reviewer signed reads "Reviewers signed, sign-off pending"
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — a review signed on its route > a later change request is not hidden by an earlier signature
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > reads only the open program by default
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > widens to every program only when asked
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > a program opened from a link is named from the board, never by its id
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > with no row naming it, the switch says "this project"
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the open program > the review-thread inbox follows the same program filter
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails
+ ↓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > carries no context eyebrow, and its one action sits in the header's action slot 112ms
+   → expected <div class="ph-eyebrow"></div> to be null
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > shows the three scopes as one segmented control, and a scope still filters 5013ms
+   → Unable to find role="group" and name "Show reviews"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > switches between this project and all projects with labels that keep their names 5011ms
+   → Unable to find role="group" and name "Projects"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > heads the inbox with a section heading and its counts, in sentence case 5139ms
+   → Unable to find role="heading" and name "Threads and change requests assigned to you"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Review threads assigned to you"[39m
+  [33mstyle[39m=[32m"margin-top: 20px;"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dr-seclbl"[39m
+    [33mstyle[39m=[32m"padding: 0px 0px 8px; display: flex; justify-content: space-between;"[39m
+  [36m>[39m
+    [36m<span>[39m
+      [0mThreads & change requests — assigned to you[0m
+      [0m · BX-256[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m>[39m
+    [0mLoading your review queue…[0m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Review threads assigned to you"[39m
+  [33mstyle[39m=[32m"margin-top: 20px;"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dr-seclbl"[39m
+    [33mstyle[39m=[32m"padding: 0px 0px 8px; display: flex; justify-content: space-between;"[39m
+  [36m>[39m
+    [36m<span>[39m
+      [0mThreads & change requests — assigned to you[0m
+      [0m · BX-256[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m>[39m
+    [0mLoading your review queue…[0m
+  [36m</div>[39m
+[36m</section>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > carries no context eyebrow, and its one action sits in the header's action slot
+AssertionError: expected <div class="ph-eyebrow"></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="ph-eyebrow"
+>
+  Project · review
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:356:51
+    354|     render(<Review {...props()} />);
+    355|     await screen.findAllByText('Clinical Overview §2.5');
+    356|     expect(document.querySelector('.ph-eyebrow')).toBeNull();
+       |                                                   ^
+    357|     expect(document.body.textContent).not.toMatch(/Project · review/i);
+    358|     expect(screen.getByRole('button', { name: /Ask AnA/ }).closest('.p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > shows the three scopes as one segmented control, and a scope still filters
+TestingLibraryElementError: Unable to find role="group" and name "Show reviews"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:363:32
+    361|   it('shows the three scopes as one segmented control, and a scope sti…
+    362|     render(<Review {...props()} />);
+    363|     const group = await screen.findByRole('group', { name: 'Show revie…
+       |                                ^
+    364|     expect(group.classList.contains('seg')).toBe(true);
+    365|     const scopes = within(group).getAllByRole('button');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > switches between this project and all projects with labels that keep their names
+TestingLibraryElementError: Unable to find role="group" and name "Projects"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mThe review board[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReviews requested in the editor: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [33mdata-emphasis[39m=[32m"quiet"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"sr-only"[39m
+          [36m>[39m
+            [0mUrgent:[0m
+          [36m</span>[39m
+          [0m [0m
+          [0mWhat is waiting on your review right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m [0m
+          [0mdocument awaits[0m
+          [0m your review[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document carries the reviews requested in the editor and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the editor.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.5"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which review you own and pre-read the document so your verdict is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m [0m
+            [0mReview Clinical Overview §2.5[0m
+          [36m</button>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"al-note"[39m
+          [36m>[39m
+            [0mOr work the queue below.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px;"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"btn ghost"[39m
+        [36m>[39m
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:378:32
+    376|   it('switches between this project and all projects with labels that …
+    377|     render(<Review {...props()} />);
+    378|     const group = await screen.findByRole('group', { name: 'Projects' …
+       |                                ^
+    379|     expect(group.classList.contains('seg')).toBe(true);
+    380|     const only = within(group).getByRole('button', { name: 'This proje…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the work-area page pattern (D4-7) > heads the inbox with a section heading and its counts, in sentence case
+TestingLibraryElementError: Unable to find role="heading" and name "Threads and change requests assigned to you"
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Review threads assigned to you"[39m
+  [33mstyle[39m=[32m"margin-top: 20px;"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dr-seclbl"[39m
+    [33mstyle[39m=[32m"padding: 0px 0px 8px; display: flex; justify-content: space-between;"[39m
+  [36m>[39m
+    [36m<span>[39m
+      [0mThreads & change requests — assigned to you[0m
+      [0m · BX-256[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m>[39m
+    [0mLoading your review queue…[0m
+  [36m</div>[39m
+[36m</section>[39m
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Review threads assigned to you"[39m
+  [33mstyle[39m=[32m"margin-top: 20px;"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dr-seclbl"[39m
+    [33mstyle[39m=[32m"padding: 0px 0px 8px; display: flex; justify-content: space-between;"[39m
+  [36m>[39m
+    [36m<span>[39m
+      [0mThreads & change requests — assigned to you[0m
+      [0m · BX-256[0m
+    [36m</span>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m>[39m
+    [0mLoading your review queue…[0m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:395:41
+    393|     render(<Review {...props()} />);
+    394|     const inbox = await screen.findByRole('region', { name: 'Review th…
+    395|     const heading = await within(inbox).findByRole('heading', { level:…
+       |                                         ^
+    396|     expect(heading.closest('.pj-sec-h')).not.toBeNull();
+    397|     await waitFor(() => expect(inbox.querySelector('.pj-sec-h .sec-sub…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 19 skipped (23)
+   Start at  14:45:43
+   Duration  17.14s (transform 879ms, setup 123ms, import 1.14s, tests 15.28s, environment 453ms)
+

@@ -61,7 +61,9 @@ beforeAll(async () => {
       decision text NOT NULL, version_reviewed integer
     );
     CREATE TABLE concept2cure_artifacts (
-      id integer PRIMARY KEY, artifact_id text NOT NULL UNIQUE, organization_id integer NOT NULL, created_by_id integer
+      id integer PRIMARY KEY, artifact_id text NOT NULL UNIQUE, organization_id integer NOT NULL, created_by_id integer,
+      -- P-95 Q2: the quorum reads the two-reviewer floor from these.
+      type text NOT NULL DEFAULT 'document', ctd_section text
     );
     CREATE TABLE concept2cure_artifact_versions (
       id serial PRIMARY KEY, artifact_id integer NOT NULL, organization_id integer NOT NULL,

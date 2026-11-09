@@ -1,0 +1,5 @@
+MUTATION M11-answer-kept-across-close in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T11:40:59.686393Z): replaced [if (!open) { setState({ phase: 'closed' }); return; }] with [if (!open) { return; }]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — outside the readiness read, and asked on every open and every click > asks again on every open, and keeps no answer across a close 226ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d (expected c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d)

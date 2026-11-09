@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > reconstructs the full lifecycle into ordered, real-column-mapped stages 36ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > emits only the created stage for a bare draft, marked active (in progress) 8ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > omits milestones the store never recorded — never fabricates a stage 10ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > is strictly tenant-scoped and never crosses orgs 8ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > selects the org’s most-recently-updated document 7ms
+ × server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > names the document and its project on every row, so the screen can open that document 16ms
+   → expected { title: 'Clinical overview', …(3) } to match object { id: 'doc-1', …(1) }
+(4 matching properties omitted from actual)
+ × server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > says a document filed under no project has none, rather than inventing one 8ms
+   → expected { title: 'Loose draft', …(3) } to match object { id: 'doc-2', programId: null }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > names the document and its project on every row, so the screen can open that document
+AssertionError: expected { title: 'Clinical overview', …(3) } to match object { id: 'doc-1', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "id": "doc-1",
+-   "programId": "6f1c2a10-0000-4000-8000-000000000001",
++   "module": null,
++   "productCode": null,
++   "title": "Clinical overview",
++   "version": "—",
+  }
+
+ ❯ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts:202:43
+    200|     const stages = await assembleOrgDocJourney(ORG) as any[];
+    201|     expect(stages.length).toBeGreaterThan(1);
+    202|     for (const s of stages) expect(s.doc).toMatchObject({ id: 'doc-1',…
+       |                                           ^
+    203|   });
+    204|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > says a document filed under no project has none, rather than inventing one
+AssertionError: expected { title: 'Loose draft', …(3) } to match object { id: 'doc-2', programId: null }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "id": "doc-2",
+-   "programId": null,
++   "module": null,
++   "productCode": null,
++   "title": "Loose draft",
++   "version": "—",
+  }
+
+ ❯ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts:209:27
+    207|     await doc({ id: 'doc-2', org: ORG, title: 'Loose draft', status: '…
+    208|     const stages = await assembleOrgDocJourney(ORG) as any[];
+    209|     expect(stages[0].doc).toMatchObject({ id: 'doc-2', programId: null…
+       |                           ^
+    210|   });
+    211| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  14:50:45
+   Duration  2.81s (transform 145ms, setup 87ms, import 522ms, tests 1.99s, environment 0ms)
+

@@ -1,0 +1,5 @@
+MUTATION M31-E9-identity-ignored in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T13:45:31.468265Z): replaced [  if (t.transport === 'as2') return t.as2MessageId ? null : 'no-as2-message';] with [  if (t.transport === 'as2') return 'no-as2-message';]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 E9 and E9′ (P-108 1(b), B1): released on the platform's own proof that nothing left > an AS2 row that formed its message is not released on platform proof: FDA's letter only 314ms
+      Tests  1 failed | 30 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93 (expected 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93)

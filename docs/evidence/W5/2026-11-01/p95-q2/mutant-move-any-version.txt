@@ -1,0 +1,10 @@
+# Mutant: a decision on any version, not only the current one, moves it on
+# in server/services/artifact-approval-act.ts
+# - 
+                     AND d.version_reviewed = ${a.version})
+# + )
+
+ × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > the same section, or decisions only on an earlier version, leave the version as it is 1849ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: moving a reviewed document voids its review, as an edit does > AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on 17ms
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 16 passed | 80 skipped (98)

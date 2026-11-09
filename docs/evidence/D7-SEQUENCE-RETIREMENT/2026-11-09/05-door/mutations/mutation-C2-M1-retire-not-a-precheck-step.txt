@@ -1,0 +1,5 @@
+MUTATION C2-M1-retire-not-a-precheck-step in server/routes/submissions.ts (on the final code and tests, 2026-11-09T08:11:44.777787Z): replaced ['shadow-finding-disposition', 'retire']),] with ['shadow-finding-disposition']),]
+ × server/routes/__tests__/submissions-leaf-remove-and-precheck.test.ts > a governed step can be asked before it is signed > hands a retirement precheck (P-86) to the retirement's own rule, with nothing else from the body 58ms
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 7efce5a6347e2ee577d025ab4504c8777aa5c9cd0ef198650a3007e95c60eff5 (expected 7efce5a6347e2ee577d025ab4504c8777aa5c9cd0ef198650a3007e95c60eff5)
