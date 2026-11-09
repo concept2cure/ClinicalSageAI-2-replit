@@ -23,7 +23,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { createHash } from 'node:crypto';
-import { createRunSourceAuthority, runWithSourceAuthority } from '../model-call-scope';
+import { createRunSourceAuthority, runWithSourceAuthority, recordCurrentRunSource } from '../model-call-scope';
 
 const derivativeIO = vi.hoisted(() => ({ source: vi.fn(), bytes: Buffer.alloc(0) }));
 // The current actor/source facade is an observed upstream boundary here; its
@@ -100,6 +100,8 @@ describe('approved derivative dispatch and local reinjection', () => {
       imageContent: [{ data: SECRET }], metadata: { leak: SECRET }, payloadProvenance: 'public', inputSensitivityTiers: [0] };
     const authority = createRunSourceAuthority({ organizationId: 7, userId: 3, projectId: 42 });
     const result = await runWithSourceAuthority(authority, async () => {
+      // The restricted source the derivative is built from, read in this run as a real read records it.
+      recordCurrentRunSource({ organizationId: 7, userId: 3, projectId: 42, key: 'restricted-source', tier: 3, recheck: async () => {} });
       const derivative = await fixture.gateway.routeDerivative(malicious, fixture.pool);
       await expect(fixture.gateway.route({ taskType: 'chat', organizationId: 7, userId: 3, projectId: 42,
         inputSensitivityTiers: [1], payloadProvenance: 'public', messages: [{ role: 'user', content: derivative.content }] })).rejects.toThrow('DENY_INPUT_TIER');

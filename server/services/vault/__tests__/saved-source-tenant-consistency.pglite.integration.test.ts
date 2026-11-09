@@ -74,7 +74,7 @@ describe('actual project-document read routing authority', () => {
       const result = JSON.parse(await handlers.get('read_project_document')!({ document_id: id },
         { organizationId: ORG, userId: Number(AUTHOR.id), projectRef: PROGRAM, sqlClient: sourceExecutor }));
       expect(result, JSON.stringify(result)).toMatchObject({ documentId: id, window: { text: 'Evidence' } });
-      const gate = captureCurrentRunSourceGate(actor)!; expect(gate.tiers).toEqual([3, 2]); await gate.recheck();
+      const gate = captureCurrentRunSourceGate(actor)!; expect(gate.tiers).toEqual([1, 2]); await gate.recheck();
       await db.pool.query("UPDATE vault.documents SET classification='PUBLIC' WHERE id=$1", [id]);
       await expect(gate.recheck()).rejects.toThrow('SOURCE_ROUTING_CHANGED');
       await db.pool.query("UPDATE vault.documents SET classification='CONFIDENTIAL',extracted_text='Replaced' WHERE id=$1", [id]);
@@ -137,7 +137,7 @@ describe('child verification independently reads the current actor-scoped Vault 
     { label: 'correct quotation with wrong randomized count', text: trialEvidence, draft: 'In Study DPL-301, a total of 999 patients were randomized [1]. The source states "The protocol defined the analysis."' },
     { label: 'arm-swapped comparison', text: 'In the safety population of Study DX-301, serious adverse events were reported in 4.6% of Drug X patients and 3.3% of placebo patients.', draft: 'In the safety population of Study DX-301, serious adverse events were reported in 3.3% of Drug X patients and 4.6% of placebo patients.' },
     { label: 'explicit-zero denial', text: 'In the safety population of Study DX-301, serious adverse events were reported in 14 (4.6%) Drug X-treated patients and 10 (3.3%) placebo-treated patients.', draft: 'In the safety population of Study DX-301, serious adverse events were reported in 14 (4.6%) Drug X-treated patients and in no placebo-treated patients.' },
-  ])('retains a rejected $label, actual source identities and T2+unknown floor when advisory qualification is unavailable', async ({ text, draft }) => {
+  ])('retains a rejected $label, actual source identities and the T2 source floor when advisory qualification is unavailable', async ({ text, draft }) => {
     const saved = await clinicalSource({ text });
     const result = await verifyStored(saved.id, draft), output = JSON.parse(result.trace.checkOutputs.find((c: { check: string }) => c.check === 'source_claims').output);
     expect(result).toMatchObject({ status: 'incomplete', verdict: 'issues_found', advisoryUnavailable: { code: 'MODEL_NOT_APPROVED', started: false }, models: [], usage: { modelCalls: 0 } });
@@ -145,7 +145,8 @@ describe('child verification independently reads the current actor-scoped Vault 
       sources: [{ documentId: saved.id, contentHash: saved.hash, referenceSchemaVersion: 2, completeText: true, sensitivityTier: 2,
         extractedTextSha256: createHash('sha256').update(text).digest('hex') }] });
     expect(output.findings).toContainEqual(expect.objectContaining({ disposition: 'rejected', reason: 'NUMERIC_SOURCE_CONTRADICTION' }));
-    expect(h.requests[0].inputSensitivityTiers).toEqual([3, 2]);
+    // The brief carries the conversation's tier (model-call-scope.ts); the Vault version raises it to its own T2.
+    expect(h.requests[0].inputSensitivityTiers).toEqual([1, 2]);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes('FROM vault.documents'))).toBe(true);
     expect(result.notChecked.join(' ')).toContain('General prose');
   });
@@ -154,7 +155,7 @@ describe('child verification independently reads the current actor-scoped Vault 
     const result = await verifyStored(saved.id);
     expect(result.checks.find((c: { check: string }) => c.check === 'source_claims').outcome).toBe('error');
     expect(JSON.stringify(result)).not.toContain('FOREIGN_VERIFIER_SOURCE_CANARY');
-    expect(h.requests[0].inputSensitivityTiers).toEqual([3, 3]);
+    expect(h.requests[0].inputSensitivityTiers).toEqual([1, 3]);
   });
   it('does not read selected Vault sources through a capability the parent was not offered', async () => {
     const saved = await clinicalSource(); h.query.mockClear();
