@@ -127,6 +127,7 @@ import {
   materialSpecBody,
   optionalDate,
   projectOnEdit,
+  refuseUnrecordedFields,
   requiredDate,
   ungovernedQualificationRefusal,
   withoutOrgId,
@@ -371,6 +372,7 @@ router.put('/analytical-methods/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(analyticalMethodBody, req.body, 'analytical-methods');
     const validatedData = analyticalMethodBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.analyticalMethod, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Analytical method not found' });
@@ -487,6 +489,7 @@ router.put('/process-validation/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(processValidationBody, req.body, 'process-validation');
     const validatedData = processValidationBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.processValidation, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Process validation record not found' });
@@ -630,6 +633,7 @@ router.put('/stability-studies/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(stabilityStudyBody, req.body, 'stability-studies');
     const validatedData = stabilityStudyBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.stabilityStudy, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Stability study not found' });
@@ -818,6 +822,7 @@ router.put('/qc-testing/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(qcTestingBody, req.body, 'qc-testing');
     const validatedData = qcTestingBody.partial().parse(req.body);
     /* `analyst` is a matter of record, not an edit. `reviewedBy` is the OTHER
        half of the same fact and was accepted from the request body — so a
@@ -918,6 +923,7 @@ router.put('/change-control/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(changeControlBody, req.body, 'change-control');
     const validatedData = changeControlBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.changeControl, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Change-control record not found' });
@@ -982,6 +988,7 @@ router.put('/drug-substances/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(drugSubstanceBody, req.body, 'drug-substances');
     const validatedData = drugSubstanceBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugSubstance, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug substance not found' });
@@ -1052,6 +1059,7 @@ router.put('/drug-products/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(drugProductBody, req.body, 'drug-products');
     const validatedData = drugProductBody.partial().parse(req.body);
     const filing = await projectOnEdit(orgId, PROGRAM_FILED_REGISTERS.drugProduct, id, req.body?.projectId);
     if (!filing.found) return res.status(404).json({ success: false, error: 'Drug product not found' });
@@ -1418,6 +1426,7 @@ router.put('/container-closures/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(containerClosureBody, req.body, 'container-closures');
     const validatedData = containerClosureBody.partial().parse(req.body);
     const stored = await reselectContainerClosure(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1505,6 +1514,7 @@ router.put('/reference-standards/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(referenceStandardBody, req.body, 'reference-standards');
     const validatedData = referenceStandardBody.partial().parse(req.body);
     const stored = await reselectReferenceStandard(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1599,6 +1609,7 @@ router.put('/impurity-profiles/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(impurityProfileBody, req.body, 'impurity-profiles');
     const validatedData = impurityProfileBody.partial().parse(req.body);
     const stored = await reselectImpurityProfile(String(id), orgId);
     if (await answeredSignedRecordEdit(
@@ -1698,6 +1709,7 @@ router.put('/dissolution-profiles/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(dissolutionProfileBody, req.body, 'dissolution-profiles');
     const validatedData = dissolutionProfileBody.partial().parse(req.body);
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
@@ -1754,6 +1766,7 @@ router.put('/material-specs/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(materialSpecBody, req.body, 'material-specs');
     const validatedData = materialSpecBody.partial().parse(req.body);
     const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
       validatedData as Record<string, unknown>,
@@ -1811,6 +1824,7 @@ router.put('/formulation-records/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(formulationRecordBody, req.body, 'formulation-records');
     const validatedData = formulationRecordBody.partial().parse(req.body);
     const [storedRow] = await db
       .select({ projectId: cmcFormulationRecords.projectId })
@@ -1903,6 +1917,7 @@ router.put('/manufacturing-processes/:id', async (req, res) => {
       return res.status(400).json({ success: false, error: 'A manufacturing process id must be a uuid' });
     }
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(manufacturingProcessBody, req.body, 'manufacturing-processes');
     const validatedData = manufacturingProcessBody.partial().parse(req.body);
     const stored = await reselectManufacturingProcess(id, orgId);
     if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
@@ -2011,6 +2026,7 @@ router.put('/characterization-studies/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
+    refuseUnrecordedFields(characterizationStudyBody, req.body, 'characterization-studies');
     const validatedData = characterizationStudyBody.partial().parse(req.body);
     const stored = await reselectCharacterizationStudy(String(id), orgId);
     if (await answeredSignedRecordEdit(

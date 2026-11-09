@@ -339,7 +339,10 @@ async function ensureStability({ api, tally }, program, studies) {
            The field is `shelfLife` — the register's own column. Sending
            `shelfLifeClaim` (the name the COMPOSER reads) returned 200 and
            changed nothing, because the route parses the body with a Zod schema
-           that strips unknown keys. See the read-back below. */
+           that strips unknown keys. The register refuses that body 400 now
+           (`refuseUnrecordedFields`, 2026-11-09), so a future misspelling fails
+           at the call; the read-back below stays, because the refusal covers
+           the PUTs and not yet the creates. */
         ...(s.shelfLife ? { shelfLife: s.shelfLife } : {}),
         projectId: program.id,
       }), [200, 201], `create stability study "${s.title}"`).data;
@@ -366,11 +369,17 @@ async function ensureStability({ api, tally }, program, studies) {
         shelfLife: s.shelfLife,
         reason: 'Demo seed: record the shelf life this study supports, which §3.2.P.8.1 states.',
       }), 200, `record the shelf-life claim for "${s.title}"`);
-      /* READ THE WRITE BACK. The register's PUT parses its body with a Zod
-         schema that STRIPS unknown keys, so a field named wrongly returns 200
+      /* READ THE WRITE BACK. The register's PUT parsed its body with a Zod
+         schema that STRIPS unknown keys, so a field named wrongly returned 200
          having changed nothing — which is exactly what happened here: three
          studies were reported updated and none was. A seed that reports a
-         write it did not make is worse than one that fails. */
+         write it did not make is worse than one that fails.
+
+         Since 2026-11-09 the route itself refuses an unrecorded field 400
+         (`refuseUnrecordedFields`, docs/evidence/F1/2026-11-09-register-edit-
+         unrecorded-field/), so this is no longer the only defence. It stays
+         because it checks a different thing: that the value the register
+         ACCEPTED is the value it stored. */
       const stored = saved?.data ?? saved;
       const after = stored?.shelfLife ?? stored?.shelf_life ?? null;
       if (!String(after ?? '').trim()) {
