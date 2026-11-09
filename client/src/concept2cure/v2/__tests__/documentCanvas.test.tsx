@@ -259,7 +259,8 @@ describe('DocumentCanvas — converts into the full editor in place', () => {
     expect(within(expanded).queryByRole('button', { name: 'Show the conversation' })).toBeNull();
     fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
     const composer = screen.getByLabelText('Reply to AnA') as HTMLTextAreaElement;
-    await waitFor(() => expect(composer.value).toMatch(/^Draft 2\.5\.1 Product Development Rationale/));
+    // The person's words only; the section travels in the saved origin (2026-11-09).
+    await waitFor(() => expect(composer.value).toBe('Draft this section from the linked section evidence.'));
     expect(within(expanded).queryByLabelText('AnA — document authoring')).toBeNull();
   });
 });

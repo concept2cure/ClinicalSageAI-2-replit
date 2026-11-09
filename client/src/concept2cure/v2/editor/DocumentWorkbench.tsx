@@ -4312,9 +4312,10 @@ export function DocumentWorkbench({
     [activeDocId, flushDecisions],
   );
 
-  const draftPrompt = activeSection
-    ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
-    : 'Draft this section from the linked section evidence.';
+  /* The person's words only. The section travels in the saved origin (askAna, originWithSavedVersion), so a stored
+     title, which anyone with the edit right can write, never becomes part of what the person asks (2ae0b1cb5a's
+     guarantee). It is the sentence the empty section's "Draft with AnA" already sends. */
+  const draftPrompt = 'Draft this section from the linked section evidence.';
 
   // What the filing outline was built FROM, in the words the filer sees.
   // Null only when there is no governed document, in which case there is no
