@@ -1681,6 +1681,16 @@ no screen, route, service, table or component file.
     - Nothing open in D7-D's steps.
     - A ZIP export with a legal original selected is not walked: this database has no legal original to select.
       `tests/db/report-pack-export.dbtest.ts` covers the export on real PostgreSQL.
+  - **S11 step 6b, the global schedule in Reporting & analytics** (`Plan: S11`: `c0729896d7`, `3707064475`; evidence
+    `docs/evidence/SPINE/S11/2026-11-09-global-schedule/`).
+    - One row per project the reader can open, on one shared axis, sorted by target date: the work, the filing, the
+      agency's clock dashed to its goal, the next phase, and today.
+    - It is read from the portfolio line's batch read, which now also carries the filing, start and clock. Nothing is
+      computed in Reporting.
+    - It is reached by "When does each project file?" and the find field, on every plan.
+    - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
+    - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
+      review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
 
 #### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
 

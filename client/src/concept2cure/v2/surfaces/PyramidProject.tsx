@@ -437,7 +437,13 @@ export interface PortfolioLineData {
   unavailable?: boolean;
   unreadable?: boolean;
   type?: string | null;
+  /** The recorded filing (catalogue id), as the single read gives it. */
+  filing?: string | null;
   target?: string | null;
+  /** The back-schedule's first day, or null when the project has no target date. */
+  start?: string | null;
+  /** The agency's clock after the filing, or null where none is held. */
+  reviewClock?: PyReviewClock | null;
   summary?: {
     total: number; done: number; blocked: number; overdue: number; lateToStart: number;
     next: { phaseId: string; phaseName: string; taskId: string; due: string | null } | null;
@@ -451,11 +457,11 @@ const isPortfolioRead = (v: unknown): v is PortfolioRead => !!v && typeof v === 
 export const PORTFOLIO_BATCH = 100;
 
 /** The portfolio lines for a page of projects: one read for the page, not one per card. */
-export function usePortfolioLines(programIds: string[]): { lines: Record<string, PortfolioLineData>; error: boolean } {
+export function usePortfolioLines(programIds: string[]): { lines: Record<string, PortfolioLineData>; error: boolean; loading: boolean; asOf: string | null } {
   const ids = programIds.slice(0, PORTFOLIO_BATCH);
   const key = ids.join(',');
   const read = useLiveData<PortfolioRead>(key ? `/api/v1/pyramids/by-project?refs=${encodeURIComponent(key)}` : null, [key], isPortfolioRead);
-  return { lines: read.data?.lines ?? {}, error: Boolean(read.error) };
+  return { lines: read.data?.lines ?? {}, error: Boolean(read.error), loading: read.loading, asOf: read.data?.asOf ?? null };
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -486,4 +492,108 @@ export function PortfolioLine({ line, className = 'pj-card-plan' }: { line: Port
 /** Said once above the cards when the page's plan lines could not be read: never a page of cards that only looks calm. */
 export function PortfolioLinesNote({ error }: { error: boolean }) {
   return error ? <p className="pf-sel-m" role="status" data-testid="portfolio-lines-error">Where each project’s plan stands could not be read.</p> : null;
+}
+
+// ── THE_PROGRAM §5, §9 step 6: the global schedule in Reporting & analytics ──
+
+/** A project the global schedule is asked about: its program id and the name the reader knows it by. */
+export interface ScheduleProject { programId: string; name: string }
+
+type Drawn = PortfolioLineData & { target: string; start: string; summary: NonNullable<PortfolioLineData['summary']> };
+
+/** Why a project is not drawn on the global schedule, in words; null when it is drawn. */
+export function offScheduleReason(line: PortfolioLineData | undefined): string | null {
+  if (!line) return 'not read';
+  if (line.unavailable) return 'not available to you';
+  if (line.unreadable) return 'its plan could not be read';
+  if (!line.type) return 'no work breakdown for its filing';
+  if (!line.target) return 'no target date';
+  return line.start && line.summary ? null : 'its dates could not be laid out';
+}
+
+const drawnEnd = (l: Drawn) => l.reviewClock?.ends ?? l.target;
+
+/** One project's line on the shared axis: its work, the filing (filled dot), the agency's clock dashed to its goal,
+ *  the next phase to complete, and today. Every date is the read's. */
+function GlobalScheduleTrack({ name, line, asOf, pct, width }: {
+  name: string; line: Drawn; asOf: string | null; pct: (iso: string) => string; width: (a: string, b: string) => string;
+}) {
+  const clock = line.reviewClock ?? null;
+  const next = line.summary.next?.due ? line.summary.next : null;
+  const marks: LineMark[] = [
+    ...(next ? [{ key: 'next', at: next.due as string, label: `${next.phaseName} complete`, kind: 'milestone' as const }] : []),
+    { key: 'submission', at: line.target, label: 'Submission (target date)', kind: 'submission' },
+    ...(clock ? [{ key: 'decision', at: clock.ends, label: `${clock.label} (day ${clock.days})`, kind: 'decision' as const }] : []),
+  ];
+  return (
+    <div className="py-line-track" role="img"
+      aria-label={`${name}: work from ${dayWords(line.start)}, submission ${dayWords(line.target)}${clock ? `, ${clock.label.toLowerCase()} by ${dayWords(clock.ends)}` : ''}.`}>
+      <span className="py-line-base" style={{ left: pct(line.start), width: width(line.start, line.target) }} />
+      {clock && <span className="py-line-clock" style={{ left: pct(line.target), width: width(line.target, clock.ends) }} />}
+      {marks.map((m) => (
+        <span key={m.key} className="py-line-dot" data-kind={m.kind} style={{ left: pct(m.at) }} tabIndex={0}
+          title={`${m.label} · ${dayWords(m.at)}`} aria-label={`${m.label}, ${dayWords(m.at)}`} />
+      ))}
+      {asOf && <span className="py-line-today" style={{ left: pct(asOf) }} aria-hidden="true" />}
+    </div>
+  );
+}
+
+function GlobalScheduleRow({ project, line, asOf, pct, width, onOpen }: {
+  project: ScheduleProject; line: Drawn; asOf: string | null; pct: (iso: string) => string; width: (a: string, b: string) => string;
+  onOpen?: (programId: string) => void;
+}) {
+  const filing = filingName(line.filing) ?? line.type;
+  const agency = line.reviewClock?.authority;
+  return (
+    <li className="py-gs-row" data-testid="global-schedule-row">
+      <div className="py-gs-head">
+        {onOpen
+          ? <button type="button" className="py-gs-name py-gs-open" onClick={() => onOpen(project.programId)}>{project.name}</button>
+          : <span className="py-gs-name">{project.name}</span>}
+        <span className="py-gs-sub">{[filing, agency].filter(Boolean).join(' · ')}</span>
+        <PortfolioLine line={line} className="py-gs-plan" />
+      </div>
+      <GlobalScheduleTrack name={project.name} line={line} asOf={asOf} pct={pct} width={width} />
+    </li>
+  );
+}
+
+/**
+ * The global schedule (THE_PROGRAM §5: "each region's filing date and review clock side by side"; §9 step 6): one row
+ * per project on one shared date axis, sorted by target date, each the Plan step's line. Read once for the chart from
+ * the portfolio line's batch read. A project that cannot be drawn is named with why; a failed read is said.
+ */
+export function GlobalSchedule({ projects, onOpen }: { projects: ScheduleProject[]; onOpen?: (programId: string) => void }) {
+  const shown = projects.slice(0, PORTFOLIO_BATCH);
+  const { lines, error, loading, asOf } = usePortfolioLines(shown.map((p) => p.programId));
+  if (error) return <PortfolioLinesNote error />;
+  if (loading) return <p className="pj-desc" role="status">Reading each project’s plan…</p>;
+  const drawn = shown.filter((p) => offScheduleReason(lines[p.programId]) === null)
+    .map((p) => ({ project: p, line: lines[p.programId] as Drawn }))
+    .sort((a, b) => a.line.target.localeCompare(b.line.target) || a.project.name.localeCompare(b.project.name));
+  const off = shown.flatMap((p) => { const why = offScheduleReason(lines[p.programId]); return why ? [`${p.name} (${why})`] : []; });
+  const days = drawn.flatMap(({ line }) => [dayMs(line.start), dayMs(drawnEnd(line))]).concat(asOf ? [dayMs(asOf)] : []);
+  const lo = Math.min(...days);
+  const hi = Math.max(...days);
+  const pct = (iso: string) => `${(((dayMs(iso) - lo) / Math.max(1, hi - lo)) * 100).toFixed(2)}%`;
+  const width = (a: string, b: string) => `${(((dayMs(b) - dayMs(a)) / Math.max(1, hi - lo)) * 100).toFixed(2)}%`;
+  return (
+    <figure className="py-gs" data-testid="global-schedule">
+      {drawn.length > 0
+        ? <ol className="py-gs-rows">{drawn.map(({ project, line }) => <GlobalScheduleRow key={project.programId} project={project} line={line} asOf={asOf} pct={pct} width={width} onOpen={onOpen} />)}</ol>
+        : <p className="pj-desc">No project has both a work breakdown and a target date yet, so none can be laid on the schedule.</p>}
+      {drawn.length > 0 && (
+        <figcaption className="pj-desc pj-fact-none">
+          From {dayWords(new Date(lo).toISOString().slice(0, 10))} to {dayWords(new Date(hi).toISOString().slice(0, 10))}{asOf ? `; today is ${dayWords(asOf)}, the thin mark` : ''}.
+          {' '}Each line runs from the work’s start to the target submission (the filled dot); the dashed part is the
+          agency’s review clock to its decision goal, and the open dot is the next phase to complete. The dates are the
+          engine’s schedule back from each target date and the agencies’ published clocks, which exclude clock stops
+          where they apply.
+        </figcaption>
+      )}
+      {off.length > 0 && <p className="pj-desc" data-testid="global-schedule-off">Not on the schedule: {off.join('; ')}.</p>}
+      {projects.length > shown.length && <p className="pj-desc" role="status">The schedule shows the first {shown.length} of {projects.length} projects.</p>}
+    </figure>
+  );
 }

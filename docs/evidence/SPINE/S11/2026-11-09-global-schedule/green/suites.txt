@@ -1,0 +1,635 @@
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm a schedule with missing row
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm a schedule with list in place of row
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm a schedule with wrong scope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm a schedule with wrong recurrence
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm a schedule with contradictory envelope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > accepts the actual schedule identity and recurrence receipt
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm mismatched enablement {"id":8,"enabled":false}
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not confirm mismatched enablement {"id":7,"enabled":true}
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > accepts a matching pause receipt
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not accept a bundle containing other selected runs
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > accepts a matching canonical bundle receipt
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > matches the server-normalized trimmed bundle name
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > rejects malformed or conflicting bundle identities 0
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > rejects malformed or conflicting bundle identities 1
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > rejects malformed or conflicting bundle identities 2
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > rejects malformed or conflicting bundle identities 3
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > uses neutral uncertainty for lost responses
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not infer absence from status 503 and an unproven envelope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not infer absence from status 503 and an unproven envelope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not infer absence from status 503 and an unproven envelope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > does not infer absence from status 500 and an unproven envelope
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > allows a deliberate retry after the new acknowledged rollback receipt
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > retains the precise 403 refusal
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library mutation receipts > retains the precise 413 refusal
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library recovery in the existing canvas > retains an uncertain schedule across tabs and requires fresh read plus review
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library recovery in the existing canvas > keeps a pending schedule draft and same-frame dispatch guard across tabs
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library recovery in the existing canvas > holds uncertain bundle picks/name across tabs and never announces success
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library recovery in the existing canvas > serializes per-row pause attempts and retains an uncertain pause for review
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting confirmed receipts across library tab remounts > consumes a matched schedule confirmation with return-before-response=true
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting confirmed receipts across library tab remounts > consumes a matched schedule confirmation with return-before-response=false
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting confirmed receipts across library tab remounts > consumes a matched bundle confirmation with return-before-response=true
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting confirmed receipts across library tab remounts > consumes a matched bundle confirmation with return-before-response=false
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 0
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 1
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 2
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 3
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 4
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > does not release a schedule hold after a malformed or contradictory read 5
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > a failed check revokes earlier review eligibility
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > invalidates earlier review synchronously when a fresh check starts
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library current reads and ownership > an absent record in a bounded bundle register still requires deliberate review
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library late completions and current account > a late confirmed schedule cannot toast or populate a replacement program
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library late completions and current account > a late bundle completion does not clear selections made for a replacement program
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library late completions and current account > does not reveal an old account attempt in a replacement account
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library late completions and current account > accepts a matching schedule receipt after ordinary same-session bearer refresh
+ ✓ client/src/concept2cure/v2/__tests__/reportingLibraryRecovery.test.tsx > reporting library late completions and current account > allows a second explicit bundle attempt after a definite refusal, with no automatic retry
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws an open report and rereads the overview for a replacement account in the same organization
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws private data on a current account-role replacement even when its ids stay the same
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > withdraws private results when the server refreshes the current role without rotating the session revision
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards an earlier overview that resolves after a replacement account has started its read
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > does not continue a sent run under replacement credentials or imply that it was rolled back
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > refuses a stale Run click in the same frame that the current actor changes
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards rendered JSON that finishes after a session ends
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > reporting current session — private canvas reads > discards a saved-history document that returns after account replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale Finalize click in the same frame as replacement credentials
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule save in the same frame as replacement credentials
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > blocks a stale schedule PATCH in the same frame as replacement credentials
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain network creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain missing-id creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain boolean-id creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain status-zero creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain server-error creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not describe an uncertain returned-unavailable creation outcome as a failed write
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > preserves a known recorded rollback in the nested error code
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > preserves a known recorded rollback in the root error code
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > does not finalize after the account changes during password verification
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > old reporting forms and signature callbacks > withdraws a sent finalization without attributing its delayed seal to a replacement account
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after logout
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF response after organization
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards a PDF body that finishes after the current account changes
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > discards an earlier report PDF body when the selected program changes
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > suppresses an old export refusal that arrives after a current-session change
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > dispatches one PDF read for duplicate clicks and disables its export while pending
+ ✓ client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx > single report export — current session and pending request > allows a pending PDF body and retains the report across normal bearer refresh in the same session
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > reads the project's own pyramid and states its progress from the project's statuses
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > records a task's status on the project's route
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > reverts a refused status and says it was not saved
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > says a filing has no work breakdown, and invents none
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > names the filing in words, never its key: a 510(k) for IVD
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the project's program plan > says the plan could not be read when the read fails
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > says the schedule is built back from the target date, when the work starts, what is behind, and who owns what
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > puts each task's owner and due date on its row, with a word when it is behind
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > makes an owner's task through the existing Assign, under the pyramid task's own origin, due on the schedule's date
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > shows the owner's task and says when the schedule has moved since it was assigned
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > gives no due dates when no target date is recorded, and says where to set one
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > reads the schedule again when the project's target date changes
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's owners and due dates > keeps a deliverable's tasks and a work-breakdown task's apart
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > reads a catalogue document's producing task from its id, and only from the catalogue's two shapes
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > lists only the person's open tasks of this project's plan, by due date, none last
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the content plan join and due-for-you, as functions > says a past-due task in words, and an unread list as unread
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > lists one row per workstream: lead, tasks done, completion date and a status word
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says Blocked when a task is recorded blocked, and Not scheduled without a target date
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > opens a workstream to its own tasks only
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says, under a device plan, that its workstreams have no work-breakdown key
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > draws the schedule: phase completions as dots, the submission, the review clock and today, the critical path darker
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the program plan's workstreams and schedule line > says when the engines hold no review clock for the filing
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyStanding equals taskStanding on every combination
+ ✓ client/src/concept2cure/v2/__tests__/projectProgramPlan.test.tsx > the client's schedule rule matches the engine's > pyWorkStatus gives the engine's summary status for a whole pyramid
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > opens on the saved settings without a note about an uncertain save
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > a request opens the drawer on the field it names, once; a request already seen at mount opens nothing
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > clears description and recorded target with null without inventing another change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > leaves an admitted reader read-only when the fresh capability is false
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > does not propose trimming a legacy description that the person has not edited
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > pins writes to the verified GET parent when the global workspace was empty
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed program settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed actor settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed organization settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed anchor settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed workspace settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed revision settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed date settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed priority settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed pending settings read without blank editable defaults
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > bounds the governed reason before sending a write
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a network outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a zero outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a server outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a explicit outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a receipt outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a audit outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a scope outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a unchanged-field outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a changed-fields outcome across collapse until an explicit reload
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > requires a fresh read after a stale row refusal and never automatically repeats PATCH
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > withdraws editable private values after a current access refusal
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > blocks duplicate saves and settings Escape/close until the pending reply settles
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a account change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a role change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a organization change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a workspace change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a program-roundtrip change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a token change
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > withholds a delayed GET after a token switch without another render
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > blocks a stale same-frame review click before any PATCH dispatch
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > preserves a pending save through ordinary same-account bearer refresh
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — server-byte exports > downloads the exact server report-pack blob once through the reports selector
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — server-byte exports > preserves the default manifest URL and its existing download filename
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > every action on a saved pack is a D0 button > leaves no button in the Bundles view without the .btn class
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > disables both controls during a pending reports export and suppresses duplicate dispatch
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > disables both controls during a pending manifest export and suppresses duplicate dispatch
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > allows a different bundle to export while this bundle is pending
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — pending requests > keeps a pending export disabled when the reader leaves and returns to Bundles
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > shows a backend response refusal without downloading, then re-enables both controls
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > shows a backend typed-error refusal without downloading, then re-enables both controls
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > reports a refused browser download without a success toast
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > retained bundle PDF downloads — failures > reports a transport failure and permits a retry
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after logout
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after logout
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after organization-adoption
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after organization-adoption
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed reports response after replacement-account
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — delayed transport > discards a delayed manifest response after replacement-account
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > discards a body read that completes after organization adoption
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed error JSON response after logout
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > suppresses a delayed transport rejection after account replacement
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > continues a delayed reports body after automatic bearer refresh in the same revision
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleExport.test.tsx > bundle export session revisions — body reads and failures > continues a delayed manifest body after automatic bearer refresh in the same revision
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > the reporting library > lands on the Report pane, so the surface a reader already knew is unchanged
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > the reporting library > offers a tab for each route family that had no screen
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > reads the route and renders the governed runs it returns
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > a run with no measured confidence says so, and never reads as 0%
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > sends the status filter the route accepts
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > a failed read is a failure with a retry, not an empty history
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > opens a run from the history through GET /runs/:id/rendered
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Run history — GET /api/report-os/runs > a sealed run whose seal no longer verifies is withheld with its reason, not shown
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > reads the route and renders the schedule in words
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > describes persisted platform output and does not promise external email
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > offers only report types an engine computes — scheduling the rest would never produce one
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > creates a schedule with the cadence chosen, and no creator in the body
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > pauses a schedule through PATCH, and says so when the server refuses
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Schedules — GET/POST/PATCH /api/insights/subscriptions > a failed read is a failure, not "no scheduled reports"
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Bundles — GET/POST /api/report-os/bundles > reads the route and renders each bundle with its reports
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Bundles — GET/POST /api/report-os/bundles > bundles the runs chosen in Run history, and posts their ids
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Bundles — GET/POST /api/report-os/bundles > a bundle whose runs belong to no project says why, rather than failing blankly
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Report catalog > offers every type an engine computes as a run control
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Report catalog > lists a type no engine computes by name, and never as a control
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > Report catalog > runs a catalog type through the governed run route
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > run history uses the complete SQL result before pagination > requests a page and sends the search to the canonical route
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > run history uses the complete SQL result before pagination > shows the server total and reaches older matching reports on the next page
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > run history uses the complete SQL result before pagination > does not imply a complete result when an older server omits pagination metadata
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > run history uses the complete SQL result before pagination > encodes scope, search and offset without dropping a zero offset
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a bundle's PDF is named for what it is > says the PDF is a manifest and where the sealed documents are
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a bundle's PDF is named for what it is > never offers the manifest as the reports
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a failed read says WHICH failure it was > a 403 on the run history is a role refusal with NO retry
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a failed read says WHICH failure it was > an expired session says to sign in, not that the server failed
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a failed read says WHICH failure it was > a 500 keeps the retry, because retrying could change the answer
+ ✓ client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > a failed read says WHICH failure it was > readFailureOf classifies each status, and only the reachable ones retry
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal chooser reaches paged exact-version selection > keeps the first page choice while adding an original from the next page, then posts only those IDs
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal chooser reaches paged exact-version selection > opens only an explicit bounded page and leaves every original unselected
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal chooser reaches paged exact-version selection > keeps an aggregate fifty-ID bound across three pages, search and kind filtering while allowing off-page removal
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal inventory refresh and refusal boundaries > shows expiry, revocation and current-source refusals without offering those originals for selection
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal inventory refresh and refusal boundaries > clears the selection and withdraws cached rows while an explicit refresh reads a fresh visit
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal inventory refresh and refusal boundaries > retries the same failed page without discarding an off-page selection or exporting cached rows
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal inventory refresh and refusal boundaries > reports an unverifiable inventory response with a missing page without presenting it as an empty library
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > Reporting legal inventory refresh and refusal boundaries > reports an unverifiable inventory response with a null record without presenting it as an empty library
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > optional reporting picker policy preserves ordinary mapping defaults > rechecks a refusal in a retained row handler and still allows removal of a selected refused ID
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserPaging.test.tsx > optional reporting picker policy preserves ordinary mapping defaults > keeps review-needed versions selectable when a mapping caller supplies neither optional policy
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > rejects retained library and ZIP actions after account drift
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > rejects retained library and ZIP actions after session drift
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > rejects retained library and ZIP actions after browser bearer drift
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > rejects retained library and ZIP actions after sign out drift
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > rejects a same-revision role snapshot replacement without requiring bearer rotation
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > canonical owner admission before retained archive actions > preserves explicit selection and one pending ZIP through actual canonical bearer refresh
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > does not decode a library response received after account replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops a library JSON body that settles after account replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > does not decode a ZIP response after account retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > does not decode a ZIP response after bundle ABA retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > does not decode a ZIP response after unmount retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops already-started ZIP bytes after account retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops already-started ZIP bytes after bundle ABA retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops already-started ZIP bytes after unmount retirement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops a delayed refusal body and its private reason after owner replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > drops a late transport error after owner replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > retired asynchronous library and archive stages > keeps the new owner pending lock when an old export completes
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > archive visit presentation and immediate withdrawal > does not dispatch a retained stationery read after account replacement
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > archive visit presentation and immediate withdrawal > does not carry a same-frame old stationery selection into the replacement archive
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > archive visit presentation and immediate withdrawal > withdraws old private fields on the first replacement-owner layout
+ ✓ client/src/concept2cure/v2/__tests__/reportingLegalChooserOwnership.test.tsx > Reporting legal chooser captured account ownership > refuses a retained ZIP click in the same frame as account replacement
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > refuses base-report Find/Enter under the actual Free plan
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > shows a known plan requirement instead of runnable pack tiles
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > keeps the catalog readable and locks base execution on Free
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Standard preview cannot grant a Find request
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Enterprise preview cannot grant a Find request
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Standard preview keeps packs browsable without runnable tiles
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Enterprise preview keeps packs browsable without runnable tiles
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Standard preview keeps catalog controls disabled with the actual plan reason
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual known Free plan — generation controls > a Enterprise preview keeps catalog controls disabled with the actual plan reason
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual per-type plan decision and supported context > honors an explicit canonical denial despite a higher local preview
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual per-type plan decision and supported context > keeps a document-bound Run disabled with its actual plan reason
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual per-type plan decision and supported context > a Standard preview preserves the exact wrong-filing reason without enabling it
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual per-type plan decision and supported context > a Enterprise preview preserves the exact wrong-filing reason without enabling it
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual per-type plan decision and supported context > preserves an unsupported pack scope before giving a plan explanation
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > a known standard plan retains base-report execution
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > a known professional plan retains base-report execution
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > a known enterprise plan retains base-report execution
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > preserves omitted-flag legacy execution
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > preserves verification failure before a known-plan explanation
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > opens a retained history report on Free without generating one
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > preserves the existing role explanation for a view-only known entitled plan
+ ✓ client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx > actual plan — existing reads and positive execution > keeps exactly the three existing plan preview choices
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — finalization belongs to the displayed run > does not attribute a signature that completes after a program change to the replacement report
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > opens an IND task binding in the one editor without changing task progress
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > renders the status the org has RECORDED, not the structure's initial todo
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > sends the change to PATCH /api/v1/pyramids/:type/progress/:taskId with the status
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > sends 'todo' as its own status — clearing progress is a write, not a no-op
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > reverts and announces a REFUSED write — the ring never counts a task the record lacks
+ ✓ client/src/concept2cure/v2/__tests__/pyramidProgressPersists.test.tsx > PyramidShell — a task status is the org's record, not a local override > reverts when the write throws, and does not report the throw as a saved status
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > loads only on request and selects nothing automatically
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > posts explicit IDs once and saves the exact server ZIP separately from existing PDF exports
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > shows expiry and approval refusals and disables those originals
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > refreshes current metadata and clears old selections
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > shows a library failure with refresh available and no selectable cached originals
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > reports a library transport failure through the canonical generic alert and allows retry
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > reports a current server approval refusal without claiming a saved ZIP
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > suppresses duplicate dispatch while the archive is pending
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > explicit legal companions for a report archive > discards delayed ZIP bytes after a session change and clears library selections
+ ✓ client/src/concept2cure/v2/__tests__/insightsLegalPackage.test.tsx > lets the reader explicitly choose published organization-wide stationery without auto-selecting scoped designs
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > engine-less types are listed once, as reports not available for the project
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > is said to be not computed when asked for, and nothing is run under its name
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for a pharma program, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for a biologic program, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for a device program, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for an IVD program, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for a CRO program, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for an academic organisation, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1b — a pack’s description names only the reports it computes > for a health-system organisation, every pack offered describes exactly the reports it holds
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > is sent to Audit & compliance reports and runs nothing
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > still runs the controlled substances ledger when that is what is asked for
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > names the open program on the run, not a project id
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > with no program open, asks which program, and opening one leads the canvas with it
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5 — the catalog follows the program’s product type > offers a biologic program no 510(k) prompt, and runs no 510(k) report when asked
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5b — a pack is offered for the filing it is for > an IND is not offered the BLA assembly pack, and is told why
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5b — a pack is offered for the filing it is for > a BLA is offered it
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5b — a pack is offered for the filing it is for > a project whose filing is not recorded is offered every pack, as before
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 6 — the report names its scope > shows the program’s name, not "project — 11"
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > allows organization reports and saved history before a product program exists
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > discards a completed request from a program that was replaced while it ran
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > does not draw a forecast trajectory from a single anchor value
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > opens a notification deep link from the stored run scope even without a selected program
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > shows portfolio risk and blockers and opens the matching program
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reactive saved report links > responds to a report notification while the reporting screen is already open
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > runs a lineage report for the chosen owned document instead of the program id
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > keeps a disabled document trace unavailable even when its engine supports document scope
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > filters regional reports by reporting role and discloses organization data scope
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > creates a platform schedule using the chosen IANA timezone
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case)
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > reads no blocker from a list row, and a blocked status still says no cause is recorded
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects list — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > no card draws a bar or states a readiness figure
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the list view states each figure as text, with no bar
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > an unavailable figure says so, and why, never "Not recorded"
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the portfolio mean says how many programs it covers when some have no recorded measurement
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — a plan that could not be read > says the plan could not be read, rather than naming one
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — a plan that could not be read > control: says nothing extra when the plan was read
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — a plan that could not be read > treats an absent flag as resolved, so an older server loses nothing
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > disables the generation-bearing Find button
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > refuses base-report dispatch even when Enter reaches the handler
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > does not replace an unread plan with a portfolio upgrade claim
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > keeps packs readable but removes runnable tiles and fallback plan locks
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > makes catalog generation unavailable with a verification reason
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan execution > also withholds organization catalog generation before a lead program exists
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan read and compatibility controls > continues known/legacy report generation when tierResolved is true
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan read and compatibility controls > continues known/legacy report generation when tierResolved is undefined
+ ✓ client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx > Insights — unverified plan read and compatibility controls > opens a retained report from history while plan generation is unavailable
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > reads every project once, for the whole chart
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > draws one row per scheduled project, sorted by target date, each saying its filing, agency and where its plan stands
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > marks the filing date and the agency's clock in words a reader can reach, from the read's dates only
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > puts every row on one axis: a later date is further right in every row
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says why a project is not on the schedule, never leaving it out silently
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says a failed read, never an empty chart
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > opens a project from its row when asked to
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is offered among the suggestions and opens on every plan, not only Enterprise
+ ✓ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is reached from the find field by asking for the schedule or the timeline
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a '510k' project is offered "'Assemble the eSTAR'", which opens 'device-510k'
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'PMA' project is offered "'Export the PMA package'", which opens 'device-pma'
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'MDR' project is offered "'Export the CER'", which opens 'device-cer'
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a 'IVDR' project is offered "'Assemble the technical documentation'", which opens 'device-diagnostics'
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > reads the pathway from the recorded regulatory path when the filing type does not name one
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-510k' is not in this release, says so in words and draws no button
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-pma' is not in this release, says so in words and draws no button
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-cer' is not in this release, says so in words and draws no button
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > when 'device-diagnostics' is not in this release, says so in words and draws no button
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a pathway with no feature (De Novo) is given no door and no guessed one
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a device project that records no pathway is given no door
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > offers nothing before the project is read, even when the shell says it is a device project
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitDeviceFiling.test.tsx > Submit — a device project assembles its filing from here > a drug project is offered no device door
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > never fills a value the record does not hold
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > fetches the governed PDF for the run, hands the bytes to downloadBlob, and sends no finalize
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > an open report keeps the page to one primary: Export PDF is quiet
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > exports a report the truthfulness gate holds below final as it stands, without sealing it
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > hands over NO file when the export is refused, and reports it as a failure
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > reports a browser that refuses the download rather than claiming a saved file
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx > the portfolio line on Projects > reads every card's plan in one request for the page
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx > the portfolio line on Projects > says where each plan stands, colour only beside the words where it is behind
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx > the portfolio line on Projects > puts the same line under the target date in the list view
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx > the portfolio line on Projects > says once that the plans could not be read, rather than showing calm cards
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioLine.test.tsx > the portfolio line on Projects > words a late start, an unreadable plan and an unavailable one
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx > Insights — the canvas says what is true about itself > claims no per-value provenance it does not carry
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx > Insights — the canvas says what is true about itself > the portfolio board credits no one with ranking, and says the average is taken here
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx > Insights — the canvas says what is true about itself > a preview says it is one, names the real plan, and does not answer as if the org had it
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx > Insights — the canvas says what is true about itself > a plan refusal is said without a first person
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx > Insights — the canvas says what is true about itself > an unregistered type is said without a first person
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > is a labelled field with a Find button, not a composer that sends
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > carries no AnA mark anywhere on the screen
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > answers with one result, never a conversation, and keeps the words in the field
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > still runs the governed report the router matched, with a plain status while it runs
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that cannot start never leaves "Running the …" beside the alert that says so
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > a run that completes says so, in place of "Running the …"
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx > Reporting: "Find a report" > keeps the result's live region mounted from the start, so the first result is announced
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > states the catalog card’s note beside "Run report"
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > pack tile — an organization-scope type under the open project > says nothing of the kind on a tile whose engine computes the project
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > names the project and says the counts are the organization’s, not the project’s
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > the lifecycle calendar under the project: the scope line note and the register’s sentence in its body
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a run whose engine computed the project carries no organization note
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > an organization (account) run is already headed as the organization and adds nothing
+ ✓ client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx > report scope line — what the counts cover > a stored project run opened from a link says it too, from the run’s own computed scope
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > shows module figures, tracked labels and signed state alongside the independent document view
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > gives AnA the same labelled tracking source without replacing governed figures
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > keeps a raw alias record separate from another saved tracking row
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > preserves unknown duplicate observations and withholds dependent completion
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > shows unmapped records instead of guessing a module or reporting an empty map
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > preserves unavailable with its source reason
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > preserves unanchored with its source reason
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > recorded tracking sections reached through Author > shows an explicitly measured empty tracking store
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds missing, malformed or contradictory tracking facts
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds a ready-looking module that contains an unknown observation
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds a contradictory section label from the screen and AnA
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds a contradictory module label from the screen and AnA
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds a contradictory unmapped label from the screen and AnA
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > withholds a module-mismatch reason when the recorded code and module agree
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > states loading independently of an empty map
+ ✓ client/src/concept2cure/v2/__tests__/projectSectionTracking.test.tsx > tracking response validation and unavailable states > retires stale tracking facts on read failure and offers Retry
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > uses server totals beyond the page and keeps readiness and search page bounded
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > requests workstream and pathway on the server, retaining the Client filter
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > applies the same pathway through the existing surface action and rejects unknown keys
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a failed filtered read distinct from an empty portfolio and allows clearing
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > does not call an empty pathway result a new organization
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a selected page status clearable when a server filter returns different statuses
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx > what must close before dispatch, in words > names a document by its title and never by its store and id
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx > what must close before dispatch, in words > lists errors first, then approvals, then the other gates; infos are not things to close
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx > what must close before dispatch, in words > keeps rule ids and codes behind "Rule detail", and each act opens where it is done
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx > the header’s verdict opens Submit at that market > is a button, named for its market and where it goes
+ ✓ client/src/concept2cure/v2/__tests__/projectSubmitPlainBlockers.test.tsx > the header’s verdict opens Submit at that market > is words only where nothing opens it
+ ✓ client/src/concept2cure/v2/__tests__/projectSettingsArchive.test.tsx > archive from Project settings > says what archiving does, and archives only after a reason and the typed word
+ ✓ client/src/concept2cure/v2/__tests__/projectSettingsArchive.test.tsx > archive from Project settings > a refusal is the server’s words, and nothing is said to be archived
+ ✓ client/src/concept2cure/v2/__tests__/projectSettingsArchive.test.tsx > archive from Project settings > an answer that may have completed is said so, never as done or refused
+ ✓ client/src/concept2cure/v2/__tests__/projectSettingsArchive.test.tsx > archive from Project settings > a person who may only read the settings is not offered it
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > places exact reasons in current notes and offers only the admitted regional run
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > filters not-applicable by its real availability without offering a Run action
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > filters filing-context-required by its real availability without offering a Run action
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > filters context-unavailable by its real availability without offering a Run action
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > treats Region as discovery; selecting USA never changes the recorded filing or makes FDA actionable
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > role/plan presentation never repairs a wrong-market filing (true/true)
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > role/plan presentation never repairs a wrong-market filing (false/true)
+ ✓ client/src/concept2cure/v2/__tests__/insightsRegionalCatalog.test.tsx > regional catalog unavailable states retain existing UI treatment > role/plan presentation never repairs a wrong-market filing (true/false)
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > "What is my CRL risk?" is answered honestly and sends no run
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > "Forecast the review trajectory for BX204" is answered honestly and sends no run
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > "Predict the likelihood of approval" is answered honestly and sends no run
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > the pharma header and suggestions no longer offer a CRL risk question
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > the biotech header and suggestions no longer offer a CRL risk question
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > no pharma standard pack offers a prediction tile
+ ✓ client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx > Insights — no prediction it cannot make > no biotech standard pack offers a prediction tile
+ ✓ client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx > existing Insights lifecycle run > runs the catalog type and displays actual obligation/occurrence dates and legal limits through the mounted Insights renderer
+ ✓ client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx > existing Insights matrix run > runs the catalog type and preserves nullable columns, recorded values and explicit unknown currency in the UI
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > states each recorded status with its count, the pace and the acceptance rate
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says when no AnA draft is recorded, rather than a rate of zero
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > withholds only the rate when the drafts could not be read
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says a failed read failed, and draws no figure
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > draws nothing for a reader with no device project, or an overview without the section
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > on the canvas of an open project
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > with no project open, beside the project picker
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx > run history row — what an organization-scope run counted > a run under a project whose engine counted the organization says both lines
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx > run history row — what an organization-scope run counted > an account run is the organization’s by its own scope: the first line only
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx > run history row — what an organization-scope run counted > a domain register whose engine computed the project says neither
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunHistoryScopeNote.test.tsx > run history row — what an organization-scope run counted > a project report says neither
+ ✓ client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > mounts Insights with the real surface registry and reaches its catalog without masking shared imports
+ ✓ client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > counts applicable definitions separately from engine-backed and currently runnable types
+ ✓ client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx > current-context report capability disclosure > qualifies predictions separately and never suggests a plan unlocks a validated prediction
+ ✓ client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a failed canvas load > offers a retry that reads again, in plain words
+ ✓ client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a report's tables and sources > a report table is a table with column headers, and a source is a disclosure, not a hover
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > gives the project's own pyramid, from its recorded filing, with its own statuses
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads the recorded filing where intake keeps it: metadata.submissionTypeId, else program_type
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says a filing has no work breakdown rather than giving it another type
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > says the progress store is not provisioned when its table is absent, even through the ORM's wrapper
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > reads nothing for a project the person is not admitted to
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref > 404s an unknown project
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > records the status under the project's key, admitted for write
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > updates the project's existing row, and 'todo' clears the task
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a task that is not in the project pyramid, and an unknown status, writing nothing
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > writes nothing when the person may not change the project
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > PATCH /pyramids/by-project/:ref/progress/:taskId > refuses a filing with no pyramid
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > back-schedules every task from the recorded target date
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > reads the target as a calendar date, in the tenant-scoped project query
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no dates when no target date is recorded, rather than assuming one
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule to a person not admitted to the project
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project/:ref — the project's schedule > gives no schedule for another organisation's project: it is not found in this one
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives each phase its completing task, the workstream's milestone
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives an IND the 30-day review from its own pyramid, dated from the target
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives a 510(k) the published MDUFA goal and its interim milestones, from regulatory-timelines
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > the plan's workstream milestones and review clock > gives no clock without a target date
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives each admitted project its plan in a few figures, from the engine's summary
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > carries what the global schedule draws: the filing, the work's start and the agency's clock (THE_PROGRAM §5)
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > gives an unscheduled project no start and no clock
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > admits each project on its own: a refused one says only that it is unavailable
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a project of another organisation is unavailable, resolved in the session's organisation only
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > says a filing with no work breakdown has none, and an unscheduled project is unscheduled
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > refuses an empty or oversized batch
+ ✓ server/routes/__tests__/pyramid-project-progress.test.ts > GET /pyramids/by-project?refs= — the portfolio line > is never read as a submission type ('by-project' is not a pyramid)
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > a run’s evidence disclosure > reads neither route until it is opened
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > a run’s evidence disclosure > reads the seal and the dependencies once opened
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > an intact seal states the verdict, the four checks and the signature
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > "not verifiable" is its own state — neither a pass nor a failure
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > a mismatch says the document is withheld, not merely that a check failed
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > an unfinalized run says it carries no seal, rather than failing to verify one
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > a run the chain records as finalized, no longer marked final, reports the contradiction
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > a sealed run with no signature row says so, rather than dropping the block
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > an unverified seal says its signer and meaning are only as recorded
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > the seal verdict > a failed seal read claims nothing about the seal
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > lists each provider with its outcome, and the engine’s own blocker sentence
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > no recorded providers says so, and does not imply the run read nothing
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > a failed dependency read is a failure, not an empty source list
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > shows the three manifestation elements plus whatever extras are recorded
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > a missing MEANING reads "Not recorded" rather than vanishing
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > a sealed run with no signature row still shows all three elements as not recorded
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > an UNSEALED run shows no manifestation at all — there is nothing to manifest
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > carries the chain’s own record of the meaning and the prior status
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > sealFactRows — §11.50 elements are never silently absent > marks the seal hash as mono so it is readable and wraps
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureIsVerifiedAgainstSeal — one binding, not three > true only when the verdict is intact AND the signature check passed
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureIsVerifiedAgainstSeal — one binding, not three > false when the seal does not verify
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureIsVerifiedAgainstSeal — one binding, not three > false when intact but the signature check itself did not pass
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureAbsent — no row is not the same as a row with gaps > true for a sealed run the server returned no signature for
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureAbsent — no row is not the same as a row with gaps > false when a row exists, even with a null meaning
+ ✓ client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > signatureAbsent — no row is not the same as a row with gaps > false for an unsealed run — the server looked for nothing
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > uses the engine's typical duration, five working days a week
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskWorkingDays > else the estimated hours at an eight-hour day, at least one day
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > makes the task that completes the submission due on the target date
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > makes each task due the working day before the earliest start of what depends on it
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > moves a weekend target back to the Friday before it
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > lays the tasks after the submission forward from it (the PMA's post-submission readiness)
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > schedules every task of every pyramid, each due no later than what depends on it starts
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > uses the IND's typical durations
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a target that is not a calendar date
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a cycle rather than giving dates
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > backSchedule > refuses a work breakdown with no single task that completes it
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskStanding > is overdue past its due date, late to start past its start and not started, else nothing
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > taskStanding > a done task, or one with no dates, stands nowhere
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > phaseGate > is each phase's completing task, in every pyramid
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > phaseGate > else the phase's one task nothing in the phase depends on, else none
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > is on track when nothing is behind, and names the next phase to complete
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > is at risk when an unfinished task is past its dates, and counts them
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > is blocked when a task is recorded blocked, before anything else
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > is unscheduled without a schedule, with no dates
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > is complete when every task is done, with no next milestone
+ ✓ tests/services/regulatory/pyramidBackSchedule.test.ts > scheduleSummary > skips a phase already complete for the next milestone
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > opens the real wizard using a validated action, and never submits intake
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > preserves a chosen filing and typed input when opened again
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > stashes across navigation and mount and consumes the opener once
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > keeps other portfolio actions guarded while the person is in intake
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > does not advertise an AnA cancellation action while the wizard owns the screen
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > can open intake even when the portfolio read failed
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a viewer > is told the canvas is view only
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a viewer > is shown pack tiles it cannot run, not run buttons
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a viewer > asking for a report sends no run and says why
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a member > sees no view-only note and gets runnable tiles
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a member > a 403 from the write gate is not reported as a plan refusal
+ ✓ client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx > Insights canvas — a member > a 403 that names a required plan is still reported as one
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > describes the accessible subset rather than every program in the organization
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > a complete rollup says nothing about a cap, and counts plainly
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > a capped rollup says the board is not the whole portfolio
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > a capped rollup counts as "first N", never as the organisation’s total
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > the reply above the board says there are more, and that these are not ranked
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx > the portfolio board and the server’s rollup cap > the board note does not claim the shown programs are the worst ones
+ ✓ client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx > Insights — readiness that was not computed > says so under the page title instead of printing a percentage
+ ✓ client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx > Insights — readiness that was not computed > draws no ring for a program without a readiness, and averages only the computed ones
+ ✓ client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx > Insights — a readiness figure carrying outstanding critical gaps > does not call the program ready, and states the gap count instead
+ ✓ client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx > Insights — a readiness figure carrying outstanding critical gaps > qualifies the figure on the regional comparison line too
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > preserves numeric anchor, canonical UUID, chosen role and captured actor/workspace headers
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > keeps confirmed data but states an unconfirmed audit outcome {"persisted":false,"chained":false}
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > keeps confirmed data but states an unconfirmed audit outcome {}
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > keeps confirmed data but states an unconfirmed audit outcome {"persisted":true,"attributed":false}
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > does not report rollback or automatically resend an uncertain write
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > does not report rollback or automatically resend an uncertain write
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > rejects ambiguous success receipts for the submitted PUT
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > rejects ambiguous success receipts for the submitted PUT
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > rejects ambiguous success receipts for the submitted PUT
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > does not confirm a revoke while its explicit share still exists
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > project sharing confirmed and unconfirmed outcomes > retains a server refusal sentence and keeps GET outages distinct
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > sharing request ownership > does not issue an old handler after account, organization or scope changes
+ ✓ client/src/concept2cure/v2/__tests__/projectSharingRequest.test.ts > sharing request ownership > discards a late receipt after its program/session was retired
+ ✓ client/src/concept2cure/v2/__tests__/insightsUnreadPlanIsNotAHigherPlan.test.tsx > Insights canvas — a run refused on an unread plan > says the plan could not be read, not that a higher plan is needed
+ ✓ client/src/concept2cure/v2/__tests__/insightsUnreadPlanIsNotAHigherPlan.test.tsx > Insights canvas — a run refused on an unread plan > a 403 naming a required plan over a READ tier is still a plan refusal
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > does not present itself as AnA
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > does not claim the suggested pack was derived from the readiness figure
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > states that the pane routes rather than answers
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > keeps failed dossier measurements unavailable in the mean
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "Not recorded" on its list row, never "0% ready"
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > filters on the server before paging and can clear the selection
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > offers no redundant selector for one active accessible client
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > keeps a way to clear the filter after a failed read and reports the failure
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > does not describe an empty filtered read as an organization with no projects
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > performs the same client filter through the existing surface action
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > refuses an action for a client outside the authorized choices
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > says one active project in the singular, and several in the plural
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list
+ ✓ client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > names the open program to the overview and leads with it
+ ✓ client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > names the open project in the back link when the address carried only its id
+ ✓ client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > a program with no project record is stated for that program, not replaced by another
+ ✓ client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > with no program open, the organisation view is read as before
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > the bundle register states a truncated read > says nothing when the register was read whole
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > the bundle register states a truncated read > names the register total when the scan truncated
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > the bundle register states a truncated read > does not present the register total as what the reader may see
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > bundleRegisterCaveat, over the cases a panel cannot easily reach > is silent unless the route said it truncated
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > bundleRegisterCaveat, over the cases a panel cannot easily reach > still speaks when the total is missing or malformed, without inventing one
+ ✓ client/src/concept2cure/v2/__tests__/insightsBundleRegisterCap.test.tsx > bundleRegisterCaveat, over the cases a panel cannot easily reach > reports a zero total rather than treating it as absent
+ ✓ client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx > Insights — reports run over the lead project > sends the project scope and id the overview names
+ ✓ client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx > Insights — reports run over the lead project > a pack tile whose type does not run over a project says so and offers no run
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > shows none where the record holds none, in either view
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > programName — a database id is never a program name > uses the code when one is recorded
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > programName — a database id is never a program name > falls back to the label the user gave the program, not its id
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > programName — a database id is never a program name > never returns a bare number
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > programName — a database id is never a program name > trims rather than emitting whitespace as a name
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > preset copy states what the pack is, never what the filing is doing > has a preset table to check
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > preset copy states what the pack is, never what the filing is doing > no preset /\bYour\s+(NDA|BLA|MAA|IND|510\(k\)|submission|dossier)\b/i (claims the reader owns a specific filing)
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > preset copy states what the pack is, never what the filing is doing > no preset /\bis in agency review\b/i (claims a review status)
+ ✓ client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts > preset copy states what the pack is, never what the filing is doing > no preset /\bis mid-assembly\b/i (claims an assembly status)
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx > Plan reaches the same authored filing lifecycle reference > uses the recorded exact filing rather than inferring it from the application type
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx > Plan reaches the same authored filing lifecycle reference > does not infer a lifecycle from IND when exact filing is undefined
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx > Plan reaches the same authored filing lifecycle reference > does not infer a lifecycle from IND when exact filing is null
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx > Plan reaches the same authored filing lifecycle reference > does not infer a lifecycle from IND when exact filing is unknown_stored_filing
+ ✓ client/src/concept2cure/v2/__tests__/projectPlanLifecycleReference.test.tsx > Plan reaches the same authored filing lifecycle reference > does not let an unknown prior project reference survive a changed project read
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-status.st-ok takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-status.st-warn takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-ready takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-partial takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-missing takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-critical takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-high takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-medium takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-lock-chip takes its colours from tokens, with no literal and no mix toward black
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > Critical is not quieter than High: same hue, heavier weight
+ ✓ client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts > roHeldBecause > quotes the gate when the gate recorded reasons
+ ✓ client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts > roHeldBecause > does not claim to quote an empty reason list, and names the real cause instead
+ ✓ client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts > roHeldBecause > says nothing explains the status when neither list holds anything
+ ✓ client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts > roHeldBecause > never emits an empty quotation, for any combination
+ ✓ client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx > Project knowledge: no selected project > offers no profile absence claim or request without a current project
+ ✓ client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts > roSpecNum > reads a genuine zero as a measurement
+ ✓ client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts > roSpecNum > reads an absent, null, empty or non-numeric field as nothing, never as zero
+ ✓ client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts > roSpecNum > reads the numbers a spec actually carries
+ ✓ client/src/concept2cure/v2/__tests__/pyramidRoleLabels.test.ts > the roles the pyramids name > each has a label
+ ✓ client/src/concept2cure/v2/__tests__/pyramidRoleLabels.test.ts > the roles the pyramids name > a role with no label yet is said in plain words, not as its id
+ Test Files  62 passed (62)
+      Tests  633 passed (633)
