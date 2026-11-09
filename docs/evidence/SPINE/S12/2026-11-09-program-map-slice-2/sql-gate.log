@@ -1,0 +1,9 @@
+## Without the entry
+[ci:sql-interpolation] ❌ 1 problem(s):
+  • server/services/clinical-regulatory-evidence/vault-citation-changes.ts: 2 value(s) interpolated into SQL text — not in the baseline
+## With the entry
+  server/services/clinical-regulatory-evidence/vault-citation-changes.ts:173:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/clinical-regulatory-evidence/vault-citation-changes.ts:173:52 supersededSql('d') <- ../vault/vault-version-family.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1051 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+## Selftest
+[ci:sql-interpolation:selftest] 35 passed — the gate fails on what it exists to catch.

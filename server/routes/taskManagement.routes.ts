@@ -54,6 +54,7 @@ import { routeRemindRefusal } from '../services/review/review-route';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
   admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
+import { requireAssignedVaultFamily, VaultFamilyRefusal } from '../services/clinical-regulatory-evidence/vault-citation-changes';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -297,6 +298,9 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       } else {
         await admitTaskCreationActor(q, ctx);
       }
+      /* S12 gap 5 (2026-11-09): a work project assigned to produce a Vault family names one in its own project's
+         filing program; the program comes from the admitted project, never the body. Absent field: unchanged. */
+      await requireAssignedVaultFamily(q, organizationId, project.projectId, validatedData.moduleData);
       if (!assigneeId) {
         const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
         if (optimalAssignee) {
@@ -347,6 +351,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     if (commitInFlight) return unconfirmedTaskCreation(req, res);
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
+    if (error instanceof VaultFamilyRefusal) return res.status(error.status).json({ success: false, code: error.code, error: error.message });
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
     console.error('Error creating task:', error);
     res.status(400).json({

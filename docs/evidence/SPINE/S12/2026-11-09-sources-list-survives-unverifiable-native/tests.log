@@ -1,0 +1,4 @@
+ ✓ lists the other source normally, and the native one as unverifiable with its reason, its details withheld 98ms
+ ✓ lists both normally when the native source verifies 81ms
+ ✓ a denied native source is still omitted, never disclosed as unverifiable 71ms
+      Tests  3 passed (3)

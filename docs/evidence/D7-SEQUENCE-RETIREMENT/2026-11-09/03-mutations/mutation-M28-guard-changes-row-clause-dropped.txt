@@ -1,0 +1,15 @@
+MUTATION M28-guard-changes-row-clause-dropped in migrations/20261109_ectd_sequence_removal_guard.sql (on the final code and tests, 2026-11-09T06:34:30.067347Z): replaced [  IF (to_jsonb(NEW) - 'deleted_at' - 'updated_at') IS DISTINCT FROM] with [  IF false AND (to_jsonb(NEW) - 'deleted_at' - 'updated_at') IS DISTINCT FROM]
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removal stands only with its signed record (G1, at COMMIT) > refuses a bare removal at COMMIT, and the sequence stays live 14ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removal stands only with its signed record (G1, at COMMIT) > admits a retirement recorded with its responsibility signature by the same actor 6ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removal stands only with its signed record (G1, at COMMIT) > refuses a retirement record that names a signature for another act, of another meaning, or by another person 13ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removal stands only with its signed record (G1, at COMMIT) > admits the filed-elsewhere declaration's removal of the draft its signature names 6ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > refuses restoring a removed sequence, and any edit of one 6ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > refuses removing a sequence that is sent, even with a record 3ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > refuses removing a sequence that is acknowledged, even with a record 5ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > refuses removing a sequence that is transmitting, even with a record 4ms
+ × server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > refuses a removal that also changes the row 7ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > a removed row is final, and a sequence the agency may hold is never removed (G2) > names exactly the filed statuses (filed-dispatch.ts) and a send in flight 1ms
+ ✓ server/services/submission-service/__tests__/sequence-removal-guard.pglite.test.ts > replay (Rule 1) > applying the migration again leaves its two triggers, once each, still guarding 27ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 a7f1b589a95228cc694e09083fcc04d3644920a44032f405d31c956ad7eb2d44 (expected a7f1b589a95228cc694e09083fcc04d3644920a44032f405d31c956ad7eb2d44)

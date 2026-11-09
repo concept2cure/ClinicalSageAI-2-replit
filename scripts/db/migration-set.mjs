@@ -3795,6 +3795,12 @@ export const C2C_MIGRATION_FILES = [
   // carries every legacy bundle:<uuid> memory pack once, ON CONFLICT DO NOTHING, and
   // fails the deploy if one was neither carried nor reported. Drops nothing.
   'migrations/20261108_report_bundle_register.sql',
+  // P-86 (founder, 2026-11-01): a sequence leaves the live set only by a signed
+  // retirement or the filed-elsewhere declaration's signed removal of drafts.
+  // Triggers only, replay-safe (CREATE OR REPLACE; its own two triggers are
+  // dropped and created again by name). A future backfill of ectd_sequences
+  // must carry WHERE deleted_at IS NULL: a removed row refuses every change.
+  'migrations/20261109_ectd_sequence_removal_guard.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

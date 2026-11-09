@@ -58,3 +58,17 @@ local database by `../2026-11-09-editor-rail-vault-replaced/walk.cjs`, whose REA
    C2C-101 · 2.5.3 — Drug substance specification v1.0 · replaced since cited; v3.0 is approved"
    (`map-1440-light.png`).
 3. The same at 390 dark, with no sideways scroll (`map-390-dark.png`).
+
+## After review (the coordinating session and the Reporting session, 2026-11-09)
+
+- **No heading of its own.** "Drafted from the Vault" lost its heading and sits inside the Work projects section,
+  which extends the project page rather than adding a card (RULE 4). Its first line names it.
+- **A refused read says the refusal,** through the shared `readRefusalWords` rule; only a failure to answer reads
+  "could not be checked". The page case covers both, and all 7 pass (`ui.log`).
+- **The Reporting session's review against the S11 6b global schedule.** There is no overlap: the global schedule
+  reads no work projects, no `unified_tasks` and no Vault lineage. The Plan task's due date is the right date for the
+  map, because it is the committed date a named person owns. A work project with no assignment says so ("No one is
+  assigned to deliver it yet."), and never falls back to the schedule's date. Filing dates and review clocks stay out;
+  the Plan step's `ScheduleLine` draws them.
+- **Push order.** This slice was first pushed at 06:38, on an earlier window. The coordinating session's 06:28 note
+  asking to push after 06:50 had not been read. That is said here and to it.

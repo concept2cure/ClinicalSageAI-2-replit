@@ -106,8 +106,22 @@ import {
 import type { DispatchReadinessAssessment } from '../ectd/assess-dispatch-readiness';
 import { submissionChannelFor } from '../regulatory/registry/submittabilityCoverage';
 import { sequenceTypeRefusal } from '../regulatory/market-support';
-import { sequenceCreationRefusal } from './filed-sequence-baseline';
+import {
+  ECTD_SEQUENCE_RETIRED_ACTION,
+  SEQUENCE_RETIREMENT_INTENT,
+  liveSetRemoval,
+  readRetirementFacts,
+  retiredSequenceRecord,
+  retirementStatement,
+  retirementMeaningRefusal,
+  retirementPayloadRefusal,
+  retirementRefusal,
+  sequenceCreationRefusal,
+  type RetirementSequence,
+} from './filed-sequence-baseline';
 import { readCurrentFiledBaseline } from './filed-sequence-baseline-content';
+import { loadFiledStateBySubmission } from '../ectd/prior-sequence-loader';
+import { resolveActorNames } from '../tenant/actor-names';
 import { canonicalRegionOf, toAgency } from '../../../shared/regulatory/region-identity';
 import { regionalDeviceApplicationClassForFiling, regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog';
 import { classNotSequencedReason, filingDocumentClassOf, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
@@ -143,7 +157,8 @@ export type SubmissionErrorCode =
   | 'NOT_AN_APPLICATION'
   | 'PACKAGE_IDENTITY_MISSING'
   | 'SHADOW_WAIVER_NOT_ELIGIBLE'
-  | 'SHADOW_FINDING_NOT_DISPOSABLE';
+  | 'SHADOW_FINDING_NOT_DISPOSABLE'
+  | 'SEQUENCE_NOT_RETIRABLE';
 
 /**
  * Transitions that are irreversible / outward-facing and must go through the
@@ -195,6 +210,9 @@ export const SUBMISSION_ERROR_STATUS: Readonly<Record<SubmissionErrorCode, numbe
   // The finding cannot be closed this way now (P-35): it is not an open critical
   // of this sequence, or 'fixed' was asked with no completed review after it.
   SHADOW_FINDING_NOT_DISPOSABLE: 409,
+  // The sequence is kept (P-86): the agency may hold it, a later sequence holds
+  // its place, or its record is read from compiles another filing shares.
+  SEQUENCE_NOT_RETIRABLE: 409,
 };
 
 // ── Pure lifecycle rules ────────────────────────────────────────────────────
@@ -972,7 +990,8 @@ const STEP_AUDIT_ACTION: Record<GovernedSequenceStep, string> = {
 export type SequenceSignatureIntent =
   | GovernedSequenceStep
   | typeof SHADOW_WAIVER_INTENT
-  | typeof SHADOW_FINDING_DISPOSITION_INTENT;
+  | typeof SHADOW_FINDING_DISPOSITION_INTENT
+  | typeof SEQUENCE_RETIREMENT_INTENT;
 
 /** How a sentence names the act a signature was given for. */
 const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
@@ -981,6 +1000,7 @@ const INTENT_LABEL: Record<SequenceSignatureIntent, string> = {
   transmit: 'transmit',
   [SHADOW_WAIVER_INTENT]: 'Shadow Review waiver',
   [SHADOW_FINDING_DISPOSITION_INTENT]: 'Shadow Review finding disposition',
+  [SEQUENCE_RETIREMENT_INTENT]: 'retirement',
 };
 
 /**
@@ -997,6 +1017,7 @@ const INTENT_MEANING_REFUSAL: Partial<Record<SequenceSignatureIntent, (meaning: 
   transmit: (m) => releaseActMeaningRefusal(m, INTENT_LABEL.transmit),
   [SHADOW_WAIVER_INTENT]: shadowWaiverMeaningRefusal,
   [SHADOW_FINDING_DISPOSITION_INTENT]: shadowFindingDispositionMeaningRefusal,
+  [SEQUENCE_RETIREMENT_INTENT]: retirementMeaningRefusal,
 };
 
 /** Why a signature's payload does not authorize this particular request, or null (P-35: which finding, closed how). */
@@ -1193,7 +1214,8 @@ async function signatureSpentBy(signatureActionId: string, target: string, organ
       AND table_name = 'ectd_sequence'
       AND record_id = ${sequenceId}
       AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', ${SHADOW_REVIEW_WAIVED_ACTION},
-                     ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED')
+                     ${SHADOW_FINDING_DISPOSITIONED_ACTION}, ${SIGNATURE_VOIDED_ACTION}, 'TRANSMIT_BLOCKED',
+                     ${ECTD_SEQUENCE_RETIRED_ACTION})
       AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
     LIMIT 1
   `;
@@ -1437,7 +1459,13 @@ async function writeBlockedTransmitEvent(client: PoolClient, input: BlockedTrans
 async function applySequenceChangeWithAudit(
   update: {
     text: string;
-    params: unknown[];
+    /**
+     * The UPDATE's parameters, or a function of the act's instant (P-86): the
+     * instant is then read on the transaction after `underLock`, given to the
+     * UPDATE and sealed on the audit row, so the row and its record carry one
+     * time. Every other caller passes an array and is unchanged.
+     */
+    params: unknown[] | ((at: string) => unknown[]);
     /**
      * What zero affected rows MEANS for this caller. When the UPDATE carries a
      * compare-and-set predicate, zero rows is a LOST RACE (the state moved after
@@ -1453,13 +1481,15 @@ async function applySequenceChangeWithAudit(
      */
     underLock?: (client: PoolClient) => Promise<void>;
   },
-  audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
-): Promise<void> {
+  audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown>; reason?: string },
+): Promise<{ occurredAt: string | null }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     if (update.underLock) await update.underLock(client);
-    const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
+    const occurredAt = typeof update.params === 'function' ? await instantAfterLocks(client) : null;
+    const params = typeof update.params === 'function' ? update.params(occurredAt as string) : update.params;
+    const res = (await client.query(update.text, params)) as { rowCount?: number | null };
     if (!res.rowCount) {
       throw update.noRowsRefusal
         ? new SubmissionError('INVALID_STATE', update.noRowsRefusal)
@@ -1472,14 +1502,24 @@ async function applySequenceChangeWithAudit(
       resourceType: 'ectd_sequence',
       resourceId: audit.resourceId,
       details: audit.details,
+      ...(audit.reason ? { reason: audit.reason } : {}),
+      ...(occurredAt ? { occurredAt } : {}),
     });
     await client.query('COMMIT');
+    return { occurredAt };
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
     throw err;
   } finally {
     client.release();
   }
+}
+
+/** The act's instant, read after its locks were taken (NOW() is BEGIN's time, before any wait), to the millisecond
+ *  the audit chain seals (services/audit/chain.ts re-derives occurred_at with toISOString). */
+async function instantAfterLocks(client: PoolClient): Promise<string> {
+  const r = await client.query(`SELECT date_trunc('milliseconds', clock_timestamp()) AS at`);
+  return new Date(r.rows[0].at as string | Date).toISOString();
 }
 
 /** The one query surface the governed-transition checks run on: the pool, or the transaction's client. */
@@ -1951,7 +1991,8 @@ async function precheckShadowFindingDisposition(
  */
 export async function precheckGovernedStep(
   id: number,
-  step: SequenceSignatureIntent,
+  /** A retirement (P-86) is not prechecked here yet: its precheck comes with its door (C2). */
+  step: Exclude<SequenceSignatureIntent, typeof SEQUENCE_RETIREMENT_INTENT>,
   ctx: { organizationId: number; userId: number },
   opts: GovernedPrecheckOptions = {},
 ): Promise<GovernedStepPrecheck> {
@@ -2347,6 +2388,131 @@ async function applyShadowReviewWaiver(
   logger.info('Shadow Review waived', { sequenceId: seq.id, failedRunId, failureCode, organizationId: ctx.organizationId });
   const waiver = await resolveShadowReviewWaiver(asQueryable(pool), { sequenceId: seq.id, organizationId: ctx.organizationId });
   return { sequenceId: seq.id, failedRunId, failureCode, signatureActionId, signatureId: verdict.signatureId, waiver };
+}
+
+// ── P-86: retire a sequence that was never filed ────────────────────────────
+
+/** What a retirement answers: the act's own facts, its instant and its signature. */
+export interface SequenceRetirementRecord {
+  retired: true;
+  sequenceId: number;
+  sequenceNumber: string;
+  region: string;
+  /** The instant the act took: the row's deleted_at and its sealed audit time. */
+  retiredAt: string;
+  signatureActionId: string;
+  signatureId: number | null;
+  meaning: 'responsibility';
+  reason: string;
+  /** False when another live sequence of the submission still holds the number (a legacy duplicate). */
+  numberFreed: boolean;
+}
+
+/**
+ * Retire a sequence that was never filed, by a signed act that frees its number
+ * (P-86, founder 2026-11-01; launch row D7). The person signs the sequence with
+ * intent 'retire', the meaning responsibility, and the statement
+ * retirementStatement gives; the act re-checks under the sequence lock, removes
+ * the row through the baseline's own statement (liveSetRemoval) and seals one
+ * ECTD_SEQUENCE_RETIRED row in the same transaction. A refusal voids the
+ * signature (P-23). The database admits the removal only with that record
+ * (migrations/20261109_ectd_sequence_removal_guard.sql).
+ */
+export function retireSequence(
+  input: { sequenceId: number; signatureActionId: string },
+  ctx: { organizationId: number; userId: number },
+): Promise<SequenceRetirementRecord> {
+  return voidingSignatureOnRefusal(
+    () => applySequenceRetirement(input, ctx),
+    { signatureActionId: input.signatureActionId, sequenceId: input.sequenceId, ctx, step: SEQUENCE_RETIREMENT_INTENT },
+  );
+}
+
+/** The live sequence to retire; a sequence already retired is answered with when and by whom. */
+async function retirementTarget(sequenceId: number, ctx: { organizationId: number; userId: number }): Promise<EctdSequence> {
+  try {
+    return await getSequence(sequenceId, ctx);
+  } catch (err) {
+    if (!(err instanceof SubmissionError) || err.code !== 'NOT_FOUND') throw err;
+    const record = await retiredSequenceRecord(asQueryable(pool), ctx.organizationId, sequenceId);
+    if (!record) throw err;
+    const who = record.actorId ? (await resolveActorNames([record.actorId])).get(record.actorId)?.name : null;
+    throw new SubmissionError('INVALID_STATE',
+      `Sequence ${record.sequenceNumber} was retired on ${record.retiredDay} UTC by ${who ?? 'a person the record no longer names'}. Nothing was changed.`);
+  }
+}
+
+/** Whether a filed sequence of this number is read from compiles (check 5b), by the filed fold's own read. */
+async function compileReadTwin(q: SequenceQueryable, organizationId: number, submissionId: number, sequenceNumber: string): Promise<boolean> {
+  const state = await loadFiledStateBySubmission(q, { organizationId, submissionId });
+  return state.sequences.some((x) => x.sequenceNumber === sequenceNumber && x.basis === 'compiles');
+}
+
+/** The facts the act judges, or its refusal. A read that fails is never a pass. */
+async function retirableFacts(q: SequenceQueryable, s: RetirementSequence, organizationId: number) {
+  let facts: Awaited<ReturnType<typeof readRetirementFacts>>;
+  try {
+    facts = await readRetirementFacts(q, organizationId, s, (n) => compileReadTwin(q, organizationId, s.submissionId, n));
+  } catch (err) {
+    logger.warn('Retirement facts unreadable', { sequenceId: s.id, err: err instanceof Error ? err.message : String(err) });
+    throw new SubmissionError('INVALID_STATE', `Whether sequence ${s.sequenceNumber} can be retired could not be checked, so it was not retired. Try again.`);
+  }
+  const refusal = retirementRefusal(facts);
+  if (refusal) throw new SubmissionError('SEQUENCE_NOT_RETIRABLE', refusal);
+  return facts;
+}
+
+async function applySequenceRetirement(
+  input: { sequenceId: number; signatureActionId: string },
+  ctx: { organizationId: number; userId: number },
+): Promise<SequenceRetirementRecord> {
+  const seq = await retirementTarget(input.sequenceId, ctx);
+  const n = seq.sequenceNumber;
+  const target = `ectd-sequence:${seq.id}`;
+  const verdict = await governedSignatureVerdict(input.signatureActionId, target, ctx, SEQUENCE_RETIREMENT_INTENT, retirementPayloadRefusal(n));
+  if (verdict.refusal !== null) {
+    throw new SubmissionError('GOVERNED_REQUIRED',
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${SEQUENCE_RETIREMENT_INTENT}', ` +
+        `the meaning responsibility, notFiledElsewhere: true and the statement the precheck gives, then pass its actionId. Refused: ${verdict.refusal}.`);
+  }
+  const independence = await independentSignerRefusal(target, ctx, verdict.meaning);
+  if (independence) throw independence;
+  const reason = await dispositionSignatureReason(asQueryable(pool), { organizationId: ctx.organizationId, signatureActionId: input.signatureActionId });
+  if (!reason) throw new SubmissionError('GOVERNED_REQUIRED', `The signature records no reason, so sequence ${n} was not retired; sign again with your reason.`);
+  const subject: RetirementSequence = { id: seq.id, submissionId: seq.submissionId, sequenceNumber: n, region: seq.region, dispatchStatus: seq.dispatchStatus ?? null };
+  await retirableFacts(asQueryable(pool), subject, ctx.organizationId);
+  // Filled from the facts judged under the lock, before the audit row is written.
+  const details: Record<string, unknown> = {
+    description: `Sequence ${n} retired by Part 11 e-signature (responsibility)`,
+    reason, signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility',
+    notFiledElsewhere: true, statement: retirementStatement(n),
+    submissionId: seq.submissionId, sequenceNumber: n, region: seq.region, type: seq.type, status: seq.status,
+    boundDigest: verdict.boundDigest,
+  };
+  const { occurredAt } = await applySequenceChangeWithAudit(
+    {
+      underLock: (client) => recheckUnderSequenceLock(client, {
+        sequenceId: seq.id, submissionId: seq.submissionId, organizationId: ctx.organizationId,
+        boundDigest: verdict.boundDigest, act: 'retirement',
+        recheck: async (q) => {
+          const row = await q.query(`SELECT dispatch_status, transmit_attempt_id FROM ectd_sequences WHERE id = $1 AND organization_id = $2`, [seq.id, ctx.organizationId]);
+          const judged = await retirableFacts(q, { ...subject, dispatchStatus: (row.rows[0]?.dispatch_status as string | null) ?? null }, ctx.organizationId);
+          Object.assign(details, { dispatchStatus: judged.dispatchStatus, transmitAttemptId: row.rows[0]?.transmit_attempt_id ?? null,
+            stagingTransmittalIds: judged.stagingTransmittalIds, numberFreed: judged.numberFreed });
+        },
+      }),
+      text: liveSetRemoval(ctx.organizationId, [seq.id]).text,
+      params: (at) => liveSetRemoval(ctx.organizationId, [seq.id], at).params,
+      noRowsRefusal: `Sequence ${n} changed while its retirement was being recorded, so it was not retired.`,
+    },
+    { organizationId: ctx.organizationId, userId: ctx.userId, action: ECTD_SEQUENCE_RETIRED_ACTION, resourceId: seq.id, reason, details },
+  );
+  logger.info('Sequence retired', { sequenceId: seq.id, sequenceNumber: n, organizationId: ctx.organizationId });
+  return {
+    retired: true, sequenceId: seq.id, sequenceNumber: n, region: seq.region, retiredAt: occurredAt as string,
+    signatureActionId: input.signatureActionId, signatureId: verdict.signatureId, meaning: 'responsibility', reason,
+    numberFreed: details.numberFreed === true,
+  };
 }
 
 // ── Closing a critical Shadow Review finding (P-35) ──────────────────────────
