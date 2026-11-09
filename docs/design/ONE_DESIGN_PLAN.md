@@ -2014,8 +2014,18 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - M21: the draft package is named after its class and type, not its project.
   - Without `REVIEW_ADMIN_TOKEN`, the 510(k) screen's predicate and SE panels read "Could not load", because
     predicate intelligence answers 503 "not configured".
-- **Next.** The device readiness scorecard: a required module `not_started` reads `nearly_ready`. This is the
-  coordinator's F1 item of 2026-11-02, held in COORDINATION.md. After it, M21.
+- **Delivered later the same day** (2026-11-09):
+  - **The device readiness scorecard** (`3995432d01`, `docs/evidence/F1/2026-11-09-device-scorecard-nothing-shown-is-not-nearly-ready/`),
+    the coordinator's F1 item of 2026-11-02. An applicable dimension that is not started or not assessed caps the
+    level at `in_progress`. Before, one module of six not started scored 90, `nearly_ready`, which AnA's
+    `build_device_blueprint` returned as is. Open for the founder: whether "nearly ready" may be said while a
+    required set is only partial.
+  - **Two device panels say what the server said** (`3630a6e136`,
+    `docs/evidence/MDX-JOURNEY/2026-11-09-demo-device-panels-say-what-the-server-said/`). Found by seeding the demo's
+    `mdx` pack (NeuroPanel-Dx) on the merged trunk and opening its seven screens. Predicate intelligence "not
+    configured" (503, now with a code) and "no GSPR assessment yet" (404 `IVDR_GSPR_NOT_FOUND`) had each read
+    "Could not load", with a retry that could not help. Re-walked live, no such panel is left.
+- **Next.** M21 (the draft package named after its project). M3's UI half and M7 wait on the founder.
 
 ## 4. How everyone works
 

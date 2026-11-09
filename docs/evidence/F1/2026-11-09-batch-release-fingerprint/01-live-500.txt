@@ -1,0 +1,25 @@
+POST /api/cmc/batch-records/1aae9573-feac-4059-9796-5211b783615f/release
+against `npm run dev`, 2026-11-09T17:12:24Z — a batch whose results were
+reviewed, i.e. the only path that reaches a signature:
+
+  HTTP 500
+  {'code': 'SERVER_ERROR', 'message': 'require is not defined', ... }
+
+server log:
+  ReferenceError: require is not defined
+      at sha256Hex (shared/canonical-json.ts:90:26)
+      at stableHash (shared/canonical-json.ts:99:10)
+      at evidenceFingerprint (server/services/cmc/batch-release-evidence.ts:174:10)
+      at evaluateBatchForRelease (server/api/cmc/batchRecordRoutes.ts:426:44)
+      at async <anonymous> (server/api/cmc/batchRecordRoutes.ts:494:21)
+
+After the fix, same request, same batch:
+
+  HTTP 400  SIGNATURE_MEANING_CONFLICT — "A disposition that leaves the batch
+            'released' is signed with the meaning 'release', not
+            'responsibility'. Nothing was signed."
+  …then with meaning 'release':
+  HTTP 200  actionId act_a613951abcca40aea4862d7f47e9c020
+            sha256Chain 22970942717faf1d4b1a52d030d66c715a91ae93…
+
+The first governed batch release this runtime has ever completed.
