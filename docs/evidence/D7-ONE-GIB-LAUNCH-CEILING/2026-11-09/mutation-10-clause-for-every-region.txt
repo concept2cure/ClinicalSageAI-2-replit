@@ -1,0 +1,12 @@
+MUTATION 10-clause-for-every-region in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T00:57:29.552951Z): replaced [    const blocked = await packageBlockers(assembled, fda);
+    const gaps = opts.judge] with [    const blocked = await packageBlockers(assembled, true);
+    const gaps = opts.judge]
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a validated FDA sequence over 1 GiB is refused at freeze while its leaves can still change, with what to do 287ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a frozen FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 138ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a dispatched FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 140ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 137ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > at exactly 1 GiB freeze is not refused on size 127ms
+      Tests  1 failed | 4 passed | 7 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze
+restored sha256 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b (expected 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b)

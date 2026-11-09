@@ -1,0 +1,42 @@
+# GREEN (commit 2): every submission-gateways test, every test naming a changed function, the route and AnA tests that reach FDA ESG, and every submission-service test, after the SFTP branch is retired, 2026-11-09T01:09:07Z
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 10ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 406ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 22ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 20ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 6ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 66ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 8ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 15ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 90ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 143ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 2ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 2ms
+ × server/services/ana/__tests__/deepening-tools.test.ts > assess_recorded_process_capability > the OPEN program outranks a project id the model supplied 262ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > with no program open and none named, asks which — listing this org's programs 7ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > opens the named program — by code — on the directive 3ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > refuses to guess between several matches 1ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > says so when nothing matches, with the programs that do exist 1ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > navigate_to — project-scope screens and programs > never resolves another organisation's program 1ms
+ × server/services/ana/__tests__/self-drive-regressions.test.ts > turnState — "open BX-301, then take me to its Vault" > act_on_screen projects.open-program sets the turn's program, and navigate_to follows it 12ms
+ × server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_nonclinical_overview_m2_4 handler > does not compose from studies supplied in the call 58ms
+ × server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_nonclinical_summaries_m2_6 handler > does not compose from studies supplied in the call 2ms
+ ✓ server/services/submission-gateways/__tests__/gateway-accounts.test.ts > what the organisation sees > every gateway × environment, platform by default, with whether it can send 4ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents 13ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them 1ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist 6ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same 2ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads its own outline when the document belongs to no project 1ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not count an archived document of the project 1ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads the most specific section a reference names 1ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reports a section that is only a template heading as outline_only, not found 1ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 29 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  6 failed | 221 passed | 1 skipped (228)
+      Tests  29 failed | 3948 passed | 2 skipped (3979)
+# Every failure above is pre-existing on trunk, none is P-93's:
+#   - gateway-selection's AUDIT_UNCONFIRMED case (1), with the coordinating session;
+#   - tests/lineage/founder-path-lineage.pglite.test.ts (11), red from hop 2 on (INDEPENDENT_CHECK_REQUIRED), as recorded
+#     in docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-08-signature-environment/README.md;
+#   - four AnA tool tests (17: deepening-tools 1, nonclinical-clinpharm-tools 2, self-drive-regressions 6,
+#     validate-cross-references-honest 8). They are in this run only because they import AnaToolDefinitions.ts. Run
+#     alone with origin a842e9603's submission-service.ts and ectd-regional-rules.ts, and without commit 2's changes,
+#     the same 17 fail (17 failed, 110 passed), so they are not this change's.

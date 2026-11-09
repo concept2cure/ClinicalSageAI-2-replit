@@ -1,0 +1,9 @@
+MUTATION 04-no-clause-at-transmit in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T00:56:13.343260Z): replaced [  const blocked = await packageBlockers(assembled, fda);
+  if (blocked.gaps.length > 0) {] with [  const blocked = await packageBlockers(assembled, false);
+  if (blocked.gaps.length > 0) {]
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > an FDA package over 1 GiB is refused at the act, on the bytes it assembled (P-93, site c) > refuses with DISPATCH_BLOCKED before the guard, the archive or the gateway, and releases the claim 20ms
+      Tests  1 failed | 16 skipped (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > an FDA package over 1 GiB is refused at the act, on the bytes it assembled (P-93, site c) > refuses with DISPATCH_BLOCKED before the guard, the archive or the gateway, and releases the claim
+AssertionError: expected undefined to be 'DISPATCH_BLOCKED' // Object.is equality
+restored sha256 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b (expected 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b)
