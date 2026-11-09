@@ -31,6 +31,7 @@ import {
   signGovernedCommand,
 } from './governed-command-signature.js';
 import { signArtifactStatusByAna } from './ana-signed-artifact-act';
+import { moveVoidsReviewSql } from '../artifact-approval-act';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -835,15 +836,20 @@ export async function placeInDossier(
         message: `Artifact ${params.artifactId} was not found in this project, so nothing was placed.`,
       };
     }
-    await client.query(
+    // P-95 Q2 (2026-11-09): a move voids review decisions, as an edit does, so
+    // the version can move on here. The signature binds the version the
+    // artifact has at its new place.
+    const placed = await client.query(
       `UPDATE concept2cure_artifacts
-       SET ctd_section = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+       SET ctd_section = $4, version = version + ${moveVoidsReviewSql('$4')}, updated_at = NOW()
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
+       RETURNING version`,
       [artifact.artifact_id, params.projectId, ctx.organizationId, params.ctdSection]
     );
+    const placedVersion = Number(placed.rows[0]?.version ?? artifact.version);
     const binding = artifactVersionContentBinding({
       artifactId: artifact.artifact_id,
-      version: Number(artifact.version),
+      version: placedVersion,
       content: artifact.content,
       ctdSection: params.ctdSection,
     });
@@ -853,12 +859,12 @@ export async function placeInDossier(
       payload: {
         projectId: params.projectId,
         artifactId: artifact.artifact_id,
-        version: Number(artifact.version),
+        version: placedVersion,
         ctdSection: params.ctdSection,
         contentSha256: binding.contentSha256,
       },
       binding,
-      extraManifest: { version: Number(artifact.version), ctdSection: params.ctdSection, contentSha256: binding.contentSha256 },
+      extraManifest: { version: placedVersion, ctdSection: params.ctdSection, contentSha256: binding.contentSha256 },
     });
     await client.query('COMMIT');
 

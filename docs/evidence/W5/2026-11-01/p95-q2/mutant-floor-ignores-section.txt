@@ -1,0 +1,10 @@
+# Mutant: the floor ignores a placement
+# in server/services/artifact-approval-act.ts
+# -   if (section) return { reviewers: 2, because: `it is placed in CTD ${section}` };
+# +   if (false) return { reviewers: 2, because: `it is placed in CTD ${section}` };
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > placed in a CTD section, one independent reviewer: refused 409 REVIEW_REQUIRED, naming the count, before the password 53ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > placed in Module 1 too (any module): one reviewer is refused, two are approved 48ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > review status says not ready, with the same sentence, while the floor is unmet; ready once it is met 21ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 15 passed | 80 skipped (98)

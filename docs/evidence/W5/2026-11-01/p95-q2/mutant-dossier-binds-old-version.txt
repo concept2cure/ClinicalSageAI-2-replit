@@ -1,0 +1,8 @@
+# Mutant: the signed placement's binding uses the version before the move
+# in server/services/ana-ri/command-executor.ts (artifactVersionContentBinding)
+# - version: placedVersion,
+# + version: Number(artifact.version),
+
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > P-95 Q2: placing a reviewed document voids its review, as an edit does; the signature binds the version at its new place 73ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)

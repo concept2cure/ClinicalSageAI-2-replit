@@ -1,0 +1,14 @@
+# Mutant: a move never moves the version on
+# in server/services/artifact-approval-act.ts
+# -     THEN 1 ELSE 0 END)`;
+# +     THEN 0 ELSE 0 END)`;
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving the document through placement voids its review: the version moves on, and the approval is refused until it is reviewed again 77ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving it through the ctd-section route voids its review the same way 22ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving it through the editor's save (PUT …/artifacts/:id with ctdSection) voids its review 32ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving an approved document (unplaced, one reviewer) into a filing: the approval no longer covers the version 46ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on 7ms
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > place_in_dossier signs the placement it makes > P-95 Q2: placing a reviewed document voids its review, as an edit does; the signature binds the version at its new place 51ms
+ × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > a move with a decision on the current version moves the version on 2252ms
+ Test Files  3 failed (3)
+      Tests  7 failed | 11 passed | 80 skipped (98)

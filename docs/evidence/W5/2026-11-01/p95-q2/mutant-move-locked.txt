@@ -1,0 +1,9 @@
+# Mutant: a locked artifact's version is moved on too
+# in server/services/artifact-approval-act.ts
+# -       AND concept2cure_artifacts.status IS DISTINCT FROM 'locked'
+
+# + 
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > AnA's placement writers use the same increment: a section change with a decision on the current version moves it on once; a locked document is not moved on 19ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)

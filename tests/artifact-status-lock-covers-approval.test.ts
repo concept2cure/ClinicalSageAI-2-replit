@@ -233,8 +233,8 @@ const reviewedAt = (version: number) =>
       ? [{ id: 1, reviewer_id: 701, review_round: 1, status: 'completed' }]
       : /FROM concept2cure_review_decisions/.test(text)
         ? (/AND reviewer_id = \$3/.test(text) ? [] : [{ assignment_id: 1, reviewer_id: 701, decision: 'approve', version_reviewed: version }])
-        : /SELECT artifact_id FROM concept2cure_artifacts/.test(text)
-          ? [{ artifact_id: 'artifact_abc' }]
+        : /SELECT artifact_id, type, ctd_section FROM concept2cure_artifacts/.test(text)
+          ? [{ artifact_id: 'artifact_abc', type: 'document', ctd_section: null }]
           : authorRows(text),
   }));
 

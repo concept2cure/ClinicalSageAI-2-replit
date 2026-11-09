@@ -38,6 +38,7 @@ import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { ReadinessComponentKey } from './project-readiness-aggregator.js';
 import { STATED_REASON_INPUT, gatedReason, requireStatedReason } from './stated-reason-input.js';
+import { moveVoidsReviewSql } from '../artifact-approval-act';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Contract
@@ -331,9 +332,10 @@ export function defaultSpineDeps(): SpineDeps {
 
     async setPlacementTx(client, artifactPk, organizationId, ctdSection) {
       if (ctdSection && ctdSection.trim()) {
+        // P-95 Q2 (2026-11-09): a move voids review decisions, as an edit does.
         const r = await client.query(
           `UPDATE concept2cure_artifacts
-              SET ctd_section = $3, updated_at = now()
+              SET ctd_section = $3, version = version + ${moveVoidsReviewSql('$3')}, updated_at = now()
             WHERE id = $1 AND organization_id = $2
             RETURNING ctd_section`,
           [artifactPk, organizationId, ctdSection.trim()],

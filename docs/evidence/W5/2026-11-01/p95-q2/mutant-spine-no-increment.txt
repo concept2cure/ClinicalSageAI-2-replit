@@ -1,0 +1,8 @@
+# Mutant: the spine's placement step does not void review
+# in server/services/ana/document-spine.ts
+# - SET ctd_section = $3, version = version + ${moveVoidsReviewSql('$3')}, updated_at = now()
+# + SET ctd_section = $3, updated_at = now()
+
+ × server/services/ana/__tests__/document-spine.pglite.integration.test.ts > setPlacementTx: a move voids review, as an edit does (P-95 Q2) > a move with a decision on the current version moves the version on 1998ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)

@@ -1,0 +1,8 @@
+# Mutant: the placement route does not void review
+# in server/routes/c2c/artifacts.ts
+# -           version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(toSection)}`,
+# + 
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > moving the document through placement voids its review: the version moves on, and the approval is refused until it is reviewed again 80ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)

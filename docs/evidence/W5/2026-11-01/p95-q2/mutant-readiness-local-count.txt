@@ -1,0 +1,8 @@
+# Mutant: review readiness is the route's own count again
+# in server/routes/c2c/artifacts.ts
+# -         readyForApproval: readiness.met,
+# +         readyForApproval: allApproved,
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q2: two independent reviewers for a placed document > review status says not ready, with the same sentence, while the floor is unmet; ready once it is met 31ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 17 passed | 80 skipped (98)
