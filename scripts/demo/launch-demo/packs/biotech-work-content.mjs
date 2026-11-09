@@ -27,6 +27,37 @@ const DS = 'C2C-101 drug substance';
 const DP = 'C2C-101 drug product, 100 mg/mL prefilled syringe';
 
 export const BIOTECH_CMC = {
+  /**
+   * The analytical procedures the specifications below are measured by, one per
+   * distinct `method` string. They are recorded in the method register because
+   * the approval route resolves a limit's named procedure against it and
+   * refuses METHOD_NOT_IN_REGISTER otherwise
+   * (services/cmc/analytical-method-source.ts) — and because §3.2.S.4.3's
+   * Analytical Methods table has no other source.
+   *
+   * `status` is never `validated` here: validation is a governed act with a
+   * signature (POST /analytical-methods/:id/validate), and a create carrying
+   * that word is refused with a 409. The seeder records each method with its
+   * ICH Q2 parameters, which is what the validation signs for, and performs
+   * the signature when a signer credential is supplied.
+   */
+  methods: [
+    { code: 'AM-101', title: 'Cell-based IL-23-induced IL-17A release assay', purpose: 'Potency', analyte: 'C2C-101 (IL-23p19 neutralising activity)', matrix: 'Drug substance and drug product', technique: 'Cell-based bioassay', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'precision (intermediate)', 'linearity', 'range'],
+      summary: 'Relative potency against the reference standard across 50–200% of nominal; intermediate precision CV 12%, within the 70–130% release range the specification sets.' },
+    { code: 'AM-102', title: 'Size-exclusion HPLC, UV 280 nm', purpose: 'Purity and aggregation', analyte: 'Monomer, high molecular weight species', matrix: 'Drug substance and drug product', technique: 'SEC-HPLC', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range', 'quantitation limit'],
+      summary: 'Monomer and HMW species resolved with R > 1.5; quantitation limit 0.1% HMW, below the 3.0% specification limit.' },
+    { code: 'AM-103', title: 'CHO HCP ELISA', purpose: 'Process-related impurity', analyte: 'CHO host cell protein', matrix: 'Drug substance', technique: 'Sandwich ELISA', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range', 'quantitation limit'],
+      summary: 'Antibody coverage established by 2-D Western blot; quantitation limit 2 ppm against a 100 ppm limit, spike recovery 85–115%.' },
+    { code: 'AM-104', title: 'Visual inspection; potentiometry', purpose: 'Appearance and pH', analyte: 'Appearance, pH', matrix: 'Drug product', technique: 'Visual inspection (Ph. Eur. 2.9.20); potentiometry', status: 'validation',
+      characteristics: ['specificity', 'precision (repeatability)'],
+      summary: 'Appearance is a qualitative identity-class test; pH precision 0.02 units against a 5.5–6.5 range.' },
+    { code: 'AM-105', title: 'Light obscuration (USP <787>)', purpose: 'Subvisible particles', analyte: 'Particles ≥10 µm and ≥25 µm', matrix: 'Drug product', technique: 'Light obscuration', status: 'validation',
+      characteristics: ['specificity', 'precision (repeatability)', 'accuracy'],
+      summary: 'Compendial procedure verified for this product per USP <787>; counts against the 6000 / 600 per container limits.' },
+  ],
   specs: [
     { material: 'Drug substance', name: `${DS} — potency (IL-23 neutralisation bioassay)`, release: '70–130% of reference standard', method: 'Cell-based IL-23-induced IL-17A release assay', ich: 'ICH Q6B', justification: 'Range set from development lots and assay variability (CV 12%).' },
     { material: 'Drug substance', name: `${DS} — purity by SEC-HPLC`, release: 'Monomer ≥ 95.0%; high molecular weight species ≤ 3.0%', method: 'Size-exclusion HPLC, UV 280 nm', ich: 'ICH Q6B' },

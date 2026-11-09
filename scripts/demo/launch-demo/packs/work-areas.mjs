@@ -13,6 +13,7 @@
  * Every pack passes its own content; nothing here names a product.
  */
 import { must } from '../lib.mjs';
+import { NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
 
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
@@ -154,6 +155,66 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
 
 /* ───────────────────────── CMC / Module 3 ───────────────────────── */
 
+/**
+ * The analytical procedures the specifications name, in the method register.
+ *
+ * Why the seed must do this: the approval route resolves a limit's named
+ * procedure against this register and refuses `METHOD_NOT_IN_REGISTER` when it
+ * does not hold it (services/cmc/analytical-method-source.ts), so a demo whose
+ * specifications name procedures nobody recorded is a demo whose limits cannot
+ * be approved. §3.2.S.4.3's Analytical Methods table has no other source
+ * either.
+ *
+ * `status` is never `validated` on the create: validation is a governed act and
+ * an ordinary write carrying that word is refused with a 409
+ * (`ungovernedQualificationRefusal`). Each method is recorded with its ICH Q2
+ * parameters — which is what the validation signs for, and without which the
+ * ceremony refuses with "nothing to sign" — and signed below when a signer
+ * credential is supplied, exactly as the pack's other signatures are.
+ */
+async function ensureMethods({ api, tally, signer }, program, methods) {
+  if (!methods?.length) return { created: 0, validated: 0, signerMissing: false };
+  const list = rowsOf(must(await api('GET', `/api/cmc/analytical-methods?projectId=${encodeURIComponent(program.id)}`), 200, 'list analytical methods'));
+  const byTitle = new Map(list.map((m) => [String(m.title ?? '').trim().toLowerCase(), m]));
+  let created = 0;
+  let validated = 0;
+  for (const m of methods) {
+    const titleKey = String(m.title).trim().toLowerCase();
+    let row = byTitle.get(titleKey) ?? null;
+    if (row) tally.found('cmc-method');
+    else {
+      row = must(await api('POST', '/api/cmc/analytical-methods', {
+        methodCode: m.code,
+        title: m.title,
+        purpose: m.purpose,
+        analyte: m.analyte,
+        matrix: m.matrix,
+        technique: m.technique,
+        status: m.status,
+        ichQ2Parameters: { characteristics: m.characteristics, summary: m.summary },
+        projectId: program.id,
+      }), [200, 201], `create analytical method "${m.title}"`).data;
+      byTitle.set(titleKey, row);
+      tally.created('cmc-method');
+      created += 1;
+    }
+    /* Already signed, or no signer to sign with. A method left in `validation`
+       is refused at approval by name and status, which is the honest state —
+       not a silent pass. */
+    if (String(row?.status ?? '').trim().toLowerCase() === 'validated') continue;
+    if (!signer) continue;
+    must(await (signer.api ?? api)('POST', `/api/cmc/analytical-methods/${row.id}/validate`, {
+      reason: 'Demo seed: the ICH Q2 validation package for this procedure is complete and is signed for.',
+      meaning: 'approval',
+      reauth: { password: signer.password },
+      idempotencyKey: `demo-method-validate-${program.id}-${m.code}`,
+    }), [200, 201], `validate "${m.title}"`);
+    tally.created('cmc-method-validation');
+    validated += 1;
+  }
+  return { created, validated, signerMissing: !signer };
+}
+
 async function ensureSpecs({ api, tally }, program, specs) {
   const list = rowsOf(must(await api('GET', `/api/cmc/specifications/${program.id}`), 200, 'list specifications'));
   const have = new Set(list.map((s) => s.material_name ?? s.materialName));
@@ -239,9 +300,18 @@ async function ensureBatches({ api, tally }, program, batches) {
   return created;
 }
 
-/** cmc: { specs: [...], stability: [...], batches: [...] } */
+/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...] } */
 export async function ensureCmc(ctx, program, cmc, label) {
   const { run } = ctx;
+  /* The methods first: a specification names one, and the approval route
+     resolves that name against this register. */
+  await run.step(`CMC / Module 3: analytical methods on ${label}`, async () => {
+    const { created, validated, signerMissing } = await ensureMethods(ctx, program, cmc.methods);
+    const total = cmc.methods?.length ?? 0;
+    return signerMissing
+      ? `${created} created of ${total}; validation ${NOT_EXECUTED_NO_SIGNER} — their specifications are refused at approval until a method is validated`
+      : `${created} created of ${total}, ${validated} validated under signature`;
+  });
   await run.step(`CMC / Module 3: specifications on ${label}`, async () => `${await ensureSpecs(ctx, program, cmc.specs)} created of ${cmc.specs.length}`);
   await run.step(`CMC / Module 3: stability programme on ${label}`, async () => `${await ensureStability(ctx, program, cmc.stability)} created of ${cmc.stability.length}`);
   await run.step(`CMC / Module 3: batch records on ${label}`, async () => `${await ensureBatches(ctx, program, cmc.batches)} created of ${cmc.batches.length}`);
