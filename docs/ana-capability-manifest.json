@@ -3660,7 +3660,7 @@
         "id": "clinical",
         "label": "Clinical (M5 / M2)"
       },
-      "description": "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding to compute Enrolled / Sites / AE rate / Endpoints-achieved — without it the endpoint falls back to a fuzzy product-name match that can pick up the wrong study in orgs running multiple trials. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
+      "description": "Bind a regulatory program to a specific clinical_ops.studies row by writing the study UUID into program.metadata.clinicalStudyId. The PMA trial-metrics endpoint reads this binding, and only this binding, to compute Enrolled / Sites active / Serious deviations / Endpoints achieved; without it the PMA trial cards say no study is linked. Use whenever the user identifies which clinical study backs a program. Tenant-scoped.",
       "scope": "project",
       "governed": false,
       "renderer": "result-card",
