@@ -67,7 +67,7 @@ export async function registerDocumentRoutes({
   try {
     const gccModule = await import('../api/gcc/index.js');
     app.use('/api/gcc', gccModule.default);
-    console.log('✅ GCC Platform API routes mounted (eCTD, Vault, Signing, Site Intel, Labeling)');
+    console.log('✅ GCC Platform API routes mounted (Signing, Site Intel, Labeling; each answers 501 with its declared state)');
   } catch (error) {
     console.error('❌ Failed to mount GCC Platform routes:', error);
   }

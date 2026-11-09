@@ -737,3 +737,47 @@ composes with the builders.
 - `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
 - the orchestrator suites, including `orchestrator-csr-readiness.pglite.test.ts` and
   `submission-orchestrator-inputs.pglite.test.ts`.
+
+### S19 — delete GCC drafting and the GCC eCTD prototype, replaced by AnA `batch_draft_sections` and the record
+
+**Deleted:**
+- `server/api/drafting/routes.ts`, mounted at `/api/gcc/drafting`: `generate`, `sessions`, `sessions/:id`, `stats` and
+  `extract-entities`.
+- Its tests, `gcc-drafting-governance.test.ts` and `tests/routes/drafting-store-not-provisioned.test.ts`.
+- `server/api/gcc/ectd/routes.js`, mounted at `/api/gcc/ectd`: `modules` and `status`.
+
+**What already exists:**
+- **Callers:** no screen ever called a route either file serves today. An older module browser called other GCC eCTD
+  endpoints, which were already gone. Production refused all of these.
+- **What the routes did:** the drafting routes read `vault.*` tables that no applier provisions. `/modules` answered
+  the same five strings for every caller.
+- **Cited drafting:** AnA `batch_draft_sections` (`server/services/ana/AnaToolExecutor.ts`), blueprint-grounded
+  (`blueprint-grounded-drafting.test.ts`).
+- **Entity extraction:** AnA `extract_submission_document`.
+- **The module list:** `MODULE_NAMES` and the record's ICH M4 headings.
+- **The rest of the GCC platform** keeps its honest state. `GET /api/gcc/health` answers 200, with signing, site
+  intelligence and labeling `not_implemented`.
+
+**Changed:**
+- `server/api/gcc/index.ts` loses the two imports and mounts, and gains a dated header note.
+- `server/api/gcc/modules.ts` drops the `ectd` and `drafting` declarations.
+- `register-document-routes.ts`: the mount log line no longer claims eCTD or Vault.
+- The baselines that named the deleted file shrink:
+  - `tables-live-schema-baseline.json`: 33 → 29;
+  - `unbacked-tables-baseline.json`: 16 → 14;
+  - `unapproved-model-pins-baseline.json`;
+  - `check-embedding-runtime-canonicality.mjs`.
+- The laptop script `scripts/test-cognitive-fabric.ts` names the replacement instead of the retired route.
+
+**Red:** `s19-red.txt`. `gcc-drafting-and-ectd-prototype-retired.test.ts` fails 4 of 5 on trunk, all on assertions:
+the files, the mounts, the declarations and the baselines. The control, that the AnA tools are registered, passes on
+trunk.
+
+**Gates:** all exit 0:
+- `ci:audit-route-mounts:no-regression` and `ci:route-ownership-matrix:check`;
+- `ci:unbacked-tables` and `ci:unapproved-model-pins`;
+- `check-embedding-runtime-canonicality.mjs` and `ci:unreferenced-modules`.
+
+`ci:unreferenced-modules` reports 71, against a baseline of 73. Its note about `auditLogger.js` and
+`services/index.ts` is the same on trunk. `ci:tables-live-schema` needs an install-fresh database and was not run.
+This change only removes entries for the file it deletes.

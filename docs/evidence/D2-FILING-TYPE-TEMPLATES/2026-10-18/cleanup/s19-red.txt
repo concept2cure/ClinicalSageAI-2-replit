@@ -1,0 +1,13 @@
+s19 red: server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts on trunk 51c52751e (the parent of this change), 2026-11-09T19:52Z
+ × server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts > S19: GCC drafting and the GCC eCTD prototype are retired > both route files are gone 
+ × server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts > S19: GCC drafting and the GCC eCTD prototype are retired > the GCC router no longer mounts them 
+ × server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts > S19: GCC drafting and the GCC eCTD prototype are retired > the module declaration no longer lists them; the other three keep their honest state 
+ × server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts > S19: GCC drafting and the GCC eCTD prototype are retired > no CI baseline still excuses the deleted drafting routes 
+ ✓ server/routes/__tests__/gcc-drafting-and-ectd-prototype-retired.test.ts > S19: GCC drafting and the GCC eCTD prototype are retired > the replacements are reached: AnA drafts and extracts 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected '/**\n * GCC Platform API Routes Index…' not to match /router\.use\('\/(draf…/(drafting|ectd)'
+AssertionError: expected [ 'ectd', 'signing', …(3) ] to deeply equal [ 'signing', 'site-intel', 'labeling' ]
+AssertionError: expected '{\n  "_comment": "Tables the server Q…' not to contain 'server/api/drafting/routes.ts'
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
