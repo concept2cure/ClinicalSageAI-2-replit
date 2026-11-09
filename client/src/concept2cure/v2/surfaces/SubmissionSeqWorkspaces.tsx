@@ -40,6 +40,7 @@ import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyStat
 import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { AnswerLead } from '../AnswerLead';
 import { PlacementReasonField, placementReasonOk, matchingLeafReceipt, placementAuditWarning, type FilingLeafReceipt } from './filingTarget';
 import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
@@ -1008,6 +1009,17 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps) {
 }
 
 /** The Builder's leaf table columns; Actions only while leaves can change. */
+/** "Not yet determined", said once above the leaves with its count (D7-A2 step 9), not as a chip on every leaf. */
+function SourceUndeterminedNote({ rows }: { rows: LeafRow[] }) {
+  const undetermined = rows.filter((l) => l.sourceDocument?.status === 'undetermined').length;
+  if (undetermined === 0) return null;
+  return (
+    <p className="sec-sub" data-testid="sc-source-undetermined">
+      Source evidence not yet determined for {undetermined} {undetermined === 1 ? 'leaf' : 'leaves'}.
+    </p>
+  );
+}
+
 function LeafTableHead({ locked }: { locked: boolean }) {
   return (
     <thead>
@@ -1083,14 +1095,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           />
         ) : (
           <>
-          {(() => {
-            const undetermined = leaves.rows.filter((l) => l.sourceDocument?.status === 'undetermined').length;
-            return undetermined > 0 ? (
-              <p className="sec-sub" data-testid="sc-source-undetermined">
-                Source evidence not yet determined for {undetermined} {undetermined === 1 ? 'leaf' : 'leaves'}.
-              </p>
-            ) : null;
-          })()}
+          <SourceUndeterminedNote rows={leaves.rows} />
           <table className="ub-inv">
             <LeafTableHead locked={locked} />
             <tbody>
@@ -2081,7 +2086,7 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
 function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
   return (
     <div className="sc-mt">
-      <div className="tl-spec-k sc-mb">Package and transmit</div>
+      <div className="pj-sec-h sc-mt"><h3 className="sec-title">Package and transmit</h3></div>
       <PackageDownload sub={sub} seq={seq} />
       {seq.status === 'dispatched' ? (
         <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} canSign={canSign} />
@@ -2091,6 +2096,49 @@ function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; s
           under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
         </div>
       )}
+    </div>
+  );
+}
+
+const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+
+/** A server blocker sentence for display: a record key ("ectd-sequence:1") is not a reader's word, and it is kept out
+ *  of the page entirely, tooltips included (D7-A2 step 10; the coordinating session, 2026-11-09). */
+export function blockerForDisplay(b: string): string {
+  return b.replace(/\bectd-sequence:\d+\b/g, 'this sequence').replace(/\b[a-z][a-z-]*:\d+\b/g, 'this record');
+}
+
+/** "Cleared to dispatch?", answered: the one emphasis="verdict" of D5–D7 (D7.md §A.4 step 10, P-33). */
+function DispatchVerdict({ a, sequenceNumber: n, awaitingOwnSignature, reauthorizing }: {
+  a: ReadinessAssessment; sequenceNumber: string; awaitingOwnSignature: boolean; reauthorizing: boolean;
+}) {
+  const blockers = a.gate.blockers;
+  const count = blockers.length;
+  const cleared = a.gate.cleared === true;
+  const headline = cleared
+    ? <>Yes. Sequence {n} is cleared to dispatch.<WaivedGateMark a={a} /></>
+    // `cleared` is the engine's own answer (a.gate.cleared === true), read only once the assessment answered: an empty
+    // blocker list is never taken for it.
+    : awaitingOwnSignature
+      ? <>Only its release signature stands between sequence {n} and dispatch, and the dispatch e-signature applies it.</>
+      : count === 0
+        // The engine's own answer is "not cleared", with no reason listed: said as that, never as "nothing stands".
+        ? <>Not yet. The gate has not cleared sequence {n} for dispatch, and it listed no reason.</>
+        : <>Not yet. {COUNT_WORDS[count] ?? count} {count === 1 ? 'thing stands' : 'things stand'} between sequence {n} and dispatch.</>;
+  const body = awaitingOwnSignature
+    ? reauthorizing
+      ? <>The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
+        to the current applicant, application and sequence content before any transmission.</>
+      : <>This submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet.
+        When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server
+        checks the full gate again with it on record before anything moves.</>
+    : !cleared && count > 0
+      ? <ul className="sc-blockers">{blockers.map((b, i) => <li key={i}>{blockerForDisplay(b)}</li>)}</ul>
+      : undefined;
+  return (
+    <div role="status" data-testid="sc-dispatch-verdict">
+      <AnswerLead emphasis="verdict" tone={cleared ? 'good' : awaitingOwnSignature ? 'calm' : 'urgent'}
+        eyebrow="Cleared to dispatch?" headline={headline} body={body} />
     </div>
   );
 }
@@ -2170,18 +2218,12 @@ export function DispatchWorkspace({
   };
 
   return (
-    <div className="pj-sec">
+    <div className="pj-sec sc-dispatch">
       <div className="pj-sec-h">
         <h2>Dispatch</h2>
         <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
       <div>
-        <div className="scaf-note sc-mb">
-          Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and
-          clear the deterministic dispatch gate before it can be dispatched. The gate below is
-          computed server-side from the canonical leaves and open Shadow Review criticals — the
-          same gate the freeze/dispatch endpoints enforce atomically with the e-signature.
-        </div>
         {live.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Computing the dispatch gate…
@@ -2196,53 +2238,30 @@ export function DispatchWorkspace({
         ) : (
           <>
             <ValidatedStageNote a={a} />
-            {/* Three states, not two. `awaitingOwnSignature` is a gate whose
-                only blocker is the release signature the dispatch e-signature
-                itself records (dispatchGateOnSigning clears, `gate` does not).
-                Reporting that as "Dispatch blocked" sent the user looking for a
-                defect that does not exist; reporting it as clear would be false.
+            {/* The one verdict (P-33; D7-A2 step 10): "Cleared to dispatch?", answered. Three states, not two.
+                `awaitingOwnSignature` is a gate whose only blocker is the release signature the dispatch e-signature
+                itself records (dispatchGateOnSigning clears, `gate` does not): calling it blocked sent the user
+                looking for a defect that does not exist; calling it clear would be false.
                 `?.` / `=== true`: network data, and missing fails closed. */}
-            <div
-              className={`sc-gate ${a.gate.cleared || awaitingOwnSignature ? 'ok' : 'blocked'}`}
-              role="status"
-            >
-              {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
-              {a.gate.cleared
-                ? <>Dispatch gate clear<WaivedGateMark a={a} /></>
-                : awaitingOwnSignature
-                  ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
-                  : `Dispatch blocked — ${a.gate.blockers.length} ${
-                      a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
-                    }`}
-            </div>
-            {awaitingOwnSignature && (
-              <div className="scaf-note sc-mb">
-                {reauthorizing ? <>
-                  The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
-                  to the current applicant, application and sequence content before any transmission.
-                </> : <>
-                  This submission type requires a 21 CFR Part 11 release signature, and none is on record
-                  for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
-                  recorded as that release signature, and the server checks the full gate again with it
-                  on record before anything moves.
-                </>}
-              </div>
-            )}
-            {!a.gate.cleared && !awaitingOwnSignature && (
-              <ol className="sc-blockers">
-                {a.gate.blockers.map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ol>
-            )}
-            <div className="scaf-note sc-mb">
+            <DispatchVerdict a={a} sequenceNumber={seq.sequenceNumber} awaitingOwnSignature={awaitingOwnSignature}
+              reauthorizing={reauthorizing} />
+            <p className="sec-sub sc-mb" data-testid="sc-dispatch-counts">
               {a.validationErrors} validation {a.validationErrors === 1 ? 'error' : 'errors'} ·{' '}
               {a.unacknowledgedShadowCriticals} unacknowledged shadow{' '}
               {a.unacknowledgedShadowCriticals === 1 ? 'critical' : 'criticals'} ·{' '}
               {a.shadowReviewRunCount} shadow {a.shadowReviewRunCount === 1 ? 'review' : 'reviews'}{' '}
               run · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} · status{' '}
               {stageLabel({ status: a.sequenceStatus, validationStatus: seq.validationStatus })}
-            </div>
+            </p>
+            <details className="pj-more sc-mb">
+              <summary>How the dispatch gate works</summary>
+              <p>
+                Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the
+                deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the
+                canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce
+                with the e-signature.
+              </p>
+            </details>
             {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
                 this note is the reason the gate blocks, never a permission. By
                 the P-34 waiver's state: active renders the server's notAssessed
@@ -2346,7 +2365,7 @@ export function DispatchWorkspace({
               <div className="cm-pushbar sc-mt">
                 <button
                   type="button"
-                  className="sc-trans-b"
+                  className="btn ghost small"
                   onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
                 >
                   Validate and compile this sequence {I.right}
