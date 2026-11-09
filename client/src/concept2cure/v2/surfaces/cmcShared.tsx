@@ -231,3 +231,38 @@ export function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.Rea
   if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
   return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
+
+/**
+ * A register header's figure, or what is true instead when no read has resolved.
+ *
+ * A card's header belongs in the same triage as its body. `RegisterCard` used to
+ * render `meta(rows)` unconditionally, over the local working set, which is
+ * seeded only once a read RESOLVES — so a FAILED read printed
+ * "organization-wide — ICH Q2 — 0/0 validated" beside a body saying "Couldn't
+ * load analytical methods": one card both refusing to show the register and
+ * stating its contents. On that register the figure is the one that stops every
+ * specification approval (ICH Q2 — a limit cannot be approved without a
+ * validated method), so it is read as the fact that blocks the work. The
+ * working agreement states the general rule: an error is never rendered as an
+ * empty result.
+ *
+ * The figure shows whenever there is something to count it over — any row in
+ * hand, so a failed REFETCH keeps its line exactly as the body keeps its table;
+ * or a read that resolved, INCLUDING one that resolved empty, where zero is a
+ * fact about that register and the body shows its empty state beside it.
+ * Otherwise it says which of the two it is, rather than going silent: a header
+ * that dropped its line would read as a register with nothing to say.
+ *
+ * The scope note is NOT a figure and is rendered either way by the caller: it
+ * says where the register lives, which is true whether the read worked or not.
+ *
+ * Evidence: docs/evidence/S7/2026-11-09-register-header-honesty/.
+ */
+export function headerMeta<T>(
+  live: { loading: boolean; error: string | null },
+  rows: T[],
+  meta: (rows: T[]) => string,
+): string {
+  if (rows.length > 0 || (!live.loading && !live.error)) return meta(rows);
+  return live.error ? 'Not loaded' : 'Loading…';
+}

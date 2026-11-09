@@ -4,7 +4,7 @@ import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CForm } from '../C2CForm';
-import { cmcProjectUuid, cmcWriteFailed, cmcWriteThrew } from './cmcShared';
+import { cmcProjectUuid, cmcWriteFailed, cmcWriteThrew, headerMeta } from './cmcShared';
 import { C2CToast, useToast } from '../toast';
 import {
   methodForm, methodBody,
@@ -383,33 +383,6 @@ function RegisterRowActionCell<T>({
       })}
     </td>
   );
-}
-
-/**
- * The header's figure, or what is true instead when no read has resolved.
- *
- * The header belongs in the same triage as the body below it. `meta(rows)` used
- * to render unconditionally, over the local working set, which is seeded only
- * once a read RESOLVES — so a FAILED read printed "ICH Q2 — 0/0 validated"
- * beside a body saying "Couldn't load analytical methods": one card both
- * refusing to show the register and stating its contents. On that register the
- * figure is the one that stops every specification approval (ICH Q2). The
- * working agreement's rule is the general form: "an error is never rendered as
- * an empty result".
- *
- * The figure shows whenever there is something to count it over — any row in
- * hand (so a failed REFETCH keeps its line, as the body keeps its table), or a
- * read that resolved, including one that resolved empty, where zero is a fact
- * about the register. The scope note is not a figure and stays either way: it
- * says where the register lives, which is true whether the read worked or not.
- */
-function headerMeta<T>(
-  live: { loading: boolean; error: string | null },
-  rows: T[],
-  meta: (rows: T[]) => string,
-): string {
-  if (rows.length > 0 || (!live.loading && !live.error)) return meta(rows);
-  return live.error ? 'Not loaded' : 'Loading…';
 }
 
 export function RegisterCard<T>({
