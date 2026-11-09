@@ -87,6 +87,11 @@ const ORG = 99;
 const USER = 777;
 /** Who wrote the seeded artifact and its version: not the signer. */
 const AUTHOR = 778;
+/**
+ * Who reviewed it in the quorum cases: neither the signer nor the author. P-95 Q1 (2026-11-09)
+ * refuses an approval signed by a reviewer of the same version, so the signer cannot be the reviewer.
+ */
+const REVIEWER = 779;
 const PROJECT = 3;
 const ARTIFACT = 'artifact_abc';
 
@@ -153,7 +158,8 @@ beforeAll(async () => {
   await holder.pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Sponsor')`);
   await holder.pg.exec(
     `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x'),
-       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x')`,
+       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x'),
+       (${REVIEWER}, 'reviewer@example.com', 'Rae Reviewer', 'x')`,
   );
   await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`);
 }, 60_000);
@@ -297,12 +303,12 @@ describe('what the status route checks before a signed act, AnA checks too', () 
 });
 
 describe('the review quorum decides on the version that would be approved', () => {
-  /** One completed assignment, and its reviewer's decision on `versionReviewed`. */
+  /** One completed assignment, and its reviewer's decision on `versionReviewed`. The reviewer is not the signer (P-95 Q1). */
   async function reviewed(decision: string, versionReviewed: number) {
     await run(
       `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
-       SELECT 'asg_1', id, organization_id, $2, $2, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1`,
-      [ARTIFACT, USER],
+       SELECT 'asg_1', id, organization_id, $2, $3, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, REVIEWER, USER],
     );
     await run(
       `INSERT INTO concept2cure_review_decisions
@@ -339,6 +345,27 @@ describe('the review quorum decides on the version that would be approved', () =
 
     expect(result.success, result.message).toBe(true);
     expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('the signer reviewed this version (P-95 Q1): refused on AnA as on the status route, nothing written', async () => {
+    await seed('review');
+    await run(
+      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+       SELECT 'asg_1', id, organization_id, $2, $3, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, USER, REVIEWER],
+    );
+    await run(
+      `INSERT INTO concept2cure_review_decisions
+         (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+       SELECT 'dec_1', a.id, a.artifact_id, a.organization_id, a.reviewer_id, 1, 'approve', 2
+         FROM concept2cure_review_assignments a WHERE a.assignment_id = 'asg_1'`,
+    );
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.message).toMatch(/you reviewed this version in review round 1/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
   });
 });
 

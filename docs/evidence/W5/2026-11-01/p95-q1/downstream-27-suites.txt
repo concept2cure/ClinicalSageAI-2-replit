@@ -1,0 +1,33 @@
+# Every suite importing the changed modules (list below), with this change (final code)
+
+ Test Files  27 passed (27)
+      Tests  567 passed (567)
+
+## Suites
+server/routes/__tests__/authoringActionsUnsignedActsRemoved.test.ts
+server/routes/__tests__/listing-doors-project-scope.pglite.test.ts
+server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+server/services/__tests__/contradiction-engine.test.ts
+server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts
+server/services/part11/__tests__/one-signing-authority-policy.test.ts
+tests/artifact-change-invalidates-bundles.contract.test.ts
+tests/artifact-routes-invalidate-bundles.test.ts
+tests/artifact-routes-project-scope.test.ts
+tests/artifact-status-audit-outcome.test.ts
+tests/artifact-status-lock-covers-approval.test.ts
+tests/artifact-status-project-scope.test.ts
+tests/phase10-runtime-esign-snapshots.test.ts
+tests/resolution/e2e-authoring-workflow.test.ts
+tests/resolution/governed-promotion-pipeline.test.ts
+tests/resolution/promotion-lifecycle.test.ts
+tests/routes/ai-entry-point-contract.test.ts
+tests/routes/concept2cure.test.ts
+tests/schema-contract/durable-sharing-review-prerequisites.contract.test.ts
+tests/unit/concept2cure-artifact-source-evidence.test.ts
+tests/unit/decision-architecture.test.ts

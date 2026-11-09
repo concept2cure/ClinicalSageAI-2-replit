@@ -1,0 +1,26 @@
+What the register holds — one row per attribute (GET /api/cmc/specifications/:projectId)
+
+  material_type='Drug product'
+  material_name='C2C-201 tablets — dissolution'
+  acceptance_criteria={"shelf": "NLT 80 % (Q) released at 30 minutes", "release": "NLT 80 % (Q) released at 30 minutes"}
+
+  material_type='Drug product'
+  material_name='C2C-201 tablets — assay'
+  acceptance_criteria={"shelf": "93.0 - 107.0 % of label claim", "release": "95.0 - 105.0 % of label claim"}
+
+  material_type='Drug substance'
+  material_name='C2C-201 — solid form'
+  acceptance_criteria={"shelf": "Conforms to the Form I reference diffractogram", "release": "Conforms to the Form I reference diffractogram"}
+
+  material_type='Drug substance'
+  material_name='C2C-201 — water content'
+  acceptance_criteria={"shelf": "NMT 0.5 % w/w", "release": "NMT 0.5 % w/w"}
+
+  material_type='Drug substance'
+  material_name='C2C-201 — specified and total impurities'
+  acceptance_criteria={"shelf": "Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %", "release": "Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %"}
+
+  material_type='Drug substance'
+  material_name='C2C-201 — assay'
+  acceptance_criteria={"shelf": "98.0 - 102.0 % on the anhydrous basis", "release": "98.0 - 102.0 % on the anhydrous basis"}
+

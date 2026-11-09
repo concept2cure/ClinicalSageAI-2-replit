@@ -45,9 +45,10 @@ describe('pathway eligibility — assessment', () => {
     expect(a.unmet).toContain('preliminary_substantial');
   });
 
-  it('leaves eligibility undetermined (false) while a criterion is unanswered', () => {
+  // 2026-11-08: undetermined is null, not false (ana/__tests__/ivd-lifecycle-unstated-inputs.test.ts).
+  it('leaves eligibility undetermined (null) while a criterion is unanswered', () => {
     const a = assessEligibility('eu_conditional_ma', { serious: true, benefit_risk: true })!;
-    expect(a.eligible).toBe(false);
+    expect(a.eligible).toBeNull();
     expect(a.unanswered).toEqual(expect.arrayContaining(['unmet_need', 'immediate_availability']));
   });
 
@@ -57,6 +58,6 @@ describe('pathway eligibility — assessment', () => {
 
   it('handles a single-criterion designation (orphan)', () => {
     expect(assessEligibility('fda_orphan', { rare: true })!.eligible).toBe(true);
-    expect(assessEligibility('fda_orphan', {})!.eligible).toBe(false);
+    expect(assessEligibility('fda_orphan', {})!.eligible).toBeNull();
   });
 });

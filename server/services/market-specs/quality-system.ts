@@ -20,6 +20,7 @@
  * @module server/services/market-specs/quality-system
  */
 
+import { ComputationRefusal } from '../ana-biostats/computation-engine.js';
 import {
   QMSR_EFFECTIVE,
   citeQms,
@@ -164,8 +165,24 @@ export interface QmsAssessment {
   fdaNote: string;
 }
 
-/** Assess QMS readiness against the major clauses. */
+/**
+ * Assess QMS readiness against the major clauses. 2026-11-08: an id that is not a clause id ('CAPA', '8.5.2', a
+ * number) counted as no clause, so the clause it meant was reported missing and the QMS not ready. It is refused,
+ * by index (ComputationRefusal).
+ */
 export function assessQmsReadiness(presentClauseIds: string[]): QmsAssessment {
+  if (!Array.isArray(presentClauseIds)) {
+    throw new ComputationRefusal('invalid_input', `presentClauseIds must be a list of clause ids (got ${JSON.stringify(presentClauseIds)}).`, 'presentClauseIds');
+  }
+  presentClauseIds.forEach((id, i) => {
+    if (!BY_ID.has(id)) {
+      throw new ComputationRefusal(
+        'invalid_input',
+        `presentClauseIds[${i}] must be a clause id, one of ${QMS_CLAUSES.map((c) => c.id).join(', ')} (got ${JSON.stringify(id)}).`,
+        `presentClauseIds[${i}]`,
+      );
+    }
+  });
   const present = new Set(presentClauseIds);
   const required = QMS_CLAUSES.filter((c) => c.required);
   const missingRequiredClauses = required.filter((c) => !present.has(c.id)).map((c) => c.id);

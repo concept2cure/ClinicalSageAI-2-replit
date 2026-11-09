@@ -17,6 +17,9 @@
  * @module server/services/market-specs/pathway-eligibility
  */
 
+import { ComputationRefusal } from '../ana-biostats/computation-engine.js';
+import { statedBoolean } from '../immunogenicity/immunogenicity-reference.js';
+
 export type Designation =
   | 'fda_breakthrough' | 'fda_fast_track' | 'fda_accelerated_approval' | 'fda_priority_review' | 'fda_orphan'
   | 'eu_prime' | 'eu_orphan' | 'eu_conditional_ma'
@@ -161,8 +164,8 @@ export function designationIds(): Designation[] {
 export interface DesignationEligibilityAssessment {
   designation: Designation;
   label: string;
-  /** True only when every criterion is answered and met. */
-  eligible: boolean;
+  /** true only when every criterion is answered true; false when any is answered false; else null (undetermined). */
+  eligible: boolean | null;
   met: string[];
   unmet: string[];
   /** Criteria with no answer supplied — eligibility is undetermined while any exist. */
@@ -171,8 +174,10 @@ export interface DesignationEligibilityAssessment {
 
 /**
  * Assess eligibility from yes/no answers keyed by criterion id. Eligible only when
- * every criterion is explicitly true; any false → not eligible; any missing →
- * undetermined (eligible stays false and the criterion is reported as unanswered).
+ * every criterion is explicitly true; any false → not eligible; otherwise any
+ * missing → undetermined (eligible is null and the criterion is reported as
+ * unanswered). 2026-11-08: eligible was false while a criterion was unanswered,
+ * and a non-boolean answer ('true') was read as unanswered; it is refused by field.
  */
 export function assessEligibility(
   id: string,
@@ -180,12 +185,19 @@ export function assessEligibility(
 ): DesignationEligibilityAssessment | undefined {
   const d = getDesignation(id);
   if (!d) return undefined;
+  if (answers === null || typeof answers !== 'object' || Array.isArray(answers)) {
+    throw new ComputationRefusal(
+      answers === undefined || answers === null ? 'missing_input' : 'invalid_input',
+      `answers must be an object of criterion id → true or false (got ${JSON.stringify(answers)}).`,
+      'answers',
+    );
+  }
 
   const met: string[] = [];
   const unmet: string[] = [];
   const unanswered: string[] = [];
   for (const c of d.criteria) {
-    const a = answers[c.id];
+    const a = statedBoolean(`answers.${c.id}`, (answers as Record<string, unknown>)[c.id]);
     if (a === true) met.push(c.id);
     else if (a === false) unmet.push(c.id);
     else unanswered.push(c.id);
@@ -194,7 +206,7 @@ export function assessEligibility(
   return {
     designation: d.id,
     label: d.label,
-    eligible: unmet.length === 0 && unanswered.length === 0,
+    eligible: unmet.length > 0 ? false : unanswered.length > 0 ? null : true,
     met,
     unmet,
     unanswered,

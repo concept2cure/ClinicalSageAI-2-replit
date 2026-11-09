@@ -9,10 +9,9 @@
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHORING_ACCESS_DDL, ORG, AUTHOR } from '../../../routes/__tests__/_authoring-canvas-fixture';
-import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256, type CoordinationPool, type CoordinationScope, type CoordinationProjection } from '../run-events';
-import { admitRunCoordination, markRunOwnerPrivate, readOwnerPrivateBoundary, recheckRunOwnerPrivacy,runOwnerInstance } from '../run-control';
+import { ORG, AUTHOR } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256, type CoordinationPool, type CoordinationScope } from '../run-events';
+import { markRunOwnerPrivate, readOwnerPrivateBoundary, recheckRunOwnerPrivacy } from '../run-control';
 import { TurnRecorder, writeTurnRecord } from '../turn-record';
 import { runWithTenantScope } from '../../../db/tenantStore';
 import { openCoordinationText, loadTurnRecord, loadOwnerPrivateTurnRecord } from '../turn-record-verify';
@@ -48,44 +47,21 @@ import { describeToolPlan } from '../agentic-loop';
 import { presentStep } from '../step-presentation';
 import { buildMemoryContextForChat, type MemoryContextAssemblerResult } from '../../memory-context-assembler';
 import { buildAssistantMetadata, refusalOf } from '../tool-trace';
+import { fixture, pool, subject, assignment, seedCoordinationMember, setupCoordinationFixture as setupSharedCoordinationFixture } from './support/coordination-fixture';
 
 const steps = (...s: Array<[string, string]>) => s.map(([title, status]) => ({ title, status }));
 
-let fixture: JourneyDb, pool: CoordinationPool;
 const keyArn = 'arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111';
-async function subject(adapter = pool, observed?: (projection: CoordinationProjection) => void) {
-  const scope: CoordinationScope = { runId: randomUUID(), organizationId: ORG, userId: Number(AUTHOR.id), projectId: 42, ownerInstance: runOwnerInstance() };
-  await pool.query(`INSERT INTO ana_runs(id,organization_id,user_id,project_id,surface,status,owner_instance)
-    VALUES($1,$2,$3,'42','ana-ri-stream','running',$4)`, [scope.runId, ORG, scope.userId, scope.ownerInstance]);
-  const source = { tiers: [3] as const, recheck: async () => { await admitRunCoordination(pool, scope); } };
-  return { scope, source, host: await openRunCoordination({ ...scope, pool: adapter, source, onProjection: observed }) };
-}
-const assignment = (intentId: string) => ({ intentId, role: 'research' as const, task: 't1', parentStep: 's1' });
 const inVerifiedOwner = <T>(fn: () => T): T => runWithTenantScope({ tenantId: String(ORG), accountId: Number(AUTHOR.id), source: 'request', caller: 'coordination-ciphertext-fixture' }, fn);
-async function setupCoordinationFixture() {
-    fixture = await createJourneyDb({ prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}
-      CREATE ROLE app_service NOLOGIN; CREATE SCHEMA vault;
-      CREATE TABLE vault.legal_holds(id serial PRIMARY KEY,organization_id integer,lifted_at timestamptz);
-      CREATE TABLE chat_threads(id TEXT PRIMARY KEY,user_id INTEGER,organization_id INTEGER,title TEXT,project_id integer,program_id uuid,
-        model text,system_prompt text,metadata jsonb,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
-      CREATE TABLE chat_messages(id serial PRIMARY KEY,thread_id text,role text,content text,model text,tokens_used integer,metadata jsonb,created_at timestamptz DEFAULT now());
-      ${extractTableDdl('migrations/0013_ana_intelligence_system.sql',['user_intelligence_profiles'])}
-      ALTER TABLE organizations ADD COLUMN settings jsonb NOT NULL DEFAULT '{}';`,
-      migrations: ['migrations/20260921_audit_logs_chain_seq.sql','db/migrations/20260917_ana_runs.sql',
-        'migrations/20260926_ana_turn_records.sql','db/migrations/20260617_audit_logs_immutability.sql'] });
-    const query: CoordinationPool['query'] = async (sql, args) => fixture.pglite.query<Record<string, unknown>>(sql, args);
-    pool = { query, connect: async () => ({ query, release() {} }) };
-    mem.chatQuery.mockImplementation((sql,params)=>pool.query(sql,params));
-}
+/* The canonical-table coordination fixture is shared with run-coordination-dispositions.test.ts
+   (support/coordination-fixture.ts); this suite also routes its chat reads to it. */
+const setupCoordinationFixture = () => setupSharedCoordinationFixture(shared => { mem.chatQuery.mockImplementation((sql,params)=>shared.query(sql,params)); });
 describe('durable scoped peer coordination on canonical PostgreSQL tables', () => {
   beforeAll(setupCoordinationFixture,180000);
   afterAll(async () => { mem.chatQuery.mockReset().mockResolvedValue({rows:[]});await fixture?.close(); });
   beforeEach(async () => {
     mem.failCrypto=false;
-    await pool.query('DELETE FROM organization_users WHERE user_id=$1', [Number(AUTHOR.id)]);
-    await pool.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, Number(AUTHOR.id)]);
-    await pool.query("UPDATE organizations SET settings='{}',status='active'");
-    await pool.query("SELECT set_config('app.current_tenant_id',$1,false),set_config('app.current_account_id',$2,false)", [String(ORG), AUTHOR.id]);
+    await seedCoordinationMember();
   });
   it('reconstructs assignment, peer request, report, refusal and explicit parent assessment without conversation text', async () => {
     const wired: Array<Promise<unknown>> = [];
