@@ -781,3 +781,46 @@ trunk.
 `ci:unreferenced-modules` reports 71, against a baseline of 73. Its note about `auditLogger.js` and
 `services/index.ts` is the same on trunk. `ci:tables-live-schema` needs an install-fresh database and was not run.
 This change only removes entries for the file it deletes.
+
+### S29 — delete the second Module 3 compile path, replaced by Module 3 build's composer
+
+**Deleted:** from `server/services/cmc-module3-compiler.ts`:
+- `compileModule3Sections` and `markStaleSections`;
+- their `SECTION_MAP`;
+- the types `CmcSourceObject` and `CompiledSection`.
+
+**Kept:** `createSourceHash`, `summarizeSectionDiff` and `canFinalizeExport`, all live.
+
+**What already exists:**
+- **Callers:** only tests used the two functions. No client or shared commit ever named them.
+- **The compile path:** CMC / Module 3 → Module 3 build → "Compile Module 3" (`CmcModule3Build.tsx`). It sends
+  `POST /api/cmc/module3-os/compile/:projectId` (`server/api/cmc/module3OperatingSystemRoutes.ts`), whose
+  `composeProjectModule3` (`server/services/cmc/module3-compile.ts`) composes through
+  `composeModule3FromCanonicalSources` (`server/services/module3Composer.ts`).
+- **Staleness:** `impactedSectionsForSourceType` and `server/services/cmc/section-drift.ts`.
+- **In the running app:**
+  - Compile Module 3 answers 200 on the small-molecule C2C-201: 21 sections, 18 ready to compile
+    (`r1-batch-1/app-09-compile-module3-small-molecule.png`).
+  - It refuses the biologic C2C-101 with the P-28 composition boundary's reason.
+- **The old map was wrong.** It said a container-closure change affects only 3.2.S.6 and 3.2.P.7. The composer's rule
+  table also names 3.2.P.2 and 3.2.A.1.
+
+**Tests repointed:**
+- `tests/module3-e2e-journey.test.ts` and `tests/module3-workflow-convergence.test.ts`: the stale cases now ask
+  `impactedSectionsForSourceType`, and the pipeline cases recompose through the composer.
+- `server/services/__tests__/cmc-module3-compiler.test.ts` keeps its finalize, diff and hash cases.
+
+**Red:** `s29-red.txt`. `cmc-module3-second-compile-path-retired.test.ts` fails 1 of 3 on trunk: the two functions are
+still exported. The controls pass on trunk: the live helpers stay, and the composer path is reached.
+
+### Green, for the batch
+
+- **The five retirement tests and the touched suites:** 134 of 134 pass in 9 files.
+- **The neighbourhood:** every test that names a touched file, plus each replacement's own tests, 140 files.
+  - 3,081 of 3,082 passed on the first run.
+  - The one failure was the `module3-regional-readiness` pin described under S13. Once corrected it passes 38 of 38.
+- **The pglite suites near the change:** 73 of 73 pass in 5 files.
+- **Tool selection and the manifest:** 461 of 461 pass in 15 files.
+- **Typecheck** (`typecheck-no-regression --incremental`): 0 errors.
+- **ESLint ratchet:** net −7 warnings, and the new tests have none.
+- **The app:** the replacements were walked on the patched server (`r1-batch-1/app-walk.txt`).
