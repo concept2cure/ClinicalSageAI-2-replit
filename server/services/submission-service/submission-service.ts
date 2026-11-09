@@ -34,6 +34,7 @@ import { sectionPlainText } from '../c2c/section-content';
 import {
   externalDocumentTableReason,
   isPlaceableDocumentTable,
+  retiredPlacementRefusal,
   unplaceableDocumentTableMessage,
 } from '../ectd/leaf-document-tables';
 import type {
@@ -4135,6 +4136,12 @@ export async function upsertLeaf(
   if (input.documentTable != null && !isPlaceableDocumentTable(input.documentTable)) {
     throw new SubmissionError('VALIDATION', unplaceableDocumentTableMessage(input.documentTable));
   }
+  /* P-108 3(b): the upload store takes withdrawals only. New content from it, on
+     a create or a re-write, is refused here, before its document is read or
+     anything is written; the Vault is where an uploaded file is approved and
+     placed from (VaultPlaceIntoSubmission.tsx). */
+  const retiredSource = retiredPlacementRefusal(input.documentTable, input.lifecycleOp);
+  if (retiredSource) throw new SubmissionError('VALIDATION', retiredSource);
 
   /* THE KEY SPACE MUST MATCH THE TABLE. `submission_leaves` addresses two of
      them — integer `document_id` for most stores, uuid `document_uuid` for

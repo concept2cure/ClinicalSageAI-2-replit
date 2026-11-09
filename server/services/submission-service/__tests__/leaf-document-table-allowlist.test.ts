@@ -113,8 +113,10 @@ const VAULT_UUID = '9f2c1d40-0000-4000-8000-0000000000aa';
 
 /** `ref` is the key space this table is addressed by — integer for most stores,
  *  uuid for the vault. Defaults to the integer so the existing entries are
- *  unchanged. */
-const PLACEABLE: Array<{ table: string; ref?: Record<string, unknown>; seed: () => void }> = [
+ *  unchanged. `lifecycleOp` is given only for a store that now takes
+ *  withdrawals alone (P-108 3(b)): it stays in the vocabulary, and a withdrawal
+ *  is the placement it still accepts. */
+const PLACEABLE: Array<{ table: string; ref?: Record<string, unknown>; lifecycleOp?: string; seed: () => void }> = [
   {
     table: 'coauthor_documents',
     seed: () => selectChain.mockResolvedValueOnce([{ id: 55, content: 'x' }]),
@@ -128,7 +130,11 @@ const PLACEABLE: Array<{ table: string; ref?: Record<string, unknown>; seed: () 
     },
   },
   {
+    // P-108 3(b), 2026-11-09: no new content from the upload store, but an
+    // upload already filed can still be withdrawn. The refusal of new content
+    // is upload-placement-retired.pglite.test.ts and its -doors twin.
     table: 'ctd_onboarding_documents',
+    lifecycleOp: 'delete',
     seed: () => selectChain.mockResolvedValueOnce([{ storagePath: '/nonexistent/upload.pdf' }]),
   },
   {
@@ -201,8 +207,8 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
     ).rejects.toThrow(/coauthor_documents/);
   });
 
-  for (const { table, ref, seed } of PLACEABLE) {
-    it(`accepts ${table} — a table the resolver branches on`, async () => {
+  for (const { table, ref, lifecycleOp, seed } of PLACEABLE) {
+    it(`accepts ${table}${lifecycleOp ? ` (lifecycle operation ${lifecycleOp})` : ''} — a table the resolver branches on`, async () => {
       seedSequence();
       seed();
       await upsertLeaf(
@@ -211,6 +217,7 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
           sectionCode: '2.5',
           title: 'Clinical Overview',
           documentTable: table,
+          ...(lifecycleOp ? { lifecycleOp } : {}),
           ...(ref ?? { documentId: 55 }),
         } as any,
         CTX,
