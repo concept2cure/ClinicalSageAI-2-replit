@@ -156,8 +156,11 @@ This is a completion: nothing was rebuilt.
   - the global pathway registry.
 
   The FDA meeting timing and advice lookups (`getSubmissionTiming`, `getTimingRecommendations`, `getPracticalAdvice`),
-  pure functions of the meeting purpose, phase and product type, move with them, verbatim. With the correction's
-  citations the engine would otherwise have been 100,805 bytes. The engine is now 94,222 bytes and the sibling 82,811.
+  pure functions of the meeting purpose, phase and product type, move verbatim into a second sibling,
+  `regulatory-strategy-meeting-advice.ts`: with the correction's citations the engine would otherwise have been 100,805
+  bytes, and in `regulatory-strategy-reference.ts` they took that file past 1,500 lines, which the repo-health line
+  ceiling refuses (a follow-up commit, before the push, moved them there). The engine is now 94,275 bytes, the
+  reference sibling 75,961 bytes (1,474 lines) and the meeting-advice sibling 7,373 bytes.
   `jp-programs.test.ts`'s prose guard lists the sibling too, a one-line pin edit;
   `jp-programs.ts`'s list of readers and the markets skill's record reference name the sibling.
 - **The definitions** say what an omission leaves. `questionsToDiscuss`, `productType` and `indication` are marked not

@@ -45,9 +45,9 @@ import {
 import {
   BRIEFING_DOCUMENT_TEMPLATE, CERTIFICATION_TYPES, EMA_ORPHAN_PREVALENCE_THRESHOLD, EXPEDITED_COMPARISON_MATRIX,
   EXPEDITED_PROGRAM_REGISTRY, FDA_ORPHAN_PREVALENCE_THRESHOLD, GLOBAL_PATHWAY_REGISTRY, MEETING_TYPE_REGISTRY,
-  PATENT_EXCLUSIVITY_REGISTRY, PATHWAY_REGISTRY, PURPOSE_TO_TYPE, getPracticalAdvice, getSubmissionTiming,
-  getTimingRecommendations,
+  PATENT_EXCLUSIVITY_REGISTRY, PATHWAY_REGISTRY, PURPOSE_TO_TYPE,
 } from './regulatory-strategy-reference';
+import { getPracticalAdvice, getSubmissionTiming, getTimingRecommendations } from './regulatory-strategy-meeting-advice';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
