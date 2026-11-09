@@ -120,15 +120,26 @@ describe('act_on_screen', () => {
 
   it('an operation on a one-program screen with none open asks which program instead of acting', async () => {
     // "search the vault" with nothing open drew "Open a project to see its
-    // vault", the search went nowhere, and AnA said she had searched.
+    // vault", the search went nowhere, and AnA said she had searched. Since
+    // 5144702d21 (2026-11-06) the Vault opens with no project (it searches the
+    // governed documents across your projects), so CMC, still one project's
+    // screen (shared/navigation scope 'project'), carries the guard here.
     const none = JSON.parse(
       await getToolHandler('act_on_screen')!(
-        { action: 'vault.search', params: { query: 'stability' } },
+        { action: 'cmc.open-tab', params: { tab: 'specs' } },
         { organizationId: null, userId: null, projectId: null, liveDrive: true },
       ),
     );
     expect(none.status).toBe('needs_project');
     expect(none).not.toHaveProperty('directive');
+    // The Vault itself no longer needs one.
+    const vaultNone = JSON.parse(
+      await getToolHandler('act_on_screen')!(
+        { action: 'vault.search', params: { query: 'stability' } },
+        { organizationId: null, userId: null, projectId: null, liveDrive: true },
+      ),
+    );
+    expect(vaultNone.status).toBe('action_ready');
 
     // The chat route sends the open program as projectId only — that counts.
     const chatRoute = JSON.parse(
