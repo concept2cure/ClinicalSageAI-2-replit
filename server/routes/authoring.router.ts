@@ -24,8 +24,8 @@ import {
   AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed, runAuthoringIndependentCheck,
 } from '../services/authoring/peer-review';
 import {
-  authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
-  routeOnVerdict, routeReviewRequest,
+  authoringApprovalReviewRefusal, authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask,
+  parseAuthoringRoute, routeOnVerdict, routeReviewRequest,
 } from '../services/authoring/authoring-review-route';
 import { ReviewRouteRefusal } from '../services/review/review-route-member';
 import { handBackMember, reassignMember, routeTxOf, senderTimeZone } from '../services/review/review-route';
@@ -5057,6 +5057,7 @@ async function approvalRefused(
   ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
   if (await signingRefused(client, req, res, ids)) return true;
+  if (await reviewRefused(client, req, res, current, ids)) return true; // P-95
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
   if (openCommentCount > 0 || pendingEdits > 0) {
     if (req.body?.acknowledgeUnresolved !== true) {
@@ -5068,6 +5069,32 @@ async function approvalRefused(
       { openCommentCount, pendingEdits, acknowledged: true }, client);
   }
   return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+}
+
+/* ── P-95: A REGULATED DOCUMENT IS APPROVED ONLY AFTER ITS REVIEW ──
+ *
+ * The founder, 2026-11-02, clarified 2026-11-09 (docs/LAUNCH_DEFINITION_OF_DONE.md
+ * P-95). An APPROVER signature, by E-sign or by the workflow /sign, is taken only
+ * when the document's RR5 review route is complete over the text being approved
+ * (authoringApprovalReviewRefusal, services/authoring/authoring-review-route.ts).
+ * Every document is treated as regulated until the document-type catalog says
+ * otherwise (fail closed). Nothing is retroactive.
+ *
+ * Before the credential, so a refusal spends no password or code; on the
+ * signing transaction, after the document's row lock. A route read failure
+ * throws and is answered as the transaction's error, never as "no review needed".
+ */
+async function reviewRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number },
+): Promise<boolean> {
+  const refusal = await authoringApprovalReviewRefusal(client, {
+    tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
+  });
+  if (!refusal) return false;
+  res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
+  return true;
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -7754,6 +7781,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
       if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await reviewRefused(client, req, res, current, { docId, tenantId })) return; // P-95
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
 
       const signer = await reverifyAuthoringSigner(req, res);

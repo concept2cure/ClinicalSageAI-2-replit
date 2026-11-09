@@ -2345,6 +2345,26 @@ session approved it without that history, and the gate refused the slice. Correc
 - **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
 - **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
 
+*Third clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 3 named
+`c2c_artifact_section_map` as the link from a Vault family to the section it feeds. It is not one. The project-page
+session (`01FTWcmX…`) found this before writing code. The table (`migrations/0002_phase15_submission_ops.sql:41-52`)
+links a conversation artifact (`concept2cure_artifacts`) to a Submission Ops package section
+(`c2c_package_sections`). It has no key for a Vault document or family, none for an editor section, and no due date.
+Using it would have made a second deliverable store, which item 3 forbids. Corrected:
+- **The link is the one that exists.** A section is fed by the Vault version it was drafted from. That is
+  `document_span_lineage` with provenance `vault_document`, the Vault version's id and content hash:
+  - written by `server/services/clinical-regulatory-evidence/span-lineage-vault.ts`;
+  - read by `server/services/vault/vault-where-used.ts`;
+  - retired by the lineage gate.
+  `c2c_artifact_section_map` stays as Submission Ops' own, and no second link is made.
+- **"Only an approved version feeds a filing section."** The section is flagged as changed when a live `vault_document`
+  span cites version V and a later version in V's family (`vault-version-family.ts`) is at a STEADY stage
+  (`vault-lifecycle.ts`). The flag shows in the project's changes list, in Evidence and in the editor rail ("replaced
+  since cited"). It is built on S12's existing source-usage reads. A later version that is not yet approved does not flag
+  the section, and neither does a retired span.
+- **No Vault file is edited.** The Vault's rules are imported read-only, with no new table, route or column. A
+  deliverable's owner and due date come from its work project (`projects.owner_id`) and that project's existing tasks.
+
 ### P-110 — CMC: suitability is a signed act, and an under-described substance is not composed as a small molecule
 
 Decided 2026-11-09 by the coordinating session (`01JbQU…`) under the founder's delegation of 2026-11-08 ("No you decide
