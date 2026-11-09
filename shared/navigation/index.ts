@@ -116,7 +116,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', description: 'The canonical project workspace (AnA + canvas).', scope: 'project', group: 'project' },
-  { id: 'documents', label: 'Documents', description: 'The project document list.', scope: 'project', group: 'project' },
+  { id: 'documents', label: 'Documents', description: 'The Vault\'s document list, which `documents` opens: the open project\'s, or, with no project open, the governed documents across your projects.', scope: 'global', group: 'project' },
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
   // Global since 2026-11-06, by the founder: "Vault … should be accessible all the time, not just from within the
