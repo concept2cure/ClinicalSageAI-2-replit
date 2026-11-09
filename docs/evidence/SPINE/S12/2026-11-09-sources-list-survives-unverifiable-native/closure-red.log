@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists the other source normally, and the native one as unverifiable with its reason, its details withheld 106ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists both normally when the native source verifies 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > a denied native source is still omitted, never disclosed as unverifiable 77ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > finds the harnesses at all — the gate is not vacuous 1ms
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > and the applier itself still declares files that ALTER what it creates 0ms
+ × tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it 22ms
+   → 
+server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
+    builds authoring_comments, user_pins but does not apply db/migrations/20260730_authoring_comments_router_columns.sql
+server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
+    builds doc_revisions but does not apply db/migrations/20260817_doc_revisions_immutable_ledger.sql
+: expected [ …(2) ] to deeply equal []
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > lists its migrations as calls or array elements, never as bare strings 572ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it
+AssertionError: 
+server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
+    builds authoring_comments, user_pins but does not apply db/migrations/20260730_authoring_comments_router_columns.sql
+server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
+    builds doc_revisions but does not apply db/migrations/20260817_doc_revisions_immutable_ledger.sql
+: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
++     builds authoring_comments, user_pins but does not apply db/migrations/20260730_authoring_comments_router_columns.sql",
++   "server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts
++     builds doc_revisions but does not apply db/migrations/20260817_doc_revisions_immutable_ledger.sql",
++ ]
+
+ ❯ tests/schema-contract/authoring-migration-list-closure.contract.test.ts:208:56
+    206|     }
+    207|
+    208|     expect(violations, `\n${violations.join('\n')}\n`).toEqual([]);
+       |                                                        ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 6 passed (7)
+   Start at  11:39:04
+   Duration  4.30s (transform 738ms, setup 68ms, import 1.36s, tests 2.63s, environment 0ms)
+
