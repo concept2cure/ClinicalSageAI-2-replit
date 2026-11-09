@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > D0.md §8, in the stylesheet > §8.2 a disabled primary is grey and fully opaque 8ms
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > D0.md §8, in the stylesheet > §8.3 the answer line is 500 weight, with room above the lead 4ms
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > D0.md §8, in the stylesheet > §8.4 the composer rests on --border-control 2ms
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > D0.md §8, in the stylesheet > §8.5 on a coarse pointer, tabs, segments, send and close reach 44px 1ms
+AssertionError: expected null to be 'var(--bg-200)' // Object.is equality
+AssertionError: expected '0 0 24px' to be '24px 0' // Object.is equality
+AssertionError: expected '1px solid var(--border)' to be '1px solid var(--border-control)' // Object.is equality
+AssertionError: expected undefined to be '44px' // Object.is equality
+      Tests  4 failed (4)

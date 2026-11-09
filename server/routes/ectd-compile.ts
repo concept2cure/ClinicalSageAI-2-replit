@@ -40,6 +40,7 @@ import { promises as fs } from 'node:fs';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { isFiledDispatchStatus } from '../services/submission-service/filed-dispatch';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
@@ -285,6 +286,40 @@ async function spineForRequest(
     return null;
   }
   return { spine, named: true };
+}
+
+/**
+ * P-99 C1 (F1, founder 2026-11-03: "Nothing restores a sequence silently").
+ *
+ * A sequence's filed record is read from its transmit, or, for a send before
+ * the platform kept what each send carried, from its compiles. A compile made
+ * after the send was recorded like any other, so the fold read it as what was
+ * sent and the next sequence's refusal lifted with nobody saying so. A
+ * non-rehearsal compile of a sequence that is filed (filed-dispatch.ts) or in
+ * flight is therefore refused before anything is assembled or recorded. A
+ * sequence is put back on record only by P-99's own acts. True when refused
+ * (the response is sent).
+ */
+async function refuseCompileOfSequenceOnFile(
+  res: Response,
+  sequence: { id: number; sequenceNumber: string },
+  orgId: number,
+): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT dispatch_status FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [sequence.id, orgId],
+  );
+  const status: unknown = r.rows[0]?.dispatch_status;
+  const n = sequence.sequenceNumber;
+  const message = status === 'transmitting'
+    ? `A send of sequence ${n} is unresolved, so a compile of it now is not recorded. Nothing was assembled.`
+    : isFiledDispatchStatus(status)
+      ? `Sequence ${n} is on file at the agency, so a compile of it now is not recorded: it would not be what it sent. ` +
+        'Its sent package is on Gateway transmittals when the platform kept it. Start the next sequence to compile again.'
+      : null;
+  if (!message) return false;
+  res.status(409).json({ error: { code: 'ECTD_SEQUENCE_ON_FILE', message } });
+  return true;
 }
 
 /** The type a compile of this sequence is recorded as: the sequence's own, in
@@ -675,6 +710,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
+      if (req.body?.rehearsal !== true && await refuseCompileOfSequenceOnFile(res, spine.sequence, orgId)) return;
       // The recorded type decides the record; a contradiction is refused, as a region is.
       const recordedType = await recordedCompilationType(spine.sequence.id, orgId);
       const statedType = req.body?.submissionType == null ? '' : String(req.body.submissionType).trim().toLowerCase();
