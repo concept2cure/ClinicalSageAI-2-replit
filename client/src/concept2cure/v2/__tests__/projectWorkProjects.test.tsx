@@ -13,19 +13,34 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/queryClient')>()), apiRequest }));
 
-import { ProjectWorkProjects } from '../surfaces/ProjectCoreWork';
+// The signed-in person, for the Plan's Assign (PlanAssign.tsx): null is a person with no permissions list, who may write.
+const auth = vi.hoisted(() => ({ user: null as null | { id: string; permissions?: string[] } }));
+vi.mock('@/services/portal/authService', async (original) => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => auth, useAuthUser: () => auth.user }));
+
+import { ProjectWorkProjects, WORK_PROJECT_TASK_ENTITY } from '../surfaces/ProjectCoreWork';
 
 const PID = '6065271c-d4b0-4936-aad1-02855423a738';
 const READ = `/api/project-hierarchy/11/children?programId=${PID}`;
 const ok = (body: unknown, status = 200) => ({ ok: status < 400, status, headers: new Headers({ 'Content-Type': 'application/json' }), json: async () => body }) as Response;
 const child = (id: number, name: string, workKind: string) => ({ id, name, workKind, ownerName: 'JM Smith', status: 'active', depth: 1, path: `11/${id}`, childCount: 0, createdAt: null });
 let rows: unknown[] = [];
+/** The Plan's task rows (GET /api/tasks/tasks/by-module/Plan), or 'fail'. */
+let planTasks: unknown[] | 'fail' = [];
+const PLAN_READ = '/api/tasks/tasks/by-module/Plan';
 
 beforeEach(() => {
-  rows = [];
+  rows = []; planTasks = []; auth.user = null;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { name: string; workKind: string }) => {
     if (method === 'GET' && url === READ) return ok({ success: true, data: { parentId: 11, programId: PID, anchorProjectId: 11, children: rows, total: rows.length } });
+    if (method === 'GET' && url === PLAN_READ) return planTasks === 'fail' ? ok({ message: 'unavailable' }, 503) : ok({ success: true, data: planTasks, count: planTasks.length });
+    if (method === 'GET' && url === '/api/task-management/assignees') return ok({ success: true, data: [{ id: '12', name: 'Dana Ruiz' }] });
+    if (method === 'POST' && url === '/api/tasks/tasks') {
+      const task = body as unknown as Record<string, unknown>;
+      planTasks = [...(planTasks === 'fail' ? [] : planTasks), { taskId: 'task-9', sourceEntityType: task.sourceEntityType, sourceEntityId: task.sourceEntityId,
+        assigneeId: 12, assigneeName: 'Dana Ruiz', dueDate: task.dueDate, status: 'pending', createdAt: '2026-11-09T00:00:00Z' }];
+      return ok({ success: true, data: { taskId: 'task-9', assigneeName: 'Dana Ruiz', assigneeId: 12, sourceEntityType: task.sourceEntityType, sourceEntityId: task.sourceEntityId } }, 201);
+    }
     if (method === 'POST' && url === '/api/c2c/projects') {
       rows = [...rows, child(101, body!.name, body!.workKind)];
       return ok({ data: { projectId: 101, created: true, parentId: 11, depth: 1, path: '11/101', programId: PID, ...body }, meta: { created: true } }, 201);
@@ -104,5 +119,26 @@ describe('the project\'s work projects (S12)', () => {
     expect(screen.getByText('Site monitoring')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Tox package/ })).toBeNull();
     expect(screen.getByText(/Nonclinical · JM Smith · No work area for this kind yet/)).toBeTruthy();
+  });
+
+  it('gives a work project its owner and due date through the Plan\'s assign, and says when its assignment cannot be read', async () => {
+    rows = [child(101, 'Drug substance CMC', 'cmc')];
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect(await screen.findByText('No one is assigned to deliver it yet.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Assign$/ }));
+    fireEvent.change(await screen.findByLabelText(/^Person/), { target: { value: '12' } });
+    const due = screen.getByLabelText(/^Due date/);
+    fireEvent.change(due, { target: { value: '2026-11-30' } });
+    fireEvent.click(document.querySelector('.de-btn.primary') as HTMLElement);
+    await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')).toBe(true));
+    const [, , task] = apiRequest.mock.calls.find(([m, u]) => m === 'POST' && u === '/api/tasks/tasks')!;
+    expect(task).toMatchObject({ title: 'Deliver: Drug substance CMC', moduleType: 'Plan', projectId: 11, assigneeId: 12,
+      sourceEntityType: WORK_PROJECT_TASK_ENTITY, sourceEntityId: `${PID}:101` });
+    expect(await screen.findByText(/Assigned to Dana Ruiz, due Nov 30, 2026/)).toBeTruthy();
+    cleanup();
+    planTasks = 'fail';
+    render(<ProjectWorkProjects programId={PID} anchorProjectId={11} canChange />);
+    expect(await screen.findByText('Its assignment could not be read.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Assign/ })).toBeNull();
   });
 });

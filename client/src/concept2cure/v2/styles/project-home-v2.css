@@ -517,6 +517,11 @@
 .c2c-v2 .pj-work-project-n{font-size:var(--fs-small);color:var(--text-100);overflow-wrap:anywhere;}
 /* A work project that opens on its work area is a row like the areas above it, its name over its kind and owner. */
 .c2c-v2 .pj-work-project-door .pj-work-area-l{display:flex;flex-direction:column;gap:0;}
+/* A work project's owner and due date (S12): the Plan's assignment line and its Assign, under the row; the line opens
+   the row's own text here, so it takes no leading separator. */
+.c2c-v2 .pj-work-project-own{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px;}
+.c2c-v2 .pj-work-project-own > .pj-plan-assigned{margin-left:0;}
+.c2c-v2 .pj-work-project-own > .pj-plan-assigned::before{content:none;}
 .c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
 /* The label keeps its words whole and the value wraps beside it: "Commitments" broke as "Commitme / nts" beside
    "4 open · next due Mar 1, 2027" (walked 2026-11-08, D3-4). */
