@@ -1,0 +1,12 @@
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > mono never reads below the 12px floor (D0 §3) > the base mono rule floors at 12px and keeps its proportion above it 5ms
+   → expected null to be 'max(12px, 0.8125em)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts > mono never reads below the 12px floor (D0 §3) > no v2 mono rule sets a size under 12px 6ms
+   → expected [ { …(2) }, { …(2) }, { …(2) }, …(2) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
++     "selector": ".c2c-v2 .scaf-row .mono",
++     "selector": ".c2c-v2 .gov-mv.mono",
++     "selector": ".c2c-v2 .pv-det-grid .v.mono",
++     "selector": ".c2c-v2 .pv-ver-row .mono",
++     "selector": ".c2c-v2 .adc-note .mono",
+     59|       .map((r) => ({ selector: r.selector, size: decl(r.body, 'font-si…
+      Tests  2 failed | 4 passed (6)
