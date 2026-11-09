@@ -18,7 +18,8 @@ const shell = vi.hoisted(() => ({ program: '6065271c-d4b0-4936-aad1-02855423a738
 vi.mock('../shellProject', async (original) => ({ ...await original<typeof import('../shellProject')>(),
   useShellProject: () => (shell.program ? { id: shell.program } : null), shellProgramId: () => shell.program }));
 
-import { WorkProjectTasks, bindWorkProject, buildWorkProjectAreaTaskBody, WORK_PROJECT_TASKS_ENTITY } from '../surfaces/ProjectWorkTasks';
+import { WorkProjectTasks, bindWorkProject, buildWorkProjectAreaTaskBody, keepWorkProjectBinding, WORK_PROJECT_TASKS_ENTITY } from '../surfaces/ProjectWorkTasks';
+import { consumeNavParams } from '../navParams';
 import { bindWorkProject as doorBinds } from '../surfaces/ProjectWorkTasks';
 
 const PID = '6065271c-d4b0-4936-aad1-02855423a738';
@@ -70,7 +71,8 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
   it('is bound by the door, keeps the binding on its URL, and lists the work project\'s own tasks', async () => {
     doorBinds('cmc', 101);
     render(<WorkProjectTasks area="cmc" />);
-    expect(await screen.findByText(/Working in Drug substance CMC · CMC · JM Smith/)).toBeTruthy();
+    expect(await screen.findByText('Drug substance CMC · JM Smith')).toBeTruthy();
+    expect(screen.getByText('Its tasks are listed here. The records below are the whole project’s.')).toBeTruthy();
     expect(new URLSearchParams(window.location.search).get('workProject')).toBe('101');
     const list = await screen.findByTestId('work-project-tasks');
     expect(list.textContent).toBe('Confirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open');
@@ -80,11 +82,26 @@ describe('a work area bound to a work project (P-111 slice 2)', () => {
     cleanup();
     // A reload keeps it: the URL alone binds the area.
     render(<WorkProjectTasks area="cmc" />);
-    expect(await screen.findByText(/Working in Drug substance CMC/)).toBeTruthy();
+    expect(await screen.findByText('Drug substance CMC · JM Smith')).toBeTruthy();
     // "Show the whole project" unbinds it.
     fireEvent.click(screen.getByRole('button', { name: 'Show the whole project' }));
     await waitFor(() => expect(new URLSearchParams(window.location.search).get('workProject')).toBeNull());
-    expect(screen.queryByText(/Working in/)).toBeNull();
+    expect(screen.queryByText('Drug substance CMC · JM Smith')).toBeNull();
+  });
+
+  it('stays bound when the area consumes the hand-off itself and passes it on (QualityModule), before or after the panel mounts', async () => {
+    window.history.replaceState(null, '', `/concept2cure/quality?program=${PID}`);
+    bindWorkProject('quality', 101);
+    keepWorkProjectBinding(consumeNavParams('quality'));
+    render(<WorkProjectTasks area="quality" />);
+    expect(await screen.findByText('Drug substance CMC · JM Smith')).toBeTruthy();
+    cleanup();
+    window.history.replaceState(null, '', `/concept2cure/quality?program=${PID}`);
+    render(<WorkProjectTasks area="quality" />);
+    expect(screen.queryByText('Drug substance CMC · JM Smith')).toBeNull();
+    bindWorkProject('quality', 101);
+    keepWorkProjectBinding(consumeNavParams('quality'));
+    expect(await screen.findByText('Drug substance CMC · JM Smith')).toBeTruthy();
   });
 
   it('adds a task to the work project, never as its Deliver task', async () => {
