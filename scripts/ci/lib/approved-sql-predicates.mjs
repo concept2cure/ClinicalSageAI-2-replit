@@ -65,6 +65,9 @@ const VAULT_FOLDER_EXPORT_BUILDERS = new Map([
   ['vaultBinaryAvailableSql', '../document-data-disposition/eligibility.js'],
 ]);
 const CALLERS = new Map([
+  // S12 gap 5 slice 2 (2026-11-09): a work project's assigned Vault family is checked by the Vault tree's own current
+  // live predicates (data eligibility, not superseded), alias `d`, imported exactly as VAULT_BUILDERS names them.
+  ['server/services/clinical-regulatory-evidence/vault-citation-changes.ts', { alias: 'd', builders: VAULT_BUILDERS }],
   ['server/services/ana/AnaToolExecutor.ts', { alias: 'a', builders: ANA_ARTIFACT_BUILDERS }],
   ['server/services/ana/saved-document-critique.ts', { alias: 's', builders: ANA_CAPTURED_BUILDERS }],
   ['server/services/vault/vault-version-restore.ts', { alias: 's', builders: VAULT_RESTORE_BUILDERS }],
