@@ -1,0 +1,6 @@
+ × server/services/cmc/__tests__/signed-outcome.test.ts > the analytical-method act records two outcomes > refuses suitability with no phase — a procedure is suitable FOR something 11ms
+   → expected { value: 'phase-appropriate', …(2) } to match object { refusal: StringContaining{…} }
+ × server/services/cmc/__tests__/signed-outcome.test.ts > the analytical-method act records two outcomes > refuses a blank phase the same way, so whitespace is not an attestation 2ms
+   → expected { value: 'phase-appropriate', …(2) } to match object { refusal: StringContaining{…} }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 52 passed (54)

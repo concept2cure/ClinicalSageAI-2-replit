@@ -169,12 +169,37 @@ describe('POST /specifications/:id/approve — the method gate the screen promis
     expect(h.writes).toEqual([]);
   });
 
-  it('approves a procedure shown suitable without full validation', async () => {
-    /* The repository's own ICH Q2 reading (`q2Expectation`) makes suitability
-       sufficient before phase 3; a phase-1 IND's specifications are routinely
-       approved on qualified methods. */
+  /* ── P-110 item 1 (2026-11-09) ─────────────────────────────────────────────
+     This case read "approves a procedure shown suitable without full
+     validation", on the repository's own ICH Q2 reading (`q2Expectation`
+     makes suitability sufficient before phase 3). That reading stands. What
+     changed is where the word comes from: the coordinating session decided,
+     under the founder's delegation of 2026-11-08, that suitability is a signed
+     act and the unsigned word is refused, including as an interim. */
+  it('refuses a suitable status that carries no signature, and writes nothing', async () => {
     h.spec = specRow({ method: 'SE-HPLC' });
     h.methods = [methodRow({ methodName: 'SE-HPLC', validationStatus: 'qualified' })];
+
+    const res = await approve();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error).toBe('METHOD_NOT_FIT');
+    expect(res.body.message).toMatch(/not a signed act/i);
+    expect(h.writes, 'a refused approval wrote something').toEqual([]);
+  });
+
+  it('approves a procedure shown suitable for its phase UNDER SIGNATURE', async () => {
+    /* Suitability still supports an approved limit before phase 3 — the
+       early-phase work P-110 was careful not to block. The signature is what
+       the gate now reads, and the ceremony that writes it is the method
+       register's own Validate act. */
+    h.spec = specRow({ method: 'SE-HPLC' });
+    h.methods = [methodRow({
+      methodName: 'SE-HPLC',
+      validationStatus: 'phase-appropriate',
+      validatedBy: 7,
+      validationDate: '2026-11-09T10:00:00Z',
+    })];
 
     const res = await approve();
 

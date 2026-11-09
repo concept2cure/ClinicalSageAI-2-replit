@@ -210,7 +210,20 @@ describe('ungovernedQualificationRefusal — one rule, three vocabularies', () =
     expect(ungovernedQualificationRefusal('approved', 'comparability-studies')).toMatch(/comparability-studies\/:id\/approve/);
     /* ...and the words themselves, so a message cannot drift from the column
        the ceremony writes. */
-    expect(vocabFor('analytical-methods')).toEqual({ signedValue: 'validated', verb: 'Method validation (ICH Q2)', path: 'validate' });
+    /* `governedValues` joined the vocabulary with P-110 item 1 (2026-11-09):
+       every word only this register's signed act may write. The analytical
+       method register has the whole approval-gate vocabulary here, because the
+       gate honours more words than the act writes and an unsigned one must not
+       unlock an approval. */
+    expect(vocabFor('analytical-methods')).toEqual({
+      signedValue: 'validated',
+      verb: 'Method validation (ICH Q2)',
+      path: 'validate',
+      governedValues: [
+        'fit for purpose', 'phase appropriate', 'phase-appropriate', 'qualified',
+        'suitability confirmed', 'suitable', 'transferred', 'validated', 'verified',
+      ],
+    });
     expect(() => vocabFor('qc-testing')).toThrow(/no signed register is registered/);
   });
 });

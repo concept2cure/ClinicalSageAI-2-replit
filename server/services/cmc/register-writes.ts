@@ -284,6 +284,19 @@ export interface QualificationVocab {
   signedValue: string;
   verb: string;
   path: string;
+  /**
+   * Every status word only this register's signed act may write, lower-cased:
+   * `signedValue`, each signed outcome's value, and the register's own
+   * `governedValues` (P-110 item 1, 2026-11-09).
+   *
+   * One word for every register but the analytical-method one, whose signed
+   * act records two outcomes and whose approval gate honours a wider
+   * vocabulary than it writes. "A word typed into a GxP register must not
+   * unlock an approval that validation reaches only by signature" — so every
+   * word the gate would honour is refused on an ordinary edit, including as
+   * an interim.
+   */
+  governedValues: readonly string[];
 }
 
 /**
@@ -305,7 +318,15 @@ export function vocabFor(registerPath: string): QualificationVocab {
         'Add it to SIGNED_REGISTERS (services/cmc/signed-record.ts) before guarding its status.',
     );
   }
-  return { signedValue: register.signedValue, verb: register.verb, path: register.signPath };
+  const governed = new Set<string>([register.signedValue.toLowerCase()]);
+  for (const o of register.signedOutcomes ?? []) governed.add(o.value.toLowerCase());
+  for (const v of register.governedValues ?? []) governed.add(String(v).trim().toLowerCase());
+  return {
+    signedValue: register.signedValue,
+    verb: register.verb,
+    path: register.signPath,
+    governedValues: [...governed].sort(),
+  };
 }
 
 /**
@@ -329,18 +350,22 @@ export function ungovernedQualificationRefusal(
      vocabulary: the stability register's words are upper-case (COMPLETED) and
      every other register's are lower-case, and a comparison that respected
      either one would silently stop guarding the other. */
-  const signed = vocab.signedValue.toLowerCase();
   const incoming = String(status ?? '').trim().toLowerCase();
   const stored = String(storedStatus ?? '').trim().toLowerCase();
-  if (incoming === signed && stored !== signed) {
+  /* The transition INTO any word only the act may write. A record already
+     holding that word round-trips its own status through an edit. */
+  if (vocab.governedValues.includes(incoming) && stored !== incoming) {
     return (
-      `${vocab.verb} is a governed action and is recorded with a signature. ` +
+      `${vocab.verb} is a governed action and is recorded with a signature; "${incoming}" is one of the words it ` +
+      `writes, so an ordinary edit cannot set it. ` +
       `POST /api/cmc/${registerPath}/:id/${vocab.path} with a reason and re-authentication.`
     );
   }
-  if (stored === signed && incoming && incoming !== signed && incoming !== 'retired') {
+  /* And the transition OUT of it. An unsigned de-qualification would strand
+     the signature on a record that no longer claims it. */
+  if (vocab.governedValues.includes(stored) && incoming && incoming !== stored && incoming !== 'retired') {
     return (
-      `This record is ${signed} under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
+      `This record is ${stored} under a recorded signature and cannot be returned to "${incoming}" by an ordinary edit. ` +
       `Retire it, or record a new assessment.`
     );
   }
