@@ -34,7 +34,17 @@ import router from '../csr-jobs';
 const PROGRAM = '11111111-2222-4333-8444-000000000011';
 const app = express();
 app.use(express.json());
-app.use((req, _res, next) => { (req as unknown as { user: unknown }).user = { organizationId: 7, id: 5 }; next(); });
+app.use((req, _res, next) => {
+  (req as unknown as { user: unknown }).user = { organizationId: 7, id: 5 };
+  // The request's pinned client, as the auth boundary binds it (establishRequestTenantScope): here, the
+  // test's PGlite, answering node-postgres's query-config form that requestDb's Drizzle sends.
+  (req as unknown as { dbClient: unknown }).dbClient = {
+    query: (q: string | { text: string; values?: unknown[]; rowMode?: string }, params?: unknown[]) => typeof q === 'string'
+      ? pg.query(q, params)
+      : pg.query(q.text, q.values ?? params, q.rowMode === 'array' ? { rowMode: 'array' } : undefined),
+  };
+  next();
+});
 app.use('/api/csr/jobs', router);
 
 let pg: PGlite;

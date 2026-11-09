@@ -35,7 +35,6 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { clientError, notFoundInTenant } from '../lib/api-response';
-import { pool } from '../db';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import type { RequestSqlClient } from '../db/requestDb';
 import { RISK_ACCESS_CODE_STATUS } from './mdx-risk-access';
@@ -83,7 +82,7 @@ export function hazardEditWhere(n: number, patch: Record<string, unknown>): { wh
  * no live one (an unguarded edit matches nothing only then), else the refusal,
  * or a hazard that moved while it was saved.
  */
-export async function refuseAcceptedHazardEdit(res: Response, id: number, orgId: number, guard: HazardEditGuard, q: RequestSqlClient = pool) {
+export async function refuseAcceptedHazardEdit(res: Response, id: number, orgId: number, guard: HazardEditGuard, q: RequestSqlClient) {
   const state = await hazardAcceptanceState(q, orgId, id);
   if (!state) return notFoundInTenant(res, 'Risk item');
   if (!state.accepted) {
@@ -109,7 +108,7 @@ export function answerControlWrite(res: Response, w: Exclude<ChildWrite, { outco
 }
 
 /** After a guarded control PATCH changed nothing: why, from the control's hazard. */
-export async function refuseAcceptedControlEdit(res: Response, controlId: number, orgId: number, q: RequestSqlClient = pool) {
+export async function refuseAcceptedControlEdit(res: Response, controlId: number, orgId: number, q: RequestSqlClient) {
   const { rows } = await q.query(
     `SELECT risk_item_id FROM risk_controls WHERE id = $1 AND organization_id = $2`,
     [controlId, orgId],
