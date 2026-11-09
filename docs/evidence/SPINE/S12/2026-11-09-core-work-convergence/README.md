@@ -178,7 +178,8 @@ The destination column says one of:
 | P12 risk register, milestones, budget | **Decide** (§4, item 2) | Protocol section, or Tasks for milestones (`unified_tasks`) |
 | P13 amendments | Protocol section | `ProtocolDevPanes.tsx` amendment panes. An amendment is a change to this document |
 | P14 deviations and CAPA | **Decide** (§4, item 2) | Quality (QMS, `QualityModule.tsx`), where CAPA lives, or the protocol section |
-| P15 consent (read), P19 IRB package | Protocol section | `ProtocolDevReviews.tsx` consent read, `IrbPackage.tsx` |
+| P15 consent (read) | P-102's `informed_consent` checks in the one editor | The consent document type's checks (P-102), not the protocol section. Corrected by the coordinating session, 2026-11-09 |
+| P19 IRB package | Protocol section | `IrbPackage.tsx` |
 | P21 workflow guide | Retire | The section's own order replaces it |
 | P9 import bridge | **Becomes the migration** | `server/services/authoring/workflow-source-import.ts` `composeProtocol` carries an existing `protocol_documents` row into an authoring protocol |
 
@@ -240,7 +241,7 @@ carries these checks:
 |---|---|---|---|---|
 | **P-a** | S3, with D4 for the mount | The protocol section in the one editor, with P10 and P11 (objectives, eligibility, schedule of assessments), on an authoring protocol linked to its `protocol_documents` row | The same panes' tab in `ProtocolDevWorkspace.tsx` | §4, item 1 |
 | **P-b** | S3 | P16, P17, P18 and P20 into the section; `StudyDesignStatisticsTab` gains B5's review table and tasks | Their tabs in `ProtocolDevWorkspace.tsx`; `DesignBridgePanel`'s duplicate in `Biostatistics.tsx` becomes the one component | P-a |
-| **P-c** | S3 | P13, P15 and P19 into the section; P12 and P14 per §4, item 2 | Their panes in `ProtocolDev*.tsx` | P-a; §4, item 2 |
+| **P-c** | S3 | P13 and P19 into the section, P15 to P-102's consent checks; P12 and P14 per §4, item 2 | Their panes in `ProtocolDev*.tsx` | P-a; §4, item 2 |
 | **P-d** | S3, with D4 | Existing `protocol_documents` rows carried into authoring protocols through `composeProtocol` (P9), with a replay-safe idempotent run | P1–P8 and P21: the protocol workspace's own document functions | P-a–P-c |
 | **P-e** | S3, with S12 for the door and D1 for the shell | Nothing: `protocol-dev` is now unreachable by design | The `protocol-dev` surface, its ⌘K and segment entries, `PROJECT_WORK_IDS` entry and the Work areas door; the routes whose last caller went, by the ledger | P-d |
 | **B-a** | D4, with S3 (P-101) | B3 and B4 as the SAP section, "Build from the study design"; the protocol statistical section and CSR §9.7 offered in their sections | The chooser and the editor hand-offs in `Biostatistics.tsx`; B6 when the list is the project's documents | P-101's "waits for the CSR demo"; §4, item 3 |
@@ -279,3 +280,10 @@ protocol workspace stays reachable until P-e.
   retirement candidates, not this convergence's.
 - Lines cited come from the three inventories at `966ff292b`. P9's durable link, and the routes each slice's ledger
   would retire, are unverified until that slice reads them.
+
+## 6. The coordinating session's answer (2026-11-09)
+
+- The four questions in §4 go to the founder, with the coordinating session's recommendations; they are not recorded
+  under the 2026-11-08 delegation, because retiring a store and adding catalog types are founder-level.
+- One correction is applied above: the consent read (P15) belongs to P-102's `informed_consent` checks.
+- Until the founder answers, no slice here is built. The P slices belong to the protocol lane and D4.
