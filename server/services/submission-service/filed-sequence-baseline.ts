@@ -344,14 +344,15 @@ export interface RetirementFacts extends KeptFacts {
 const day = (v: unknown): string => (v ? new Date(String(v)).toISOString().slice(0, 10) : 'an unrecorded date');
 
 /** Check 3, under P-108 2(a) (the coordinating session, 2026-11-09): a non-staging transmittal bound to the sequence
- *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature. A
- *  missing environment counts as production, and a blocked row naming no signature proves nothing. When P-92's
- *  "released as not received" is built, checks 3 and 4 exclude a released attempt too. */
+ *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature, or P-92's
+ *  signed settlement released it as not received (on FDA's letter or the platform's own proof). A missing environment
+ *  counts as production, and a blocked row naming no signature proves nothing. Check 4 excludes the same release. */
 async function boundProductionSend(q: BaselineQueryable, org: number, id: number): Promise<SendOnRecord | null> {
   const { rows } = await q.query(
     `SELECT t.created_at, t.metadata->>'environment' AS environment FROM submission_transmittals t
       WHERE t.organization_id = $1 AND t.metadata->'dispatchBinding'->>'sequenceId' = $2::text
         AND COALESCE(t.metadata->>'environment', '') <> 'staging'
+        AND COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
         AND NOT EXISTS (SELECT 1 FROM audit_logs a
               WHERE a.tenant_id = $1 AND a.table_name = 'ectd_sequence' AND a.record_id = $2::text
                 AND a.action = 'TRANSMIT_BLOCKED' AND a.new_values::jsonb->>'transmitted' = 'false'
@@ -366,6 +367,7 @@ async function boundProductionSend(q: BaselineQueryable, org: number, id: number
     `SELECT occurred_at, new_values::jsonb->>'environment' AS environment FROM audit_logs
       WHERE tenant_id = $1 AND table_name = 'ectd_sequence' AND record_id = $2::text AND action = 'ECTD_TRANSMITTED'
         AND COALESCE(new_values::jsonb->>'environment', '') <> 'staging'
+        AND NOT (COALESCE(new_values::jsonb->>'source', '') = 'held-send-settlement' AND COALESCE(new_values::jsonb->>'status', '') = 'not-received')
       ORDER BY occurred_at LIMIT 1`,
     [org, id],
   );
@@ -458,12 +460,14 @@ const IND_KINDS: Array<[keyof KeptFacts['filedIndRecords'], string, string]> = [
 function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null {
   const n = f.sequenceNumber;
   if (isFiledDispatchStatus(f.dispatchStatus)) {
+    // In words, never the stored status (P-92 C1; the coordinating session, 2026-11-09).
+    const acknowledged = f.dispatchStatus === 'acknowledged' ? ', which acknowledged it' : '';
     return { reason: 'it is on file with the agency',
-      sentence: `Sequence ${n} is on file with the agency (dispatch status '${f.dispatchStatus}'), so it cannot be retired. A correction is a new sequence numbered after it.` };
+      sentence: `Sequence ${n} is on file with the agency${acknowledged}, so it cannot be retired. A correction is a new sequence numbered after it.` };
   }
   if (f.dispatchStatus === 'transmitting') {
     return { reason: 'a send of it is in flight',
-      sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, or wait for the send to settle, then look again.` };
+      sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, settle the held send from the Dispatch tab, or wait for the send to settle, then look again.` };
   }
   if (f.productionSend) {
     const on = `${day(f.productionSend.at)} UTC`;

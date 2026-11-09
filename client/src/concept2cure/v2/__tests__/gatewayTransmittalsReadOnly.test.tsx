@@ -97,6 +97,34 @@ describe('Gateway transmittals — a read-only transmission log', () => {
     }
   });
 
+  /* P-92 C2: a held send settled by signature is said under its status, as a technical rejection is, and FDA's
+     verified answer kept against that settlement after it (P-108 1(c)). The log stays read-only: no control is added. */
+  it.each([
+    [{ outcome: 'received', kind: 'ack2', settledAt: '2026-11-04T09:00:00.000Z' }, [], "recorded as received by signature · FDA's Ack2 · 4 November 2026"],
+    [{ outcome: 'received', kind: 'ack3', settledAt: '2026-11-04T09:00:00.000Z' },
+      [{ verified: true, contradicts: 'received', receivedAt: '2026-11-05T10:00:00.000Z' }],
+      "recorded as received by signature · FDA's Ack3 · 4 November 2026 · FDA's signed answer, kept 5 November 2026, refuses it"],
+    [{ outcome: 'not-received', kind: 'fda-non-receipt-confirmation', settledAt: '2026-11-04T09:00:00.000Z' },
+      [{ verified: true, contradicts: 'not-received', receivedAt: '2026-11-05T10:00:00.000Z' }],
+      "released as not received by signature · FDA's written confirmation · 4 November 2026 · FDA's signed receipt, kept 5 November 2026, shows it was received"],
+    [{ outcome: 'not-received', kind: 'platform-proof', settledAt: '2026-11-04T09:00:00.000Z' }, [],
+      "released as not received by signature · the platform's own record that it never left · 4 November 2026"],
+  ])('a held send settled by signature is said under its status: %j', async (heldSendSettlement, as2ReceiptHistory, words) => {
+    const row = { ...LOG[0], id: 9, transmission_id: 'ESG-HELD-9', status: 'rejected', metadata: { sequence: '0001', heldSendSettlement, as2ReceiptHistory } };
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/mdx/gateways/transmittals'
+        ? ({ ok: true, status: 200, json: async () => ({ data: [row], meta: { count: 1, signing: { canSign: true } } }) } as Response)
+        : ({ ok: true, status: 200, json: async () => ({ data: [] }) } as Response));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-HELD-9');
+    const note = screen.getByTestId('held-send-settlement-note');
+    expect(note.textContent).toBe(words);
+    expect(note.textContent).not.toMatch(/\b[a-z-]+:\d+\b|not-received|platform-proof|ack2/);
+    for (const name of [/Rollback/, /Settle/, /Release/, /Record as received/]) {
+      expect(screen.queryByRole('button', { name }), String(name)).toBeNull();
+    }
+  });
+
   it('a failed log read is an error, never "No transmittals yet"', async () => {
     apiRequest.mockImplementation(async () => ({ ok: false, status: 500, json: async () => ({ error: 'down' }) } as Response));
     render(<GatewayTransmittals {...props()} />);

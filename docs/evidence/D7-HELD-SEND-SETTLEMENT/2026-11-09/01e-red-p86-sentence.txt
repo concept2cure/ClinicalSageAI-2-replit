@@ -1,0 +1,9 @@
+# P-92 C1 red for P-86's retirement sentence in words (the coordinating session, 2026-11-09), 2026-11-09T14:32:10Z, before the change
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence that is sent, the agency holds it 82ms
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence that is acknowledged, the agency holds it 45ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 24 skipped (26)
+AssertionError: expected SubmissionError: Sequence 0000 is on file… { code: '…' } to match object { Object (code, message) }
+(1 matching property omitted from actual)
+
+- Expected

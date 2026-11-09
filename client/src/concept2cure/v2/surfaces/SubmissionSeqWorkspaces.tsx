@@ -47,7 +47,7 @@ import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
-import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
+import { gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, type HeldSendSettlementRecord, type KeptReceipt } from '../gatewayLabels';
 import { dispatchWords } from './CommitmentRow';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 /* The Truth Engine's recorded cross-document checks, which had no screen: the
@@ -74,6 +74,7 @@ import {
   type WaiverRequest,
 } from './ShadowReviewWaiver';
 import { ShadowFindingList, type DispositionRequest, type ShadowFindingRow } from './ShadowFindingDisposition';
+import { VaultVersionPicker, type PickedVaultVersion } from './VaultLibraryResults';
 import { ShadowRunCoverage } from './ShadowRunCoverage';
 import {
   SC_LENSES,
@@ -1755,7 +1756,48 @@ interface DispatchQcResult {
  *  'shadow-finding-disposition' closes one critical finding (P-35,
  *  ShadowFindingDisposition.tsx); 'retire' takes a sequence never filed out of
  *  use and frees its number (P-86, RetireSequence below). */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire';
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire' | 'held-send-settlement';
+
+/** P-92: the two ways a held FDA send is settled, and what each rests on (server: fda-esg-receipts.ts). */
+export type HeldSendOutcome = 'received' | 'not-received';
+export type HeldSendEvidenceKind = 'ack2' | 'ack3' | 'fda-non-receipt-confirmation' | 'platform-proof';
+/** POST governed-precheck {step:'held-send-settlement'} → its `heldSend`: which ways are offered (null) or why not. With a
+ *  chosen way, the statement the signer makes and the evidence it cites, both the server's and signed word for word. */
+export interface HeldSendOverview {
+  sequenceNumber: string;
+  sentAt: string | null;
+  transmittalId: number | null;
+  attemptId: string | null;
+  /** FDA's signed MDN for this message can be recorded on Gateway transmittals. */
+  receiptUpload: boolean;
+  outcomes: Record<HeldSendOutcome, string | null>;
+  /** The platform's own proof that nothing left (P-108 1(b)): no Vault document is chosen for a release on it. */
+  platformProof: string | null;
+  signerRefusal: string | null;
+  statement?: string;
+  evidence?: Record<string, unknown>;
+}
+/** What a settlement needs beyond its signature: the way, and the FDA document it rests on, by Vault id and in words. */
+export interface SettlementRequest {
+  outcome: HeldSendOutcome;
+  evidenceKind: HeldSendEvidenceKind;
+  evidenceDocumentId?: string;
+  documentLabel?: string;
+}
+/** A held-send answer the screen can act on, or null: an answer without its two outcomes is unreadable, never "nothing to settle". */
+export function heldSendOf(p: GovernedPrecheck | null | undefined): HeldSendOverview | null {
+  const h = p?.heldSend;
+  const o = h?.outcomes as Record<string, unknown> | undefined;
+  if (!h || typeof h.sequenceNumber !== 'string' || typeof h.receiptUpload !== 'boolean' || !o) return null;
+  return 'received' in o && 'not-received' in o ? h : null;
+}
+/** A held-send answer for a chosen way, with the server's statement and evidence to sign, or null. */
+export function settlementOf(p: GovernedPrecheck | null | undefined): (HeldSendOverview & { statement: string; evidence: Record<string, unknown> }) | null {
+  const h = heldSendOf(p);
+  if (!h || typeof h.statement !== 'string' || !h.statement.trim() || !h.evidence || typeof h.evidence !== 'object') return null;
+  return h as HeldSendOverview & { statement: string; evidence: Record<string, unknown> };
+}
+
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';
@@ -1823,6 +1865,7 @@ export interface GovernedPrecheck {
   refusal: string | null;
   transmit?: TransmitReadiness;
   retirement?: RetirementPrecheck;
+  heldSend?: HeldSendOverview;
 }
 
 /** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
@@ -1938,8 +1981,12 @@ interface DossierTransmittal {
   submitted_by_name?: string | null;
   /** transmitSequence records the sequence NUMBER it carried and the environment; a send since F1 slice 1 also names
    *  the sequence it is bound to (`dispatchBinding.sequenceId`). */
-  metadata?: { sequence?: string | null; environment?: string | null; dispatchBinding?: { sequenceId?: number } | null } | null;
+  metadata?: {
+    sequence?: string | null; environment?: string | null; dispatchBinding?: { sequenceId?: number } | null;
+    heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null;
+  } | null;
 }
+
 
 /** Whose transmission a row is (P-86 C3): by the sequence it is bound to, never by its number alone, because a
  *  retired sequence's number can be started again. A row with no binding is said to be of this number, no more. */
@@ -2016,6 +2063,8 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
                     }`
                   : ' (environment not recorded)'}
                 {t.error_message ? ` · ${t.error_message}` : ''}
+                {/* A held send settled by signature, and FDA's verified answer kept against it (P-92 C2, S9). */}
+                {heldSendSettlementWords(t.metadata, 'row') ? ` · ${heldSendSettlementWords(t.metadata, 'row')}` : ''}
               </span>
             </div>
           );
@@ -2043,7 +2092,9 @@ function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }:
  * "not configured" is said here, before a password is typed — never
  * discovered after (QA 2026-10-08, j6, the blocker).
  */
-function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+function TransmitPanel({ seq, programId, onTransmit, onSettle, canSign }: {
+  seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
+}) {
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
   const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
   const [applicationId, setApplicationId] = React.useState('');
@@ -2105,25 +2156,30 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
         </button>
       </div>
       {blockedBy ? (
-        <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockedBy)}.</div>
+        // The server's refusal, a record key said in words (blockerForDisplay): the dispatch gate's can name one.
+        <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockerForDisplay(blockedBy))}.</div>
       ) : !appNumber ? (
         <div className="scaf-note sc-mt">
           No agency application number is recorded for this project. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
+      {/* Where the held send is told, the door to settle it (P-92 C2): only while a send is held. */}
+      {t.dispatchStatus === 'transmitting' && <HeldSendSettlement seq={seq} programId={programId} onSettle={onSettle} />}
       {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceId={seq.id} sequenceNumber={seq.sequenceNumber} />}
     </div>
   );
 }
 
 /** The package and the transmit, for this sequence (QA 2026-10-08, j6, the blocker). */
-function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+function PackageAndTransmit({ sub, seq, onTransmit, onSettle, canSign }: {
+  sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
+}) {
   return (
     <div className="sc-mt">
       <div className="pj-sec-h sc-mt"><h3 className="sec-title">Package and transmit</h3></div>
       <PackageDownload sub={sub} seq={seq} />
       {seq.status === 'dispatched' ? (
-        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} canSign={canSign} />
+        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} onSettle={onSettle} canSign={canSign} />
       ) : (
         <div className="scaf-note sc-mt">
           Transmit opens once sequence {seq.sequenceNumber} is dispatched. It sends this package to the region&#39;s agency gateway,
@@ -2272,6 +2328,178 @@ function RetireSequence({ seq, onRetire }: { seq: SeqRow; onRetire: () => void }
   );
 }
 
+/* ── P-92: settle a held FDA send (founder 2026-11-02; P-108 1(b); launch row D7) ───────────────────────────────── */
+
+type HeldSendState =
+  | { phase: 'closed' } | { phase: 'reading' } | { phase: 'unreadable' }
+  | { phase: 'blocked'; refusal: string } | { phase: 'offered'; overview: HeldSendOverview };
+type ChoiceState =
+  | { phase: 'idle' } | { phase: 'checking' } | { phase: 'unreadable' }
+  | { phase: 'refused'; refusal: string } | { phase: 'stated'; statement: string };
+
+const MDN_SENTENCE = "If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.";
+const precheckPath = (seqId: number) => `/api/submissions/sequences/${seqId}/governed-precheck`;
+
+/** The server's overview of the held send: which ways are offered, or why none is. */
+async function askHeldSend(seq: SeqRow): Promise<HeldSendState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seq.id), { step: 'held-send-settlement' });
+  const overview = heldSendOf(r.data);
+  if (!overview || typeof r.data?.cleared !== 'boolean') return { phase: 'unreadable' };
+  return r.data.refusal ? { phase: 'blocked', refusal: r.data.refusal } : { phase: 'offered', overview };
+}
+
+/** The server's answer for one way on one ground: the statement to sign, or why not. */
+async function askSettlement(seqId: number, body: Record<string, unknown>): Promise<ChoiceState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seqId), { step: 'held-send-settlement', ...body });
+  if (r.data?.cleared === true) {
+    const s = settlementOf(r.data);
+    return s ? { phase: 'stated', statement: s.statement } : { phase: 'unreadable' };
+  }
+  return r.data && typeof r.data.refusal === 'string' && r.data.refusal.trim() ? { phase: 'refused', refusal: r.data.refusal } : { phase: 'unreadable' };
+}
+
+const documentLabelOf = (d: PickedVaultVersion): string => (d.version ? `${d.title}, version ${d.version}` : d.title);
+
+/** One way, chosen: FDA's document from this project's Vault (and, to record it received, which acknowledgement it is),
+ *  or the platform's own proof with no document; then the server's statement, and the sign button. */
+function HeldSendChoice({ seq, programId, outcome, proof, onSettle }: {
+  seq: SeqRow; programId: string | null | undefined; outcome: HeldSendOutcome; proof: boolean; onSettle: (req: SettlementRequest) => void;
+}) {
+  const n = seq.sequenceNumber;
+  const [doc, setDoc] = React.useState<PickedVaultVersion | null>(null);
+  const [kind, setKind] = React.useState<HeldSendEvidenceKind | null>(
+    outcome === 'received' ? null : proof ? 'platform-proof' : 'fda-non-receipt-confirmation');
+  const [judged, setJudged] = React.useState<ChoiceState>({ phase: 'idle' });
+  const asked = React.useRef(0);
+  const needsDocument = kind !== 'platform-proof';
+  const docId = doc?.id;
+  const seqId = seq.id;
+  React.useEffect(() => {
+    const id = ++asked.current;
+    if (!kind || (needsDocument && !docId)) { setJudged({ phase: 'idle' }); return; }
+    setJudged({ phase: 'checking' });
+    void askSettlement(seqId, { outcome, evidenceKind: kind, ...(needsDocument ? { evidenceDocumentId: docId } : {}) })
+      .then((answer) => { if (asked.current === id) setJudged(answer); });
+  }, [seqId, outcome, kind, needsDocument, docId]);
+  const sign = () => onSettle({ outcome, evidenceKind: kind as HeldSendEvidenceKind,
+    ...(needsDocument && doc ? { evidenceDocumentId: doc.id, documentLabel: documentLabelOf(doc) } : {}) });
+  return (
+    <div className="sc-mt">
+      {needsDocument && (programId
+        ? <VaultVersionPicker programId={programId} label="Find FDA's document in this project's Vault" disabled={false} onChoose={setDoc} />
+        : <div role="note">This submission is not in a project, so no project Vault holds FDA&#39;s document.</div>)}
+      {needsDocument && doc && <div className="sc-mt">{`Chosen: ${documentLabelOf(doc)}.`}</div>}
+      {outcome === 'received' && (
+        <fieldset className="sc-mt">
+          <legend>Which acknowledgement is it?</legend>
+          {/* One radio row each, as the company documents list draws its choices (company-documents.css). */}
+          <label className="company-check"><input type="radio" name={`held-send-kind-${seq.id}`} checked={kind === 'ack2'} onChange={() => setKind('ack2')} />Ack2: FDA unpacked it and delivered it to the center</label>
+          <label className="company-check"><input type="radio" name={`held-send-kind-${seq.id}`} checked={kind === 'ack3'} onChange={() => setKind('ack3')} />Ack3: the center&#39;s validation result</label>
+        </fieldset>
+      )}
+      <HeldSendJudged judged={judged} proof={!needsDocument} signLabel={outcome === 'received' ? `Sign: record sequence ${n} as received` : `Sign: release sequence ${n}'s send`} onSign={sign} />
+    </div>
+  );
+}
+
+/** The server's answer for a chosen way: checking, why not, could not be checked, or the statement and the sign button. */
+function HeldSendJudged({ judged, proof, signLabel, onSign }: { judged: ChoiceState; proof: boolean; signLabel: string; onSign: () => void }) {
+  // Inside the door's own block, so each line takes the door's type, not the page's paragraph size.
+  if (judged.phase === 'idle') return null;
+  if (judged.phase === 'checking') return <div role="status" className="sc-mt">{proof ? "Checking the platform's record…" : 'Checking this document…'}</div>;
+  if (judged.phase === 'refused') return <div role="note" className="sc-mt">{blockerForDisplay(judged.refusal)}</div>;
+  if (judged.phase === 'unreadable') {
+    return <div role="status" className="sc-mt">Whether this can settle the send could not be checked. Choose again to retry.</div>;
+  }
+  return (
+    <>
+      <div className="sc-mt" data-testid="held-send-would-state">
+        <span className="tl-spec-k">By signing, you would state:</span>
+        <div><q>{judged.statement}</q></div>
+      </div>
+      <div className="sc-mt"><button type="button" className="btn ghost small" onClick={onSign}>{signLabel}</button></div>
+    </>
+  );
+}
+
+/** One way to settle: its button and what it does, or the server's sentence for why it is not offered. */
+function HeldSendWay({ label, line, refusal, onChoose }: { label: string; line: string; refusal: string | null; onChoose: () => void }) {
+  if (refusal) return <p role="note" className="sc-mt">{blockerForDisplay(refusal)}</p>;
+  return (
+    <div className="sc-mt">
+      <button type="button" className="btn ghost small" onClick={onChoose}>{label}</button>
+      <div>{line}</div>
+    </div>
+  );
+}
+
+/** The held send, told, and the ways it is offered to this person. */
+function HeldSendWays({ seq, programId, overview: h, onSettle }: {
+  seq: SeqRow; programId: string | null | undefined; overview: HeldSendOverview; onSettle: (req: SettlementRequest) => void;
+}) {
+  const [way, setWay] = React.useState<HeldSendOutcome | null>(null);
+  const n = h.sequenceNumber;
+  const when = heldSendWhen(h.sentAt);
+  const proof = h.platformProof !== null;
+  const documentWay = h.outcomes.received === null || (h.outcomes['not-received'] === null && !proof);
+  const release = proof
+    ? `On the platform's own record that this send never left. Sequence ${n} can then be sent again, under a new signature.`
+    : `On FDA's written confirmation that this send did not arrive. Sequence ${n} can then be sent again, under a new signature.`;
+  return (
+    <>
+      <p>{`Sequence ${n}'s send${when ? ` of ${when}` : ''} is held: the platform holds no verified answer from FDA to it.`}</p>
+      {h.receiptUpload && <p>{MDN_SENTENCE}</p>}
+      {h.signerRefusal ? <p role="note">{blockerForDisplay(h.signerRefusal)}</p> : (
+        <>
+          {documentWay && <p>{`${h.receiptUpload ? 'Otherwise, settle' : 'Settle'} it by signature, on FDA's own document added to this project's Vault.`}</p>}
+          <HeldSendWay label="Record as received" refusal={h.outcomes.received} onChoose={() => setWay('received')}
+            line={`On FDA's Ack2 or Ack3 for this send. Sequence ${n} is then on file with FDA and is not sent again.`} />
+          <HeldSendWay label="Release as not received" refusal={h.outcomes['not-received']} onChoose={() => setWay('not-received')} line={release} />
+          {way && <HeldSendChoice key={way} seq={seq} programId={programId} outcome={way} proof={way === 'not-received' && proof} onSettle={onSettle} />}
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Settle the held send (P-92 C2; design §5 C2, as re-cut in §10.3 D): where the held send is told, a closed door. Each
+ * open asks the server again and no answer is kept across a close. It offers the two ways the server offers, each on
+ * FDA's own document chosen in this project's Vault, or a release on the platform's own proof that nothing left; the
+ * statement shown is the server's, and the sign button hands the one signature to Submission Center, which asks again.
+ * No receipt upload is mounted here (Gateway transmittals records FDA's MDN), and nothing is signed or changed here.
+ */
+function HeldSendSettlement({ seq, programId, onSettle }: { seq: SeqRow; programId: string | null | undefined; onSettle: (req: SettlementRequest) => void }) {
+  const [state, setState] = React.useState<HeldSendState>({ phase: 'closed' });
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    // One open is one question: a toggle event that does not change the state asks nothing again.
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askHeldSend(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const waiting = state.phase === 'reading' || state.phase === 'unreadable';
+  return (
+    <details className="pj-more sc-mt" data-testid="held-send" onToggle={onToggle}>
+      <summary>Settle the held send…</summary>
+      {waiting && (
+        <p role="status">
+          {state.phase === 'reading'
+            ? 'Checking how this send can be settled…'
+            : 'How this send can be settled could not be checked. Close this and open it again to retry.'}
+        </p>
+      )}
+      {state.phase === 'blocked' && <p role="note">{blockerForDisplay(state.refusal)}</p>}
+      {state.phase === 'offered' && <HeldSendWays key={asked.current} seq={seq} programId={programId} overview={state.overview} onSettle={onSettle} />}
+    </details>
+  );
+}
+
 export function DispatchWorkspace({
   sub,
   seq,
@@ -2280,7 +2508,7 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest) => void;
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest, settlement?: SettlementRequest) => void;
   /** Shell navigation, for the compile screen opened on this sequence (F14). */
   onNav?: (id: string) => void;
 }) {
@@ -2506,6 +2734,7 @@ export function DispatchWorkspace({
               seq={seq}
               canSign={!cannotSign}
               onTransmit={(req) => onGoverned(seq, 'transmit', req)}
+              onSettle={(req) => onGoverned(seq, 'held-send-settlement', undefined, undefined, req)}
             />
             {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
                 it was hidden for every IND / NDA / BLA / MAA sequence — a third
