@@ -28,3 +28,8 @@ id. Both the draft package and the official eSTAR use it. `meta.ident` is unchan
 |---|---|---|
 | `mdx/hooks/__tests__/useEstarExport.packageName.test.ts` (draft package, official eSTAR, fallback) | 2 of 3 failed (`red/package-name-before.txt`) | 3 passed |
 | Every `mdx/hooks` and `mdx/surfaces` suite | — | 72 files, 795 tests (`green/package-name-after.txt`) |
+| The running app, the demo's seeded NeuroPanel-Dx: the home filing's editing copy created (201), B1 started (201) and saved with a reason (200), then Export 510(k) package | `Class_II_510k_content-package-draft.zip` in the slice 5 walk | 200, the filing compared, `_Demo_MDX_NeuroPanel-Dx_510_k__content-package-draft.zip` (`runs/demo-neuropanel-*.json`) |
+
+The seeded project's export answered 422 `NO_AUTHORED_CONTENT` before B1 was written. The demo pack authors its
+510(k) documents unbound to the project's filing, so the filing holds no section. That is recorded for the pack, after
+the demo of 2026-11-09.
