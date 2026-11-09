@@ -21,6 +21,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'node:fs';
 import { drizzle } from 'drizzle-orm/pglite';
 import * as schema from '../../../../shared/schema';
 
@@ -165,6 +166,7 @@ beforeAll(async () => {
   pg = new PGlite();
   drz = drizzle(pg, { schema }) as unknown as ReturnType<typeof drizzle>;
   await pg.exec(DDL);
+  await pg.exec(readFileSync(new URL('../../../../migrations/20261109_unified_tasks_parent_task.sql', import.meta.url), 'utf8')); // P-111: the column the Drizzle model names
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG.id}, 'Concept2Cure')`);
   await pg.exec(`INSERT INTO users (id, email, name) VALUES (1, 'admin@concept2cure.pro', 'JM Smith')`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (9, ${ORG.id}, 'BX-099 BLA')`);
