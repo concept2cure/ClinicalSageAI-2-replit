@@ -79,3 +79,19 @@ marked, with its reason code. It is never dropped silently and never used. The o
 - **The rail.** `walk.cjs` opens "2.3 · Quality Overall Summary", section 2.3, and the Sources rail at 1440 light.
   The section's sources read answers 200, and the rail lists its citations with their states
   (`sources-rail-2.3-1440-light.png`).
+
+## After fix (a) (the coordinating session's `37f520f3be`)
+
+The coordinating session fixed the cause in the authoring lane: `currentRole` locks only for a write, and the 503
+logs its cause. It landed at 04:28 UTC, before this change was pushed (`1696fca99` sits on top of it).
+
+- **The test case still holds after (a).** Its failure is driven by the stubbed Quality reader, which aborts the
+  caller's transaction with a statement and then rejects. It does not depend on `currentRole`'s lock. The test's
+  comment now says so.
+- **Running app, on trunk with both changes:**
+  - section 2.5.3 answers 200 with no citations, and section 2.3 answers 200 with its seven (`route-after-fix-a.log`);
+  - the server log has no `PROJECT_ACCESS_UNAVAILABLE`;
+  - the rail walk passes again (`walk-after-fix-a.log`).
+
+  With (a), C2C-101's native Quality source verifies again. This change's report mode keeps the list alive for the
+  next native source that genuinely cannot be verified.

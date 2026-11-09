@@ -76,7 +76,9 @@ beforeEach(async () => {
   });
   h.collect.mockReset().mockImplementation(async (collectQ: unknown) => {
     if (failRead) {
-      // As the demo stack failed (2026-11-09): a row lock inside the route's READ ONLY transaction, which aborts it.
+      // A stubbed Quality reader that rejects, after a statement that aborts the caller's transaction (here a row lock
+      // inside READ ONLY). The demo stack's own cause, currentRole's lock, is fixed on trunk (37f520f3be); this failure
+      // does not depend on it, and still proves the savepoint.
       await (collectQ as { query: (s: string) => Promise<unknown> }).query('SELECT id FROM organizations FOR SHARE').catch(() => undefined);
       throw new Error('Native source verification unavailable');
     }
