@@ -107,7 +107,8 @@ async function transmittalRow(
     [t.orgId, route.region, route.gateway, route.transport, 'a'.repeat(64), userId, JSON.stringify(metadata)]);
 }
 
-async function view(t: Tenant) {
+/** The real compile routes, as this tenant's admin, under the request's tenant scope. */
+async function compileApp(t: Tenant) {
   const ectdCompileRoutes = (await import('../../server/routes/ectd-compile')).default;
   const { establishRequestTenantScope } = await import('../../server/middleware/establishRequestTenantScope');
   const app = express();
@@ -119,7 +120,11 @@ async function view(t: Tenant) {
   });
   app.use(establishRequestTenantScope);
   app.use('/api/ectd-compile', ectdCompileRoutes);
-  return request(app).get(`/api/ectd-compile/${t.programId}/filed-state`);
+  return app;
+}
+
+async function view(t: Tenant) {
+  return request(await compileApp(t)).get(`/api/ectd-compile/${t.programId}/filed-state`);
 }
 
 beforeAll(async () => {
@@ -215,6 +220,32 @@ describe('what the agency holds is what was sent (F1)', () => {
       { sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' },
       { sequenceNumber: '0001', dispatchStatus: 'sent', filed: true, basis: 'transmit' },
     ]);
+  });
+});
+
+/* P-99 C1 (F1): a compile of a sequence already sent is not recorded as what it sent. Before C1 such a compile
+   wrote a row the fold then read as what was sent ('compiles'), restoring the sequence silently. The route test
+   (tests/routes/ectd-compile-sent-sequence.test.ts) mocks pg; this is the design's case on PostgreSQL as the runtime
+   role under RLS, owed by docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-09-no-silent-restore/. */
+describe('a compile of a sequence already on file is refused and not recorded (P-99 C1)', () => {
+  it('a sent sequence with a placed leaf and no compile: 409, no compilation row, and the view unchanged', async () => {
+    const t = await tenant('on-file');
+    const sub = await submission(t);
+    const sequenceId = Number((await owner.query(
+      `INSERT INTO ectd_sequences (submission_id, region, sequence_number, organization_id, created_by, dispatch_status)
+       VALUES ($1, 'fda', '0000', $2, $3, 'sent') RETURNING id`, [sub, t.orgId, userId])).rows[0].id);
+    await owner.query(
+      `INSERT INTO submission_leaves (sequence_id, section_code, title, organization_id, created_by)
+       VALUES ($1, '3.2.S.1', 'General information (invented)', $2, $3)`, [sequenceId, t.orgId, userId]);
+    const before = await view(t);
+    expect(before.status, JSON.stringify(before.body).slice(0, 400)).toBe(200);
+    expect(before.body.sequences).toEqual([{ sequenceNumber: '0000', dispatchStatus: 'sent', filed: false, basis: null }]);
+    const res = await request(await compileApp(t)).post(`/api/ectd-compile/${t.programId}/compile`).send({ sequenceId });
+    expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(409);
+    expect(res.body.error).toEqual({ code: 'ECTD_SEQUENCE_ON_FILE',
+      message: expect.stringMatching(/^Sequence 0000 is on file at the agency, so a compile of it now is not recorded: it would not be what it sent\./) });
+    expect((await owner.query(`SELECT count(*)::int AS n FROM ectd_compilations WHERE organization_id = $1`, [t.orgId])).rows[0].n).toBe(0);
+    expect((await view(t)).body).toEqual(before.body);
   });
 });
 

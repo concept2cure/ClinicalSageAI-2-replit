@@ -1,0 +1,11 @@
+Before the case was added, at 87cf40648a (P-99 C1 is 27b901c491; this file unchanged since): PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1), a throwaway database provisioned as CI provisions it (scripts/db/install-fresh.mjs, then scripts/db/deploy-migrate.mjs), as app_service with RLS_ENFORCE=on.
+Command: CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/concept2cure-ri_dbtest_p99 APP_DATABASE_URL=<app_service on the same database> npx vitest run --config vitest.db.config.ts tests/db/ectd-filed-state-view.dbtest.ts
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 3375ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 12ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 15ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file 10ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded 9ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that filed shows what is on file 25ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > a project that is not an application keeps its filed state once it has filed (P-97) > a clinical study report project that never filed is refused, by name 9ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
