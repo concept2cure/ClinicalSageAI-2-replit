@@ -1,0 +1,8 @@
+# Mutant: the metadata is replaced again, not merged
+# in server/services/module3-convergence-service.ts
+# -              metadata     = COALESCE(metadata::jsonb, '{}'::jsonb) || $3::jsonb,
+# +              metadata     = $3::jsonb,
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a Module 3 section bridged from a compile > a recompile records the version it writes and keeps the metadata other writers recorded 22ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 49 skipped (52)
