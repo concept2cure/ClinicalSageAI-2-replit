@@ -1,0 +1,18 @@
+Signed in as founder@demo.local (user 1, organisation 2) at http://localhost:5200
+Every demo area is open on the enterprise plan.
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — 40c30ed7-a63b-4539-ab1a-3356d0b90944 (created, scaffold 38 sections)
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 17 cabinet folders: cab-unfiled, cab-bn:A, cab-bn:B, cab-bn:C, cab-bn:D, cab-bn:E, cab-bn:F, cab-bn:G, cab-k510, cab-pma, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — 434ce5c8-ca9a-4def-821d-45a6e5679f4f → k510 (ingested, filed (k510), 6346 bytes)
+  • Vault: Software Description and Level of Concern … ok — 872039ee-9723-4e4d-9323-f1ae708c8d0e → eng (ingested, filed (eng), 4654 bytes)
+  • Vault: Analytical Performance Study Report … ok — 81c6b73e-a46b-4640-9331-f0fa08e4fd47 → k510 (ingested, filed (k510), 6247 bytes)
+  • Vault: Clinical Performance Study Report … ok — 2ef89662-c10c-4680-8ddf-7ebc96298523 → cer (ingested, filed (cer), 5659 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — 56eb3298-eed6-4c53-9cc6-260de8fcc677 → eng (ingested, filed (eng), 4407 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — 17c24c7a-cd50-498e-8c76-eb87434ca6e3 → udi (ingested, filed (udi), 6254 bytes)
+  • Vault: data room after filing … ok — documentCount=7; cab-bn:A:9 cab-bn:B:3 cab-bn:C:2 cab-bn:D:6 cab-bn:E:8 cab-bn:F:1 cab-bn:G:2 cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 3415e1bf-ffcb-42e8-a56d-cfa1beb9fd95 (created, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment 6952794d-0ec3-48b5-9ebb-b045144af39d created and resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … FAILED
+✗ mdx: freeze document: HTTP 403 {"error":{"code":"AUTHORING_OBJECT_FORBIDDEN","message":"You do not have permission to perform this action on the authoring object."}}
+exit 1

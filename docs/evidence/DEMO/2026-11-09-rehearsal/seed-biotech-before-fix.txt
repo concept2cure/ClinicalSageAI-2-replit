@@ -1,0 +1,43 @@
+Signed in as founder@demo.local (user 1, organisation 2) at http://localhost:5200
+Every demo area is open on the enterprise plan.
+
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — found 7f7bc7b2-4fe0-4fdf-915b-d3619b8f5a45 (C2C-101)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — found 0b66e947-7b80-466f-bd37-971cc01cf1af → module-1 (2 pages, 7296 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — found 4a54878a-7b67-4af5-ac52-b068d3b458b6 → module-5 (2 pages, 9196 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — found c757b5cb-924c-4bef-9fc0-07fca1f4eabc → module-5 (2 pages, 6891 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — found 49ec7fe7-04f7-4dac-b2bc-b494ea7ad597 → module-2 (2 pages, 6467 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — found f91ca584-58c8-40a9-9180-0e01524100e1 → module-2 (2 pages, 5781 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — found 85fbee73-67c7-4004-baf9-df861b6ad4fd → module-1 (2 pages, 5599 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=7, unfiled=0, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — found 021f3bdd-3961-429d-bc2c-552b3e0e7b0d; sections 6 (0 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — 7c40ea97:resolved, e1a632af:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — reviewer oq-signer@validation.local (pending)
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — frozen v1.0 2d6ff3fb08d7…
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — found signature 0627ca09-b9bc-48fe-8c4f-4d844afaaac7 by oq-signer@validation.local (REVIEWER)
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — found 3dcb6117-f6b7-40c6-8814-7e28ad462dbc; sections 6 (0 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — reviewer oq-signer@validation.local (pending); workflow {"success":true,"workflowId":"d1e9c2f7-0b96-46db-85dd-aece392e3869","steps":[{"w
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — found f71df6e4-6f5a-48e4-95d4-c851dd33c6be; sections 4 (0 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — 6dd21ebb:open
+  • Protocol development: C2C-101-201 document … ok — found #1
+  • Protocol development: section content … ok — 10 sections (0 written)
+  • Protocol development: objectives, eligibility, visits, team … ok — added objectives 0, criteria 0, visits 0, team 0
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (0 rows, 0 cells added)
+  • Protocol development: risk register … ok — 6 risks (0 added)
+  • Protocol development: milestones … ok — 5 milestones (0 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — found 1 version(s)
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 6, risks 6, milestones 5, amendments 1
+  • Biostatistics: study design "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis" … ok — updated sd_e935c6aeb79748e8810b7a512622e877
+  • Submission Center: the program's canonical submission (IND) … ok — #1 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #1 status assembling
+  • Submission Center: place the vault documents as eCTD leaves … ok — 6 leaves (0 placed)
+  • Submission Center: sequence moves draft → assembling … ok — already assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=8; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (8 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — 1 prior run(s), none completed (failed)
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … FAILED
+✗ biotech: send 1 for review: HTTP 409 {"error":"Quinn Signer is not a QMS approver: until an administrator designates QMS approvers, members with the Approver role approve controlled documents. Nothing was sent.","details":{"code":"MEMBER_NOT_QMS_APPROVER"}}
+exit 1
