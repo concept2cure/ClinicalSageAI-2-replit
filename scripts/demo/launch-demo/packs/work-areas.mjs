@@ -532,6 +532,23 @@ export async function ensureStudyDesign({ api, run, tally }, program, protocolDo
  */
 export async function ensureAdaptivePlan({ api, run, tally }, plan) {
   await run.step(`Biostatistics: adaptive plan "${plan.title}"`, async () => {
+    /* There is NO list route for adaptive plans — only GET /adaptive/:planId
+       (biostatPlatform.ts) — so an existing plan cannot be looked up by title.
+       Without this probe every seed run created another identical plan: the
+       second run created plan 2 (found by re-running it, 2026-11-09). The ids
+       are a serial, so a bounded walk finds the one this pack created; the walk
+       stops as soon as it matches. */
+    for (let id = 1; id <= 40; id += 1) {
+      const res = await api('GET', `/api/biostat/adaptive/${id}`);
+      if (res.status === 404) continue;
+      if (!res.ok) break;
+      const body = res.json?.data ?? res.json ?? {};
+      if ((body.plan?.title ?? body.title) !== plan.title) continue;
+      const looks = (body.snapshots ?? []).length;
+      tally.found('adaptive-plan');
+      return `plan ${id} already recorded, ${looks} look(s)`;
+    }
+
     /* `interimLooks` must state an informationFraction per look and they must
        strictly increase; `stoppingRules` needs at least one with a type. The
        service refuses anything else rather than assuming a timing
@@ -545,7 +562,7 @@ export async function ensureAdaptivePlan({ api, run, tally }, plan) {
       spendingFunction: plan.spendingFunction,
       maxSampleSize: plan.maxSampleSize,
     }), [200, 201], 'create the adaptive plan');
-    const planId = created.data?.plan?.id ?? created.data?.id ?? created.plan?.id ?? created.id;
+    const planId = created.data?.plan?.id ?? created.plan?.id ?? created.data?.id ?? created.id;
     if (!planId) throw new Error(`the adaptive plan answered no id: ${JSON.stringify(created).slice(0, 300)}`);
 
     /* Read the plan back before ingesting: a re-run must not stack a second
