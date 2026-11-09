@@ -2344,3 +2344,42 @@ session approved it without that history, and the gate refused the slice. Correc
   gate is widened.
 - **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
 - **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
+
+### P-110 — CMC: suitability is a signed act, and an under-described substance is not composed as a small molecule
+
+Decided 2026-11-09 by the coordinating session (`01JbQU…`) under the founder's delegation of 2026-11-08 ("No you decide
+as the global sme", P-107). The CMC session (`01GJidg5…`) raised both questions in `4b9af67aa0`
+(`.design/claude-convergence/COORDINATION.md`), with options in its evidence.
+
+1. **An analytical method is recorded as suitable only by a signed act, never by an edit.**
+   - **The finding.** The specification approval gate admits a validated or a suitable method (`METHOD_SUITABLE`,
+     which `q2Expectation` in `services/cmc/ich-compliance-q2.ts` relies on before phase 3). But no form can record
+     suitability, so in practice every limit needs a fully validated method
+     (`docs/evidence/S7/2026-11-09-demo-cmc-methods/`).
+   - **Decided: option (b), by extending the existing act.** The signed validation act
+     (`POST /api/cmc/analytical-methods/:id/validate`, `server/api/cmc/routes.ts`) takes an outcome:
+     - `validated`, as today;
+     - or suitable for its phase, with the signer's reason and the phase.
+     It is the same ceremony, the same audit and the same route; there is no second endpoint. This follows what FDA asks
+     at phase 1: procedures that are scientifically sound and fit for their use, with full validation by the
+     pivotal phase (21 CFR 312.23(a)(7); ICH Q2(R2) and Q14).
+   - **Option (a), the unsigned `qualified` status, is refused, including as an interim.** A word typed into a GxP
+     register must not unlock an approval that validation reaches only by signature. Until the act takes its new
+     outcome, today's stricter behaviour stands: only a validated method supports an approved limit.
+   - **Owner.** The CMC session (S7). Tests are red first, and `METHOD_SUITABLE`'s words are read only from the signed
+     outcome.
+2. **The composition boundary fails closed when the modality is inferred rather than recorded.**
+   - **The finding.** `classifySubstanceModality` (`server/services/cmc/substance-modality.ts`) reads "a recorded
+     chemical process, and nothing suggesting biology" as a small molecule. So a terse route admitted a monoclonal
+     antibody into small-molecule Module 3 composition (`docs/evidence/S7/2026-11-09-demo-cmc-materials/`, mutation 5).
+   - **Decided: option (a).**
+     - `compositionRefusal` (`server/services/cmc/composition-scope.ts`) accepts a small molecule only when the
+       modality is stated. An inferred verdict is refused as `CMC_MODALITY_NOT_ESTABLISHED`, and the refusal asks for
+       the modality to be recorded.
+     - §3.2.A.2 keeps its current reading.
+     - Existing substance rows are not rewritten. Each is refused at composition until its modality is recorded.
+   - **Why.** This narrows P-28's boundary, it does not widen it. A boundary that decides what a filing may say rests
+     on a recorded fact, not on the absence of words in a free-text field.
+   - **Owner.** The CMC session (S7, or F1 for the boundary). The test includes mutation 5's antibody.
+- **Unchanged.** No new file, route, table, screen or tool (RULE 6). The CMC composition scope of P-28 is otherwise as
+  decided.
