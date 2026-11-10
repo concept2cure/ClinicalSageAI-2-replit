@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/qc-testing",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+      "sampleId": "OQ-QC-530091",
+      "sampleType": "finished-product",
+      "testMethod": "HPLC assay",
+      "passFailStatus": "pass",
+      "testDate": "2026-01-01",
+      "reviewedBy": 1,
+      "releaseDate": "2026-01-02"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 12,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "code": "REVIEW_IS_A_SECOND_PERSON",
+      "error": "A QC result is recorded by whoever ran the test and reviewed afterwards by somebody else, so it cannot be created already reviewed (reviewedBy and releaseDate). Record the result, then PUT /api/cmc/qc-testing/:id with reviewedBy to record the review: the reviewer is the signed-in user, and the analyst who ran the test is refused.",
+      "fields": [
+        "reviewedBy",
+        "releaseDate"
+      ]
+    }
+  }
+}

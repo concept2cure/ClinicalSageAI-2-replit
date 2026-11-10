@@ -1,0 +1,59 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/search?q=oqlibrary20261110020007",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "oqlibrary20261110020007",
+        "mode": "search",
+        "filters": {},
+        "total": 1,
+        "limit": 25,
+        "offset": 0,
+        "includeSuperseded": false,
+        "scope": "verified-accessible-programs",
+        "results": [
+          {
+            "originalFileAvailable": true,
+            "disposition": null,
+            "id": "da163ff9-ac93-4170-bb05-0e8bd3e0a7d7",
+            "contentHash": "435f5ae4df38c66c8fb8c11e9148ec126184f38bfebc6e0ae93537e5b9d4b9d5",
+            "title": "OQ-002 oqlibrary20261110020007 report",
+            "fileName": "OQ-002-oqlibrary20261110020007-report.pdf",
+            "documentType": "PROTOCOL",
+            "sizeBytes": 618,
+            "folderId": "module-5",
+            "ctdSection": null,
+            "placementStatus": "suggested",
+            "evidenceKind": "protocol",
+            "classification": "CONFIDENTIAL",
+            "lifecycleStage": null,
+            "updatedAt": "2026-11-10T02:03:07.699Z",
+            "version": "1.0",
+            "current": true,
+            "snippet": null,
+            "program": {
+              "id": "f2a71086-9691-474c-8b31-1a9065fbf434",
+              "name": "OQ-002 Library program 20261110020007"
+            },
+            "size": "618 B",
+            "client": {
+              "id": 2,
+              "name": "Concept2Cure Therapeutics"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

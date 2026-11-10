@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs/aef11e08-e0af-4793-b714-2928902a6322/freeze",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "OQ-003 step 11 freeze",
+      "version": "1.0",
+      "meaning": "AUTHOR",
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 324,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "contentHash": "56efd26ed95342f61f99c2515f0b7b8f8f7775c85f0536ab8d2f55d0bd6dc67e",
+      "version": "1.0",
+      "signatureId": "eb540b43-2149-47b1-a9be-cd12611f30ef",
+      "documentHash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+      "frozenAt": "2026-11-10T02:03:38.184Z"
+    }
+  }
+}
