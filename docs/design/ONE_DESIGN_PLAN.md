@@ -560,13 +560,15 @@ licensed equivalent.
 
 The active item takes a soft fill.
 
-**Home.** A centred serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
-shadow, attach, and an orange send button). A few quiet starter suggestions sit below. Nothing else is above the
-fold.
+**Home.** A compact serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
+shadow, attach, and an orange send button), with a few quiet starter suggestions. Beneath them, and visible at
+1440×900 without scrolling, are the person's projects and their due tasks (P-122).
 
-**Projects.** The page holds the title, a search field, one "New project" button and a grid of calm cards. Each card
-shows the name, a one-line description and when it was updated. Filters stay quiet. There are no readiness bars and
-no stat strip.
+**Projects.** The page holds the title, a search field, one "New project" button, the portfolio figures (active
+projects, average readiness, filings due within 60 days) and a grid of calm cards. Each card shows the name, a
+one-line description, its readiness, stage, lead and status, and when it was updated. These are shown by default, in
+grid and list, and the figures come from the server. Filters stay quiet. "Which projects are at risk this week?" is
+one click, answered by the server's risk engines (P-122).
 
 **A project.** This is Claude's project page:
 - **Main column:** the name, a one-line description, the composer ("How can I help with this project?") and the
@@ -576,6 +578,11 @@ no stat strip.
 - **The regulatory work:** Plan, Evidence, Author, Review, Submit and Respond, documents, filing state and the work
   areas. All of it stays one click away, in a quiet segmented control and sections below the composer, never as
   banners above it.
+- **Shown, not hidden (P-122):**
+  - the open step says what to do next;
+  - Records and Activity are open sections;
+  - the Review step lists its approvals and the server's readiness;
+  - section owners, deadlines and milestones are on the Plan step.
 
 **Conversation.** A centred reading column. AnA's prose is set in the serif, the person's turns are quiet, and
 artifacts and citations appear inline.
@@ -616,6 +623,10 @@ Quality, RBM and Reporting share one page pattern:
 **Zero capability loss.** This is not negotiable (`.claude/skills/claude-ui-design-principles.md`). Every metric,
 workflow, verdict and action a removed element gave stays reachable: through the conversation, an inspector, a quiet
 section or ⌘K. Each package files a ledger of every removed element and where it now lives.
+
+**Enforced since P-122 (2026-11-10).** A ledger entry is not enough. Nothing a screen showed is removed, hidden, moved
+below the fold or put behind a closed disclosure without a founder decision. A fold is admitted only with a test
+that opens the target and shows the same outcome.
 
 ## 3. The work packages
 
