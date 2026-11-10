@@ -1,32 +1,32 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "http://localhost:5200/api/authoring/sections/9474170d-8c52-4fcd-ba0a-17f912985373",
+    "url": "http://localhost:5200/api/authoring/sections/04b604b9-7900-4a4c-9657-3f94e7dac258",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
-      "content": "<p>OQ-006 Self-approval SOP 20261110025052: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+      "content": "<p>OQ-006 Self-approval SOP 20261110031119: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
       "changeReason": "OQ-006: write the controlled procedure text before review"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 44,
+    "durationMs": 41,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "section": {
-        "id": "9474170d-8c52-4fcd-ba0a-17f912985373",
-        "doc_id": "f72ac55f-6e9f-4da2-8b31-ff0abf5d84d5",
+        "id": "04b604b9-7900-4a4c-9657-3f94e7dac258",
+        "doc_id": "62bb5557-dc16-4941-b5fd-95072766a648",
         "code": "qms-purpose",
         "title": "Purpose",
-        "content": "<p>OQ-006 Self-approval SOP 20261110025052: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+        "content": "<p>OQ-006 Self-approval SOP 20261110031119: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
         "order_index": 1,
         "track_changes": false,
         "tenant_id": 2,
-        "created_at": "2026-11-10T02:51:34.797Z",
-        "updated_at": "2026-11-10T02:51:35.407Z"
+        "created_at": "2026-11-10T03:12:34.772Z",
+        "updated_at": "2026-11-10T03:12:35.384Z"
       },
       "message": "Section updated successfully",
       "revision_created": true,

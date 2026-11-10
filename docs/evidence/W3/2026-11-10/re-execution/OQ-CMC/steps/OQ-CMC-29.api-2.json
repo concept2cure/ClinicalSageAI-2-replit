@@ -1,34 +1,20 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/process-capability",
+    "url": "http://localhost:5200/api/cmc/unclaimed-probe",
     "anonymous": false,
     "identity": null,
     "body": null
   },
   "response": {
-    "status": 200,
+    "status": 403,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 21,
+    "durationMs": 12,
     "rateLimitRetries": 0,
     "body": {
-      "success": true,
-      "data": {
-        "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
-        "resultsOnFile": 0,
-        "assessed": false,
-        "unattributableSampleTypes": [],
-        "statement": "No batch results are recorded for this project, so process capability is NOT assessed. Record the QC results, each with its batch number and the acceptance criterion it was judged against.",
-        "sides": {
-          "drug_substance": {
-            "series": [],
-            "statements": []
-          },
-          "drug_product": {
-            "series": [],
-            "statements": []
-          }
-        }
+      "error": {
+        "code": "LAUNCH_SCOPE",
+        "message": "This part of the product is not in this release."
       }
     }
   }

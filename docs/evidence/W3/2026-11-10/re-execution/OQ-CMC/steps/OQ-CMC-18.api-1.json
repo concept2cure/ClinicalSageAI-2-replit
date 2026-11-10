@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/78731580-7719-4562-985d-a412edebff5a",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 64,
+    "durationMs": 37,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
@@ -28,13 +28,13 @@
         "canonicalGovernedState": {
           "context": {
             "organizationId": "2",
-            "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+            "projectId": "78731580-7719-4562-985d-a412edebff5a",
             "documentType": "cmc_module3",
             "ctdSection": "3",
             "intendedAction": "export",
             "actorId": "1",
-            "requestId": "3a3e8c5d-4fb0-48db-9e81-6efe6a1840aa",
-            "timestamp": "2026-11-10T02:54:32.178Z"
+            "requestId": "0b870dbe-4b9a-47b6-b30a-660e975743e4",
+            "timestamp": "2026-11-10T03:40:32.044Z"
           },
           "decision": {
             "decisionId": "",
@@ -44,14 +44,14 @@
             "blockerCount": 3,
             "warningCount": 4,
             "consequenceCount": 4,
-            "timestamp": "2026-11-10T02:54:32.179Z",
+            "timestamp": "2026-11-10T03:40:32.045Z",
             "decisionReference": {
-              "decisionId": "1b37991a-b3bb-4e3c-92d1-cd5b523043bf",
-              "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+              "decisionId": "b7454243-95f2-4555-b2ca-fd4415415214",
+              "projectId": "78731580-7719-4562-985d-a412edebff5a",
               "intent": "export",
               "outcome": "block",
               "actorId": "1",
-              "timestamp": "2026-11-10T02:54:32.180Z"
+              "timestamp": "2026-11-10T03:40:32.045Z"
             }
           },
           "readinessState": {
@@ -60,55 +60,55 @@
             "blockers": [],
             "warnings": [
               {
-                "id": "wrn_76ab8732-feca-4e61-89fe-d315b48fdaad",
+                "id": "wrn_b706c0cf-99d0-44bd-99b0-3918d7d60efc",
                 "category": "evidence_incomplete",
                 "severity": "warning",
                 "message": "Evidence is missing or incomplete",
                 "source": "readiness-gates"
               },
               {
-                "id": "wrn_c8f67586-229d-4984-ace9-29531bf25efa",
+                "id": "wrn_2562d6f7-6262-4707-91cc-d718d396a2e6",
                 "category": "low_completeness",
                 "severity": "warning",
                 "message": "Completeness score is 0.047619047619047616% — below recommended threshold",
                 "source": "readiness-gates"
               },
               {
-                "id": "wrn_52cf33fb-2d5c-4181-a4be-4639e0271b7a",
+                "id": "wrn_c2ebed83-fdc3-4396-a34b-0cb3ce5baf9c",
                 "category": "incomplete_reviews",
                 "severity": "warning",
                 "message": "0/1 required reviews completed",
                 "source": "readiness-gates"
               },
               {
-                "id": "wrn_40ec0568-3edc-4a46-9664-74d8537e9372",
+                "id": "wrn_457aaced-6965-457c-a9a8-577f3d4bbef1",
                 "category": "non_critical_contradictions",
                 "severity": "warning",
                 "message": "1 non-critical contradiction(s) remain unresolved",
                 "source": "readiness-gates"
               }
             ],
-            "evaluatedAt": "2026-11-10T02:54:32.178Z",
+            "evaluatedAt": "2026-11-10T03:40:32.044Z",
             "evaluatedBy": "readiness-gates@1.0.0",
             "confidence": "high"
           },
           "blockers": [
             {
-              "id": "gate_bc742a0e-229c-45f3-a043-53fb241b97ed",
+              "id": "gate_4c317713-59b4-4016-965f-7ab674df2bb3",
               "category": "missing_approval",
               "severity": "critical",
               "message": "Document must be approved before export",
               "source": "export-publish-gates@1.0.0"
             },
             {
-              "id": "gate_ba813e23-de2d-4fee-a10b-2ce1f9f0dabe",
+              "id": "gate_ae8aab1f-8662-48a6-8240-32198a2d15cc",
               "category": "export_gate_failed",
               "severity": "major",
               "message": "Provenance chain is incomplete — audit trail required for export",
               "source": "export-publish-gates@1.0.0"
             },
             {
-              "id": "gate_eb7b1580-2b3b-4975-bc6b-cbff19e3afd1",
+              "id": "gate_b5d1eaa4-8658-4b55-b1d9-a9b7b320eb88",
               "category": "unresolved_contradiction",
               "severity": "critical",
               "message": "1 unresolved contradiction(s) block export",
@@ -117,28 +117,28 @@
           ],
           "warnings": [
             {
-              "id": "wrn_76ab8732-feca-4e61-89fe-d315b48fdaad",
+              "id": "wrn_b706c0cf-99d0-44bd-99b0-3918d7d60efc",
               "category": "evidence_incomplete",
               "severity": "warning",
               "message": "Evidence is missing or incomplete",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_c8f67586-229d-4984-ace9-29531bf25efa",
+              "id": "wrn_2562d6f7-6262-4707-91cc-d718d396a2e6",
               "category": "low_completeness",
               "severity": "warning",
               "message": "Completeness score is 0.047619047619047616% — below recommended threshold",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_52cf33fb-2d5c-4181-a4be-4639e0271b7a",
+              "id": "wrn_c2ebed83-fdc3-4396-a34b-0cb3ce5baf9c",
               "category": "incomplete_reviews",
               "severity": "warning",
               "message": "0/1 required reviews completed",
               "source": "readiness-gates"
             },
             {
-              "id": "wrn_40ec0568-3edc-4a46-9664-74d8537e9372",
+              "id": "wrn_457aaced-6965-457c-a9a8-577f3d4bbef1",
               "category": "non_critical_contradictions",
               "severity": "warning",
               "message": "1 non-critical contradiction(s) remain unresolved",
@@ -219,21 +219,21 @@
             ],
             "blockingReasons": [
               {
-                "id": "gate_bc742a0e-229c-45f3-a043-53fb241b97ed",
+                "id": "gate_4c317713-59b4-4016-965f-7ab674df2bb3",
                 "category": "missing_approval",
                 "severity": "critical",
                 "message": "Document must be approved before export",
                 "source": "export-publish-gates@1.0.0"
               },
               {
-                "id": "gate_ba813e23-de2d-4fee-a10b-2ce1f9f0dabe",
+                "id": "gate_ae8aab1f-8662-48a6-8240-32198a2d15cc",
                 "category": "export_gate_failed",
                 "severity": "major",
                 "message": "Provenance chain is incomplete — audit trail required for export",
                 "source": "export-publish-gates@1.0.0"
               },
               {
-                "id": "gate_eb7b1580-2b3b-4975-bc6b-cbff19e3afd1",
+                "id": "gate_b5d1eaa4-8658-4b55-b1d9-a9b7b320eb88",
                 "category": "unresolved_contradiction",
                 "severity": "critical",
                 "message": "1 unresolved contradiction(s) block export",
@@ -259,7 +259,7 @@
               "consequenceType": "update_readiness_score",
               "description": "Readiness evaluated: review_ready (score: 30/100, confidence: high)",
               "targetObjectType": "project",
-              "targetObjectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+              "targetObjectId": "78731580-7719-4562-985d-a412edebff5a",
               "severity": "info",
               "actionRequired": false,
               "autoExecutable": true,
@@ -294,12 +294,12 @@
             }
           ],
           "decisionReference": {
-            "decisionId": "1b37991a-b3bb-4e3c-92d1-cd5b523043bf",
-            "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+            "decisionId": "b7454243-95f2-4555-b2ca-fd4415415214",
+            "projectId": "78731580-7719-4562-985d-a412edebff5a",
             "intent": "export",
             "outcome": "block",
             "actorId": "1",
-            "timestamp": "2026-11-10T02:54:32.180Z"
+            "timestamp": "2026-11-10T03:40:32.045Z"
           },
           "uiPresentationHints": {
             "readinessBadge": {
@@ -357,8 +357,8 @@
           },
           "artifactBinding": {},
           "stateFreshness": {
-            "evaluatedAt": "2026-11-10T02:54:32.178Z",
-            "generatedAt": "2026-11-10T02:54:32.184Z"
+            "evaluatedAt": "2026-11-10T03:40:32.044Z",
+            "generatedAt": "2026-11-10T03:40:32.047Z"
           },
           "derivedFlags": {
             "isBlocked": true,

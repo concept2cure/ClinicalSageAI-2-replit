@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/f9b3dbfc-dff2-4489-99aa-9e30f9d7003a/retract",
+    "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6ce8c935-3c4b-4d0f-bb1f-4d1c90210a68/retract",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -11,7 +11,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 23,
+    "durationMs": 43,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

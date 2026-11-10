@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "451684e9-524c-465e-8389-599ad123eaf9",
+      "projectId": "818bcda1-8dfe-48ee-9674-b6d4dace5aee",
       "productName": "PRV-signed 5 mg tablet",
       "dosageForm": "Film-coated tablet",
       "strength": "5 mg",
@@ -16,14 +16,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 24,
+    "durationMs": 23,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 4,
+        "id": 13,
         "organizationId": 2,
-        "projectId": "451684e9-524c-465e-8389-599ad123eaf9",
+        "projectId": "818bcda1-8dfe-48ee-9674-b6d4dace5aee",
         "productName": "PRV-signed 5 mg tablet",
         "dosageForm": "Film-coated tablet",
         "strength": "5 mg",
@@ -36,8 +36,8 @@
         "packagingMaterials": null,
         "stability": null,
         "status": "development",
-        "createdAt": "2026-11-10T03:01:03.040Z",
-        "updatedAt": "2026-11-10T03:01:03.040Z"
+        "createdAt": "2026-11-10T03:47:33.051Z",
+        "updatedAt": "2026-11-10T03:47:33.051Z"
       },
       "module3Linked": true
     }

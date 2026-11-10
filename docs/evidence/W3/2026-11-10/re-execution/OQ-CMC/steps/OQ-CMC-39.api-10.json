@@ -6,7 +6,7 @@
     "identity": null,
     "body": {
       "projectId": "not-a-uuid",
-      "systemName": "OQ CCS 20261110025315",
+      "systemName": "OQ CCS 20261110033923",
       "containerDescription": "HDPE bottle",
       "closureDescription": "CR cap",
       "status": "draft"
@@ -15,7 +15,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

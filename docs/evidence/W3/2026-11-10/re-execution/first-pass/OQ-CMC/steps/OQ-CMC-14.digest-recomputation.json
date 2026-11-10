@@ -1,0 +1,154 @@
+{
+  "signatureId": 16,
+  "bindingBasis": "cmc-module3-section-version-sha256",
+  "stored": "ede54932d93055bca66db637cd3ce70529ff933e2847ae2e709d5e65cfa0bc10",
+  "recomputed": "ede54932d93055bca66db637cd3ce70529ff933e2847ae2e709d5e65cfa0bc10",
+  "inputs": {
+    "organizationId": 2,
+    "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+    "sectionKey": "3.1",
+    "versionNumber": 1,
+    "approvedVersionId": "55c0cbe2-9557-45b0-9fe4-e84e839a5c39",
+    "snapshot": {
+      "tables": [
+        {
+          "rows": [
+            [
+              "3.2.S.1",
+              "General Information"
+            ],
+            [
+              "3.2.S.2",
+              "Manufacture (Drug Substance)"
+            ],
+            [
+              "3.2.S.3",
+              "Characterisation"
+            ],
+            [
+              "3.2.S.4",
+              "Control of Drug Substance"
+            ],
+            [
+              "3.2.S.5",
+              "Reference Standards (Drug Substance)"
+            ],
+            [
+              "3.2.S.6",
+              "Container Closure System (Drug Substance)"
+            ],
+            [
+              "3.2.S.7",
+              "Stability (Drug Substance)"
+            ],
+            [
+              "3.2.P.1",
+              "Description and Composition"
+            ],
+            [
+              "3.2.P.2",
+              "Pharmaceutical Development"
+            ],
+            [
+              "3.2.P.3",
+              "Manufacture (Drug Product)"
+            ],
+            [
+              "3.2.P.4",
+              "Control of Excipients"
+            ],
+            [
+              "3.2.P.5",
+              "Control of Drug Product"
+            ],
+            [
+              "3.2.P.6",
+              "Reference Standards (Drug Product)"
+            ],
+            [
+              "3.2.P.7",
+              "Container Closure System (Drug Product)"
+            ],
+            [
+              "3.2.P.8",
+              "Stability (Drug Product)"
+            ]
+          ],
+          "title": "Module 3 — Table of Contents",
+          "headers": [
+            "Section",
+            "Title"
+          ]
+        }
+      ],
+      "sectionKey": "3.1",
+      "sourceTypes": [
+        "drug_substance",
+        "drug_product"
+      ],
+      "completeness": 100,
+      "missingInputs": [],
+      "narrativeText": "This section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is BX-701 5 mg film-coated tablet. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.",
+      "sourceObjects": [
+        {
+          "type": "drug_product",
+          "payload": {
+            "name": "BX-701 5 mg film-coated tablet",
+            "status": "development",
+            "version": null,
+            "strength": "5 mg",
+            "batchSize": "",
+            "components": null,
+            "dosageForm": "Film-coated tablet",
+            "excipients": null,
+            "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
+            "formulation": null,
+            "specifications": null,
+            "stability_data": null,
+            "processControls": null,
+            "containerClosure": "",
+            "compositionDetail": null,
+            "manufacturingSite": "",
+            "batchFormulaDetail": null,
+            "processDescription": "",
+            "dosageFormDescription": "Film-coated tablet",
+            "manufacturing_process": null,
+            "routeOfAdministration": "oral"
+          }
+        },
+        {
+          "type": "drug_substance",
+          "payload": {
+            "cas": "1234-56-7",
+            "inn": "bexanistat",
+            "name": "BX-701",
+            "status": "development",
+            "cellLine": "",
+            "modality": "small_molecule",
+            "structure": "",
+            "tseStatus": "",
+            "impurities": null,
+            "manufacturer": "Acme Fine Chemicals",
+            "sourceOrganism": "",
+            "specifications": null,
+            "stability_data": null,
+            "molecularWeight": "297.36",
+            "biologicalOrigin": "",
+            "developmentPhase": "phase1",
+            "molecularFormula": "C17H19N3O2",
+            "manufacturingSite": "Basel",
+            "biologicalActivity": null,
+            "manufacturingRoute": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+            "processDescription": "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water",
+            "qualificationBasis": null,
+            "reference_materials": null,
+            "characterization_data": null,
+            "structuralElucidation": null,
+            "viralSafetyEvaluation": "",
+            "physicochemicalProperties": null
+          }
+        }
+      ]
+    }
+  }
+}

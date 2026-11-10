@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -21,21 +21,21 @@
     "body": {
       "success": true,
       "data": {
-        "id": "28a35007-b94c-459f-ae66-17d33aa60c9d",
-        "project_id": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "id": "effad986-6462-4b01-b6de-21402161171a",
+        "project_id": "78731580-7719-4562-985d-a412edebff5a",
         "title": "OQ probe comparability",
         "product": "Scale",
         "type": "process",
         "status": "approved",
-        "createdAt": "2026-11-10T02:56:21.188Z",
-        "updatedAt": "2026-11-10T02:59:00.600Z",
+        "createdAt": "2026-11-10T03:42:50.992Z",
+        "updatedAt": "2026-11-10T03:45:30.597Z",
         "methods": [],
         "outcome": "Comparable on every attribute against the pre-change criteria.",
         "owner": "oq-runner@validation.local"
       },
       "governance": {
-        "actionId": "act_fb2c947582b447a483fd13b655fdd37f",
-        "sha256Chain": "8bdad2587e72ab9bafd6c6728c3d1cb9d1a74ff5d2ac354e8f770b635a6eb48e"
+        "actionId": "act_16027918b92d4a6bbb950410a3d70eea",
+        "sha256Chain": "9e0c001ff2abb484acab311c730552d93181f6fad8625ea3e4d71178397cd4cf"
       },
       "module3Linked": true
     }

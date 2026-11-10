@@ -6,7 +6,7 @@
     "identity": null,
     "body": {
       "projectId": "99999999-9999-4999-8999-999999999999",
-      "materialName": "OQ excipient 20261110025315",
+      "materialName": "OQ excipient 20261110033923",
       "materialRole": "excipient",
       "grade": "USP"
     }
@@ -14,7 +14,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "BX-703 IND 20261110025315",
+      "name": "BX-703 IND 20261110033923",
       "productName": "BX-703",
       "programType": "ind",
       "productType": "drug",
@@ -17,15 +17,15 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 94,
+    "durationMs": 108,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "4af7d245-994e-4773-b88a-d03f914a25d7",
-        "title": "BX-703 IND 20261110025315",
+        "id": "e248f0a4-9bcf-401f-8aa6-be835e6646b6",
+        "title": "BX-703 IND 20261110033923",
         "ws": "Biotech",
         "pathway": "ind",
-        "code": "BX-703-IFSD",
+        "code": "BX-703-5RCS",
         "stage": "Planning",
         "status": "active",
         "lead": "oq-runner@validation.local",
@@ -42,9 +42,9 @@
         "readinessState": "measured"
       },
       "program": {
-        "id": "4af7d245-994e-4773-b88a-d03f914a25d7",
-        "code": "BX-703-IFSD",
-        "name": "BX-703 IND 20261110025315",
+        "id": "e248f0a4-9bcf-401f-8aa6-be835e6646b6",
+        "code": "BX-703-5RCS",
+        "name": "BX-703 IND 20261110033923",
         "program_type": "ind",
         "status": "active",
         "phase": "planning",
@@ -62,8 +62,8 @@
         "approval_date": null,
         "lead_user_id": 1,
         "team_members": [],
-        "created_at": "2026-11-10T02:53:25.741Z",
-        "updated_at": "2026-11-10T02:53:25.741Z",
+        "created_at": "2026-11-10T03:39:33.435Z",
+        "updated_at": "2026-11-10T03:39:33.435Z",
         "application_number": null,
         "product_type": "drug",
         "device_class": null,
@@ -81,7 +81,7 @@
         "device_flags": null,
         "readiness": 0,
         "readinessState": "measured",
-        "readinessAsOf": "2026-11-10T02:53:25.815Z"
+        "readinessAsOf": "2026-11-10T03:39:33.518Z"
       },
       "meta": {
         "created": true,
@@ -89,7 +89,7 @@
         "actorUserId": 1,
         "clientWorkspaceId": 2,
         "clientWorkspaceName": "Concept2Cure Therapeutics",
-        "documentId": "doc_c757f48259ed49d3be50c055a6e3a5a8",
+        "documentId": "doc_5a862b01a4af45b991c45678fc3382be",
         "scaffoldedSections": 92,
         "marketSupport": {
           "tier": "build_and_sequence",
@@ -100,9 +100,9 @@
             "US_IND_AMENDMENT"
           ]
         },
-        "submissionId": 31,
+        "submissionId": 73,
         "submissionCreated": true,
-        "projectAnchorId": 28,
+        "projectAnchorId": 69,
         "projectAnchorCreated": true
       }
     }

@@ -5,8 +5,8 @@
   "appLabel": "Projects",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/projects/run.mjs",
-  "executedAt": "2026-11-10T02:42:00.160Z",
-  "finishedAt": "2026-11-10T02:45:36.825Z",
+  "executedAt": "2026-11-10T03:05:59.119Z",
+  "finishedAt": "2026-11-10T03:08:36.921Z",
   "environment": {
     "baseUrl": "http://localhost:5200",
     "node": "v22.23.4",
@@ -14,7 +14,7 @@
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "3088335238a12d9e89df8fc5025ae22d0730766f"
+      "commit": "644657a825165ff86a2053d932add6e70db3b8ce"
     },
     "testUser": "oq-runner@validation.local",
     "authentication": "password+totp",
@@ -43,8 +43,8 @@
     }
   },
   "counts": {
-    "pass": 17,
-    "fail": 3,
+    "pass": 20,
+    "fail": 0,
     "deviation": 0,
     "not-executed": 0
   },
@@ -60,8 +60,8 @@
       "expected": "HTTP 401 (or 403); no program data returned",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-11-10T02:42:00.694Z",
-      "finishedAt": "2026-11-10T02:42:00.951Z",
+      "startedAt": "2026-11-10T03:05:59.627Z",
+      "finishedAt": "2026-11-10T03:05:59.882Z",
       "evidence": [],
       "api": [
         {
@@ -87,8 +87,8 @@
       "expected": "Login page renders; after sign-in the URL leaves /concept2cure/login and the shell renders",
       "status": "pass",
       "observed": "signed in with password + authenticator code; landed on /concept2cure",
-      "startedAt": "2026-11-10T02:42:00.951Z",
-      "finishedAt": "2026-11-10T02:42:30.305Z",
+      "startedAt": "2026-11-10T03:05:59.882Z",
+      "finishedAt": "2026-11-10T03:06:02.628Z",
       "evidence": [
         "steps/OQ-PROJ-02.login-page.png",
         "steps/OQ-PROJ-02.code-step.png",
@@ -110,8 +110,8 @@
       "expected": "Both refused with HTTP 400 and a message naming the field",
       "status": "pass",
       "observed": "missing name → 400 ({\"error\":\"name is required\"}); bad type → 400 ({\"error\":\"The filing type must be one of: hde, mdl, ivd_licence, shonin, ninsho, todokede, ivd_approval, jp_cdx, 510k, de_novo, pma, ivd, device, cer, ide, ind,)",
-      "startedAt": "2026-11-10T02:42:30.305Z",
-      "finishedAt": "2026-11-10T02:42:32.047Z",
+      "startedAt": "2026-11-10T03:06:02.628Z",
+      "finishedAt": "2026-11-10T03:06:03.314Z",
       "evidence": [],
       "api": [
         {
@@ -142,9 +142,9 @@
       "action": "POST /api/c2c/projects {name, programType:\"ind\", productType:\"drug\", primaryAgency:\"FDA\", indication}",
       "expected": "HTTP 201; data.id is a UUID; the row carries the given name; meta reports what else the intake created (scaffolded document, canonical submission)",
       "status": "pass",
-      "observed": "program 2d03e03e-8223-4374-9528-7125cb651f62 created (ws=Biotech, code=OQ-001); intake also created: document=doc_5c303cbe3e314def88deaa4ef2ac9f2c (92 sections), submission=17; projectAnchor=16",
-      "startedAt": "2026-11-10T02:42:32.047Z",
-      "finishedAt": "2026-11-10T02:42:32.576Z",
+      "observed": "program 5c942649-d864-49de-a912-c344fa278b91 created (ws=Biotech, code=OQ-001-YOJL); intake also created: document=doc_0cfa0e9114204d1aa5fbe65cf58393bc (92 sections), submission=39; projectAnchor=36",
+      "startedAt": "2026-11-10T03:06:03.315Z",
+      "finishedAt": "2026-11-10T03:06:03.678Z",
       "evidence": [],
       "api": [
         {
@@ -168,9 +168,9 @@
       "action": "GET /api/c2c/projects; GET /api/c2c/projects/:id",
       "expected": "List contains the new program; detail returns the same name",
       "status": "pass",
-      "observed": "listed (15 programs) and readable; product class shown as \"drug\"",
-      "startedAt": "2026-11-10T02:42:32.576Z",
-      "finishedAt": "2026-11-10T02:42:33.163Z",
+      "observed": "listed (35 programs) and readable; product class shown as \"drug\"",
+      "startedAt": "2026-11-10T03:06:03.678Z",
+      "finishedAt": "2026-11-10T03:06:04.258Z",
       "evidence": [],
       "api": [
         {
@@ -182,7 +182,7 @@
         {
           "file": "steps/OQ-PROJ-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/projects/2d03e03e-8223-4374-9528-7125cb651f62",
+          "url": "http://localhost:5200/api/c2c/projects/5c942649-d864-49de-a912-c344fa278b91",
           "status": 200
         }
       ],
@@ -197,37 +197,29 @@
         "URS-PROJ-004"
       ],
       "kind": "scripted",
-      "action": "GET /api/c2c/projects/:id/activity; GET /api/c2c/actions/verify-chain",
-      "expected": "Activity has ≥1 entry for the creation with an actor and time; the audit_logs chain verifier answers ok",
-      "status": "fail",
-      "observed": {
-        "error": {
-          "code": "LAUNCH_SCOPE",
-          "message": "This part of the product is not in this release."
-        }
-      },
-      "startedAt": "2026-11-10T02:42:33.163Z",
-      "finishedAt": "2026-11-10T02:42:33.751Z",
-      "evidence": [
-        "steps/OQ-PROJ-06.at-failure.png"
-      ],
+      "action": "GET /api/c2c/projects/:id/activity; GET /api/audit/reports/audit-trail-integrity",
+      "expected": "Activity has ≥1 entry for the creation with an actor and time; the attestation reports the audit_logs hash chain intact",
+      "status": "pass",
+      "observed": "activity entries: 2 (first: {\"id\":\"701f620b-2895-4b20-9feb-adf0acb41909\",\"action\":\"c2c.project.create\",\"resource_type\":\"regulatory_programs\",\"resource_id\":\"5c942649-d864-49de-a912-c344fa27); audit_logs hash chain intact, 616 rows (COMPLIANCE-REPORT-1794279964812-6d575459)",
+      "startedAt": "2026-11-10T03:06:04.258Z",
+      "finishedAt": "2026-11-10T03:06:04.822Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-PROJ-06.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/projects/2d03e03e-8223-4374-9528-7125cb651f62/activity",
+          "url": "http://localhost:5200/api/c2c/projects/5c942649-d864-49de-a912-c344fa278b91/activity",
           "status": 200
         },
         {
           "file": "steps/OQ-PROJ-06.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/actions/verify-chain",
-          "status": 403
+          "url": "http://localhost:5200/api/audit/reports/audit-trail-integrity",
+          "status": 200
         }
       ],
       "consoleErrors": [],
-      "note": null,
-      "failure": "verify-chain expected ok, got 403",
+      "note": "v0.12: the chain verdict is read from the Audit trail integrity attestation (tests/validation/lib/chain-verdict.mjs). GET /api/c2c/actions/verify-chain is claimed by no launch surface, and a server that refuses unattributed paths (production's default) answers it 403 LAUNCH_SCOPE.",
       "rateLimitRetries": 0
     },
     {
@@ -240,9 +232,9 @@
       "action": "GET /api/audit-trail/ledger?limit=50 (the read model behind /concept2cure/audit-trail)",
       "expected": "At least one hash-chained entry exists for the organisation after a program was created, and the server's chain verdict says the chain verifies (meta.chain.ok = true); the entry for the program's creation names the run identity's account (actorRef user:<id>), not only a display name that two accounts may share",
       "status": "pass",
-      "observed": "ledger entries: 50 (50 hash-chained); server chain verdict ok=true over 296 row(s); the creation entry names oq-runner@validation.local (user:1); newest: {\"id\":\"AUD-95e254de-4529-424d-8077-b0a4a1cc9b93\",\"when\":\"2026-11-10 02:42\",\"at\":\"2026-11-10T02:42:32.559Z\",\"actor\":\"oq-runner@validation.local\",\"actorRef\":\"user",
-      "startedAt": "2026-11-10T02:42:33.751Z",
-      "finishedAt": "2026-11-10T02:42:34.056Z",
+      "observed": "ledger entries: 50 (50 hash-chained); server chain verdict ok=true over 617 row(s); the creation entry names oq-runner@validation.local (user:1); newest: {\"id\":\"AUD-0af3d2ed-b85e-48b1-826b-e54e3fb094fe\",\"when\":\"2026-11-10 03:06\",\"at\":\"2026-11-10T03:06:04.812Z\",\"actor\":\"oq-runner@validation.local\",\"actorRef\":\"user",
+      "startedAt": "2026-11-10T03:06:04.822Z",
+      "finishedAt": "2026-11-10T03:06:05.111Z",
       "evidence": [],
       "api": [
         {
@@ -267,8 +259,8 @@
       "expected": "The program name is visible on the page",
       "status": "pass",
       "observed": "program name visible on Projects",
-      "startedAt": "2026-11-10T02:42:34.056Z",
-      "finishedAt": "2026-11-10T02:42:41.531Z",
+      "startedAt": "2026-11-10T03:06:05.111Z",
+      "finishedAt": "2026-11-10T03:06:11.567Z",
       "evidence": [
         "steps/OQ-PROJ-07.png"
       ],
@@ -289,8 +281,8 @@
       "expected": "Project home renders with the program name and no runtime page error",
       "status": "pass",
       "observed": "project home shows the program",
-      "startedAt": "2026-11-10T02:42:41.531Z",
-      "finishedAt": "2026-11-10T02:42:50.526Z",
+      "startedAt": "2026-11-10T03:06:11.567Z",
+      "finishedAt": "2026-11-10T03:06:19.071Z",
       "evidence": [
         "steps/OQ-PROJ-08.png"
       ],
@@ -307,29 +299,35 @@
         "URS-PROJ-006"
       ],
       "kind": "scripted",
-      "action": "POST /api/tasks/tasks {title, moduleType:\"projects\", priority:\"high\"}; GET /api/task-management/board",
+      "action": "GET /api/projects (the program's tracking record); POST /api/tasks/tasks {title, moduleType:\"projects\", priority:\"high\", projectId}; GET /api/task-management/board",
       "expected": "Task created (2xx) with a taskId; the board lists it",
       "status": "pass",
-      "observed": "task TASK-1794278570794-f88f7538 created and listed (board total 10)",
-      "startedAt": "2026-11-10T02:42:50.526Z",
-      "finishedAt": "2026-11-10T02:42:51.111Z",
+      "observed": "task TASK-1794279979599-9a1596f0 created and listed (board total 23)",
+      "startedAt": "2026-11-10T03:06:19.071Z",
+      "finishedAt": "2026-11-10T03:06:19.919Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-PROJ-09.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/projects",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-PROJ-09.api-2.json",
           "method": "POST",
           "url": "http://localhost:5200/api/tasks/tasks",
           "status": 200
         },
         {
-          "file": "steps/OQ-PROJ-09.api-2.json",
+          "file": "steps/OQ-PROJ-09.api-3.json",
           "method": "GET",
           "url": "http://localhost:5200/api/task-management/board",
           "status": 200
         }
       ],
       "consoleErrors": [],
-      "note": null,
+      "note": "v0.12: the task is created under the program, as New task creates it. Since 958c213e03 (2026-10-31) the Tasks board opens filtered to the open project, so a task with no project is not on the board OQ-PROJ-10 opens.",
       "rateLimitRetries": 0
     },
     {
@@ -341,18 +339,17 @@
       "kind": "unscripted",
       "action": "Open /concept2cure/tasks",
       "expected": "The task title is visible",
-      "status": "fail",
-      "observed": "Skip to content\nConcept2Cure.RI\nNew conversation\nSearch\nHome\nProjects\nTasks\nCommunication\nVault\nSubmission Center\nWork areas\nCMC / Module 3\nBiostatistics\nRisk-based monitoring\nQuality\nReporting & analytics\nRecents\nOQ-001 IND program 20261110024200\nOQ-008 Q1E within 20261110020703\nBX-703 IND 20261110020703\nYour conversations appear here.\no\noq-runner@validation.local\nConcept2Cure Therapeutics\nOQ-001\n›\nTasks\n7\nProject — collaboration\nTasks\nEvery task across your projects: the work planned here, and the work that comes from the project schedule, agency correspondence and tracked filings, each labe",
-      "startedAt": "2026-11-10T02:42:51.111Z",
-      "finishedAt": "2026-11-10T02:43:27.866Z",
+      "status": "pass",
+      "observed": "task visible on Tasks",
+      "startedAt": "2026-11-10T03:06:19.919Z",
+      "finishedAt": "2026-11-10T03:06:26.232Z",
       "evidence": [
-        "steps/OQ-PROJ-10.at-failure.png"
+        "steps/OQ-PROJ-10.png"
       ],
       "api": [],
       "consoleErrors": [],
       "note": null,
       "browser429": 0,
-      "failure": "page text does not contain \"OQ-001 task 20261110024200\"",
       "rateLimitRetries": 0
     },
     {
@@ -366,8 +363,8 @@
       "expected": "HTTP 403 LAUNCH_SCOPE: the journey is not served in this release",
       "status": "pass",
       "observed": "HTTP 403 LAUNCH_SCOPE: not in this release",
-      "startedAt": "2026-11-10T02:43:27.866Z",
-      "finishedAt": "2026-11-10T02:43:28.130Z",
+      "startedAt": "2026-11-10T03:06:26.232Z",
+      "finishedAt": "2026-11-10T03:06:26.497Z",
       "evidence": [],
       "api": [
         {
@@ -390,32 +387,31 @@
       "kind": "scripted",
       "action": "Open the former catalog bookmark with query/hash; browse/search the Projects wizard and select the offered US IND. Inspect its facts, offer/build limits and authored reference; cancel and verify no browser project creation request. Create an exact US_IND/FDA record through the public API and inspect Plan, then inspect the OQ-PROJ-04 program without an exact filing id",
       "expected": "Canonical Projects wizard retains query/hash. Selected facts and collapsed authored stages/timing/return guidance remain reachable, separate from server support. Exact recorded US IND/FDA Plan shows the guide beside the existing plan; missing exact identity explicitly withholds it. A real offer-read failure stays explicit and the unreached positive path is a deviation. Screenshots, URLs and text are retained for reviewer judgement",
-      "status": "fail",
-      "observed": {
-        "error": "State whether the product is a drug or a biologic: an IND filing covers both, and the class is recorded on the project."
-      },
-      "startedAt": "2026-11-10T02:43:28.130Z",
-      "finishedAt": "2026-11-10T02:43:37.592Z",
+      "status": "pass",
+      "observed": "former catalog bookmark opened canonical Projects wizard with query/hash and no browser project creation; selected filing facts and authored guide recorded; exact US IND Plan guide and missing-identity unavailability recorded alongside the existing plan (scripted observations require reviewer acceptance)",
+      "startedAt": "2026-11-10T03:06:26.497Z",
+      "finishedAt": "2026-11-10T03:06:50.792Z",
       "evidence": [
         "steps/OQ-PROJ-12.destination.json",
         "steps/OQ-PROJ-12.wizard-browse.png",
         "steps/OQ-PROJ-12.intake-reference.txt",
         "steps/OQ-PROJ-12.selected-filing-reference.png",
         "steps/OQ-PROJ-12.intake-project-writes.json",
-        "steps/OQ-PROJ-12.at-failure.png"
+        "steps/OQ-PROJ-12.plan-reference.txt",
+        "steps/OQ-PROJ-12.exact-filing-plan.png",
+        "steps/OQ-PROJ-12.missing-filing-plan.png"
       ],
       "api": [
         {
           "file": "steps/OQ-PROJ-12.api-1.json",
           "method": "POST",
           "url": "http://localhost:5200/api/c2c/projects",
-          "status": 400
+          "status": 201
         }
       ],
       "consoleErrors": [],
       "note": "v0.10 replaces the historical standalone catalog-render observation. This scripted step checks the declared filing-reference behavior; it is not a computed regulatory verdict and has not been formally executed. The runner neither injects an offer failure nor edits stored identity to manufacture negative cases.",
       "browser429": 0,
-      "failure": "exact filing reference fixture was not created",
       "rateLimitRetries": 0
     },
     {
@@ -429,8 +425,8 @@
       "expected": "launchScope.enforced=true; the out-of-scope surface \"program-journey\" is not entitled with source \"launch-scope\"; every launch app's primary surface is entitled (Projects, Vault, Authoring, Submission Center and its readiness, QMS, Reporting & analytics, CMC / Module 3, Risk-based monitoring, Biostatistics)",
       "status": "pass",
       "observed": "89 verdicts; program-journey locked by launch-scope; 10 launch surfaces entitled",
-      "startedAt": "2026-11-10T02:43:37.592Z",
-      "finishedAt": "2026-11-10T02:43:37.876Z",
+      "startedAt": "2026-11-10T03:06:50.792Z",
+      "finishedAt": "2026-11-10T03:06:51.064Z",
       "evidence": [],
       "api": [
         {
@@ -455,8 +451,8 @@
       "expected": "The page explains the surface is not in this release (no journey content, no upsell)",
       "status": "pass",
       "observed": "launch-scope gate rendered",
-      "startedAt": "2026-11-10T02:43:37.876Z",
-      "finishedAt": "2026-11-10T02:43:44.147Z",
+      "startedAt": "2026-11-10T03:06:51.064Z",
+      "finishedAt": "2026-11-10T03:06:57.604Z",
       "evidence": [
         "steps/OQ-PROJ-14.png"
       ],
@@ -477,8 +473,8 @@
       "expected": "HTTP 404 (never 200, never 500)",
       "status": "pass",
       "observed": "HTTP 404",
-      "startedAt": "2026-11-10T02:43:44.147Z",
-      "finishedAt": "2026-11-10T02:43:44.411Z",
+      "startedAt": "2026-11-10T03:06:57.604Z",
+      "finishedAt": "2026-11-10T03:06:57.870Z",
       "evidence": [],
       "api": [
         {
@@ -502,9 +498,9 @@
       "action": "Credentialed run: POST /api/auth/login with a wrong password; POST /api/auth/login with the password, then POST /api/auth/mfa/verify with a wrong code; POST /api/auth/login with the password, then POST /api/auth/mfa/verify with the current authenticator code. Then GET /api/audit-trail/ledger?limit=50",
       "expected": "HTTP 401; 200 then 401; 200 then 200 with a session. The ledger then holds exactly five entries for the run identity that it did not hold before the step, reading newest first, each hash-chained: \"Signed in: password and second factor verified\", \"Password verified: authenticator code requested\", \"Second factor refused: wrong code\", \"Password verified: authenticator code requested\", \"Sign-in refused: wrong password\"; the server chain verdict is ok",
       "status": "pass",
-      "observed": "sign-in statuses 401, 200, 401, 200, 200; 5 new ledger entries for user:1, newest first: \"Signed in: password and second factor verified\", \"Password verified: authenticator code requested\", \"Second factor refused: wrong code\", \"Password verified: authenticator code requested\", \"Sign-in refused: wrong password\"; all hash-chained; server chain verdict ok=true over 302 row(s)",
-      "startedAt": "2026-11-10T02:43:44.411Z",
-      "finishedAt": "2026-11-10T02:43:45.847Z",
+      "observed": "sign-in statuses 401, 200, 401, 200, 200; 5 new ledger entries for user:1, newest first: \"Signed in: password and second factor verified\", \"Password verified: authenticator code requested\", \"Second factor refused: wrong code\", \"Password verified: authenticator code requested\", \"Sign-in refused: wrong password\"; all hash-chained; server chain verdict ok=true over 625 row(s)",
+      "startedAt": "2026-11-10T03:06:57.870Z",
+      "finishedAt": "2026-11-10T03:06:59.358Z",
       "evidence": [],
       "api": [
         {
@@ -535,8 +531,8 @@
       "expected": "Projects 200 before; logout 200; afterwards the projects API answers 401 and the session check authenticated=false. The newest ledger entry the step added for the run identity reads \"Signed out\", hash-chained",
       "status": "pass",
       "observed": "own session (password+totp): projects 200; logout 200; afterwards projects 401, session check signed out; newest new ledger entry for user:1: \"Signed out\", chained",
-      "startedAt": "2026-11-10T02:43:45.847Z",
-      "finishedAt": "2026-11-10T02:44:00.431Z",
+      "startedAt": "2026-11-10T03:06:59.358Z",
+      "finishedAt": "2026-11-10T03:07:00.451Z",
       "evidence": [],
       "api": [
         {
@@ -567,8 +563,8 @@
       "expected": "Projects 200 before; the suspension 200. Suspended: the subject's session reads projects 401 ACCOUNT_INACTIVE; the session check answers authenticated=false with AUTH_ACCOUNT_INACTIVE; the password step answers 403 AUTH_ACCOUNT_INACTIVE and issues no challenge; the newest ledger entry the step added for the subject reads \"Sign-in refused: the account is not active (suspended or deprovisioned)\", hash-chained. Restored: the old session stays ended, 401 SESSION_ENDED; a new sign-in reads projects 200. Without the two credentials the step is recorded \"not executed — credential not supplied\"",
       "status": "pass",
       "observed": "subject user:5 (password+totp): projects 200; suspended by the platform administrator user:4 (not an organisation admin; session roles: member, user), 200; its session read projects 401 ACCOUNT_INACTIVE, session check 401 AUTH_ACCOUNT_INACTIVE, password step 403 AUTH_ACCOUNT_INACTIVE, no challenge; newest new ledger entry \"Sign-in refused: the account is not active (suspended or deprovisioned)\", chained; restored, the old session 401 SESSION_ENDED, a new sign-in (password+totp) read projects 200",
-      "startedAt": "2026-11-10T02:44:00.431Z",
-      "finishedAt": "2026-11-10T02:44:30.165Z",
+      "startedAt": "2026-11-10T03:07:00.451Z",
+      "finishedAt": "2026-11-10T03:07:30.208Z",
       "evidence": [],
       "api": [
         {
@@ -599,8 +595,8 @@
       "expected": "Settings 200 and the PATCH 200. The step's own session reads projects 200 at first. After 65 seconds idle: projects 401 SESSION_IDLE; the refresh 401 SESSION_IDLE with no new tokens; the session check authenticated=false. The run session, in use, still reads projects 200. The setting is restored",
       "status": "pass",
       "observed": "own session (password+totp): projects 200; after 65 s idle 401 SESSION_IDLE; refresh 401 SESSION_IDLE; session check signed out; run session 200; window restored to 15 min",
-      "startedAt": "2026-11-10T02:44:30.165Z",
-      "finishedAt": "2026-11-10T02:45:36.741Z",
+      "startedAt": "2026-11-10T03:07:30.208Z",
+      "finishedAt": "2026-11-10T03:08:36.832Z",
       "evidence": [],
       "api": [
         {

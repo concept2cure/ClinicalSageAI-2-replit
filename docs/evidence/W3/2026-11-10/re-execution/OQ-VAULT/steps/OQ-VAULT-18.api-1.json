@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ-002 Library program 20261110024537",
+      "name": "OQ-002 Library program 20261110030837",
       "programType": "ind",
       "productType": "drug",
       "primaryAgency": "FDA",
@@ -16,15 +16,15 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 101,
+    "durationMs": 162,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "2a5913d3-78a9-41a0-9443-d9a52c648380",
-        "title": "OQ-002 Library program 20261110024537",
+        "id": "0b1d7411-0217-456e-b45f-cbbff3f735a1",
+        "title": "OQ-002 Library program 20261110030837",
         "ws": "Biotech",
         "pathway": "ind",
-        "code": "OQ-002-BM0C",
+        "code": "OQ-002-575N",
         "stage": "Planning",
         "status": "active",
         "lead": "oq-runner@validation.local",
@@ -41,15 +41,15 @@
         "readinessState": "measured"
       },
       "program": {
-        "id": "2a5913d3-78a9-41a0-9443-d9a52c648380",
-        "code": "OQ-002-BM0C",
-        "name": "OQ-002 Library program 20261110024537",
+        "id": "0b1d7411-0217-456e-b45f-cbbff3f735a1",
+        "code": "OQ-002-575N",
+        "name": "OQ-002 Library program 20261110030837",
         "program_type": "ind",
         "status": "active",
         "phase": "planning",
         "priority": "medium",
         "description": null,
-        "product_name": "OQ-002 Library program 20261110024537",
+        "product_name": "OQ-002 Library program 20261110030837",
         "indication": "Validation exercise",
         "intended_use": null,
         "primary_agency": "FDA",
@@ -61,8 +61,8 @@
         "approval_date": null,
         "lead_user_id": 1,
         "team_members": [],
-        "created_at": "2026-11-10T02:48:07.211Z",
-        "updated_at": "2026-11-10T02:48:07.211Z",
+        "created_at": "2026-11-10T03:11:07.641Z",
+        "updated_at": "2026-11-10T03:11:07.641Z",
         "application_number": null,
         "product_type": "drug",
         "device_class": null,
@@ -80,7 +80,7 @@
         "device_flags": null,
         "readiness": 0,
         "readinessState": "measured",
-        "readinessAsOf": "2026-11-10T02:48:07.288Z"
+        "readinessAsOf": "2026-11-10T03:11:07.767Z"
       },
       "meta": {
         "created": true,
@@ -88,7 +88,7 @@
         "actorUserId": 1,
         "clientWorkspaceId": 2,
         "clientWorkspaceName": "Concept2Cure Therapeutics",
-        "documentId": "doc_ea8b92f8cf1f4ed8b7f980e2f602a0ed",
+        "documentId": "doc_130e4c5e8cc140e0a918c697ba2ad983",
         "scaffoldedSections": 92,
         "marketSupport": {
           "tier": "build_and_sequence",
@@ -99,9 +99,9 @@
             "US_IND_AMENDMENT"
           ]
         },
-        "submissionId": 19,
+        "submissionId": 42,
         "submissionCreated": true,
-        "projectAnchorId": 18,
+        "projectAnchorId": 39,
         "projectAnchorCreated": true
       }
     }

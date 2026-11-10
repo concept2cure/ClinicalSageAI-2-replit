@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.S.1",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 19,
+    "durationMs": 14,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -22,7 +22,7 @@
         "stale": false,
         "staleReason": null,
         "compiledHash": "61f8f7358d925ae31633d4aac6cbf5efa7b835010e5a5a5679045084256d74b2",
-        "updatedAt": "2026-11-10T02:53:26.884Z",
+        "updatedAt": "2026-11-10T03:39:34.590Z",
         "completeness": 100,
         "missingInputs": [],
         "narrative": "The drug substance is BX-701, manufactured by Acme Fine Chemicals. This section provides nomenclature (INN, CAS number) and structure (molecular formula, molecular weight) from the recorded drug-substance register. General properties (§3.2.S.1.3) is not recorded and is not established by this section.",
@@ -66,7 +66,7 @@
         "lineage": [
           {
             "sourceType": "drug_substance",
-            "sourceKey": "drug_substance:5",
+            "sourceKey": "drug_substance:38",
             "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e",
             "changedSinceCompile": false
           }

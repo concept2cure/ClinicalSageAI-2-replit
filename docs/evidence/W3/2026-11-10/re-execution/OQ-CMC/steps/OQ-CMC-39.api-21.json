@@ -5,19 +5,19 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+      "projectId": "78731580-7719-4562-985d-a412edebff5a",
       "scope": "both"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 29,
+    "durationMs": 24,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
         "organizationId": 2,
         "scope": "both",
         "cqas": [
@@ -91,7 +91,7 @@
           "ICH Q8(R2)",
           "ICH Q9"
         ],
-        "generatedAt": "2026-11-10T02:59:20.487Z"
+        "generatedAt": "2026-11-10T03:45:50.117Z"
       }
     }
   }

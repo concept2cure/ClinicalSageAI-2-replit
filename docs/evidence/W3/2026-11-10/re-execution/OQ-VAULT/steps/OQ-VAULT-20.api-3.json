@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/relationships",
+    "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/relationships",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,27 +9,27 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 38,
+    "durationMs": 46,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
         "relationships": [
           {
-            "id": "73ffdaca-a3e0-4da3-a43e-5891ef4b1914",
+            "id": "5fa5c2f0-f004-4683-b604-0a52affe0443",
             "type": "supporting",
             "direction": "outgoing",
             "label": "Supported by",
             "note": null,
-            "createdAt": "2026-11-10T02:48:09.642Z",
+            "createdAt": "2026-11-10T03:11:10.134Z",
             "createdBy": "oq-runner@validation.local",
             "other": {
-              "documentId": "5cc06622-b6d7-4871-80cc-8c654b66df0d",
-              "title": "OQ-002 supporting record 20261110024537",
+              "documentId": "83b4b453-57f9-40b0-a158-12c9cd41ec28",
+              "title": "OQ-002 supporting record 20261110030837",
               "version": "1.0",
               "documentType": "PROTOCOL",
-              "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
-              "programName": "OQ-002 Vault program 20261110024537",
+              "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
+              "programName": "OQ-002 Vault program 20261110030837",
               "superseded": false,
               "otherClient": false
             }

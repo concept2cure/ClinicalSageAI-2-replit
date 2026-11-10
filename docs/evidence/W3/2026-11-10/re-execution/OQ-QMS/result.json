@@ -5,8 +5,8 @@
   "appLabel": "QMS controlled documents",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/qms/run.mjs",
-  "executedAt": "2026-11-10T02:50:51.842Z",
-  "finishedAt": "2026-11-10T02:53:15.293Z",
+  "executedAt": "2026-11-10T03:11:18.613Z",
+  "finishedAt": "2026-11-10T03:14:45.450Z",
   "environment": {
     "baseUrl": "http://localhost:5200",
     "node": "v22.23.4",
@@ -14,7 +14,7 @@
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "3088335238a12d9e89df8fc5025ae22d0730766f"
+      "commit": "644657a825165ff86a2053d932add6e70db3b8ce"
     },
     "testUser": "oq-runner@validation.local",
     "authentication": "password+totp",
@@ -43,8 +43,8 @@
     }
   },
   "counts": {
-    "pass": 21,
-    "fail": 1,
+    "pass": 22,
+    "fail": 0,
     "deviation": 0,
     "not-executed": 0
   },
@@ -60,8 +60,8 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-11-10T02:50:52.474Z",
-      "finishedAt": "2026-11-10T02:50:52.729Z",
+      "startedAt": "2026-11-10T03:11:19.226Z",
+      "finishedAt": "2026-11-10T03:11:19.484Z",
       "evidence": [],
       "api": [
         {
@@ -86,8 +86,8 @@
       "expected": "HTTP 400 QMS_CREATE_INVALID (v0.8: the controlled create, 2026-10-14); nothing created",
       "status": "pass",
       "observed": "HTTP 400 QMS_CREATE_INVALID: {\"error\":\"Choose an owned project, document type and title, and state a reason of at least eight characters.\",\"details\":{\"code\":\"QMS_CREATE_INVALID\"}}; not registered",
-      "startedAt": "2026-11-10T02:50:52.729Z",
-      "finishedAt": "2026-11-10T02:50:53.268Z",
+      "startedAt": "2026-11-10T03:11:19.484Z",
+      "finishedAt": "2026-11-10T03:11:20.030Z",
       "evidence": [],
       "api": [
         {
@@ -118,9 +118,9 @@
       "action": "POST /api/mdx/qms/documents {docNumber, title, docType:\"sop\", programId, templateKey:\"sop\", reason, nextReviewDate:+10d}; write the first authored section (PATCH /api/authoring/sections/:id {content, changeReason}); GET list; GET detail",
       "expected": "HTTP 201; status draft, version 1.0, bound to an authored copy; meta.auditTrail reports the §11.10(e) row; the section saves; listed and readable",
       "status": "pass",
-      "observed": "doc 3 SOP-OQ-20261110025052 draft v1.0; auditTrail={\"persisted\":true,\"chained\":true}",
-      "startedAt": "2026-11-10T02:50:53.268Z",
-      "finishedAt": "2026-11-10T02:50:54.741Z",
+      "observed": "doc 7 SOP-OQ-20261110031119 draft v1.0; auditTrail={\"persisted\":true,\"chained\":true}",
+      "startedAt": "2026-11-10T03:11:20.030Z",
+      "finishedAt": "2026-11-10T03:11:21.483Z",
       "evidence": [],
       "api": [
         {
@@ -132,13 +132,13 @@
         {
           "file": "steps/OQ-QMS-03.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/3f80b867-f573-427a-bb51-2f7f3623df89/sections",
+          "url": "http://localhost:5200/api/authoring/docs/e64acd6f-d09f-4951-bc25-383953c89cb0/sections",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-03.api-3.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/sections/9ad22888-376e-466e-b1ee-fcd5786429d8",
+          "url": "http://localhost:5200/api/authoring/sections/7dd14408-8326-4c8f-98f8-f241f5be7a84",
           "status": 200
         },
         {
@@ -150,7 +150,7 @@
         {
           "file": "steps/OQ-QMS-03.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 200
         }
       ],
@@ -169,8 +169,8 @@
       "expected": "HTTP 409",
       "status": "pass",
       "observed": "HTTP 409",
-      "startedAt": "2026-11-10T02:50:54.741Z",
-      "finishedAt": "2026-11-10T02:50:55.012Z",
+      "startedAt": "2026-11-10T03:11:21.483Z",
+      "finishedAt": "2026-11-10T03:11:21.756Z",
       "evidence": [],
       "api": [
         {
@@ -194,33 +194,33 @@
       "action": "resolve the signer (OQ_SIGNER_EMAIL); PATCH /api/mdx/qms/documents/:docA {status:\"in_review\", reason} with no route; then with route {reviewers:[], approvers:[signer], approvalDueDate:+5d}; GET /api/mdx/qms/documents/:docA/review-route",
       "expected": "Without a route: HTTP 409 REVIEW_ROUTE_REQUIRED and SOP A stays draft. With it: HTTP 200, status in_review; the route is open, round 1, sent by the run identity, with one member: the signer, role approver, step open, outcome pending",
       "status": "pass",
-      "observed": "no route → 409 REVIEW_ROUTE_REQUIRED (still draft); routed send → in_review; route 564f4919-b97c-435c-ad14-cc49c7b8af91 open, approver OQ Signer at their turn",
-      "startedAt": "2026-11-10T02:50:55.012Z",
-      "finishedAt": "2026-11-10T02:50:56.548Z",
+      "observed": "no route → 409 REVIEW_ROUTE_REQUIRED (still draft); routed send → in_review; route 19fee6b3-dff1-43d9-9b76-622feba16342 open, approver OQ Signer at their turn",
+      "startedAt": "2026-11-10T03:11:21.756Z",
+      "finishedAt": "2026-11-10T03:11:31.259Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-04b.api-1.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 409
         },
         {
           "file": "steps/OQ-QMS-04b.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-04b.api-3.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-04b.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/review-route",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/review-route",
           "status": 200
         }
       ],
@@ -239,43 +239,43 @@
       "action": "sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first approve with {password} only; POST /api/mdx/qms/documents/:docA/approve {password, mfaToken?, meaning:\"APPROVED\", reason, effectiveDate}; approve again",
       "expected": "A signer with a second factor enrolled: the password-only approval is refused 400 MFA_TOKEN_REQUIRED, SOP A stays in review and no signature row is written (§11.200). HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded \"not executed — credential not supplied\".",
       "status": "pass",
-      "observed": "password-only approval refused 400 MFA_TOKEN_REQUIRED with no row written; approved with password + TOTP; effective; author 1 (oq-runner@validation.local) ≠ approver 2 (oq-signer@validation.local) at 2026-11-10T02:51:00.615Z; signature 14 meaning APPROVED, password+totp, digest 804d7ef87df6…; auditTrail={\"persisted\":true,\"chained\":true}; re-approve → 409 QMS_INVALID_STATE",
-      "startedAt": "2026-11-10T02:50:56.548Z",
-      "finishedAt": "2026-11-10T02:51:30.613Z",
+      "observed": "password-only approval refused 400 MFA_TOKEN_REQUIRED with no row written; approved with password + TOTP; effective; author 1 (oq-runner@validation.local) ≠ approver 2 (oq-signer@validation.local) at 2026-11-10T03:12:00.653Z; signature 28 meaning APPROVED, password+totp, digest c597034be84a…; auditTrail={\"persisted\":true,\"chained\":true}; re-approve → 409 QMS_INVALID_STATE",
+      "startedAt": "2026-11-10T03:11:31.260Z",
+      "finishedAt": "2026-11-10T03:12:30.615Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-05.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/approve",
           "status": 400,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-05.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A3",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A7",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-05.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-05.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/approve",
           "status": 409,
           "identity": "oq-signer@validation.local"
         }
@@ -294,9 +294,9 @@
       "action": "GET /api/part11/signatures/by-target?target=qms-document:<docA>; GET /api/mdx/qms/documents/:docA; recompute sha256(canonicalJson(version content)) (tests/validation/lib/qms-digest.mjs — a re-implementation of computeQmsDocumentContentDigest)",
       "expected": "One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true, second_factor_verified true when the signer has a second factor enrolled; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest; (v0.8) the review route is complete, its approver signed with this row",
       "status": "pass",
-      "observed": "1 row (id 14) by signer 2, APPROVED, qms-document-version-content-sha256, second_factor_verified true; recomputed digest 804d7ef87df6… == signature == document (match true); route 564f4919-b97c-435c-ad14-cc49c7b8af91 complete on esig 14",
-      "startedAt": "2026-11-10T02:51:30.613Z",
-      "finishedAt": "2026-11-10T02:51:31.689Z",
+      "observed": "1 row (id 28) by signer 2, APPROVED, qms-document-version-content-sha256, second_factor_verified true; recomputed digest c597034be84a… == signature == document (match true); route 19fee6b3-dff1-43d9-9b76-622feba16342 complete on esig 28",
+      "startedAt": "2026-11-10T03:12:30.615Z",
+      "finishedAt": "2026-11-10T03:12:31.719Z",
       "evidence": [
         "steps/OQ-QMS-05b.digest-recomputation.json"
       ],
@@ -304,25 +304,25 @@
         {
           "file": "steps/OQ-QMS-05b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A3",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A7",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-05b.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-05b.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/versions",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/versions",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-05b.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/review-route",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/review-route",
           "status": 200
         }
       ],
@@ -340,9 +340,9 @@
       "action": "POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:\"sop\", programId, reason, nextReviewDate:+5d}; write its procedure text; PATCH status in_review with a route naming the signer as QMS approver",
       "expected": "HTTP 201, draft v1.0; then in review on an open route",
       "status": "pass",
-      "observed": "doc 5 SOP-OQ-B-20261110025052 in_review v1.0",
-      "startedAt": "2026-11-10T02:51:31.689Z",
-      "finishedAt": "2026-11-10T02:51:32.867Z",
+      "observed": "doc 9 SOP-OQ-B-20261110031119 in_review v1.0",
+      "startedAt": "2026-11-10T03:12:31.719Z",
+      "finishedAt": "2026-11-10T03:12:32.885Z",
       "evidence": [],
       "api": [
         {
@@ -354,19 +354,19 @@
         {
           "file": "steps/OQ-QMS-06a.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/745f45a8-30a7-4628-9764-1b09f6b862e5/sections",
+          "url": "http://localhost:5200/api/authoring/docs/069c29c7-4769-47bb-8171-6402bd60a4fc/sections",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-06a.api-3.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/sections/74990697-44e8-40ff-ab00-57db522ec9f7",
+          "url": "http://localhost:5200/api/authoring/sections/be9baff3-fefe-48d6-966d-233d9b7c090f",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-06a.api-4.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         }
       ],
@@ -385,20 +385,20 @@
       "expected": "HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password, meaning and reason; docB stays in review",
       "status": "pass",
       "observed": "HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: password, meaning, reason); docB still in review",
-      "startedAt": "2026-11-10T02:51:32.867Z",
-      "finishedAt": "2026-11-10T02:51:33.412Z",
+      "startedAt": "2026-11-10T03:12:32.885Z",
+      "finishedAt": "2026-11-10T03:12:33.421Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-06.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-QMS-06.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         }
       ],
@@ -417,27 +417,27 @@
       "expected": "HTTP 401 PASSWORD_VERIFICATION_FAILED; docB stays in review; no signature row for docB",
       "status": "pass",
       "observed": "HTTP 401 PASSWORD_VERIFICATION_FAILED; docB still in review; 0 signature rows",
-      "startedAt": "2026-11-10T02:51:33.412Z",
-      "finishedAt": "2026-11-10T02:51:34.534Z",
+      "startedAt": "2026-11-10T03:12:33.421Z",
+      "finishedAt": "2026-11-10T03:12:34.504Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-06b.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/approve",
           "status": 401,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06b.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-06b.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A5",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A9",
           "status": 200
         }
       ],
@@ -455,9 +455,9 @@
       "action": "as the signer, create SOP C (authored by the signer) with its text; send it for review on a route naming the signer as its QMS approver; then approve it with the signer's own valid password (and code)",
       "expected": "The send is refused HTTP 409 MEMBER_IS_AUTHOR (v0.8: the route refuses the author before anything is written) and SOP C stays draft; the approval is refused HTTP 409 QMS_INVALID_STATE (only a document under review is approved); no signature row",
       "status": "pass",
-      "observed": "SOP C 6 authored by 2; naming the author as approver → HTTP 409 MEMBER_IS_AUTHOR; self-approve → HTTP 409 QMS_INVALID_STATE; still draft; 0 signature rows",
-      "startedAt": "2026-11-10T02:51:34.534Z",
-      "finishedAt": "2026-11-10T02:52:01.152Z",
+      "observed": "SOP C 10 authored by 2; naming the author as approver → HTTP 409 MEMBER_IS_AUTHOR; self-approve → HTTP 409 QMS_INVALID_STATE; still draft; 0 signature rows",
+      "startedAt": "2026-11-10T03:12:34.504Z",
+      "finishedAt": "2026-11-10T03:13:01.188Z",
       "evidence": [],
       "api": [
         {
@@ -470,42 +470,42 @@
         {
           "file": "steps/OQ-QMS-06c.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/f72ac55f-6e9f-4da2-8b31-ff0abf5d84d5/sections",
+          "url": "http://localhost:5200/api/authoring/docs/62bb5557-dc16-4941-b5fd-95072766a648/sections",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06c.api-3.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/sections/9474170d-8c52-4fcd-ba0a-17f912985373",
+          "url": "http://localhost:5200/api/authoring/sections/04b604b9-7900-4a4c-9657-3f94e7dac258",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06c.api-4.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/mdx/qms/documents/6",
+          "url": "http://localhost:5200/api/mdx/qms/documents/10",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06c.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/6/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/10/approve",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06c.api-6.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/6",
+          "url": "http://localhost:5200/api/mdx/qms/documents/10",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06c.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A6",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A10",
           "status": 200,
           "identity": "oq-signer@validation.local"
         }
@@ -524,22 +524,22 @@
       "action": "as the signer, POST /documents/:docB/approve {password, meaning:\"APPROVED\", reason}",
       "expected": "HTTP 200 effective with meta.signature; one signature row for docB",
       "status": "pass",
-      "observed": "docB effective; signature 15 (APPROVED); 1 row",
-      "startedAt": "2026-11-10T02:52:01.152Z",
-      "finishedAt": "2026-11-10T02:52:30.961Z",
+      "observed": "docB effective; signature 29 (APPROVED); 1 row",
+      "startedAt": "2026-11-10T03:13:01.188Z",
+      "finishedAt": "2026-11-10T03:13:31.066Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-06d.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/approve",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-QMS-06d.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A5",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A9",
           "status": 200
         }
       ],
@@ -558,20 +558,20 @@
       "expected": "Without reason → 400 QMS_REASON_REQUIRED (v0.8: the controlled revision, 2026-10-14); with reason → version 2.0, status draft, prior approval cleared, audited",
       "status": "pass",
       "observed": "v2.0 draft; auditTrail={\"persisted\":true,\"chained\":true}",
-      "startedAt": "2026-11-10T02:52:30.961Z",
-      "finishedAt": "2026-11-10T02:52:31.537Z",
+      "startedAt": "2026-11-10T03:13:31.066Z",
+      "finishedAt": "2026-11-10T03:13:31.644Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-07.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/revise",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/revise",
           "status": 400
         },
         {
           "file": "steps/OQ-QMS-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/3/revise",
+          "url": "http://localhost:5200/api/mdx/qms/documents/7/revise",
           "status": 200
         }
       ],
@@ -590,20 +590,20 @@
       "expected": "HTTP 201 with exact documentVersion/contentDigest and chained audit; coverage HTTP 200",
       "status": "pass",
       "observed": "personal ack for v1.0; chained audit confirmed; coverage HTTP 200",
-      "startedAt": "2026-11-10T02:52:31.537Z",
-      "finishedAt": "2026-11-10T02:52:32.385Z",
+      "startedAt": "2026-11-10T03:13:31.644Z",
+      "finishedAt": "2026-11-10T03:13:32.483Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-08.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-08.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/training-ack",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/training-ack",
           "status": 201
         },
         {
@@ -627,9 +627,9 @@
       "action": "GET /api/mdx/qms/documents/review-due?within=30 (docB is effective with nextReviewDate +5d)",
       "expected": "docB listed with overdue=false",
       "status": "pass",
-      "observed": "listed (2 due within 30 days)",
-      "startedAt": "2026-11-10T02:52:32.385Z",
-      "finishedAt": "2026-11-10T02:52:32.655Z",
+      "observed": "listed (4 due within 30 days)",
+      "startedAt": "2026-11-10T03:13:32.483Z",
+      "finishedAt": "2026-11-10T03:13:32.750Z",
       "evidence": [],
       "api": [
         {
@@ -654,38 +654,38 @@
       "expected": "HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password and meaning; docB keeps the status it had; no new signature row",
       "status": "pass",
       "observed": "HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: password, meaning); docB still effective; signature rows unchanged (1)",
-      "startedAt": "2026-11-10T02:52:32.655Z",
-      "finishedAt": "2026-11-10T02:52:34.011Z",
+      "startedAt": "2026-11-10T03:13:32.750Z",
+      "finishedAt": "2026-11-10T03:13:34.099Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-QMS-10b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-10b.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A5",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A9",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-10b.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/retire",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/retire",
           "status": 400
         },
         {
           "file": "steps/OQ-QMS-10b.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
           "status": 200
         },
         {
           "file": "steps/OQ-QMS-10b.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A5",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A9",
           "status": 200
         }
       ],
@@ -700,37 +700,54 @@
         "URS-QMS-007"
       ],
       "kind": "scripted",
-      "action": "as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:\"APPROVED\", reason}; read the signatures by target; recompute the §11.70 digest from the stored row; retire again",
-      "expected": "HTTP 200: status retired, metadata.retired {reason, meaning APPROVED, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE",
-      "status": "fail",
-      "observed": {
-        "error": "Retirement is an electronic signature and requires a password, the signature meaning 'retirement' and a reason for change; missing or invalid: meaning",
-        "details": {
-          "code": "ESIGNATURE_COMPONENT_MISSING",
-          "fieldErrors": {
-            "meaning": [
-              "Signature meaning must be 'retirement' (21 CFR Part 11 §11.50)"
-            ]
-          }
-        }
-      },
-      "startedAt": "2026-11-10T02:52:34.011Z",
-      "finishedAt": "2026-11-10T02:53:00.404Z",
+      "action": "as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:\"retirement\", reason} (v0.10; \"APPROVED\" until P-51); read the signatures by target; recompute the §11.70 digest from the stored row; retire again",
+      "expected": "HTTP 200: status retired, metadata.retired {reason, meaning retirement, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning retirement, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE",
+      "status": "pass",
+      "observed": "retired by 2 (oq-signer@validation.local) from effective at 2026-11-10T03:14:00.633+00:00; signature 30 meaning retirement, password+totp, digest 4dbc4c3c9d8f… (recomputed match true); 2 rows for docB; auditTrail={\"persisted\":true,\"chained\":true}; re-retire → 409 QMS_INVALID_STATE",
+      "startedAt": "2026-11-10T03:13:34.099Z",
+      "finishedAt": "2026-11-10T03:14:30.643Z",
       "evidence": [
-        "steps/OQ-QMS-10.at-failure.png"
+        "steps/OQ-QMS-10.retirement-digest-recomputation.json"
       ],
       "api": [
         {
           "file": "steps/OQ-QMS-10.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/mdx/qms/documents/5/retire",
-          "status": 400,
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/retire",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-QMS-10.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A9",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-QMS-10.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-QMS-10.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/versions",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-QMS-10.api-5.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/mdx/qms/documents/9/retire",
+          "status": 409,
           "identity": "oq-signer@validation.local"
         }
       ],
       "consoleErrors": [],
       "note": "Security review 2026-09-24, DP-32 / P1-29. Retiring is the terminal transition of an effective procedure and a signed record (§11.50, §11.200), taken with the same ceremony as the approval: signing authority, password and enrolled second factor re-verified, the meaning, one electronic_signatures row bound to the version content, the UPDATE and the chained audit row in one transaction (server/services/qms/document-approval-signature.ts retireQmsDocumentSigned).",
-      "failure": "signed retire expected 200, got 400",
       "rateLimitRetries": 0
     },
     {
@@ -743,9 +760,9 @@
       "action": "POST /api/mdx/qms/changes {changeNumber, title, reason}; GET /api/mdx/qms/changes; GET /changes/summary",
       "expected": "HTTP 201 and the change is listed",
       "status": "pass",
-      "observed": "change 2 listed (2)",
-      "startedAt": "2026-11-10T02:53:00.404Z",
-      "finishedAt": "2026-11-10T02:53:00.945Z",
+      "observed": "change 3 listed (3)",
+      "startedAt": "2026-11-10T03:14:30.643Z",
+      "finishedAt": "2026-11-10T03:14:31.195Z",
       "evidence": [],
       "api": [
         {
@@ -776,8 +793,8 @@
       "expected": "Both 403 LAUNCH_SCOPE: no plan is created or listed in this release",
       "status": "pass",
       "observed": "create 403 LAUNCH_SCOPE; list 403 LAUNCH_SCOPE",
-      "startedAt": "2026-11-10T02:53:00.945Z",
-      "finishedAt": "2026-11-10T02:53:01.470Z",
+      "startedAt": "2026-11-10T03:14:31.195Z",
+      "finishedAt": "2026-11-10T03:14:31.729Z",
       "evidence": [],
       "api": [
         {
@@ -808,8 +825,8 @@
       "expected": "HTTP 200 with a non-empty template family",
       "status": "pass",
       "observed": "9 templates",
-      "startedAt": "2026-11-10T02:53:01.470Z",
-      "finishedAt": "2026-11-10T02:53:01.735Z",
+      "startedAt": "2026-11-10T03:14:31.729Z",
+      "finishedAt": "2026-11-10T03:14:31.995Z",
       "evidence": [],
       "api": [
         {
@@ -834,8 +851,8 @@
       "expected": "SOP register shows the created SOP; Change control tab renders (an unavailable store is an honest error state)",
       "status": "pass",
       "observed": "SOP register shows the SOP; change control tab captured",
-      "startedAt": "2026-11-10T02:53:01.735Z",
-      "finishedAt": "2026-11-10T02:53:08.977Z",
+      "startedAt": "2026-11-10T03:14:31.995Z",
+      "finishedAt": "2026-11-10T03:14:39.296Z",
       "evidence": [
         "steps/OQ-QMS-14.sop-register.png",
         "steps/OQ-QMS-14.change-control.png"
@@ -858,8 +875,8 @@
       "expected": "The page explains the surface is not in this release (no plan content, no upsell)",
       "status": "pass",
       "observed": "launch-scope gate rendered",
-      "startedAt": "2026-11-10T02:53:08.977Z",
-      "finishedAt": "2026-11-10T02:53:15.195Z",
+      "startedAt": "2026-11-10T03:14:39.296Z",
+      "finishedAt": "2026-11-10T03:14:45.355Z",
       "evidence": [
         "steps/OQ-QMS-15.png"
       ],

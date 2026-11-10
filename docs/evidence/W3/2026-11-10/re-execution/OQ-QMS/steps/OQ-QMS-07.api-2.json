@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/mdx/qms/documents/3/revise",
+    "url": "http://localhost:5200/api/mdx/qms/documents/7/revise",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -11,14 +11,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 62,
+    "durationMs": 60,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": 3,
+        "id": 7,
         "organization_id": 2,
-        "doc_number": "SOP-OQ-20261110025052",
-        "title": "OQ-006 Document control SOP 20261110025052",
+        "doc_number": "SOP-OQ-20261110031119",
+        "title": "OQ-006 Document control SOP 20261110031119",
         "doc_type": "sop",
         "category": "production",
         "version": "2.0",
@@ -93,16 +93,16 @@
             "by": 1,
             "from": "1.0",
             "reason": "OQ-006 step 07: periodic review found an obsolete reference",
-            "sourceDocumentId": "3f80b867-f573-427a-bb51-2f7f3623df89"
+            "sourceDocumentId": "e64acd6f-d09f-4951-bc25-383953c89cb0"
           },
           "retainedAuthoringDocuments": [
-            "3f80b867-f573-427a-bb51-2f7f3623df89"
+            "e64acd6f-d09f-4951-bc25-383953c89cb0"
           ]
         },
-        "created_at": "2026-11-10T02:50:53.541Z",
-        "updated_at": "2026-11-10T02:52:31.491Z",
+        "created_at": "2026-11-10T03:11:20.298Z",
+        "updated_at": "2026-11-10T03:13:31.605Z",
         "deleted_at": null,
-        "authoring_document_id": "eb0177f7-f041-473c-ab70-40be92c5101f"
+        "authoring_document_id": "d75dd25f-3db3-4f20-93be-380aeb3302f2"
       },
       "meta": {
         "auditTrail": {

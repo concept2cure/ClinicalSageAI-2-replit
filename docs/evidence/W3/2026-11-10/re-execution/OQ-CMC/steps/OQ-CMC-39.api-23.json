@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
-      "title": "OQ comparability 20261110025315b",
+      "projectId": "78731580-7719-4562-985d-a412edebff5a",
+      "title": "OQ comparability 20261110033923b",
       "type": "process",
       "product": "Scale",
       "status": "draft"
@@ -15,19 +15,19 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 21,
+    "durationMs": 15,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "57e7fcdf-9531-4bbc-a810-143a82b657df",
-        "project_id": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
-        "title": "OQ comparability 20261110025315b",
+        "id": "75783489-f2df-43ea-83cf-c94d83933661",
+        "project_id": "78731580-7719-4562-985d-a412edebff5a",
+        "title": "OQ comparability 20261110033923b",
         "product": "Scale",
         "type": "process",
         "status": "draft",
-        "createdAt": "2026-11-10T02:59:21.033Z",
-        "updatedAt": "2026-11-10T02:59:21.033Z",
+        "createdAt": "2026-11-10T03:45:50.651Z",
+        "updatedAt": "2026-11-10T03:45:50.651Z",
         "methods": [],
         "outcome": null,
         "owner": null

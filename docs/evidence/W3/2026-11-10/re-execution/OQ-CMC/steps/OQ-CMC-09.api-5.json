@@ -6,21 +6,21 @@
     "identity": null,
     "body": {
       "substanceName": "BX-703",
-      "projectId": "4af7d245-994e-4773-b88a-d03f914a25d7",
+      "projectId": "e248f0a4-9bcf-401f-8aa6-be835e6646b6",
       "status": "development"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 18,
+    "durationMs": 22,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 8,
+        "id": 41,
         "organizationId": 2,
-        "projectId": "4af7d245-994e-4773-b88a-d03f914a25d7",
+        "projectId": "e248f0a4-9bcf-401f-8aa6-be835e6646b6",
         "substanceName": "BX-703",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -40,8 +40,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": null,
-        "createdAt": "2026-11-10T02:53:26.080Z",
-        "updatedAt": "2026-11-10T02:53:26.080Z"
+        "createdAt": "2026-11-10T03:39:33.784Z",
+        "updatedAt": "2026-11-10T03:39:33.784Z"
       },
       "module3Linked": true
     }

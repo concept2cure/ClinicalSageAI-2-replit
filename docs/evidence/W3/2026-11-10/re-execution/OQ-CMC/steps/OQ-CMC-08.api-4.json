@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/0d801c1b-ee09-44be-9fa3-a5bac1262c67",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/1fae3511-9127-4bbf-ba87-a3d1bff918d2",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 12,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

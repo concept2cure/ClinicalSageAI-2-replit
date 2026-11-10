@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+    "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -22,7 +22,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 48,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "ok": false,

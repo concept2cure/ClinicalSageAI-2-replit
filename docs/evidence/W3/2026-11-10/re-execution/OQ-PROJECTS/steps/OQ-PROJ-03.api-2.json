@@ -5,14 +5,14 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ bad type 20261110024200",
+      "name": "OQ bad type 20261110030559",
       "programType": "not-a-type"
     }
   },
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 157,
     "rateLimitRetries": 0,
     "body": {
       "error": "The filing type must be one of: hde, mdl, ivd_licence, shonin, ninsho, todokede, ivd_approval, jp_cdx, 510k, de_novo, pma, ivd, device, cer, ide, ind, cta, bla, biologic, nda, maa, jnda, anda, mdr, ivdr, dmf, pas, cbe, annual_report, rems, pader, ind_amendment, ind_safety_report, ind_annual_report, briefing, orphan, designation, fast_track, rmat, psp, type_d_meeting, interact_meeting, expanded_access_individual, expanded_access_intermediate, expanded_access_treatment, bla_pas, bla_cbe30, bla_cbe0, bla_annual_report, bla_pediatric_report, bla_pmr_status_report, bla_distribution_report, bpdr, bla_pae_report, cber_master_file, cber_lot_release, eua_request, csr, protocol, ib, sap, icf, dsur, psur"

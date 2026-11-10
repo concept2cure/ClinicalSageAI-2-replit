@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "554a00ab-5944-48ee-8783-723df129a44f",
+      "projectId": "1f8b6f80-3a4d-4d98-9f8e-22dc8ad004ca",
       "substanceName": "Q1E-noaccel-DS",
       "modality": "small_molecule",
       "status": "development",
@@ -18,14 +18,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 31,
+    "durationMs": 26,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 11,
+        "id": 44,
         "organizationId": 2,
-        "projectId": "554a00ab-5944-48ee-8783-723df129a44f",
+        "projectId": "1f8b6f80-3a4d-4d98-9f8e-22dc8ad004ca",
         "substanceName": "Q1E-noaccel-DS",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -47,8 +47,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": "phase1",
-        "createdAt": "2026-11-10T02:59:04.894Z",
-        "updatedAt": "2026-11-10T02:59:04.894Z"
+        "createdAt": "2026-11-10T03:45:34.751Z",
+        "updatedAt": "2026-11-10T03:45:34.751Z"
       },
       "module3Linked": true
     }

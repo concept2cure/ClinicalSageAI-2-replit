@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "http://localhost:5200/api/cmc/stability-studies/19",
+    "url": "http://localhost:5200/api/cmc/stability-studies/61",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -11,14 +11,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 27,
+    "durationMs": 20,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 19,
+        "id": 61,
         "organizationId": 2,
-        "projectId": "451684e9-524c-465e-8389-599ad123eaf9",
+        "projectId": "818bcda1-8dfe-48ee-9674-b6d4dace5aee",
         "studyTitle": null,
         "productName": "PRV-signed",
         "batchNumber": "B-1",
@@ -65,8 +65,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T03:01:03.313Z",
-        "updatedAt": "2026-11-10T03:01:03.592Z"
+        "createdAt": "2026-11-10T03:47:33.323Z",
+        "updatedAt": "2026-11-10T03:47:33.596Z"
       },
       "module3Linked": true
     }

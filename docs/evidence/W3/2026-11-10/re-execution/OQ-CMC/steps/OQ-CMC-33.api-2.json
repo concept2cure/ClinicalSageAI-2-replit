@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1/approve",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1/approve",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -14,19 +14,14 @@
     }
   },
   "response": {
-    "status": 409,
+    "status": 403,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 376,
+    "durationMs": 311,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
-      "error": "§3.2.A.1 is 50% complete and cannot be approved. Missing required inputs: containerDescription. Record them and recompile.",
-      "data": {
-        "completeness": 50,
-        "missingInputs": [
-          "containerDescription"
-        ]
-      }
+      "error": "SEPARATION_OF_DUTIES",
+      "detail": "Separation of duties: you are an author of this record (register entries (audit chain)) and cannot review, approve or lock it. A different, authorized user must sign."
     }
   }
 }

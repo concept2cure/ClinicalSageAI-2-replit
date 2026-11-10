@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+    "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,16 +16,16 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 307,
+    "durationMs": 300,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 17,
+        "id": 59,
         "organizationId": 2,
-        "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
         "studyTitle": null,
-        "productName": "OQ-CLO-20261110025315",
+        "productName": "OQ-CLO-20261110033923",
         "batchNumber": "B-1",
         "dosageForm": "tablet",
         "strength": null,
@@ -65,17 +65,17 @@
         "notes": null,
         "shelfLife": "24 months at 25C/60%RH",
         "shelfLifeSignedBy": 1,
-        "shelfLifeSignedAt": "2026-11-10T03:00:30.614Z",
+        "shelfLifeSignedAt": "2026-11-10T03:47:00.606Z",
         "status": "COMPLETED",
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T02:59:22.146Z",
-        "updatedAt": "2026-11-10T03:00:30.614Z"
+        "createdAt": "2026-11-10T03:45:51.726Z",
+        "updatedAt": "2026-11-10T03:47:00.606Z"
       },
       "governance": {
-        "actionId": "act_7f52075c127e47cb9a82e0b0322a1f3d",
-        "sha256Chain": "40cc0b5b56c7cf09e2a6c694dbd6a9b25c0559960538d31339767f62e2bba662"
+        "actionId": "act_4e91578ddda04e3a930d4b20fbd0c085",
+        "sha256Chain": "fc6d581ac7cddb4b804e5bd7f33a9c803576dbfb99d8a0a8227ee00fce95c3bc"
       },
       "module3Linked": true
     }

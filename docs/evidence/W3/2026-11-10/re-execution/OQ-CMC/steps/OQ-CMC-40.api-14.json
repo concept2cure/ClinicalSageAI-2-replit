@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+    "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,12 +16,12 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 315,
+    "durationMs": 317,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
       "error": "This stability study is already COMPLETED",
-      "qualifiedAt": "2026-11-10T03:00:30.614Z"
+      "qualifiedAt": "2026-11-10T03:47:00.606Z"
     }
   }
 }

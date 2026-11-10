@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/annotations",
+    "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/annotations",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,18 +9,18 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 43,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
         "annotations": [
           {
-            "id": "9471baa2-4354-44d6-beb5-d88364d5fa3d",
+            "id": "6bcf90e0-3cf9-4d1b-912e-fa72292fa750",
             "parentId": null,
-            "versionId": "cbd66d82-3d49-4f79-b9c7-b1edf1440c6f",
+            "versionId": "80cbdc96-5907-4f86-8089-638181ced476",
             "versionLabel": "1.0",
-            "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+            "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
             "kind": "request_changes",
             "anchor": {
               "kind": "text",
@@ -35,23 +35,23 @@
             "bodySha256": "b5d58b65cc744024ee9249745cbfcb01517934bc141e1b8fd6f093e835bed146",
             "authorId": 1,
             "authorName": "oq-runner@validation.local",
-            "createdAt": "2026-11-10T02:48:15.571Z",
+            "createdAt": "2026-11-10T03:11:16.110Z",
             "lifecycleStage": null,
             "resolution": {
               "byId": 1,
               "byName": "oq-runner@validation.local",
-              "at": "2026-11-10T02:48:16.396Z",
+              "at": "2026-11-10T03:11:16.942Z",
               "note": "Dose per kilogram added in the next version.",
               "addressedIn": null
             },
             "retraction": null,
             "replies": [
               {
-                "id": "5f63fdcc-6a12-4042-800b-29747e07c46b",
-                "parentId": "9471baa2-4354-44d6-beb5-d88364d5fa3d",
-                "versionId": "cbd66d82-3d49-4f79-b9c7-b1edf1440c6f",
+                "id": "9f303390-24c2-4025-8df2-8e04f6559a0e",
+                "parentId": "6bcf90e0-3cf9-4d1b-912e-fa72292fa750",
+                "versionId": "80cbdc96-5907-4f86-8089-638181ced476",
                 "versionLabel": "1.0",
-                "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+                "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
                 "kind": "comment",
                 "anchor": null,
                 "anchorCurrent": null,
@@ -60,7 +60,7 @@
                 "bodySha256": "49721faa8421febb20dcbfb1501817c14af322c3323990fead880c2c9b360363",
                 "authorId": 1,
                 "authorName": "oq-runner@validation.local",
-                "createdAt": "2026-11-10T02:48:15.848Z",
+                "createdAt": "2026-11-10T03:11:16.388Z",
                 "lifecycleStage": null,
                 "resolution": null,
                 "retraction": null,
@@ -69,11 +69,11 @@
             ]
           },
           {
-            "id": "f9b3dbfc-dff2-4489-99aa-9e30f9d7003a",
+            "id": "6ce8c935-3c4b-4d0f-bb1f-4d1c90210a68",
             "parentId": null,
-            "versionId": "cbd66d82-3d49-4f79-b9c7-b1edf1440c6f",
+            "versionId": "80cbdc96-5907-4f86-8089-638181ced476",
             "versionLabel": "1.0",
-            "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+            "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
             "kind": "comment",
             "anchor": {
               "kind": "document"
@@ -84,13 +84,13 @@
             "bodySha256": "3bd61b1fe282041f6a4f9e8d8dc6fe474d2a19cb3d29e89fcfe47260f7a14c3a",
             "authorId": 1,
             "authorName": "oq-runner@validation.local",
-            "createdAt": "2026-11-10T02:48:16.671Z",
+            "createdAt": "2026-11-10T03:11:17.232Z",
             "lifecycleStage": null,
             "resolution": null,
             "retraction": {
               "byId": 1,
               "byName": "oq-runner@validation.local",
-              "at": "2026-11-10T02:48:17.213Z",
+              "at": "2026-11-10T03:11:17.805Z",
               "reason": "Posted on the wrong document by mistake."
             },
             "replies": []
@@ -98,7 +98,7 @@
         ],
         "openByVersion": [
           {
-            "versionId": "cbd66d82-3d49-4f79-b9c7-b1edf1440c6f",
+            "versionId": "80cbdc96-5907-4f86-8089-638181ced476",
             "versionLabel": "1.0",
             "current": true,
             "open": 0,

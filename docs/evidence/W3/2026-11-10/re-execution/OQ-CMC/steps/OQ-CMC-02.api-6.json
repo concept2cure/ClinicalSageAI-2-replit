@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/stability-studies?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+    "url": "http://localhost:5200/api/cmc/stability-studies?projectId=78731580-7719-4562-985d-a412edebff5a",
     "anonymous": false,
     "identity": "oq-viewer@validation.local",
     "body": null
@@ -15,10 +15,10 @@
       "success": true,
       "data": [
         {
-          "id": 6,
+          "id": 48,
           "studyTitle": null,
           "productName": "BX-701",
-          "batchNumber": "B-20261110025315",
+          "batchNumber": "B-20261110033923",
           "dosageForm": "solution",
           "strength": null,
           "scope": "DS",
@@ -46,9 +46,9 @@
           "startDate": "2026-01-01T00:00:00.000Z",
           "plannedEndDate": null,
           "organizationId": 2,
-          "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
-          "createdAt": "2026-11-10T02:53:18.133Z",
-          "updatedAt": "2026-11-10T02:53:18.133Z"
+          "projectId": "78731580-7719-4562-985d-a412edebff5a",
+          "createdAt": "2026-11-10T03:39:25.920Z",
+          "updatedAt": "2026-11-10T03:39:25.920Z"
         }
       ]
     }

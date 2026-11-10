@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-communications",
+    "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/agency-communications",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -17,21 +17,21 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 66,
+    "durationMs": 47,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "ace_1794279665586_c81c4974",
+        "id": "ace_1794282483111_3e50d4dc",
         "organizationId": 2,
-        "projectId": 24,
+        "projectId": 65,
         "sourceType": "uploaded_official_correspondence",
         "communicationType": "OQ-CMC-42 information request",
         "sourceChannel": "esg",
         "linkedSubmission": null,
         "linkedSectionCodes": [],
         "linkedArtifactIds": [],
-        "receivedDate": "2026-11-10T03:01:05.586Z",
+        "receivedDate": "2026-11-10T03:48:03.111Z",
         "dueDate": "2099-12-31T00:00:00.000Z",
         "urgency": "high",
         "responseRequired": true,
@@ -41,7 +41,7 @@
         "letterClass": null,
         "auditMetadata": {
           "capturedBy": "oq-runner@validation.local",
-          "capturedAt": "2026-11-10T03:01:05.586Z",
+          "capturedAt": "2026-11-10T03:48:03.111Z",
           "visibilityTier": "shared_client_c2c"
         }
       },

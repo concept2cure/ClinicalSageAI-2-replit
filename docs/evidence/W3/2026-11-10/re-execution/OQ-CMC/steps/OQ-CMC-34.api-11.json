@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a",
     "anonymous": false,
     "identity": null,
     "body": {

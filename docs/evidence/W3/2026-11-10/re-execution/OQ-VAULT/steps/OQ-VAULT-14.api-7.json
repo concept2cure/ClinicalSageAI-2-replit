@@ -7,7 +7,7 @@
     "body": {
       "sources": {
         "vault_documents": {
-          "nativeId": "bdef649c-07f8-4b6e-a774-530b0b34f795",
+          "nativeId": "e69a247d-8967-4bcb-8b68-3aae71587824",
           "role": "artifact"
         }
       }
@@ -16,11 +16,11 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 30,
+    "durationMs": 21,
     "rateLimitRetries": 0,
     "body": {
       "ok": true,
-      "canonicalId": "37c054a0-8dde-499a-8bcf-6dd4c90b6f86",
+      "canonicalId": "81aa9369-3646-4cb1-9810-5b2bcf0a6322",
       "created": true
     }
   }

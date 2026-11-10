@@ -5,8 +5,8 @@
   "appLabel": "CMC / Module 3",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/cmc/run.mjs",
-  "executedAt": "2026-11-10T02:53:15.354Z",
-  "finishedAt": "2026-11-10T03:01:06.968Z",
+  "executedAt": "2026-11-10T03:39:23.120Z",
+  "finishedAt": "2026-11-10T03:48:04.393Z",
   "environment": {
     "baseUrl": "http://localhost:5200",
     "node": "v22.23.4",
@@ -14,7 +14,7 @@
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "3088335238a12d9e89df8fc5025ae22d0730766f"
+      "commit": "644657a825165ff86a2053d932add6e70db3b8ce"
     },
     "testUser": "oq-runner@validation.local",
     "authentication": "password+totp",
@@ -43,10 +43,10 @@
     }
   },
   "counts": {
-    "pass": 31,
-    "fail": 3,
-    "deviation": 5,
-    "not-executed": 3
+    "pass": 36,
+    "fail": 0,
+    "deviation": 4,
+    "not-executed": 2
   },
   "steps": [
     {
@@ -60,8 +60,8 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-11-10T02:53:15.866Z",
-      "finishedAt": "2026-11-10T02:53:16.121Z",
+      "startedAt": "2026-11-10T03:39:23.630Z",
+      "finishedAt": "2026-11-10T03:39:23.885Z",
       "evidence": [],
       "api": [
         {
@@ -85,9 +85,9 @@
       "action": "POST /api/c2c/projects, then the drug substance, product, method, specification, batch and stability under it",
       "expected": "created; every row carries the programme",
       "status": "pass",
-      "observed": "programme 51e1fef6-b4ad-4a31-92b6-da93122fd087 with 6 reference records",
-      "startedAt": "2026-11-10T02:53:16.121Z",
-      "finishedAt": "2026-11-10T02:53:18.143Z",
+      "observed": "programme 78731580-7719-4562-985d-a412edebff5a with 6 reference records",
+      "startedAt": "2026-11-10T03:39:23.885Z",
+      "finishedAt": "2026-11-10T03:39:25.933Z",
       "evidence": [
         "steps/OQ-CMC-03.records.json"
       ],
@@ -150,49 +150,49 @@
       "expected": "each read 200; the write 403 and no row written",
       "status": "pass",
       "observed": "drug-substances 200; drug-products 200; analytical-methods 200; specifications 200; batch-records 200; stability-studies 200; the viewer's write 403 , no row",
-      "startedAt": "2026-11-10T02:53:18.143Z",
-      "finishedAt": "2026-11-10T02:53:20.593Z",
+      "startedAt": "2026-11-10T03:39:25.933Z",
+      "finishedAt": "2026-11-10T03:39:28.386Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-02.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-products?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/drug-products?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/analytical-methods?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/specifications/78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/batch-records/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/batch-records/78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-02.api-6.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/stability-studies?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/stability-studies?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200,
           "identity": "oq-viewer@validation.local"
         },
@@ -206,7 +206,7 @@
         {
           "file": "steps/OQ-CMC-02.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         }
       ],
@@ -225,8 +225,8 @@
       "expected": "the read names no record of that programme (404/403, or 200 with nothing); the write is refused and no row is written",
       "status": "pass",
       "observed": "read 200; write 409",
-      "startedAt": "2026-11-10T02:53:20.593Z",
-      "finishedAt": "2026-11-10T02:53:21.126Z",
+      "startedAt": "2026-11-10T03:39:28.386Z",
+      "finishedAt": "2026-11-10T03:39:28.925Z",
       "evidence": [],
       "api": [
         {
@@ -257,8 +257,8 @@
       "expected": "one canonical source per recorded row; no section record yet",
       "status": "pass",
       "observed": "0 sections before compile; source-evidence 200",
-      "startedAt": "2026-11-10T02:53:21.126Z",
-      "finishedAt": "2026-11-10T02:53:21.673Z",
+      "startedAt": "2026-11-10T03:39:28.925Z",
+      "finishedAt": "2026-11-10T03:39:29.457Z",
       "evidence": [
         "steps/OQ-CMC-05.source-evidence.json"
       ],
@@ -266,13 +266,13 @@
         {
           "file": "steps/OQ-CMC-05.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         }
       ],
@@ -291,8 +291,8 @@
       "expected": "the core §3.2.S / §3.2.P / 3.1 / 3.3 sections, the emittable 3.2.A appendices and US 3.2.R; each completeness is the compiler’s",
       "status": "pass",
       "observed": "21 sections: 3.1, 3.2.A.1, 3.2.A.2, 3.2.A.3, 3.2.P.1, 3.2.P.2, 3.2.P.3, 3.2.P.4, 3.2.P.5, 3.2.P.6, 3.2.P.7, 3.2.P.8, 3.2.R.1.US, 3.2.S.1, 3.2.S.2, 3.2.S.3, 3.2.S.4, 3.2.S.5, 3.2.S.6, 3.2.S.7, 3.3",
-      "startedAt": "2026-11-10T02:53:21.673Z",
-      "finishedAt": "2026-11-10T02:53:22.549Z",
+      "startedAt": "2026-11-10T03:39:29.457Z",
+      "finishedAt": "2026-11-10T03:39:30.204Z",
       "evidence": [
         "steps/OQ-CMC-06.sections.json"
       ],
@@ -300,13 +300,13 @@
         {
           "file": "steps/OQ-CMC-06.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-06.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         }
       ],
@@ -325,8 +325,8 @@
       "expected": "409 naming the registers to record first; nothing written",
       "status": "pass",
       "observed": "409: No canonical source objects for this project — nothing to compile. Record the project's CMC data in the registers (substance, product, methods, specifications, batches, stability);",
-      "startedAt": "2026-11-10T02:53:22.549Z",
-      "finishedAt": "2026-11-10T02:53:23.447Z",
+      "startedAt": "2026-11-10T03:39:30.204Z",
+      "finishedAt": "2026-11-10T03:39:31.098Z",
       "evidence": [],
       "api": [
         {
@@ -338,13 +338,13 @@
         {
           "file": "steps/OQ-CMC-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/c1e34c96-124f-4dab-b254-f7ee3308ff13",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/ffd0095c-14c9-4c35-8556-69df29bf3aaf",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-07.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/c1e34c96-124f-4dab-b254-f7ee3308ff13",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/ffd0095c-14c9-4c35-8556-69df29bf3aaf",
           "status": 200
         }
       ],
@@ -363,8 +363,8 @@
       "expected": "409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE; nothing composed; the refusal names ICH Q6B and the authoring path",
       "status": "pass",
       "observed": "409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE; 0 sections; This project records its product as a biologic, and Module 3 is composed here only for a drug (a small-molecule medicinal product). A biologic's quality require",
-      "startedAt": "2026-11-10T02:53:23.447Z",
-      "finishedAt": "2026-11-10T02:53:24.603Z",
+      "startedAt": "2026-11-10T03:39:31.098Z",
+      "finishedAt": "2026-11-10T03:39:32.274Z",
       "evidence": [],
       "api": [
         {
@@ -382,13 +382,13 @@
         {
           "file": "steps/OQ-CMC-08.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/0d801c1b-ee09-44be-9fa3-a5bac1262c67",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/1fae3511-9127-4bbf-ba87-a3d1bff918d2",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-08.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/0d801c1b-ee09-44be-9fa3-a5bac1262c67",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/1fae3511-9127-4bbf-ba87-a3d1bff918d2",
           "status": 200
         }
       ],
@@ -407,8 +407,8 @@
       "expected": "409 CMC_APPLICATION_OUT_OF_SCOPE, then 409 CMC_MODALITY_NOT_ESTABLISHED; nothing composed",
       "status": "pass",
       "observed": "NDA CMC_APPLICATION_OUT_OF_SCOPE; no route recorded CMC_MODALITY_NOT_ESTABLISHED",
-      "startedAt": "2026-11-10T02:53:24.603Z",
-      "finishedAt": "2026-11-10T02:53:26.353Z",
+      "startedAt": "2026-11-10T03:39:32.274Z",
+      "finishedAt": "2026-11-10T03:39:34.062Z",
       "evidence": [],
       "api": [
         {
@@ -426,7 +426,7 @@
         {
           "file": "steps/OQ-CMC-09.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/105bb1fe-3b73-4e77-a342-16ac73f8f130",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/fce058f8-a76d-4c4a-a0b2-24bcca397b69",
           "status": 409
         },
         {
@@ -444,7 +444,7 @@
         {
           "file": "steps/OQ-CMC-09.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/compile/4af7d245-994e-4773-b88a-d03f914a25d7",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/e248f0a4-9bcf-401f-8aa6-be835e6646b6",
           "status": 409
         }
       ],
@@ -463,26 +463,26 @@
       "expected": "the stored record is the composer’s; the body’s claim is not written",
       "status": "pass",
       "observed": "§3.2.S.1 refresh 200; stored completeness 100 unchanged",
-      "startedAt": "2026-11-10T02:53:26.354Z",
-      "finishedAt": "2026-11-10T02:53:27.172Z",
+      "startedAt": "2026-11-10T03:39:34.062Z",
+      "finishedAt": "2026-11-10T03:39:34.875Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-10.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.S.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-10.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.S.1/refresh",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1/refresh",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-10.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.S.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1",
           "status": 200
         }
       ],
@@ -501,20 +501,20 @@
       "expected": "400 REASON_REQUIRED naming the field; both refused with nothing written",
       "status": "pass",
       "observed": "no reason 400 REASON_REQUIRED (field reason); a 7-character reason 400 REASON_REQUIRED",
-      "startedAt": "2026-11-10T02:53:27.173Z",
-      "finishedAt": "2026-11-10T02:53:27.710Z",
+      "startedAt": "2026-11-10T03:39:34.875Z",
+      "finishedAt": "2026-11-10T03:39:35.409Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-11.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-11.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1/approve",
           "status": 400
         }
       ],
@@ -533,27 +533,27 @@
       "expected": "403 ESIGNATURE_NO_AUTHORITY; no signature row",
       "status": "pass",
       "observed": "the member's approval 403 ESIGNATURE_NO_AUTHORITY; signature rows 0 → 0",
-      "startedAt": "2026-11-10T02:53:27.710Z",
-      "finishedAt": "2026-11-10T02:53:28.837Z",
+      "startedAt": "2026-11-10T03:39:35.409Z",
+      "finishedAt": "2026-11-10T03:39:36.541Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-12.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A51e1fef6-b4ad-4a31-92b6-da93122fd087%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A78731580-7719-4562-985d-a412edebff5a%2F3.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-12.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1/approve",
           "status": 403,
           "identity": "oq-member@validation.local"
         },
         {
           "file": "steps/OQ-CMC-12.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A51e1fef6-b4ad-4a31-92b6-da93122fd087%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A78731580-7719-4562-985d-a412edebff5a%2F3.1",
           "status": 200
         }
       ],
@@ -571,9 +571,9 @@
       "action": "as the signer: approve with a wrong password, then with the password and a fresh authenticator code",
       "expected": "401 then 200; the section approved; one electronic_signatures row with the signer, the meaning and the bound digest; a chained audit row; a version snapshot",
       "status": "pass",
-      "observed": "wrong password 401; signed 200; version 55c0cbe2-9557-45b0-9fe4-e84e839a5c39; 1 signature row(s)",
-      "startedAt": "2026-11-10T02:53:28.837Z",
-      "finishedAt": "2026-11-10T02:54:01.211Z",
+      "observed": "wrong password 401; signed 200; version 8742e751-3bb6-4345-9815-1028d0772d33; 1 signature row(s)",
+      "startedAt": "2026-11-10T03:39:36.541Z",
+      "finishedAt": "2026-11-10T03:40:01.235Z",
       "evidence": [
         "steps/OQ-CMC-13.signature-rows.json"
       ],
@@ -581,27 +581,27 @@
         {
           "file": "steps/OQ-CMC-13.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1/approve",
           "status": 401,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-13.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-13.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.1",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-13.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A51e1fef6-b4ad-4a31-92b6-da93122fd087%2F3.1",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A78731580-7719-4562-985d-a412edebff5a%2F3.1",
           "status": 200
         }
       ],
@@ -619,9 +619,9 @@
       "action": "as the runtime role (DATABASE_URL_RUNTIME, the organisation set as the server sets it): read the signature row's bound digest and the approved version's stored snapshot; recompute the §11.70 digest",
       "expected": "the signature row carries a sha256 bound digest, basis cmc-module3-section-version-sha256, equal to sha256 of the canonical JSON of {organizationId, projectId, sectionKey, versionNumber, approvedVersionId, snapshot}",
       "status": "pass",
-      "observed": "signature 16: stored ede54932d93055bc… = recomputed over version 55c0cbe2-9557-45b0-9fe4-e84e839a5c39 (v1)",
-      "startedAt": "2026-11-10T02:54:01.211Z",
-      "finishedAt": "2026-11-10T02:54:01.504Z",
+      "observed": "signature 50: stored 01bec5cd54f72b0b… = recomputed over version 8742e751-3bb6-4345-9815-1028d0772d33 (v1)",
+      "startedAt": "2026-11-10T03:40:01.235Z",
+      "finishedAt": "2026-11-10T03:40:01.543Z",
       "evidence": [
         "steps/OQ-CMC-14.digest-recomputation.json"
       ],
@@ -648,21 +648,21 @@
       "expected": "409 SECTION_CHANGED; nothing signed",
       "status": "pass",
       "observed": "409 SECTION_CHANGED; §3.2.A.1 still draft",
-      "startedAt": "2026-11-10T02:54:01.504Z",
-      "finishedAt": "2026-11-10T02:54:30.947Z",
+      "startedAt": "2026-11-10T03:40:01.543Z",
+      "finishedAt": "2026-11-10T03:40:30.877Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-15.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.A.1/approve",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-15.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.A.1",
           "status": 200
         }
       ],
@@ -681,8 +681,8 @@
       "expected": "the sweep reports what it examined; a recorded resolution survives the re-run",
       "status": "pass",
       "observed": "the sweep reports {\"specifications\":1,\"methods\":1,\"stability\":1,\"batches\":1,\"comparability\":0}; re-sweep 200",
-      "startedAt": "2026-11-10T02:54:30.947Z",
-      "finishedAt": "2026-11-10T02:54:31.537Z",
+      "startedAt": "2026-11-10T03:40:30.877Z",
+      "finishedAt": "2026-11-10T03:40:31.443Z",
       "evidence": [
         "steps/OQ-CMC-16.sweeps.json"
       ],
@@ -690,13 +690,13 @@
         {
           "file": "steps/OQ-CMC-16.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-16.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         }
       ],
@@ -716,7 +716,7 @@
       "status": "deviation",
       "observed": [
         {
-          "id": "8bd06b6a-3f5c-4691-8ee1-d052f44e1e98",
+          "id": "a675f3f8-b4a8-4f64-9927-50f330907100",
           "severity": "high",
           "contradictionType": "method_validation_gap",
           "details": "1 analytical method(s) lack validated status: RP-HPLC Assay. Specifications reference these methods.",
@@ -729,11 +729,11 @@
             "Method Validation Scientist"
           ],
           "status": "open",
-          "updatedAt": "2026-11-10T02:54:31.223Z"
+          "updatedAt": "2026-11-10T03:40:31.153Z"
         }
       ],
-      "startedAt": "2026-11-10T02:54:31.537Z",
-      "finishedAt": "2026-11-10T02:54:31.875Z",
+      "startedAt": "2026-11-10T03:40:31.443Z",
+      "finishedAt": "2026-11-10T03:40:31.764Z",
       "evidence": [
         "steps/OQ-CMC-17.at-failure.png"
       ],
@@ -741,7 +741,7 @@
         {
           "file": "steps/OQ-CMC-17.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/contradictions/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         }
       ],
@@ -759,25 +759,23 @@
       "kind": "scripted",
       "action": "the gate with one section approved and the rest not",
       "expected": "409 naming the blocker; 200 only when every blocker is clear",
-      "status": "fail",
-      "observed": "3 section(s) have no recorded source lineage, so the audit trail required for export is incomplete",
-      "startedAt": "2026-11-10T02:54:31.875Z",
-      "finishedAt": "2026-11-10T02:54:32.225Z",
+      "status": "pass",
+      "observed": "409: 20 of 21 sections unapproved, 3 without source lineage; sentence: 3 section(s) have no recorded source lineage, so the audit trail required for export is incomplete",
+      "startedAt": "2026-11-10T03:40:31.764Z",
+      "finishedAt": "2026-11-10T03:40:32.052Z",
       "evidence": [
-        "steps/OQ-CMC-18.gate.json",
-        "steps/OQ-CMC-18.at-failure.png"
+        "steps/OQ-CMC-18.gate.json"
       ],
       "api": [
         {
           "file": "steps/OQ-CMC-18.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/78731580-7719-4562-985d-a412edebff5a",
           "status": 409
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "failure": "the refusal does not name the unapproved sections",
       "rateLimitRetries": 0
     },
     {
@@ -790,507 +788,17 @@
       "action": "place the approved Module 3 into the programme’s IND sequence; then retry with the same key",
       "expected": "200 with one leaf per placed section; the retry idempotent",
       "status": "deviation",
-      "observed": [
-        {
-          "id": 31,
-          "title": "BX-703 IND 20261110025315",
-          "productName": "BX-703",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:53:25.741Z",
-          "updatedAt": "2026-11-10T02:53:25.741Z",
-          "deletedAt": null,
-          "programId": "4af7d245-994e-4773-b88a-d03f914a25d7"
-        },
-        {
-          "id": 30,
-          "title": "BX-701 NDA 20261110025315",
-          "productName": "BX-701",
-          "applicationType": "nda",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:53:24.878Z",
-          "updatedAt": "2026-11-10T02:53:24.878Z",
-          "deletedAt": null,
-          "programId": "105bb1fe-3b73-4e77-a342-16ac73f8f130"
-        },
-        {
-          "id": 29,
-          "title": "BX-902 IND 20261110025315",
-          "productName": "BX-902",
-          "applicationType": "ind",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:53:23.715Z",
-          "updatedAt": "2026-11-10T02:53:23.715Z",
-          "deletedAt": null,
-          "programId": "0d801c1b-ee09-44be-9fa3-a5bac1262c67"
-        },
-        {
-          "id": 28,
-          "title": "BX-700 EMPTY 20261110025315",
-          "productName": "BX-701",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:53:22.825Z",
-          "updatedAt": "2026-11-10T02:53:22.825Z",
-          "deletedAt": null,
-          "programId": "c1e34c96-124f-4dab-b254-f7ee3308ff13"
-        },
-        {
-          "id": 27,
-          "title": "BX-701 IND 20261110025315",
-          "productName": "BX-701",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:53:16.394Z",
-          "updatedAt": "2026-11-10T02:53:16.394Z",
-          "deletedAt": null,
-          "programId": "51e1fef6-b4ad-4a31-92b6-da93122fd087"
-        },
-        {
-          "id": 26,
-          "title": "OQ-005 Readiness program 20261110025026",
-          "productName": "OQ-005 Readiness program 20261110025026",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:50:27.059Z",
-          "updatedAt": "2026-11-10T02:50:27.059Z",
-          "deletedAt": null,
-          "programId": "dad8d372-b2c9-4d28-b3c1-17cdcb029eb1"
-        },
-        {
-          "id": 25,
-          "title": "OQ-004 IND 20261110024919",
-          "productName": "OQ-004 IND 20261110024919",
-          "applicationType": "IND",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:49:21.276Z",
-          "updatedAt": "2026-11-10T02:49:21.276Z",
-          "deletedAt": null,
-          "programId": "2a5550d5-b980-49a5-afff-24da3eac8b5e"
-        },
-        {
-          "id": 24,
-          "title": "OQ-004 Submission-create program 20261110024919",
-          "productName": "OQ-004 Submission-create program 20261110024919",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:49:20.826Z",
-          "updatedAt": "2026-11-10T02:49:20.826Z",
-          "deletedAt": null,
-          "programId": "2a5550d5-b980-49a5-afff-24da3eac8b5e"
-        },
-        {
-          "id": 23,
-          "title": "OQ-004 Submission program 20261110024919",
-          "productName": "OQ-004 Submission program 20261110024919",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:49:19.450Z",
-          "updatedAt": "2026-11-10T02:49:19.450Z",
-          "deletedAt": null,
-          "programId": "fb517312-5af8-49de-9d04-2a5dafe99192"
-        },
-        {
-          "id": 22,
-          "title": "OQ-003 Authoring program 20261110024818",
-          "productName": "OQ-003 Authoring program 20261110024818",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:48:18.662Z",
-          "updatedAt": "2026-11-10T02:48:18.662Z",
-          "deletedAt": null,
-          "programId": "0f6df2e4-d780-4097-a157-694bbe51a663"
-        },
-        {
-          "id": 21,
-          "title": "OQ-002 IND 20261110024537",
-          "productName": "OQ-002 IND 20261110024537",
-          "applicationType": "IND",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:48:12.623Z",
-          "updatedAt": "2026-11-10T02:48:12.623Z",
-          "deletedAt": null,
-          "programId": "29d6b5d4-ab07-4c51-b6d2-9a49691ad952"
-        },
-        {
-          "id": 20,
-          "title": "OQ-002 Where-used program 20261110024537",
-          "productName": "OQ-002 Where-used program 20261110024537",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:48:11.654Z",
-          "updatedAt": "2026-11-10T02:48:11.654Z",
-          "deletedAt": null,
-          "programId": "29d6b5d4-ab07-4c51-b6d2-9a49691ad952"
-        },
-        {
-          "id": 19,
-          "title": "OQ-002 Library program 20261110024537",
-          "productName": "OQ-002 Library program 20261110024537",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:48:07.211Z",
-          "updatedAt": "2026-11-10T02:48:07.211Z",
-          "deletedAt": null,
-          "programId": "2a5913d3-78a9-41a0-9443-d9a52c648380"
-        },
-        {
-          "id": 18,
-          "title": "OQ-002 Vault program 20261110024537",
-          "productName": "OQ-002 Vault program 20261110024537",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:45:37.748Z",
-          "updatedAt": "2026-11-10T02:45:37.748Z",
-          "deletedAt": null,
-          "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0"
-        },
-        {
-          "id": 17,
-          "title": "OQ-001 IND program 20261110024200",
-          "productName": "OQ-001 IND program 20261110024200",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:42:32.410Z",
-          "updatedAt": "2026-11-10T02:42:32.410Z",
-          "deletedAt": null,
-          "programId": "2d03e03e-8223-4374-9528-7125cb651f62"
-        },
-        {
-          "id": 16,
-          "title": "OQ-008 Q1E within 20261110020703",
-          "productName": "Q1E-within",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:08:52.868Z",
-          "updatedAt": "2026-11-10T02:08:52.868Z",
-          "deletedAt": null,
-          "programId": "00841ef3-cc70-4e8a-8e3e-ae2a198d8dd8"
-        },
-        {
-          "id": 15,
-          "title": "BX-703 IND 20261110020703",
-          "productName": "BX-703",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:07:11.692Z",
-          "updatedAt": "2026-11-10T02:07:11.692Z",
-          "deletedAt": null,
-          "programId": "5aa39330-66df-40f1-ae09-a610d43f8544"
-        },
-        {
-          "id": 14,
-          "title": "BX-701 NDA 20261110020703",
-          "productName": "BX-701",
-          "applicationType": "nda",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:07:10.804Z",
-          "updatedAt": "2026-11-10T02:07:10.804Z",
-          "deletedAt": null,
-          "programId": "7e941c46-53fc-429d-9843-df0f11b53428"
-        },
-        {
-          "id": 13,
-          "title": "BX-902 IND 20261110020703",
-          "productName": "BX-902",
-          "applicationType": "ind",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:07:09.640Z",
-          "updatedAt": "2026-11-10T02:07:09.640Z",
-          "deletedAt": null,
-          "programId": "53be45d6-0591-45ec-a571-e6512b00baeb"
-        },
-        {
-          "id": 12,
-          "title": "BX-700 EMPTY 20261110020703",
-          "productName": "BX-701",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:07:08.763Z",
-          "updatedAt": "2026-11-10T02:07:08.763Z",
-          "deletedAt": null,
-          "programId": "72fe3b08-9bcd-48d2-a29e-a48d0ed94ae0"
-        },
-        {
-          "id": 11,
-          "title": "BX-701 IND 20261110020703",
-          "productName": "BX-701",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:07:03.660Z",
-          "updatedAt": "2026-11-10T02:07:03.660Z",
-          "deletedAt": null,
-          "programId": "808060af-b01c-4b94-b24f-58138b33098d"
-        },
-        {
-          "id": 10,
-          "title": "OQ-005 Readiness program 20261110020625",
-          "productName": "OQ-005 Readiness program 20261110020625",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:06:26.177Z",
-          "updatedAt": "2026-11-10T02:06:26.177Z",
-          "deletedAt": null,
-          "programId": "fc7b2edb-3601-4215-a081-81f3f6730da8"
-        },
-        {
-          "id": 9,
-          "title": "OQ-004 IND 20261110020503",
-          "productName": "OQ-004 IND 20261110020503",
-          "applicationType": "IND",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:05:05.514Z",
-          "updatedAt": "2026-11-10T02:05:05.514Z",
-          "deletedAt": null,
-          "programId": "1a0d5ae0-decb-40b4-88a4-07f97b6e47a4"
-        },
-        {
-          "id": 8,
-          "title": "OQ-004 Submission-create program 20261110020503",
-          "productName": "OQ-004 Submission-create program 20261110020503",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:05:05.129Z",
-          "updatedAt": "2026-11-10T02:05:05.129Z",
-          "deletedAt": null,
-          "programId": "1a0d5ae0-decb-40b4-88a4-07f97b6e47a4"
-        },
-        {
-          "id": 7,
-          "title": "OQ-004 Submission program 20261110020503",
-          "productName": "OQ-004 Submission program 20261110020503",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:05:03.820Z",
-          "updatedAt": "2026-11-10T02:05:03.820Z",
-          "deletedAt": null,
-          "programId": "119bddbb-3abc-4781-92a7-6c1588c5da76"
-        },
-        {
-          "id": 6,
-          "title": "OQ-003 Authoring program 20261110020318",
-          "productName": "OQ-003 Authoring program 20261110020318",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:03:18.664Z",
-          "updatedAt": "2026-11-10T02:03:18.664Z",
-          "deletedAt": null,
-          "programId": "bc2946f0-8a62-47e6-bdf7-9aced623e69a"
-        },
-        {
-          "id": 5,
-          "title": "OQ-002 IND 20261110020007",
-          "productName": "OQ-002 IND 20261110020007",
-          "applicationType": "IND",
-          "clientType": "biotech",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:03:12.673Z",
-          "updatedAt": "2026-11-10T02:03:12.673Z",
-          "deletedAt": null,
-          "programId": "dbc325d1-73e9-4f9c-b490-1e5a8fbee829"
-        },
-        {
-          "id": 4,
-          "title": "OQ-002 Where-used program 20261110020007",
-          "productName": "OQ-002 Where-used program 20261110020007",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:03:11.723Z",
-          "updatedAt": "2026-11-10T02:03:11.723Z",
-          "deletedAt": null,
-          "programId": "dbc325d1-73e9-4f9c-b490-1e5a8fbee829"
-        },
-        {
-          "id": 3,
-          "title": "OQ-002 Library program 20261110020007",
-          "productName": "OQ-002 Library program 20261110020007",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:03:07.321Z",
-          "updatedAt": "2026-11-10T02:03:07.321Z",
-          "deletedAt": null,
-          "programId": "f2a71086-9691-474c-8b31-1a9065fbf434"
-        },
-        {
-          "id": 2,
-          "title": "OQ-002 Vault program 20261110020007",
-          "productName": "OQ-002 Vault program 20261110020007",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T02:00:07.666Z",
-          "updatedAt": "2026-11-10T02:00:07.666Z",
-          "deletedAt": null,
-          "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428"
-        },
-        {
-          "id": 1,
-          "title": "OQ QMS program",
-          "productName": "OQ-QMS-1",
-          "applicationType": "ind",
-          "clientType": "pharma",
-          "primaryRegion": "fda",
-          "status": "planning",
-          "lifecycleStage": "planning",
-          "organizationId": 2,
-          "createdBy": 1,
-          "createdAt": "2026-11-10T01:55:01.156Z",
-          "updatedAt": "2026-11-10T01:55:01.156Z",
-          "deletedAt": null,
-          "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d"
-        }
-      ],
-      "startedAt": "2026-11-10T02:54:32.225Z",
-      "finishedAt": "2026-11-10T02:54:32.557Z",
+      "observed": {
+        "status": 409,
+        "error": "3 section(s) have no recorded source lineage, so the audit trail required for export is incomplete",
+        "approvedSections": 1,
+        "totalSections": 21,
+        "leaves": 0
+      },
+      "startedAt": "2026-11-10T03:40:32.052Z",
+      "finishedAt": "2026-11-10T03:41:00.679Z",
       "evidence": [
+        "steps/OQ-CMC-19.placement.json",
         "steps/OQ-CMC-19.at-failure.png"
       ],
       "api": [
@@ -1299,11 +807,30 @@
           "method": "GET",
           "url": "http://localhost:5200/api/submissions",
           "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-19.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/69/sequences",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-CMC-19.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/78731580-7719-4562-985d-a412edebff5a",
+          "status": 409,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-CMC-19.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/10/leaves",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "deviationReason": "not executed — the programme has no submission spine to place into; the IND filing path (OQ-SUBC) creates it.",
+      "deviationReason": "not executed — the placement was refused 409 by the final-export gate (1 of 21 sections approved, 3 without source lineage) and wrote no leaf, which is the designed answer. The reference records do not compose a Module 3 whose every section can be approved, so the positive placement and its idempotent retry were not observed. A fixture for it is owed.",
       "rateLimitRetries": 0
     },
     {
@@ -1313,16 +840,37 @@
         "URS-CMC-011"
       ],
       "kind": "scripted",
-      "action": "as a member without that role: place",
+      "action": "as the viewer, who holds no regulatory-author role: place",
       "expected": "403; no leaf written",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-CMC-19 did not pass",
-      "startedAt": "2026-11-10T02:54:32.557Z",
-      "finishedAt": "2026-11-10T02:54:32.557Z",
+      "status": "pass",
+      "observed": "403 ; leaves 0 → 0",
+      "startedAt": "2026-11-10T03:41:00.679Z",
+      "finishedAt": "2026-11-10T03:41:01.893Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-CMC-20.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/10/leaves",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-20.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/place-into-submission/78731580-7719-4562-985d-a412edebff5a",
+          "status": 403,
+          "identity": "oq-viewer@validation.local"
+        },
+        {
+          "file": "steps/OQ-CMC-20.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/10/leaves",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": "v0.11: the placement is the member's (OQ_MEMBER). Until v0.10 it was sent with the run session."
+      "note": "v0.11: the placement is the member's (OQ_MEMBER). Until v0.10 it was sent with the run session. v0.12: the placement is the viewer's (OQ_VIEWER). An organisation member holds the regulatory-author role (ORG_ROLE_FUNCTIONAL_GRANTS, server/middleware/auth.ts), so OQ_MEMBER passed the role and was answered by the export gate (409); the viewer is the identity without it. The step depends on the approval (OQ-CMC-13), not on a completed placement: the role is refused before the target is read, and the step needs only the sequence OQ-CMC-19 creates.",
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-CMC-21",
@@ -1335,8 +883,8 @@
       "expected": "each refused by the database",
       "status": "pass",
       "observed": "cmc_module3_section_versions.UPDATE refused: 42501; cmc_module3_section_versions.DELETE refused: 42501; cmc_provenance_events.UPDATE refused: 42501; cmc_provenance_events.DELETE refused: 42501",
-      "startedAt": "2026-11-10T02:54:32.557Z",
-      "finishedAt": "2026-11-10T02:54:32.567Z",
+      "startedAt": "2026-11-10T03:41:01.893Z",
+      "finishedAt": "2026-11-10T03:41:01.905Z",
       "evidence": [
         "steps/OQ-CMC-21.append-only.json"
       ],
@@ -1356,14 +904,14 @@
       "expected": "409 each time; nothing released",
       "status": "pass",
       "observed": "release with no QC result 409; create already released 409",
-      "startedAt": "2026-11-10T02:54:32.567Z",
-      "finishedAt": "2026-11-10T02:55:00.603Z",
+      "startedAt": "2026-11-10T03:41:01.905Z",
+      "finishedAt": "2026-11-10T03:41:30.620Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-22.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/batch-records/0350e58e-3dac-4089-b5f4-40756ea888f7/release",
+          "url": "http://localhost:5200/api/cmc/batch-records/071b0795-aa0b-488d-9987-462a3cc025ce/release",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
@@ -1389,40 +937,40 @@
       "expected": "the method validated 200; the approval 200; 422 without a reason; with one, the edit lands and the approval is withdrawn",
       "status": "pass",
       "observed": "method validated 200; approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (undefined)",
-      "startedAt": "2026-11-10T02:55:00.603Z",
-      "finishedAt": "2026-11-10T02:56:01.514Z",
+      "startedAt": "2026-11-10T03:41:30.620Z",
+      "finishedAt": "2026-11-10T03:42:31.467Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-23.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/4/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/13/validate",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-23.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034/approve",
+          "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971/approve",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-CMC-23.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034",
+          "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
           "status": 422
         },
         {
           "file": "steps/OQ-CMC-23.api-4.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034",
+          "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-23.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034",
+          "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
           "status": 200
         }
       ],
@@ -1441,8 +989,8 @@
       "expected": "it cites the guideline revision and the records it judged; 403/404 for the foreign programme",
       "status": "pass",
       "observed": "compliance 200 citing guidelines; a nonexistent programme 404 with no records; a foreign programme 404",
-      "startedAt": "2026-11-10T02:56:01.514Z",
-      "finishedAt": "2026-11-10T02:56:02.379Z",
+      "startedAt": "2026-11-10T03:42:31.467Z",
+      "finishedAt": "2026-11-10T03:42:32.302Z",
       "evidence": [
         "steps/OQ-CMC-24.ich-compliance.json"
       ],
@@ -1481,8 +1029,8 @@
       "expected": "the approvals, portfolio, build state and the gate’s own readiness verdict are shown; an uncomputed figure says so; a never-swept programme is not reported as swept and clear",
       "status": "pass",
       "observed": "screens captured for the recorded and the empty programme; the reviewer reads the screenshots",
-      "startedAt": "2026-11-10T02:56:02.379Z",
-      "finishedAt": "2026-11-10T02:56:15.209Z",
+      "startedAt": "2026-11-10T03:42:32.302Z",
+      "finishedAt": "2026-11-10T03:42:45.163Z",
       "evidence": [
         "steps/OQ-CMC-25.overview.png",
         "steps/OQ-CMC-25.empty-programme.png"
@@ -1507,8 +1055,8 @@
         "anaDependency": "down",
         "launchScopeEnforced": true
       },
-      "startedAt": "2026-11-10T02:56:15.209Z",
-      "finishedAt": "2026-11-10T02:56:15.791Z",
+      "startedAt": "2026-11-10T03:42:45.163Z",
+      "finishedAt": "2026-11-10T03:42:45.748Z",
       "evidence": [
         "steps/OQ-CMC-26.posture.json",
         "steps/OQ-CMC-26.at-failure.png"
@@ -1543,8 +1091,8 @@
       "expected": "the signature is bound to this sequence’s leaf manifest; a manifest that differs reads as no release signature for the sequence",
       "status": "not-executed",
       "observed": "prerequisite step OQ-CMC-19 did not pass",
-      "startedAt": "2026-11-10T02:56:15.791Z",
-      "finishedAt": "2026-11-10T02:56:15.791Z",
+      "startedAt": "2026-11-10T03:42:45.748Z",
+      "finishedAt": "2026-11-10T03:42:45.748Z",
       "evidence": [],
       "api": [],
       "consoleErrors": [],
@@ -1561,8 +1109,8 @@
       "expected": "the verdict speaks to the Module 3 requirement, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies",
       "status": "not-executed",
       "observed": "prerequisite step OQ-CMC-19 did not pass",
-      "startedAt": "2026-11-10T02:56:15.791Z",
-      "finishedAt": "2026-11-10T02:56:15.791Z",
+      "startedAt": "2026-11-10T03:42:45.748Z",
+      "finishedAt": "2026-11-10T03:42:45.748Z",
       "evidence": [],
       "api": [],
       "consoleErrors": [],
@@ -1577,29 +1125,25 @@
       "kind": "scripted",
       "action": "with launch scope enforced: a path the CMC screens call, and a path under /api/cmc that no screen claims",
       "expected": "the called path served; the unclaimed path 403 LAUNCH_SCOPE",
-      "status": "deviation",
-      "observed": {
-        "launchScopeEnforced": true,
-        "unclaimedStatus": 200
-      },
-      "startedAt": "2026-11-10T02:56:15.791Z",
-      "finishedAt": "2026-11-10T02:56:16.673Z",
+      "status": "pass",
+      "observed": "claimed 200; unclaimed 403 LAUNCH_SCOPE",
+      "startedAt": "2026-11-10T03:42:45.748Z",
+      "finishedAt": "2026-11-10T03:42:46.541Z",
       "evidence": [
-        "steps/OQ-CMC-29.launch-scope.json",
-        "steps/OQ-CMC-29.at-failure.png"
+        "steps/OQ-CMC-29.launch-scope.json"
       ],
       "api": [
         {
           "file": "steps/OQ-CMC-29.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/drug-substances?projectId=78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-29.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/process-capability",
-          "status": 200
+          "url": "http://localhost:5200/api/cmc/unclaimed-probe",
+          "status": 403
         },
         {
           "file": "steps/OQ-CMC-29.api-3.json",
@@ -1610,7 +1154,6 @@
       ],
       "consoleErrors": [],
       "note": null,
-      "deviationReason": "partly executed — launch scope is enforced and a claimed path is served (200), but the unclaimed path answered 200: this deployment sets LAUNCH_SCOPE_API_UNATTRIBUTED=report, which records an unclaimed path instead of refusing it. Set it to enforce to observe the refusal.",
       "rateLimitRetries": 0
     },
     {
@@ -1626,8 +1169,8 @@
       "observed": {
         "error": "invalid_request"
       },
-      "startedAt": "2026-11-10T02:56:16.673Z",
-      "finishedAt": "2026-11-10T02:56:17.035Z",
+      "startedAt": "2026-11-10T03:42:46.541Z",
+      "finishedAt": "2026-11-10T03:42:46.894Z",
       "evidence": [
         "steps/OQ-CMC-30.at-failure.png"
       ],
@@ -1654,9 +1197,9 @@
       "action": "read the chained audit ledger after the prerequisite’s writes",
       "expected": "one row per recorded row, naming the operator and the record; none anonymous; the chain verifies",
       "status": "pass",
-      "observed": "6/6 records named by a register-create row; 31 rows, none anonymous; chain ok over 545 row(s) of audit_logs",
-      "startedAt": "2026-11-10T02:56:17.035Z",
-      "finishedAt": "2026-11-10T02:56:17.371Z",
+      "observed": "6/6 records named by a register-create row; 151 rows, none anonymous; chain ok over 1078 row(s) of audit_logs",
+      "startedAt": "2026-11-10T03:42:46.894Z",
+      "finishedAt": "2026-11-10T03:42:47.207Z",
       "evidence": [
         "steps/OQ-CMC-32.register-create-ledger.json"
       ],
@@ -1681,39 +1224,33 @@
       "kind": "scripted",
       "action": "as the author who recorded the registers: approve a section; then with the meaning authorship",
       "expected": "403 SEPARATION_OF_DUTIES naming why; then 400 APPROVAL_IS_NOT_AUTHORSHIP; nothing signed either time",
-      "status": "fail",
-      "observed": {
-        "success": false,
-        "error": "§3.2.A.1 is 50% complete and cannot be approved. Missing required inputs: containerDescription. Record them and recompile.",
-        "data": {
-          "completeness": 50,
-          "missingInputs": [
-            "containerDescription"
-          ]
-        }
-      },
-      "startedAt": "2026-11-10T02:56:17.371Z",
-      "finishedAt": "2026-11-10T02:56:18.354Z",
-      "evidence": [
-        "steps/OQ-CMC-33.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "self-approval 403 SEPARATION_OF_DUTIES; authorship meaning 400 APPROVAL_IS_NOT_AUTHORSHIP; §3.2.S.1 still draft",
+      "startedAt": "2026-11-10T03:42:47.207Z",
+      "finishedAt": "2026-11-10T03:42:48.308Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-CMC-33.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1/approve",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-33.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1/approve",
-          "status": 409
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1/approve",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-CMC-33.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.S.1",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "failure": "a self-approval expected 403, got 409",
       "rateLimitRetries": 0
     },
     {
@@ -1728,8 +1265,8 @@
       "expected": "reviewer judgment",
       "status": "pass",
       "observed": "the run’s own identifiers are attached for the reviewer; the runner records no further observation",
-      "startedAt": "2026-11-10T02:56:18.354Z",
-      "finishedAt": "2026-11-10T02:56:18.355Z",
+      "startedAt": "2026-11-10T03:42:48.308Z",
+      "finishedAt": "2026-11-10T03:42:48.309Z",
       "evidence": [
         "steps/OQ-CMC-31.run-state.json"
       ],
@@ -1749,8 +1286,8 @@
       "expected": "each refused 409 naming the governed path that does record it; nothing written, and no signer or date set",
       "status": "pass",
       "observed": "4 registers refuse the signed state on create; 3 refuse it on an edit; each names its own governed path",
-      "startedAt": "2026-11-10T02:56:18.355Z",
-      "finishedAt": "2026-11-10T02:56:22.011Z",
+      "startedAt": "2026-11-10T03:42:48.309Z",
+      "finishedAt": "2026-11-10T03:42:51.813Z",
       "evidence": [
         "steps/OQ-CMC-34.refusals.json"
       ],
@@ -1770,13 +1307,13 @@
         {
           "file": "steps/OQ-CMC-34.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14",
           "status": 404
         },
         {
@@ -1794,13 +1331,13 @@
         {
           "file": "steps/OQ-CMC-34.api-7.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/2",
+          "url": "http://localhost:5200/api/cmc/process-validation/5",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/process-validation/2",
+          "url": "http://localhost:5200/api/cmc/process-validation/5",
           "status": 404
         },
         {
@@ -1818,13 +1355,13 @@
         {
           "file": "steps/OQ-CMC-34.api-11.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-34.api-12.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a",
           "status": 404
         },
         {
@@ -1849,8 +1386,8 @@
       "expected": "the signature records the status, the signer and the date, writes one electronic_signatures row bound to the chained audit row, and the edit after it is refused",
       "status": "pass",
       "observed": "3 registers signed through the path their refusal named; each records the signer and refuses the edit after",
-      "startedAt": "2026-11-10T02:56:22.011Z",
-      "finishedAt": "2026-11-10T02:59:01.174Z",
+      "startedAt": "2026-11-10T03:42:51.813Z",
+      "finishedAt": "2026-11-10T03:45:31.177Z",
       "evidence": [
         "steps/OQ-CMC-35.ungoverned-halves.json",
         "steps/OQ-CMC-35.signatures.json"
@@ -1859,127 +1396,127 @@
         {
           "file": "steps/OQ-CMC-35.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/2/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/5/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/2/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/5/approve",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-35.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-35.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-8.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5/validate",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14/validate",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-10.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=analytical_method%3A5",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=analytical_method%3A14",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-11.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/5",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/14",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/2/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/5/approve",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-13.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/2",
+          "url": "http://localhost:5200/api/cmc/process-validation/5",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-14.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/process-validation/2/approve",
+          "url": "http://localhost:5200/api/cmc/process-validation/5/approve",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-15.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=process_validation%3A2",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=process_validation%3A5",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-16.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/process-validation/2",
+          "url": "http://localhost:5200/api/cmc/process-validation/5",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-17.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-35.api-18.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-19.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d/approve",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-20.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=comparability_study%3A28a35007-b94c-459f-ae66-17d33aa60c9d",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=comparability_study%3Aeffad986-6462-4b01-b6de-21402161171a",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-35.api-21.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a",
           "status": 409
         }
       ],
@@ -1998,8 +1535,8 @@
       "expected": "Q1E pass, then a finding naming the months claimed and the months covered, then a second finding that Q1E admits extrapolation only on accelerated data, then not_evaluated quoting the text it could not read — never a pass",
       "status": "pass",
       "observed": "4 stability programmes judged: within=pass, beyond=warning, noaccel=warning, unreadable=not_evaluated, planned=warning",
-      "startedAt": "2026-11-10T02:59:01.174Z",
-      "finishedAt": "2026-11-10T02:59:08.449Z",
+      "startedAt": "2026-11-10T03:45:31.177Z",
+      "finishedAt": "2026-11-10T03:45:38.291Z",
       "evidence": [
         "steps/OQ-CMC-36.q1e-verdicts.json"
       ],
@@ -2163,9 +1700,9 @@
       "action": "edit one record in each of three registers — a serial one, a uuid one, and one moved by two fields at once — then send the same body again; then edit a record that does not exist; read each record’s chained history back",
       "expected": "one act per edit that moved something, each naming the actor, the fields that moved and both values; the repeat body adds no act; the unknown record is a 404 that adds none; every act is sealed into the tenant chain",
       "status": "pass",
-      "observed": "3 registers record an edit with both values; a repeat body records none; chain ok over 584 row(s)",
-      "startedAt": "2026-11-10T02:59:08.449Z",
-      "finishedAt": "2026-11-10T02:59:13.421Z",
+      "observed": "3 registers record an edit with both values; a repeat body records none; chain ok over 1117 row(s)",
+      "startedAt": "2026-11-10T03:45:38.291Z",
+      "finishedAt": "2026-11-10T03:45:43.189Z",
       "evidence": [
         "steps/OQ-CMC-37.recorded-edits.json"
       ],
@@ -2179,25 +1716,25 @@
         {
           "file": "steps/OQ-CMC-37.api-2.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/6",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/15",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/6",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/15",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-4.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/analytical-methods/6",
+          "url": "http://localhost:5200/api/cmc/analytical-methods/15",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/6",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/15",
           "status": 200
         },
         {
@@ -2209,25 +1746,25 @@
         {
           "file": "steps/OQ-CMC-37.api-7.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/16",
+          "url": "http://localhost:5200/api/cmc/stability-studies/58",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/16",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/58",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-9.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/16",
+          "url": "http://localhost:5200/api/cmc/stability-studies/58",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-10.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/16",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/58",
           "status": 200
         },
         {
@@ -2239,25 +1776,25 @@
         {
           "file": "steps/OQ-CMC-37.api-12.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/99767119-5791-43ed-8681-a16293e077e8",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-13.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/99767119-5791-43ed-8681-a16293e077e8",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-14.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/comparability-studies/99767119-5791-43ed-8681-a16293e077e8",
+          "url": "http://localhost:5200/api/cmc/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-37.api-15.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/99767119-5791-43ed-8681-a16293e077e8",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
           "status": 200
         },
         {
@@ -2294,8 +1831,8 @@
       "expected": "the create and each edit in order with the person, the fields and both values; 404 for the unknown record; 404 naming the registers that do keep one — never an empty history; the specifications route still answers 200",
       "status": "pass",
       "observed": "3 record histories read in order; an unserved register names the served ones; specifications 200",
-      "startedAt": "2026-11-10T02:59:13.421Z",
-      "finishedAt": "2026-11-10T02:59:14.770Z",
+      "startedAt": "2026-11-10T03:45:43.189Z",
+      "finishedAt": "2026-11-10T03:45:44.524Z",
       "evidence": [
         "steps/OQ-CMC-38.histories.json"
       ],
@@ -2303,19 +1840,19 @@
         {
           "file": "steps/OQ-CMC-38.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/6",
+          "url": "http://localhost:5200/api/cmc/register-history/analytical-methods/15",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-38.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/16",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/58",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-38.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/99767119-5791-43ed-8681-a16293e077e8",
+          "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
           "status": 200
         },
         {
@@ -2327,7 +1864,7 @@
         {
           "file": "steps/OQ-CMC-38.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034/history",
+          "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971/history",
           "status": 200
         }
       ],
@@ -2346,8 +1883,8 @@
       "expected": "each read 404 stating nothing was assessed and each create 409 naming the programme as not this organisation’s, with nothing written; the same six succeed under the run’s own programme; the create with no programme is accepted as an organisation-wide record",
       "status": "pass",
       "observed": "3 unheld programme(s) × 6 paths refused; the same 6 serve this run's own programme; an org-wide record is accepted",
-      "startedAt": "2026-11-10T02:59:14.770Z",
-      "finishedAt": "2026-11-10T02:59:21.607Z",
+      "startedAt": "2026-11-10T03:45:44.524Z",
+      "finishedAt": "2026-11-10T03:45:51.197Z",
       "evidence": [
         "steps/OQ-CMC-39.unheld-programmes.json"
       ],
@@ -2469,7 +2006,7 @@
         {
           "file": "steps/OQ-CMC-39.api-20.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/quality/qbd/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+          "url": "http://localhost:5200/api/cmc/quality/qbd/78731580-7719-4562-985d-a412edebff5a",
           "status": 200
         },
         {
@@ -2518,8 +2055,8 @@
       "expected": "the create and the PUT are each refused 409 naming POST /api/cmc/stability-studies/:id/close-out and nothing is stored; then 400, then 401, then 409 naming the missing shelf life, then 409 naming the absent results, then 200 with COMPLETED, the signer and the date set and one electronic_signatures row; the edit after is 409 SIGNED_RECORD and a second close-out is 409 already COMPLETED",
       "status": "pass",
       "observed": "the close-out is a signature: refused on the create, on the edit, with no reason, with no re-authentication, over no claim and over no data; once signed, closed and unrepeatable",
-      "startedAt": "2026-11-10T02:59:21.607Z",
-      "finishedAt": "2026-11-10T03:01:00.634Z",
+      "startedAt": "2026-11-10T03:45:51.197Z",
+      "finishedAt": "2026-11-10T03:47:30.635Z",
       "evidence": [
         "steps/OQ-CMC-40.close-out.json"
       ],
@@ -2539,73 +2076,73 @@
         {
           "file": "steps/OQ-CMC-40.api-3.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/17",
+          "url": "http://localhost:5200/api/cmc/register-history/stability-studies/59",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 400
         },
         {
           "file": "steps/OQ-CMC-40.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 401
         },
         {
           "file": "steps/OQ-CMC-40.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-8.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-10.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-12.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/part11/signatures/by-target?target=stability_study%3A17",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=stability_study%3A59",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-40.api-13.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59",
           "status": 409
         },
         {
           "file": "steps/OQ-CMC-40.api-14.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/17/close-out",
+          "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
           "status": 409
         }
       ],
@@ -2622,15 +2159,12 @@
       "kind": "scripted",
       "action": "record the same shelf-life claim, the same three pull-point results and the same condition on two programmes, close one out under a signature, and compose §3.2.P.8 for each",
       "expected": "both sections state the period and the data it is subject to review of; the signed one reads \"accepted on a signed study close-out\" and the running one \"recorded on a study that has not been closed out under signature\" — the only difference between the two sections",
-      "status": "fail",
-      "observed": {
-        "success": false,
-        "error": "REAUTH_TOTP_REQUIRED"
-      },
-      "startedAt": "2026-11-10T03:01:00.634Z",
-      "finishedAt": "2026-11-10T03:01:04.198Z",
+      "status": "pass",
+      "observed": "two programmes identical but for the signature compose two different §3.2.P.8 provenance statements",
+      "startedAt": "2026-11-10T03:47:30.635Z",
+      "finishedAt": "2026-11-10T03:48:01.744Z",
       "evidence": [
-        "steps/OQ-CMC-41.at-failure.png"
+        "steps/OQ-CMC-41.provenance.json"
       ],
       "api": [
         {
@@ -2660,7 +2194,7 @@
         {
           "file": "steps/OQ-CMC-41.api-5.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/18",
+          "url": "http://localhost:5200/api/cmc/stability-studies/60",
           "status": 200
         },
         {
@@ -2690,19 +2224,30 @@
         {
           "file": "steps/OQ-CMC-41.api-10.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/cmc/stability-studies/19",
+          "url": "http://localhost:5200/api/cmc/stability-studies/61",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-41.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/cmc/stability-studies/19/close-out",
-          "status": 401
+          "url": "http://localhost:5200/api/cmc/stability-studies/61/close-out",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-41.api-12.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/ca16371b-7121-42e7-9e97-932067b83ad9",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-CMC-41.api-13.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/cmc/module3-os/compile/818bcda1-8dfe-48ee-9674-b6d4dace5aee",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "failure": "the close-out expected 200, got 401",
       "rateLimitRetries": 0
     },
     {
@@ -2715,9 +2260,9 @@
       "action": "POST and PATCH /api/cmc/agency-questions; as the runtime role, INSERT, UPDATE, DELETE and TRUNCATE on reg_questions (each rolled back); log a response-required letter on the programme and record a question on it at §3.2.P.7; set its owner to a member of the organisation with a reason; read the programme's Module 3 questions",
       "expected": "410 CMC_QUESTION_FILE_READ_ONLY twice with the earlier file unchanged; the runtime role refused by the database; 201 for the question; 200 for the owner; the Module 3 read lists it at §3.2.P.7 from the question, unanswered, not overdue, with that owner",
       "status": "pass",
-      "observed": "legacy POST 410, PATCH 410; reg_questions.INSERT refused: 42501; reg_questions.UPDATE refused: 42501; reg_questions.DELETE refused: 42501; reg_questions.TRUNCATE refused: 42501; question 2 listed at §3.2.P.7, unanswered",
-      "startedAt": "2026-11-10T03:01:04.198Z",
-      "finishedAt": "2026-11-10T03:01:06.874Z",
+      "observed": "legacy POST 410, PATCH 410; reg_questions.INSERT refused: 42501; reg_questions.UPDATE refused: 42501; reg_questions.DELETE refused: 42501; reg_questions.TRUNCATE refused: 42501; question 5 listed at §3.2.P.7, unanswered",
+      "startedAt": "2026-11-10T03:48:01.744Z",
+      "finishedAt": "2026-11-10T03:48:04.312Z",
       "evidence": [
         "steps/OQ-CMC-42.module3-read.json",
         "steps/OQ-CMC-42.read-only.json"
@@ -2750,31 +2295,31 @@
         {
           "file": "steps/OQ-CMC-42.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-communications",
+          "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/agency-communications",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-communications/ace_1794279665586_c81c4974/questions",
+          "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/agency-communications/ace_1794282483111_3e50d4dc/questions",
           "status": 201
         },
         {
           "file": "steps/OQ-CMC-42.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/team",
+          "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/team",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-8.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-communications/ace_1794279665586_c81c4974/questions/2/owner",
+          "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/agency-communications/ace_1794282483111_3e50d4dc/questions/5/owner",
           "status": 200
         },
         {
           "file": "steps/OQ-CMC-42.api-9.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-questions?ctdModule=3",
+          "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/agency-questions?ctdModule=3",
           "status": 200
         }
       ],

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/mdx/qms/documents/5/retire",
+    "url": "http://localhost:5200/api/mdx/qms/documents/9/retire",
     "anonymous": false,
     "identity": null,
     "body": {

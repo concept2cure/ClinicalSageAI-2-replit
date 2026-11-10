@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/batch-records/0350e58e-3dac-4089-b5f4-40756ea888f7/release",
+    "url": "http://localhost:5200/api/cmc/batch-records/071b0795-aa0b-488d-9987-462a3cc025ce/release",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -21,7 +21,7 @@
     "rateLimitRetries": 0,
     "body": {
       "success": false,
-      "error": "No QC result is recorded against batch B-20261110025315. A release is signed over the batch's recorded, reviewed results: record them in QC testing first.",
+      "error": "No QC result is recorded against batch B-20261110033923. A release is signed over the batch's recorded, reviewed results: record them in QC testing first.",
       "code": "RELEASE_EVIDENCE"
     }
   }

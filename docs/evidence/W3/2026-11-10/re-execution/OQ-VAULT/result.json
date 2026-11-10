@@ -5,8 +5,8 @@
   "appLabel": "Vault",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/vault/run.mjs",
-  "executedAt": "2026-11-10T02:45:36.871Z",
-  "finishedAt": "2026-11-10T02:48:17.891Z",
+  "executedAt": "2026-11-10T03:08:36.980Z",
+  "finishedAt": "2026-11-10T03:11:18.539Z",
   "environment": {
     "baseUrl": "http://localhost:5200",
     "node": "v22.23.4",
@@ -14,7 +14,7 @@
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "3088335238a12d9e89df8fc5025ae22d0730766f"
+      "commit": "644657a825165ff86a2053d932add6e70db3b8ce"
     },
     "testUser": "oq-runner@validation.local",
     "authentication": "password+totp",
@@ -43,8 +43,8 @@
     }
   },
   "counts": {
-    "pass": 23,
-    "fail": 1,
+    "pass": 24,
+    "fail": 0,
     "deviation": 0,
     "not-executed": 0
   },
@@ -57,9 +57,9 @@
       "action": "POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200",
       "expected": "Program created (201); ledger readable",
       "status": "pass",
-      "observed": "program a2d23776-d656-465a-a1a8-b7e4b7ac87e0; ledger entries before: 200",
-      "startedAt": "2026-11-10T02:45:37.470Z",
-      "finishedAt": "2026-11-10T02:45:38.129Z",
+      "observed": "program 51d77e85-b3f5-4ed6-ba14-8bd5415ec721; ledger entries before: 200",
+      "startedAt": "2026-11-10T03:08:37.489Z",
+      "finishedAt": "2026-11-10T03:08:38.160Z",
       "evidence": [],
       "api": [
         {
@@ -90,14 +90,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-11-10T02:45:38.129Z",
-      "finishedAt": "2026-11-10T02:45:38.383Z",
+      "startedAt": "2026-11-10T03:08:38.160Z",
+      "finishedAt": "2026-11-10T03:08:38.418Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 401
         }
       ],
@@ -116,8 +116,8 @@
       "expected": "Refused with a 4xx and a message; nothing stored",
       "status": "pass",
       "observed": "HTTP 400: {\"error\":{\"code\":\"FILE_TYPE_NOT_ALLOWED\",\"message\":\"File type .exe is not allowed. Accepted: .pdf, .docx, .xlsx, .txt, .md, .csv, .tsv, .json, .ndjson, .xml, .png, .jpg, .jpeg, .gif, .xpt, .xsl, .pptx",
-      "startedAt": "2026-11-10T02:45:38.384Z",
-      "finishedAt": "2026-11-10T02:45:38.802Z",
+      "startedAt": "2026-11-10T03:08:38.418Z",
+      "finishedAt": "2026-11-10T03:08:38.852Z",
       "evidence": [],
       "api": [
         {
@@ -141,9 +141,9 @@
       "action": "POST /api/vault/ingest (multipart: file, programId, documentCode, documentTitle, documentType=PROTOCOL)",
       "expected": "HTTP 201; document.id returned; document.contentHash equals the SHA-256 of the uploaded bytes",
       "status": "pass",
-      "observed": "document 5b6ec540-1e05-4a62-a551-fe759774ffe7; contentHash matches sha256 268a6daa904a…; filing: {\"view\":\"pharma\",\"folderId\":\"module-5\",\"evidenceKind\":\"protocol\",\"ctdSection\":null,\"placementStatus\":\"suggested\",\"confidence\":\"medium\",\"rationale\":\"Uploaded as ",
-      "startedAt": "2026-11-10T02:45:38.803Z",
-      "finishedAt": "2026-11-10T02:45:40.131Z",
+      "observed": "document 81e1297e-b6a6-4820-89d2-a7f9587687f0; contentHash matches sha256 a4d64939cc4c…; filing: {\"view\":\"pharma\",\"folderId\":\"module-5\",\"evidenceKind\":\"protocol\",\"ctdSection\":null,\"placementStatus\":\"suggested\",\"confidence\":\"medium\",\"rationale\":\"Uploaded as ",
+      "startedAt": "2026-11-10T03:08:38.852Z",
+      "finishedAt": "2026-11-10T03:08:39.178Z",
       "evidence": [],
       "api": [
         {
@@ -168,14 +168,14 @@
       "expected": "success:true; documentCount ≥ 1; the tree names the document",
       "status": "pass",
       "observed": "documentCount=2; standard=pharma; tree nodes=2",
-      "startedAt": "2026-11-10T02:45:40.131Z",
-      "finishedAt": "2026-11-10T02:45:40.529Z",
+      "startedAt": "2026-11-10T03:08:39.178Z",
+      "finishedAt": "2026-11-10T03:08:39.678Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-04.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 200
         }
       ],
@@ -193,15 +193,15 @@
       "action": "GET /api/c2c/project-vault/:programId/search?q=<title fragment>",
       "expected": "results contain the ingested document id",
       "status": "pass",
-      "observed": "total=1; hit 5b6ec540-1e05-4a62-a551-fe759774ffe7",
-      "startedAt": "2026-11-10T02:45:40.529Z",
-      "finishedAt": "2026-11-10T02:45:40.817Z",
+      "observed": "total=1; hit 81e1297e-b6a6-4820-89d2-a7f9587687f0",
+      "startedAt": "2026-11-10T03:08:39.679Z",
+      "finishedAt": "2026-11-10T03:08:39.972Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-05.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/search?q=OQ-002%20Protocol",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/search?q=OQ-002%20Protocol",
           "status": 200
         }
       ],
@@ -219,9 +219,9 @@
       "action": "GET /api/c2c/project-vault/:programId/documents/:documentId/download",
       "expected": "HTTP 200; SHA-256 of the body equals the hash recorded at ingest",
       "status": "pass",
-      "observed": "611 bytes, sha256 268a6daa904a… matches",
-      "startedAt": "2026-11-10T02:45:40.817Z",
-      "finishedAt": "2026-11-10T02:45:40.847Z",
+      "observed": "611 bytes, sha256 a4d64939cc4c… matches",
+      "startedAt": "2026-11-10T03:08:39.972Z",
+      "finishedAt": "2026-11-10T03:08:39.998Z",
       "evidence": [
         "steps/OQ-VAULT-06.download.json"
       ],
@@ -241,20 +241,20 @@
       "expected": "Filing into Module 5 answers success:true with the folder recorded; a folder outside the program's vault view is refused (4xx), not stored",
       "status": "pass",
       "observed": "filed: {\"folderId\":\"module-5\",\"folderLabel\":\"Module 5 · Clinical\",\"evidenceKind\":\"protocol\",\"ctdSection\":null,\"placementStatus\":\"confirmed\",\"confidence\":null,\"rationale\":\"OQ-002 step 07 — filed into Module 5; k510 → 400 INVALID_FOLDER",
-      "startedAt": "2026-11-10T02:45:40.847Z",
-      "finishedAt": "2026-11-10T02:45:41.417Z",
+      "startedAt": "2026-11-10T03:08:39.999Z",
+      "finishedAt": "2026-11-10T03:08:40.591Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-07.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/file",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/file",
           "status": 400
         }
       ],
@@ -269,31 +269,23 @@
         "URS-VAULT-008"
       ],
       "kind": "scripted",
-      "action": "GET /api/c2c/actions/verify-chain",
-      "expected": "ok:true — the audit_logs chain is intact after ingest and filing",
-      "status": "fail",
-      "observed": {
-        "error": {
-          "code": "LAUNCH_SCOPE",
-          "message": "This part of the product is not in this release."
-        }
-      },
-      "startedAt": "2026-11-10T02:45:41.417Z",
-      "finishedAt": "2026-11-10T02:45:41.729Z",
-      "evidence": [
-        "steps/OQ-VAULT-08.at-failure.png"
-      ],
+      "action": "GET /api/audit/reports/audit-trail-integrity",
+      "expected": "the attestation reports the audit_logs hash chain intact after ingest and filing",
+      "status": "pass",
+      "observed": "audit_logs hash chain intact, 645 rows checked (COMPLIANCE-REPORT-1794280120870-7036bbf8): Every chained row re-derives from its predecessor; head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is th",
+      "startedAt": "2026-11-10T03:08:40.591Z",
+      "finishedAt": "2026-11-10T03:08:40.877Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-08.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/actions/verify-chain",
-          "status": 403
+          "url": "http://localhost:5200/api/audit/reports/audit-trail-integrity",
+          "status": 200
         }
       ],
       "consoleErrors": [],
-      "note": null,
-      "failure": "verify-chain expected ok, got 403",
+      "note": "v0.17: read from the Audit trail integrity attestation (tests/validation/lib/chain-verdict.mjs); GET /api/c2c/actions/verify-chain is claimed by no launch surface and is refused 403 LAUNCH_SCOPE where unattributed paths are refused, as in production.",
       "rateLimitRetries": 0
     },
     {
@@ -306,9 +298,9 @@
       "action": "GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)",
       "expected": "The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server's chain verdict says the chain verifies (meta.chain.ok = true)",
       "status": "pass",
-      "observed": "ledger window 200 (baseline 200); 4 chained entr(ies) for the document: Filing recorded, Text extracted, Downloaded, Uploaded to the Vault; server chain verdict ok=true over 322 row(s)",
-      "startedAt": "2026-11-10T02:45:41.729Z",
-      "finishedAt": "2026-11-10T02:45:42.014Z",
+      "observed": "ledger window 200 (baseline 200); 4 chained entr(ies) for the document: Filing recorded, Downloaded, Text extracted, Uploaded to the Vault; server chain verdict ok=true over 646 row(s)",
+      "startedAt": "2026-11-10T03:08:40.877Z",
+      "finishedAt": "2026-11-10T03:08:41.162Z",
       "evidence": [],
       "api": [
         {
@@ -333,8 +325,8 @@
       "expected": "The data room renders and the document title is visible",
       "status": "pass",
       "observed": "data room shows the document",
-      "startedAt": "2026-11-10T02:45:42.014Z",
-      "finishedAt": "2026-11-10T02:45:51.127Z",
+      "startedAt": "2026-11-10T03:08:41.162Z",
+      "finishedAt": "2026-11-10T03:08:48.874Z",
       "evidence": [
         "steps/OQ-VAULT-09.png"
       ],
@@ -355,8 +347,8 @@
       "expected": "HTTP 404",
       "status": "pass",
       "observed": "HTTP 404",
-      "startedAt": "2026-11-10T02:45:51.127Z",
-      "finishedAt": "2026-11-10T02:45:51.395Z",
+      "startedAt": "2026-11-10T03:08:48.874Z",
+      "finishedAt": "2026-11-10T03:08:49.150Z",
       "evidence": [],
       "api": [
         {
@@ -380,9 +372,9 @@
       "action": "POST /api/vault/ingest with supersedesDocumentId = the OQ-VAULT-03 document and new bytes; then the same bytes again against the new version; then new bytes against the OQ-VAULT-03 document again",
       "expected": "HTTP 201 with version 2.0 and the OQ-VAULT-03 document code; then 409 CONTENT_ALREADY_A_VERSION; then 409 VERSION_NOT_CURRENT naming 2.0",
       "status": "pass",
-      "observed": "version 2.0 (082cde6c-fdaa-4083-9692-72ba333f94d1) of OQ-002 Protocol 20261110024537.pdf; known bytes refused; stale head refused",
-      "startedAt": "2026-11-10T02:45:51.395Z",
-      "finishedAt": "2026-11-10T02:45:52.254Z",
+      "observed": "version 2.0 (ba80eae1-788f-48ba-b452-0d703dc034f9) of OQ-002 Protocol 20261110030837.pdf; known bytes refused; stale head refused",
+      "startedAt": "2026-11-10T03:08:49.150Z",
+      "finishedAt": "2026-11-10T03:08:50.024Z",
       "evidence": [],
       "api": [
         {
@@ -418,9 +410,9 @@
       "action": "GET /api/c2c/project-vault/:programId; GET …/documents/<OQ-VAULT-03 id>/versions; GET …/documents/<OQ-VAULT-03 id>/download; GET …/documents/<version 2.0 id>/history; GET …/search?q=<title> without and with includeSuperseded=true",
       "expected": "The tree has one leaf for the document, version 2.0, with versionCount 2, and no leaf for 1.0; the versions list is [2.0 current, 1.0 earlier] with the OQ-VAULT-03 SHA-256 on 1.0; version 1.0 downloads with that SHA-256; the history carries entries for both versions; search returns 2.0 and not 1.0 unless includeSuperseded=true",
       "status": "pass",
-      "observed": "one leaf (2.0, 2 versions); versions [2.0, 1.0]; 1.0 downloads with sha256 268a6daa904a…; history spans 1.0, 2.0; search 1 / 2",
-      "startedAt": "2026-11-10T02:45:52.254Z",
-      "finishedAt": "2026-11-10T02:45:53.852Z",
+      "observed": "one leaf (2.0, 2 versions); versions [2.0, 1.0]; 1.0 downloads with sha256 a4d64939cc4c…; history spans 1.0, 2.0; search 1 / 2",
+      "startedAt": "2026-11-10T03:08:50.024Z",
+      "finishedAt": "2026-11-10T03:08:51.711Z",
       "evidence": [
         "steps/OQ-VAULT-12.versions.json"
       ],
@@ -428,31 +420,31 @@
         {
           "file": "steps/OQ-VAULT-12.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-12.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/versions",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/versions",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-12.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/082cde6c-fdaa-4083-9692-72ba333f94d1/history",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/ba80eae1-788f-48ba-b452-0d703dc034f9/history",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-12.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/search?q=OQ-002%20Protocol%2020261110024537",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/search?q=OQ-002%20Protocol%2020261110030837",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-12.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/search?q=OQ-002%20Protocol%2020261110024537&includeSuperseded=true",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/search?q=OQ-002%20Protocol%2020261110030837&includeSuperseded=true",
           "status": 200
         }
       ],
@@ -470,9 +462,9 @@
       "action": "POST /api/regulatory/documents naming the OQ-VAULT-11 version, twice; POST …/:id/advance {to:\"in_review\"} with no route; POST …/:id/advance {to:\"in_review\", reason, route} naming the run identity (the uploader) as reviewer, then OQ_SIGNER as reviewer and as approver; GET …/:id; the same naming OQ_SIGNER as reviewer and OQ_APPROVER as approver; as the run identity POST …/:id/sign {meaning:\"reviewed\", reason}; as OQ_SIGNER POST …/:id/sign {meaning:\"reviewed\", reason, password, mfaToken?}; as OQ_SIGNER POST …/:id/sign {meaning:\"approved\", …} and POST …/:id/advance {to:\"approved\", …}; GET …/documents/:id/versions",
       "expected": "One lifecycle record (the second start returns it, created:false). The send without a route 409 REVIEW_ROUTE_REQUIRED. The route naming the uploader 409 MEMBER_IS_AUTHOR; the route naming the reviewer as approver too 409 MEMBER_ALREADY_NAMED; the record still in authoring. The route naming OQ_SIGNER and OQ_APPROVER 200, in_review, with its routeId. The uploader's review 403 ROUTE_NOT_NAMED; the signer's review 200 with boundContentHash equal to the version's SHA-256, completing the review; the signer's approval by signing 403 ROUTE_NOT_NAMED and by advancing 409 ROUTE_APPROVAL_BY_SIGN; the versions list shows the version In review with the review's printed name, and the route: the reviewer signed, the approver's step open. Without OQ_SIGNER_* or OQ_APPROVER_* (a third identity, the route's approver) the step is recorded \"not executed — credential not supplied\".",
       "status": "pass",
-      "observed": "record 5d0908f6-ca17-48a0-bdc2-9fdde20541ef: unrouted send refused (REVIEW_ROUTE_REQUIRED); uploader and reviewer-as-approver not admitted to the route; route fdc3fec3-d3e3-4f56-b5ef-28bbfeb208c1 sent; uploader's review refused; reviewed by OQ Signer, bound to 0f119702af25…; reviewer's approval refused by sign and by advance; approver OQ Approver's step open",
-      "startedAt": "2026-11-10T02:45:53.853Z",
-      "finishedAt": "2026-11-10T02:47:00.780Z",
+      "observed": "record 5d124d9f-dc6a-4e99-961c-582711ed4640: unrouted send refused (REVIEW_ROUTE_REQUIRED); uploader and reviewer-as-approver not admitted to the route; route faa475ee-b5b7-4928-8bf0-44303c22a6a2 sent; uploader's review refused; reviewed by OQ Signer, bound to 4f494b4d0be4…; reviewer's approval refused by sign and by advance; approver OQ Approver's step open",
+      "startedAt": "2026-11-10T03:08:51.711Z",
+      "finishedAt": "2026-11-10T03:10:00.706Z",
       "evidence": [],
       "api": [
         {
@@ -490,64 +482,64 @@
         {
           "file": "steps/OQ-VAULT-13.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
           "status": 409
         },
         {
           "file": "steps/OQ-VAULT-13.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
           "status": 409
         },
         {
           "file": "steps/OQ-VAULT-13.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
           "status": 409
         },
         {
           "file": "steps/OQ-VAULT-13.api-6.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-13.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-13.api-8.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/sign",
           "status": 403
         },
         {
           "file": "steps/OQ-VAULT-13.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/sign",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-13.api-10.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/sign",
           "status": 403,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-13.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/5d0908f6-ca17-48a0-bdc2-9fdde20541ef/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/5d124d9f-dc6a-4e99-961c-582711ed4640/advance",
           "status": 409,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-13.api-12.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/082cde6c-fdaa-4083-9692-72ba333f94d1/versions",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/ba80eae1-788f-48ba-b452-0d703dc034f9/versions",
           "status": 200
         }
       ],
@@ -565,9 +557,9 @@
       "action": "Ingest a new document (v1.0); send it for review on a route naming OQ_SIGNER as reviewer and OQ_APPROVER as approver; OQ_SIGNER signs the review; OQ_APPROVER signs the approval (POST …/:id/sign {meaning:\"approved\", reason, password, mfaToken?}). Check in v2.0 and repeat. GET …/documents/:v2/versions. POST …/documents/:v2/details {documentTitle, reason}",
       "expected": "Each send 200 in_review. Each review 200, completing the review. Each approval 200 approvalComplete:true, stage approved, bound to that version's SHA-256: the server approves on the last required signature. v2's approval answers superseded:[v1's record]; the versions list shows v2.0 Approved (the approver's printed name), its route complete, and v1.0 Superseded; the edit 409 APPROVED_VERSION_IMMUTABLE. Without OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD (a third identity) the step is recorded \"not executed — credential not supplied\".",
       "status": "pass",
-      "observed": "v1.0 approved on route a2d066b8-8b9c-48f8-be37-6eb1141a8431, then superseded by v2.0 (approved on route 7c524d04-4101-4577-b652-996115c2e9ce by OQ Approver, route complete); the approved version's edit refused",
-      "startedAt": "2026-11-10T02:47:00.780Z",
-      "finishedAt": "2026-11-10T02:48:01.950Z",
+      "observed": "v1.0 approved on route d9e994b0-306d-4747-bbfc-23f189c7a0cb, then superseded by v2.0 (approved on route 543e9711-a3b4-4903-b626-f4e3ebf4e186 by OQ Approver, route complete); the approved version's edit refused",
+      "startedAt": "2026-11-10T03:10:00.706Z",
+      "finishedAt": "2026-11-10T03:11:01.946Z",
       "evidence": [
         "steps/OQ-VAULT-14.versions.json"
       ],
@@ -587,20 +579,20 @@
         {
           "file": "steps/OQ-VAULT-14.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/c570465b-c9c9-490c-9507-00d559f15b0f/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/b2c87e54-9c91-4ec6-b4f5-2b5a58d779a2/advance",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-14.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/c570465b-c9c9-490c-9507-00d559f15b0f/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/b2c87e54-9c91-4ec6-b4f5-2b5a58d779a2/sign",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-14.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/c570465b-c9c9-490c-9507-00d559f15b0f/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/b2c87e54-9c91-4ec6-b4f5-2b5a58d779a2/sign",
           "status": 200,
           "identity": "oq-approver@validation.local"
         },
@@ -619,33 +611,33 @@
         {
           "file": "steps/OQ-VAULT-14.api-8.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/37c054a0-8dde-499a-8bcf-6dd4c90b6f86/advance",
+          "url": "http://localhost:5200/api/regulatory/documents/81aa9369-3646-4cb1-9810-5b2bcf0a6322/advance",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-14.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/37c054a0-8dde-499a-8bcf-6dd4c90b6f86/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/81aa9369-3646-4cb1-9810-5b2bcf0a6322/sign",
           "status": 200,
           "identity": "oq-signer@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-14.api-10.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/regulatory/documents/37c054a0-8dde-499a-8bcf-6dd4c90b6f86/sign",
+          "url": "http://localhost:5200/api/regulatory/documents/81aa9369-3646-4cb1-9810-5b2bcf0a6322/sign",
           "status": 200,
           "identity": "oq-approver@validation.local"
         },
         {
           "file": "steps/OQ-VAULT-14.api-11.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/bdef649c-07f8-4b6e-a774-530b0b34f795/versions",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/e69a247d-8967-4bcb-8b68-3aae71587824/versions",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-14.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/bdef649c-07f8-4b6e-a774-530b0b34f795/details",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/e69a247d-8967-4bcb-8b68-3aae71587824/details",
           "status": 409
         }
       ],
@@ -663,9 +655,9 @@
       "action": "POST /api/chat/upload {file, projectId} (a capture into the program's data room); POST /api/c2c/project-vault/:id/data-room/file {sourceIds:[that source, 999999999]}; POST it again with the captured source alone; GET /api/c2c/project-vault/:id",
       "expected": "The capture answers a sourceId with dataRoom.recorded. The filing answers 200 complete:false with [filed (a new document, suggested or unfiled, never confirmed), refused NOT_FOUND]. The second filing answers complete:true, already_filed with the same document. The data room shows the source as filed, as version 1.0.",
       "status": "pass",
-      "observed": "source 158 filed as document 585af49a-1430-4a17-a338-0bee275eff1a (unfiled); unknown source refused NOT_FOUND; second filing already_filed; room shows \"filed as 1.0\"",
-      "startedAt": "2026-11-10T02:48:01.950Z",
-      "finishedAt": "2026-11-10T02:48:03.873Z",
+      "observed": "source 160 filed as document 1dcf8bc6-23e4-4eb4-abeb-decd614eae13 (unfiled); unknown source refused NOT_FOUND; second filing already_filed; room shows \"filed as 1.0\"",
+      "startedAt": "2026-11-10T03:11:01.946Z",
+      "finishedAt": "2026-11-10T03:11:04.072Z",
       "evidence": [],
       "api": [
         {
@@ -677,19 +669,19 @@
         {
           "file": "steps/OQ-VAULT-15.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/data-room/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/data-room/file",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-15.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/data-room/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/data-room/file",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-15.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 200
         }
       ],
@@ -708,8 +700,8 @@
       "expected": "Both ingests answer placementStatus \"suggested\" in the same folder, and awaitingConfirmationCount counts them. Without a note: 422 REASON_REQUIRED. With one: 200 complete:true, both confirmed. The repeat: 200 complete:false, both refused CONFLICT. awaitingConfirmationCount is two lower than before.",
       "status": "pass",
       "observed": "2 suggested in module-5 (awaiting 3); no note → 422; confirmed both; repeat → CONFLICT ×2; awaiting 1",
-      "startedAt": "2026-11-10T02:48:03.873Z",
-      "finishedAt": "2026-11-10T02:48:06.084Z",
+      "startedAt": "2026-11-10T03:11:04.073Z",
+      "finishedAt": "2026-11-10T03:11:06.481Z",
       "evidence": [],
       "api": [
         {
@@ -727,31 +719,31 @@
         {
           "file": "steps/OQ-VAULT-16.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-16.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file-batch",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/file-batch",
           "status": 422
         },
         {
           "file": "steps/OQ-VAULT-16.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file-batch",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/file-batch",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-16.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file-batch",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/file-batch",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-16.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
           "status": 200
         }
       ],
@@ -770,8 +762,8 @@
       "expected": "The first answers 200 with from v1.0 and to v2.0, sameBytes false (the recorded SHA-256s differ), and either a text comparison with at least one changed line or, when a version has no extracted text, no text comparison and a reason naming that version. The second answers 422 NOT_SAME_DOCUMENT.",
       "status": "pass",
       "observed": "v1.0 → v2.0: 1 added, 1 removed; another document refused",
-      "startedAt": "2026-11-10T02:48:06.086Z",
-      "finishedAt": "2026-11-10T02:48:06.939Z",
+      "startedAt": "2026-11-10T03:11:06.481Z",
+      "finishedAt": "2026-11-10T03:11:07.356Z",
       "evidence": [
         "steps/OQ-VAULT-17.compare.json"
       ],
@@ -779,7 +771,7 @@
         {
           "file": "steps/OQ-VAULT-17.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/082cde6c-fdaa-4083-9692-72ba333f94d1/compare?against=5b6ec540-1e05-4a62-a551-fe759774ffe7",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/ba80eae1-788f-48ba-b452-0d703dc034f9/compare?against=81e1297e-b6a6-4820-89d2-a7f9587687f0",
           "status": 200
         },
         {
@@ -791,7 +783,7 @@
         {
           "file": "steps/OQ-VAULT-17.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/082cde6c-fdaa-4083-9692-72ba333f94d1/compare?against=3d467c5f-4dab-4c55-b4c8-ed25ac3d9f03",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/ba80eae1-788f-48ba-b452-0d703dc034f9/compare?against=4bc08ebf-263a-4ae6-b07f-3fc8a02d31d7",
           "status": 422
         }
       ],
@@ -809,9 +801,9 @@
       "action": "Create a second program; ingest a PDF into it with a unique word in its title; GET /api/c2c/project-vault/search?q=<that word>; GET /api/c2c/project-vault/<first program>/search?q=<that word>; GET /api/c2c/project-vault/search?q=",
       "expected": "The library search answers 200 with the document, named with the second program. The first program's search does not list it. The empty query answers no results with reason EMPTY_QUERY.",
       "status": "pass",
-      "observed": "found ac1a8046-08ea-4313-a616-3eb249544790 in OQ-002 Library program 20261110024537; not in the first program's search; empty query → EMPTY_QUERY",
-      "startedAt": "2026-11-10T02:48:06.939Z",
-      "finishedAt": "2026-11-10T02:48:08.433Z",
+      "observed": "found 7009d7ce-f631-4d79-a061-8b57a29cbcc9 in OQ-002 Library program 20261110030837; not in the first program's search; empty query → EMPTY_QUERY",
+      "startedAt": "2026-11-10T03:11:07.356Z",
+      "finishedAt": "2026-11-10T03:11:08.952Z",
       "evidence": [],
       "api": [
         {
@@ -829,13 +821,13 @@
         {
           "file": "steps/OQ-VAULT-18.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/search?q=oqlibrary20261110024537",
+          "url": "http://localhost:5200/api/c2c/project-vault/search?q=oqlibrary20261110030837",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-18.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/search?q=oqlibrary20261110024537",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/search?q=oqlibrary20261110030837",
           "status": 200
         },
         {
@@ -860,20 +852,20 @@
       "expected": "HTTP 200 with checked equal to the number of stored versions, every one verified (no altered, missing or unreadable version on an installation nobody has tampered with), and the document's history carrying a \"Fixity check: verified\" entry (vault.document.fixity).",
       "status": "pass",
       "observed": "8 stored version(s) re-proven, all verified; the history records the check",
-      "startedAt": "2026-11-10T02:48:08.433Z",
-      "finishedAt": "2026-11-10T02:48:09.039Z",
+      "startedAt": "2026-11-10T03:11:08.952Z",
+      "finishedAt": "2026-11-10T03:11:09.556Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-19.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/fixity",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/fixity",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-19.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/history",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/history",
           "status": 200
         }
       ],
@@ -891,9 +883,9 @@
       "action": "Ingest a PDF; POST /api/c2c/project-vault/:id/documents/<the OQ-VAULT-03 document>/relationships {toDocumentId: <the new PDF>, type: supporting}; GET …/relationships for both documents; POST …/relationships/<id>/remove without a reason, then with one; GET …/documents/<the OQ-VAULT-03 document>/history",
       "expected": "The relate answers 201. The OQ-VAULT-03 document lists it as \"Supported by\" the new PDF, and the new PDF lists it as \"Supports\" the document. Removing it without a reason answers 422 REASON_REQUIRED; with a reason, 200, and neither document lists it any more. The history carries \"Related: supported by …\" and \"Relationship removed: supported by …\" (vault.document.relate, vault.document.unrelate).",
       "status": "pass",
-      "observed": "related 5b6ec540-1e05-4a62-a551-fe759774ffe7 to 5cc06622-b6d7-4871-80cc-8c654b66df0d (supporting), listed at both ends, removed with a reason; both changes in the history",
-      "startedAt": "2026-11-10T02:48:09.039Z",
-      "finishedAt": "2026-11-10T02:48:11.382Z",
+      "observed": "related 81e1297e-b6a6-4820-89d2-a7f9587687f0 to 83b4b453-57f9-40b0-a158-12c9cd41ec28 (supporting), listed at both ends, removed with a reason; both changes in the history",
+      "startedAt": "2026-11-10T03:11:09.556Z",
+      "finishedAt": "2026-11-10T03:11:11.882Z",
       "evidence": [],
       "api": [
         {
@@ -905,43 +897,43 @@
         {
           "file": "steps/OQ-VAULT-20.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/relationships",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/relationships",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-20.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/relationships",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/relationships",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-20.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5cc06622-b6d7-4871-80cc-8c654b66df0d/relationships",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/83b4b453-57f9-40b0-a158-12c9cd41ec28/relationships",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-20.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/relationships/73ffdaca-a3e0-4da3-a43e-5891ef4b1914/remove",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/relationships/5fa5c2f0-f004-4683-b604-0a52affe0443/remove",
           "status": 422
         },
         {
           "file": "steps/OQ-VAULT-20.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/relationships/73ffdaca-a3e0-4da3-a43e-5891ef4b1914/remove",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/relationships/5fa5c2f0-f004-4683-b604-0a52affe0443/remove",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-20.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/relationships",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/relationships",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-20.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/5b6ec540-1e05-4a62-a551-fe759774ffe7/history",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/81e1297e-b6a6-4820-89d2-a7f9587687f0/history",
           "status": 200
         }
       ],
@@ -959,9 +951,9 @@
       "action": "Create a program, ingest two PDFs into it, create an IND submission on it with sequence 0000; PUT /api/submissions/sequences/:seq/leaves {sectionCode: \"2.5\", documentTable: \"vault_documents\", documentUuid: <the first PDF>, lifecycleOp: \"new\", reason}; GET /api/c2c/project-vault/:program/documents/<each PDF>/versions",
       "expected": "The leaf is placed (200). The first PDF's version lists one placement: the submission, sequence 0000, section 2.5, operation new. The second PDF's version lists none.",
       "status": "pass",
-      "observed": "version b1c2c500-bf47-48fd-a6c2-4abb43794f93 lists submission 21, sequence 4, 2.5 (new); the unplaced version lists none",
-      "startedAt": "2026-11-10T02:48:11.382Z",
-      "finishedAt": "2026-11-10T02:48:13.857Z",
+      "observed": "version d3151cb7-3de8-44c2-9757-062619445e36 lists submission 44, sequence 7, 2.5 (new); the unplaced version lists none",
+      "startedAt": "2026-11-10T03:11:11.882Z",
+      "finishedAt": "2026-11-10T03:11:14.291Z",
       "evidence": [],
       "api": [
         {
@@ -991,25 +983,25 @@
         {
           "file": "steps/OQ-VAULT-21.api-5.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions/21/sequences",
+          "url": "http://localhost:5200/api/submissions/44/sequences",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-21.api-6.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/submissions/sequences/4/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/7/leaves",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-21.api-7.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/29d6b5d4-ab07-4c51-b6d2-9a49691ad952/documents/b1c2c500-bf47-48fd-a6c2-4abb43794f93/versions",
+          "url": "http://localhost:5200/api/c2c/project-vault/b2d81724-b8d9-4fa0-8d48-00d746b07b9a/documents/d3151cb7-3de8-44c2-9757-062619445e36/versions",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-21.api-8.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/29d6b5d4-ab07-4c51-b6d2-9a49691ad952/documents/ddb06b99-1bb3-4b0e-bd78-d845b3262036/versions",
+          "url": "http://localhost:5200/api/c2c/project-vault/b2d81724-b8d9-4fa0-8d48-00d746b07b9a/documents/3d25d3a5-c7ae-4287-8da3-7863af7838c1/versions",
           "status": 200
         }
       ],
@@ -1028,8 +1020,8 @@
       "expected": "201 for page 1, 422 PAGE_OUT_OF_RANGE for page 2; 200 for the text read; 201 for the passage and the reply; 422 then 200 to resolve; 422 then 200 to retract. The list shows the passage resolved with its reply and the comment retracted; the history carries \"Extracted text read…\", \"Change request posted on a passage…\", \"Reply to…\", \"Annotation resolved…\" and \"Annotation retracted…\", and says nothing is cut.",
       "status": "pass",
       "observed": "page and passage annotations posted; the passage thread resolved; a comment retracted; 5 acts in the history",
-      "startedAt": "2026-11-10T02:48:13.857Z",
-      "finishedAt": "2026-11-10T02:48:17.794Z",
+      "startedAt": "2026-11-10T03:11:14.291Z",
+      "finishedAt": "2026-11-10T03:11:18.423Z",
       "evidence": [],
       "api": [
         {
@@ -1047,73 +1039,73 @@
         {
           "file": "steps/OQ-VAULT-22.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/eb4f6bcf-fb93-4725-9249-25af8a0022ef/annotations",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/2420b45f-4416-4a95-9fef-5ffb607c0647/annotations",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-22.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/eb4f6bcf-fb93-4725-9249-25af8a0022ef/annotations",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/2420b45f-4416-4a95-9fef-5ffb607c0647/annotations",
           "status": 422
         },
         {
           "file": "steps/OQ-VAULT-22.api-5.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/text",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/text",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-22.api-6.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/annotations",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/annotations",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-22.api-7.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/9471baa2-4354-44d6-beb5-d88364d5fa3d/replies",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6bcf90e0-3cf9-4d1b-912e-fa72292fa750/replies",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-22.api-8.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/9471baa2-4354-44d6-beb5-d88364d5fa3d/resolve",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6bcf90e0-3cf9-4d1b-912e-fa72292fa750/resolve",
           "status": 422
         },
         {
           "file": "steps/OQ-VAULT-22.api-9.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/9471baa2-4354-44d6-beb5-d88364d5fa3d/resolve",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6bcf90e0-3cf9-4d1b-912e-fa72292fa750/resolve",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-22.api-10.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/annotations",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/annotations",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-22.api-11.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/f9b3dbfc-dff2-4489-99aa-9e30f9d7003a/retract",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6ce8c935-3c4b-4d0f-bb1f-4d1c90210a68/retract",
           "status": 422
         },
         {
           "file": "steps/OQ-VAULT-22.api-12.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/annotations/f9b3dbfc-dff2-4489-99aa-9e30f9d7003a/retract",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/annotations/6ce8c935-3c4b-4d0f-bb1f-4d1c90210a68/retract",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-22.api-13.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/annotations",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/annotations",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-22.api-14.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/cbd66d82-3d49-4f79-b9c7-b1edf1440c6f/history",
+          "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/80cbdc96-5907-4f86-8089-638181ced476/history",
           "status": 200
         }
       ],

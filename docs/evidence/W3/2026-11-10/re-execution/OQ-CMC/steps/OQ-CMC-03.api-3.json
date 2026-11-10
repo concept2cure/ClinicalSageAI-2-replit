@@ -11,20 +11,20 @@
       "routeOfAdministration": "oral",
       "composition": "BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat 3 mg",
       "status": "development",
-      "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087"
+      "projectId": "78731580-7719-4562-985d-a412edebff5a"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 31,
+    "durationMs": 29,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 2,
+        "id": 11,
         "organizationId": 2,
-        "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
         "productName": "BX-701 5 mg film-coated tablet",
         "dosageForm": "Film-coated tablet",
         "strength": "5 mg",
@@ -37,8 +37,8 @@
         "packagingMaterials": null,
         "stability": null,
         "status": "development",
-        "createdAt": "2026-11-10T02:53:17.026Z",
-        "updatedAt": "2026-11-10T02:53:17.026Z"
+        "createdAt": "2026-11-10T03:39:24.798Z",
+        "updatedAt": "2026-11-10T03:39:24.798Z"
       },
       "module3Linked": true
     }

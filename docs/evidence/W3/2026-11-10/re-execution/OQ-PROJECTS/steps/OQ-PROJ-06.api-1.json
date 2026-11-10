@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/projects/2d03e03e-8223-4374-9528-7125cb651f62/activity",
+    "url": "http://localhost:5200/api/c2c/projects/5c942649-d864-49de-a912-c344fa278b91/activity",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,20 +9,20 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 27,
+    "durationMs": 28,
     "rateLimitRetries": 0,
     "body": {
       "activity": [
         {
-          "id": "95e254de-4529-424d-8077-b0a4a1cc9b93",
+          "id": "701f620b-2895-4b20-9feb-adf0acb41909",
           "action": "c2c.project.create",
           "resource_type": "regulatory_programs",
-          "resource_id": "2d03e03e-8223-4374-9528-7125cb651f62",
+          "resource_id": "5c942649-d864-49de-a912-c344fa278b91",
           "actor_id": 1,
           "details": {
-            "project_id": "2d03e03e-8223-4374-9528-7125cb651f62",
-            "name": "OQ-001 IND program 20261110024200",
-            "code": "OQ-001",
+            "project_id": "5c942649-d864-49de-a912-c344fa278b91",
+            "name": "OQ-001 IND program 20261110030559",
+            "code": "OQ-001-YOJL",
             "program_type": "ind",
             "product_type": "drug",
             "primary_agency": "FDA",
@@ -30,29 +30,29 @@
             "eu_ivdr_class": null,
             "riskBasedMonitoring": false,
             "created_via": "v2-new-project-wizard",
-            "submission_id": 17,
+            "submission_id": 39,
             "submission_created": true,
             "submission_application_type": "ind",
-            "project_anchor_id": 16,
+            "project_anchor_id": 36,
             "project_anchor_created": true,
             "client_workspace_id": 2
           },
           "actor_name": "oq-runner@validation.local",
-          "occurred_at": "2026-11-10T02:42:32.559Z",
+          "occurred_at": "2026-11-10T03:06:03.665Z",
           "ip_address": null,
           "reason": null,
           "event": null,
           "event_agency": null
         },
         {
-          "id": "1d01da1d-417b-4989-8ac7-9d13949ef45e",
+          "id": "21b1b838-3379-402f-b69e-41ebf21b781f",
           "action": "c2c.work.transition",
           "resource_type": "document",
-          "resource_id": "doc_5c303cbe3e314def88deaa4ef2ac9f2c",
+          "resource_id": "doc_0cfa0e9114204d1aa5fbe65cf58393bc",
           "actor_id": 1,
           "details": null,
           "actor_name": "oq-runner@validation.local",
-          "occurred_at": "2026-11-10T02:42:32.518Z",
+          "occurred_at": "2026-11-10T03:06:03.653Z",
           "ip_address": null,
           "reason": "Project created — document scaffolded from rule pack",
           "event": null,

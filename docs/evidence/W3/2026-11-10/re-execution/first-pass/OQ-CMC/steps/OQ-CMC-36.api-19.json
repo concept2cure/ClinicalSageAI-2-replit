@@ -1,0 +1,143 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/ich-compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "7f8dece7-8d56-416f-bc36-e27e8327a7af"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 36,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "projectId": "7f8dece7-8d56-416f-bc36-e27e8327a7af",
+        "organizationId": 2,
+        "overallStatus": "non_compliant",
+        "guidelineStatus": {
+          "Q1A(R2)": "warning",
+          "Q1E": "not_evaluated",
+          "Q2(R2)": "fail",
+          "Q3A(R2)": "fail",
+          "Q3B(R2)": "not_applicable",
+          "Q3D(R2)": "fail",
+          "Q6A": "fail",
+          "Q6B": "not_applicable",
+          "Q8(R2)": "warning",
+          "Q9(R1)": "warning",
+          "Q10": "warning"
+        },
+        "findings": [
+          {
+            "guideline": "Q1A(R2)",
+            "ruleId": "Q1A_BATCH_COUNT",
+            "status": "warning",
+            "message": "Only 1 long-term batch(es) recorded; ICH Q1A(R2) recommends three primary batches.",
+            "evidence": [
+              "Study:  (25C/60%RH)"
+            ],
+            "citation": "ICH Q1A(R2) §2.1.3 — Selection of batches."
+          },
+          {
+            "guideline": "Q1E",
+            "ruleId": "Q1E_CLAIM_NOT_READABLE",
+            "status": "not_evaluated",
+            "message": "A shelf-life claim is recorded but its period cannot be read: \"to be determined\". State it as a number of months or years (for example \"24 months\"). This is not a pass: the claim was not evaluated.",
+            "evidence": [
+              "shelf_life: to be determined"
+            ],
+            "citation": "ICH Q1E (2003-02)"
+          },
+          {
+            "guideline": "Q2(R2)",
+            "ruleId": "Q2_NO_METHODS",
+            "status": "fail",
+            "message": "No analytical methods recorded for the project.",
+            "evidence": [
+              "analytical_methods row count: 0",
+              "stage: filing type \"ind\"; no clinical phase recorded in 0 study design(s)"
+            ],
+            "citation": "FDA 21 CFR 312.23 (CMC: 312.23(a)(7)(i)-(iv)(a)-(e); foreign-language translations: 312.23(c)) (undated); EC EMA/CHMP/QWP/545525/2017 Rev. 2 (2022-01-31)"
+          },
+          {
+            "guideline": "Q3A(R2)",
+            "ruleId": "Q3A_NO_IMPURITY_PROFILE",
+            "status": "fail",
+            "message": "No impurity data is recorded for this project, on the drug substance record or in the impurity register.",
+            "evidence": [
+              "Substance: Q1E-unreadable-DS"
+            ],
+            "citation": "ICH Q3A(R2) §2 — Identification and qualification thresholds."
+          },
+          {
+            "guideline": "Q3D(R2)",
+            "ruleId": "Q3D_NO_ASSESSMENT",
+            "status": "fail",
+            "message": "No elemental-impurities assessment (ICH Q3D / USP <232>/<233>) found in specifications or source objects.",
+            "evidence": [
+              "No spec test parameter matches \"elemental\"",
+              "No source object keyed to Q3D"
+            ],
+            "citation": "ICH Q3D(R2) §3 — Risk assessment for Class 1, 2A, 2B, 3 elemental impurities."
+          },
+          {
+            "guideline": "Q6A",
+            "ruleId": "Q6A_NO_SPECS",
+            "status": "fail",
+            "message": "No quality specifications recorded.",
+            "evidence": [
+              "quality_specifications row count: 0"
+            ],
+            "citation": "ICH Q6A §1 — Specifications: Test procedures and acceptance criteria."
+          },
+          {
+            "guideline": "Q8(R2)",
+            "ruleId": "Q8_NO_QBD_EVIDENCE",
+            "status": "warning",
+            "message": "No critical process parameters or QbD source objects found. Pharmaceutical development (Q8) evidence is incomplete.",
+            "evidence": [
+              "manufacturing_processes.criticalProcessParameters empty",
+              "No qbd/design_space/control_strategy source object"
+            ],
+            "citation": "ICH Q8(R2) §2.3 — Critical quality attributes and process parameters."
+          },
+          {
+            "guideline": "Q9(R1)",
+            "ruleId": "Q9_NO_RISK_ASSESSMENT",
+            "status": "warning",
+            "message": "No quality risk management evidence (FMEA, HAZOP, or risk_assessment source object).",
+            "evidence": [
+              "No source object keyed to risk",
+              "No Module 3 section narrative referencing risk assessment"
+            ],
+            "citation": "ICH Q9(R1) §4 — Quality risk management process."
+          },
+          {
+            "guideline": "Q10",
+            "ruleId": "Q10_LIFECYCLE_THIN",
+            "status": "warning",
+            "message": "Pharmaceutical quality system lifecycle evidence is thin (0/3 signals present).",
+            "evidence": [
+              "No change controls, validated processes, or approved Module 3 sections."
+            ],
+            "citation": "ICH Q10 §3 — Pharmaceutical quality system: management responsibility, lifecycle elements, continual improvement."
+          }
+        ],
+        "counts": {
+          "pass": 0,
+          "warning": 4,
+          "fail": 4,
+          "not_applicable": 0,
+          "not_evaluated": 1
+        },
+        "unevaluatedInputs": [],
+        "evaluatedAt": "2026-11-10T02:59:06.955Z"
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@
   "observed": [
     {
       "register": "analytical-methods",
-      "id": 6,
+      "id": 15,
       "acts": [
         "cmc.register.create",
         "cmc.register.update"
@@ -15,7 +15,7 @@
     },
     {
       "register": "stability-studies",
-      "id": 16,
+      "id": 58,
       "acts": [
         "cmc.register.create",
         "cmc.register.update"
@@ -27,7 +27,7 @@
     },
     {
       "register": "comparability-studies",
-      "id": "99767119-5791-43ed-8681-a16293e077e8",
+      "id": "808e80f6-2af3-403a-a6de-3f51ea4a163e",
       "acts": [
         "cmc.register.create",
         "cmc.register.update"
@@ -42,9 +42,9 @@
   "chain": {
     "store": "audit_logs",
     "legacyRows": 0,
-    "sequencedRows": 584,
+    "sequencedRows": 1117,
     "ok": true,
-    "rowsChecked": 584,
+    "rowsChecked": 1117,
     "head": {
       "verified": false,
       "status": "not_configured",

@@ -5,8 +5,9 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ-001 exact IND reference 20261110024200",
+      "name": "OQ-001 exact IND reference 20261110030559",
       "programType": "ind",
+      "productType": "drug",
       "primaryAgency": "FDA",
       "submissionTypeId": "us_ind",
       "indication": "Validation exercise — authored filing reference",
@@ -14,12 +15,96 @@
     }
   },
   "response": {
-    "status": 400,
+    "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 30,
+    "durationMs": 119,
     "rateLimitRetries": 0,
     "body": {
-      "error": "State whether the product is a drug or a biologic: an IND filing covers both, and the class is recorded on the project."
+      "data": {
+        "id": "647c72fc-f2e7-4e43-9492-6b43eaf6e6a7",
+        "title": "OQ-001 exact IND reference 20261110030559",
+        "ws": "Biotech",
+        "pathway": "ind",
+        "code": "OQ-001-ZCEC",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "oq-runner@validation.local",
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Nov 10",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "description": null,
+        "indication": "Validation exercise — authored filing reference",
+        "agency": "FDA",
+        "program_type": "ind",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "647c72fc-f2e7-4e43-9492-6b43eaf6e6a7",
+        "code": "OQ-001-ZCEC",
+        "name": "OQ-001 exact IND reference 20261110030559",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-001 exact IND reference 20261110030559",
+        "indication": "Validation exercise — authored filing reference",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-11-10T03:06:34.499Z",
+        "updated_at": "2026-11-10T03:06:34.499Z",
+        "application_number": null,
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "registry_id": "US_IND",
+        "submission_type_id": "us_ind",
+        "riskBasedMonitoring": false,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-11-10T03:06:34.591Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 2,
+        "actorUserId": 1,
+        "clientWorkspaceId": 2,
+        "clientWorkspaceName": "Concept2Cure Therapeutics",
+        "documentId": "doc_33f863cf49c74a059d8aad16032caf84",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 40,
+        "submissionCreated": true,
+        "projectAnchorId": 37,
+        "projectAnchorCreated": true
+      }
     }
   }
 }

@@ -2,11 +2,11 @@
   "method": "tests/validation/lib/qms-digest.mjs — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentContentDigest (canonical JSON: sorted keys, undefined→null, Date→ISO; sha256 hex)",
   "digestInput": {
     "kind": "qms-document-version-content",
-    "id": 3,
+    "id": 7,
     "organizationId": 2,
-    "docNumber": "SOP-OQ-20261110025052",
+    "docNumber": "SOP-OQ-20261110031119",
     "version": "1.0",
-    "title": "OQ-006 Document control SOP 20261110025052",
+    "title": "OQ-006 Document control SOP 20261110031119",
     "docType": "sop",
     "category": "production",
     "artifactId": null,
@@ -71,66 +71,66 @@
       "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
       "templateKey": "sop",
       "authoringContent": {
-        "title": "OQ-006 Document control SOP 20261110025052",
+        "title": "OQ-006 Document control SOP 20261110031119",
         "sections": [
           {
-            "id": "9ad22888-376e-466e-b1ee-fcd5786429d8",
+            "id": "7dd14408-8326-4c8f-98f8-f241f5be7a84",
             "code": "qms-purpose",
             "title": "Purpose",
-            "content": "<p>OQ-006 Document control SOP 20261110025052: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+            "content": "<p>OQ-006 Document control SOP 20261110031119: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
             "orderIndex": 1
           },
           {
-            "id": "a503bf5e-9622-4089-9ef2-7ee25957cf25",
+            "id": "4e80103b-1d89-4035-bfa4-999562a76694",
             "code": "qms-scope",
             "title": "Scope",
             "content": "",
             "orderIndex": 2
           },
           {
-            "id": "7e9bb52b-02ce-4f5f-8507-8a388472fda3",
+            "id": "0ecfc559-44a3-468a-984a-a69dc650a71c",
             "code": "qms-responsibilities",
             "title": "Responsibilities",
             "content": "",
             "orderIndex": 3
           },
           {
-            "id": "e346dcd0-7a0f-44b4-9dd0-a7000e42cc7d",
+            "id": "c89f318c-c149-476b-b31b-e8c1f465c39a",
             "code": "qms-definitions",
             "title": "Definitions",
             "content": "",
             "orderIndex": 4
           },
           {
-            "id": "905f6a86-4ebe-4915-8978-5be727ecd583",
+            "id": "d131f3e5-2937-4563-9bd9-4191638127ed",
             "code": "qms-procedure",
             "title": "Procedure",
             "content": "",
             "orderIndex": 5
           },
           {
-            "id": "affa16cd-8f0d-40b3-a747-6579fd31a702",
+            "id": "6e57c824-b029-49c3-99f0-cd523c6031fe",
             "code": "qms-references",
             "title": "References",
             "content": "",
             "orderIndex": 6
           },
           {
-            "id": "a9c28a4e-4c25-4129-9306-be82cf87d18e",
+            "id": "f29890c0-f476-4d6c-ac16-86cbbd41ff4a",
             "code": "qms-attachments",
             "title": "Attachments",
             "content": "",
             "orderIndex": 7
           },
           {
-            "id": "ab9e3fb9-3563-43ce-b5ea-93214650a2ec",
+            "id": "a163fe5a-c910-4b65-8608-4187d0bd3046",
             "code": "qms-revision_history",
             "title": "Revision history",
             "content": "",
             "orderIndex": 8
           },
           {
-            "id": "a7ca07cc-58b9-4647-a884-3dd642cdf9a8",
+            "id": "05ef747f-2fa9-42ec-a10a-c71f5f25fd46",
             "code": "qms-approval",
             "title": "Approval",
             "content": "",
@@ -138,19 +138,19 @@
           }
         ],
         "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
-        "documentId": "3f80b867-f573-427a-bb51-2f7f3623df89"
+        "documentId": "e64acd6f-d09f-4951-bc25-383953c89cb0"
       }
     }
   },
-  "recomputed": "804d7ef87df6b82819200f1ef87a103066d63dc615046552b03329378e81cba4",
-  "reportedBySignature": "804d7ef87df6b82819200f1ef87a103066d63dc615046552b03329378e81cba4",
-  "storedOnDocument": "804d7ef87df6b82819200f1ef87a103066d63dc615046552b03329378e81cba4",
+  "recomputed": "c597034be84a54bc7f548e6d88f06b39afd21622a28f6cf5fda667f49238d966",
+  "reportedBySignature": "c597034be84a54bc7f548e6d88f06b39afd21622a28f6cf5fda667f49238d966",
+  "storedOnDocument": "c597034be84a54bc7f548e6d88f06b39afd21622a28f6cf5fda667f49238d966",
   "match": true,
   "signatureRow": {
-    "id": 14,
+    "id": 28,
     "document_id": null,
     "version_id": null,
-    "signed_target": "qms-document:3",
+    "signed_target": "qms-document:7",
     "signature_type": "qms-document-approval",
     "signature_purpose": "OQ-006 step 05: SOP approved for validation (signed)",
     "signer_id": 2,
@@ -158,11 +158,11 @@
     "signer_title": null,
     "signer_email": "oq-signer@validation.local",
     "signature_meaning": "APPROVED",
-    "signature_hash": "b709156a872a169adf07ffbab8246ab3c513ae528f1841ecfe5b8f1fff4c3750",
+    "signature_hash": "0c8c09359954a9b8af7646363dcc662eb4bc3b57746442e6a40b49dea8f76cec",
     "binding_basis": "qms-document-version-content-sha256",
     "second_factor_verified": true,
     "is_valid": true,
-    "signed_at": "2026-11-10T02:51:00.615Z",
+    "signed_at": "2026-11-10T03:12:00.653Z",
     "ip_address": "127.0.0.1",
     "approvals_recorded": 1,
     "approvals_required": 1,

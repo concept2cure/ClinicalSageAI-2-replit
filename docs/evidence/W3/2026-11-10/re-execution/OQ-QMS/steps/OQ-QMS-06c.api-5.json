@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/mdx/qms/documents/6/approve",
+    "url": "http://localhost:5200/api/mdx/qms/documents/10/approve",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -14,7 +14,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 299,
+    "durationMs": 302,
     "rateLimitRetries": 0,
     "body": {
       "error": "This document is a draft. Send it for review first; only a document under review can be approved. Nothing was signed.",

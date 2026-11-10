@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ-006 QMP 20261110025052",
+      "name": "OQ-006 QMP 20261110031119",
       "description": "Validation exercise",
       "reason": "OQ-006 validation exercise: QMP create"
     }
@@ -13,7 +13,7 @@
   "response": {
     "status": 403,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 11,
+    "durationMs": 16,
     "rateLimitRetries": 0,
     "body": {
       "error": {

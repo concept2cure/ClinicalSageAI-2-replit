@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/projects/2d03e03e-8223-4374-9528-7125cb651f62",
+    "url": "http://localhost:5200/api/c2c/projects/5c942649-d864-49de-a912-c344fa278b91",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,18 +9,18 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 35,
+    "durationMs": 23,
     "rateLimitRetries": 0,
     "body": {
-      "id": "2d03e03e-8223-4374-9528-7125cb651f62",
-      "code": "OQ-001",
-      "name": "OQ-001 IND program 20261110024200",
+      "id": "5c942649-d864-49de-a912-c344fa278b91",
+      "code": "OQ-001-YOJL",
+      "name": "OQ-001 IND program 20261110030559",
       "program_type": "ind",
       "status": "active",
       "phase": "planning",
       "priority": "medium",
       "description": null,
-      "product_name": "OQ-001 IND program 20261110024200",
+      "product_name": "OQ-001 IND program 20261110030559",
       "indication": "Validation exercise — OQ-001",
       "intended_use": null,
       "primary_agency": "FDA",
@@ -32,8 +32,8 @@
       "approval_date": null,
       "lead_user_id": 1,
       "team_members": [],
-      "created_at": "2026-11-10T02:42:32.410Z",
-      "updated_at": "2026-11-10T02:42:32.410Z",
+      "created_at": "2026-11-10T03:06:03.584Z",
+      "updated_at": "2026-11-10T03:06:03.584Z",
       "application_number": null,
       "product_type": "drug",
       "device_class": null,
@@ -51,7 +51,7 @@
       "device_flags": null,
       "readiness": 0,
       "readinessState": "measured",
-      "readinessAsOf": "2026-11-10T02:42:33.161Z",
+      "readinessAsOf": "2026-11-10T03:06:04.255Z",
       "canChange": true
     }
   }

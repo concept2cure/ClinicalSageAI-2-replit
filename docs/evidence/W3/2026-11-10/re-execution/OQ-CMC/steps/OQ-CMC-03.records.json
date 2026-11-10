@@ -1,11 +1,11 @@
 {
-  "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+  "projectId": "78731580-7719-4562-985d-a412edebff5a",
   "created": {
-    "drugSubstance": 5,
-    "drugProduct": 2,
-    "analyticalMethod": 4,
-    "specification": "56fa6310-ea01-40f1-95ff-3500af357034",
-    "batchRecord": "0350e58e-3dac-4089-b5f4-40756ea888f7",
-    "stabilityStudy": 6
+    "drugSubstance": 38,
+    "drugProduct": 11,
+    "analyticalMethod": 13,
+    "specification": "87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+    "batchRecord": "071b0795-aa0b-488d-9987-462a3cc025ce",
+    "stabilityStudy": 48
   }
 }

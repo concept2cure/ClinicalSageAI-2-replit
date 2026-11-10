@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+    "url": "http://localhost:5200/api/cmc/module3-os/source-evidence/78731580-7719-4562-985d-a412edebff5a",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,51 +9,51 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 20,
+    "durationMs": 17,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": [
         {
-          "sourceObjectId": "b8595da6-9be3-4feb-b2d8-9fe633276d89",
+          "sourceObjectId": "f0a9893b-4179-4ddf-a7a2-278ae7bcd824",
           "sourceType": "batch",
-          "sourceKey": "batch:0350e58e-3dac-4089-b5f4-40756ea888f7",
-          "label": "batch B-20261110025315",
+          "sourceKey": "batch:071b0795-aa0b-488d-9987-462a3cc025ce",
+          "label": "batch B-20261110033923",
           "evidence": []
         },
         {
-          "sourceObjectId": "37429016-b855-4584-bf16-5a2d86a758bf",
+          "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
           "sourceType": "drug_product",
-          "sourceKey": "drug_product:2",
+          "sourceKey": "drug_product:11",
           "label": "drug product BX-701 5 mg film-coated tablet",
           "evidence": []
         },
         {
-          "sourceObjectId": "d02e2c15-9954-43b4-be43-142baf877353",
+          "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
           "sourceType": "drug_substance",
-          "sourceKey": "drug_substance:5",
+          "sourceKey": "drug_substance:38",
           "label": "drug substance BX-701",
           "evidence": []
         },
         {
-          "sourceObjectId": "a67b1de6-527e-42ca-a4a5-530f24dec370",
+          "sourceObjectId": "1dc850cf-747f-4670-8698-58d8caffa2b3",
           "sourceType": "method",
-          "sourceKey": "method:4",
+          "sourceKey": "method:13",
           "label": "method RP-HPLC Assay",
           "evidence": []
         },
         {
-          "sourceObjectId": "77a6b4c4-4b0b-4f2f-a961-347d94715cbc",
+          "sourceObjectId": "5463e23d-6c2c-440c-9bcc-8c4c5baafbd6",
           "sourceType": "specification",
-          "sourceKey": "specification:56fa6310-ea01-40f1-95ff-3500af357034",
+          "sourceKey": "specification:87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
           "label": "specification BX-701",
           "evidence": []
         },
         {
-          "sourceObjectId": "408f7a8f-b48f-4dc4-9d71-d10acf128568",
+          "sourceObjectId": "e6a55f7a-06fa-4baf-afd1-e795e8bcbe60",
           "sourceType": "stability",
-          "sourceKey": "stability:6",
-          "label": "stability:6",
+          "sourceKey": "stability:48",
+          "label": "stability:48",
           "evidence": []
         }
       ]

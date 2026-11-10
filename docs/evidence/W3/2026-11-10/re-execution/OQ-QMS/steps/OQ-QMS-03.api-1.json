@@ -5,26 +5,26 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "title": "OQ-006 Document control SOP 20261110025052",
+      "title": "OQ-006 Document control SOP 20261110031119",
       "docType": "sop",
       "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
       "templateKey": "sop",
       "reason": "OQ-006 step 03: create the document control SOP",
-      "docNumber": "SOP-OQ-20261110025052",
+      "docNumber": "SOP-OQ-20261110031119",
       "nextReviewDate": "2026-11-20"
     }
   },
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 71,
+    "durationMs": 66,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": 3,
+        "id": 7,
         "organization_id": 2,
-        "doc_number": "SOP-OQ-20261110025052",
-        "title": "OQ-006 Document control SOP 20261110025052",
+        "doc_number": "SOP-OQ-20261110031119",
+        "title": "OQ-006 Document control SOP 20261110031119",
         "doc_type": "sop",
         "category": "production",
         "version": "1.0",
@@ -96,10 +96,10 @@
           "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
           "templateKey": "sop"
         },
-        "created_at": "2026-11-10T02:50:53.541Z",
-        "updated_at": "2026-11-10T02:50:53.541Z",
+        "created_at": "2026-11-10T03:11:20.298Z",
+        "updated_at": "2026-11-10T03:11:20.298Z",
         "deleted_at": null,
-        "authoring_document_id": "3f80b867-f573-427a-bb51-2f7f3623df89"
+        "authoring_document_id": "e64acd6f-d09f-4951-bc25-383953c89cb0"
       },
       "meta": {
         "auditTrail": {
