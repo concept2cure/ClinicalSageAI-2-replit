@@ -202,3 +202,19 @@ it('Submission Center’s package run takes no clinical source: none is offered,
   expect(screen.queryByText(/Clinical source tables/)).toBeNull();
   expect(apiRequest.mock.calls.some(([, path]) => String(path).includes('/csr/sources?'))).toBe(false);
 });
+
+it('lists first, and says so, the Vault file of a capture this project uses (S2 "Use in this project")', async () => {
+  const OTHER = { ...SOURCE, documentId: '11111111-2222-4333-8444-000000000006', documentTitle: 'Earlier study source', sha256: 'b'.repeat(64) };
+  const fallback = apiRequest.getMockImplementation()!;
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (path.includes('/csr/sources?')) return response({ ...list, sources: [OTHER, SOURCE] });
+    if (path.endsWith(`/projects/${PROGRAM}/evidence`)) {
+      return response({ evidence: [{ evidence_kind: 'data_room', data_room: { checksum: HASH, isCurrent: true } }] });
+    }
+    return fallback(method, path);
+  });
+  render(<StudyDataSource {...sourceProps} />);
+  await screen.findByRole('option', { name: /Approved synthetic study source.*used in this project/ });
+  const options = screen.getAllByRole('option').map(o => o.textContent);
+  expect(options.slice(1)).toEqual(['Approved synthetic study source · v2 · approved · used in this project', 'Earlier study source · v2 · approved']);
+});
