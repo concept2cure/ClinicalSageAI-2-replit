@@ -58,17 +58,32 @@ placement suites; all 73 Vault client suites; `ci:one-product`, `ci:undefined-cs
 `ci:check-shell-css-collisions`, `ci:migration-drop-safety`, `ci:migration-set-order`. `ci:check-css-selector-shadowing`
 fails identically on trunk (`journey-v2.css`, `protocol-dev-editing.css`), not from this change.
 
+## 2026-11-10: steps 2–4, and the multi-tenant repair
+
+The founder: "the UI doesn't reflect all the Vault features yet … this is a multi tenant environment".
+
+- **Survey** (every Vault route checked for a client caller): every `/api/c2c/project-vault`, `/api/vault/ingest` and
+  legal-hold route is reached. What the person could not see was the binder: it sat below every authored document's
+  draft outline, never said which outline it came from, and on an EU file listed empty US submission folders.
+- **Step 2** (`walk-binders.cjs`, `walk-binders.json`, `screenshots/binder-*.png`): IND, NDA, MAA, 510(k), EU MDR and EU
+  IVDR each open on their own binder, first in the tree, with "Binder from the filing's outline: … · version …".
+- **Step 3** (`screenshots/plan-*.png`): Module 3 of the IND lists its four plan tasks (3.2.S, 3.2.P, manufacturing,
+  stability); in the Plan, the drug substance task's folder button opens 3.2.S in the Vault.
+- **Step 4** (`ana-folder-live.mts`, `ana-step4-live.txt`): AnA's folder made under RLS with `agent:ana` and her reason
+  in the audit row; her listing holds the project's 100 folders; another organization is refused as "Project not found".
+  The tool's handling is pinned by `document-placement-tools.test.ts` (four new cases red on the old handler).
+- **Multi-tenant** (`tenant-isolation-folders.contract.test.ts`, two new cases, red on the old route): the
+  organization-wide `/api/folders` route no longer lists, renames, deletes or parents a project's folders, which would
+  have crossed project and sponsor lines inside one organization (a CRO's sponsors). Project folders are written only
+  through the project's Vault route, under `requireCurrentVaultProgramWrite` (that project's access and role), and read
+  bound to program and organization; every write carries a chained audit row.
+
+Checks run: the cabinet, folder, export, placement and AnA document-tool suites; all 73 Vault client suites; the plan
+and pyramid suites. `project-settings.pglite.test.ts` (6 cases) and `ci:check-css-selector-shadowing` fail identically
+on trunk.
+
 ## Where this stops, for the next session
 
-Steps 2–4 are open; their design and the files they touch are in `docs/design/ONE_DESIGN_PLAN.md` §3a, "S6 — The
-Vault's folders and filing binders". In short:
-
-- **Step 2** is built (the binder per filing type and region); its walk is not. NDA, MAA, EU MDR and EU IVDR projects
-  are made through `POST /api/c2c/projects` with `clientWorkspaceId`; the app refuses a J-NDA and a Health Canada NDS
-  project, so those binders cannot be shown yet. Restart the app first: the record pane's folder name for a binder or
-  person's folder (`nameLeafFolders`) has not been seen running (`after-4-document-in-folder.png` shows `uf:5`).
-- **Step 3**: `vault.open-folder` takes an exact folder id; "Open in Vault" in the pyramid's task sheet; a binder
-  folder lists the plan tasks bound to it, from `GET /api/v1/pyramids/by-project/:id`.
-- **Step 4**: `place_project_document` files to binder headings and people's folders, and can make a folder through
-  `createProgramFolder` with AnA's provenance; a person still confirms the filing.
-- Stop the app before `git push`: the full typecheck gate runs out of memory beside it on 15 GB.
+Open items are listed in `docs/design/ONE_DESIGN_PLAN.md` §3a, "S6 — The Vault's folders and filing binders"
+("What the survey found"): multi-value search filters, moving or removing a project folder, AnA walked in a
+conversation once a model key is present, and J-NDA/Health Canada intake. Stop the app before `git push`.
