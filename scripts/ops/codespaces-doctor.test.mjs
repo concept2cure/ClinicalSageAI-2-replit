@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
-  checkOpenAI, checkAnthropic, classifyAnthropicResponse,
+  checkOpenAI, checkAnthropic, checkAnthropicDrafting, classifyAnthropicResponse,
   probeDatabase, checkApplication, checkAuthConfiguration,
   checkTenantIsolationConfiguration, runtimeIsolationFailures, runCodespacesDoctor,
 } from './codespaces-doctor.mjs';
@@ -332,4 +332,91 @@ test('--expect-anthropic-models reaches the Anthropic probe from the command lin
   });
   assert.deepEqual(report.anthropic.draftingModelsVisible, ['claude-opus-5-5']);
   assert.deepEqual(report.anthropic.draftingModelsMissing, ['claude-opus-5']);
+});
+
+// 2026-11-10: a key the model list accepts can still be refused on every drafting call. Anthropic lists models for
+// an account with no credit, so the Codespace start said "key accepted; drafting models available" and the app then
+// drafted nothing. The explicit, billable probe sends one small Messages request to an approved drafting model.
+const draftingCall = { env: { ANTHROPIC_API_KEY: 'test-only-key' }, models: ['claude-opus-5-5', 'claude-opus-5'] };
+const apiError = (status, type, message) => ({ ok: false, status, json: async () => ({ type: 'error', error: { type, message } }) });
+
+test('the drafting-call probe sends one small request the current API accepts, to the first approved model', async () => {
+  const sent = [];
+  const fetcher = async (url, opts) => {
+    sent.push({ url, opts });
+    return { ok: true, status: 200, json: async () => ({ type: 'message', model: 'claude-opus-5-5', stop_reason: 'end_turn', content: [] }) };
+  };
+  const result = await checkAnthropicDrafting({ ...draftingCall, fetcher });
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].url, 'https://api.anthropic.com/v1/messages');
+  assert.equal(sent[0].opts.method, 'POST');
+  assert.equal(sent[0].opts.headers['x-api-key'], 'test-only-key');
+  const body = JSON.parse(sent[0].opts.body);
+  assert.equal(body.model, 'claude-opus-5-5');
+  // Nothing the drafting models refuse: no sampling parameter, no thinking budget, no forced tool choice.
+  assert.deepEqual(Object.keys(body).sort(), ['max_tokens', 'messages', 'model', 'output_config']);
+  assert.ok(body.max_tokens <= 256);
+  assert.equal(result.status, 'passed');
+  assert.equal(result.code, 'ANTHROPIC_DRAFTING_CALL_ACCEPTED');
+  assert.equal(result.model, 'claude-opus-5-5');
+  assert.equal(result.billingVerified, true);
+  assert.equal(JSON.stringify(result).includes('test-only-key'), false);
+});
+
+test('an account with no credit is named as that, whatever the model list said', async () => {
+  const result = await checkAnthropicDrafting({ ...draftingCall,
+    fetcher: async () => apiError(400, 'invalid_request_error', 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.') });
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.code, 'ANTHROPIC_QUOTA_OR_BILLING');
+  assert.match(result.explanation, /credit/i);
+  assert.doesNotMatch(result.explanation, /Plans & Billing to upgrade/); // the provider's own text is not repeated
+});
+
+test('a model the account cannot use is tried no further than the approved list, and the result names which answered', async () => {
+  const asked = [];
+  const fetcher = async (_url, opts) => {
+    const { model } = JSON.parse(opts.body);
+    asked.push(model);
+    return model === 'claude-opus-5-5' ? apiError(404, 'not_found_error', 'model: claude-opus-5-5')
+      : { ok: true, status: 200, json: async () => ({ type: 'message', model, stop_reason: 'max_tokens', content: [] }) };
+  };
+  const result = await checkAnthropicDrafting({ ...draftingCall, fetcher });
+  assert.deepEqual(asked, ['claude-opus-5-5', 'claude-opus-5']);
+  assert.equal(result.status, 'passed');
+  assert.equal(result.model, 'claude-opus-5');
+  assert.deepEqual(result.modelsRefused, ['claude-opus-5-5']);
+});
+
+test('no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes', async () => {
+  const none = await checkAnthropicDrafting({ ...draftingCall, fetcher: async () => apiError(404, 'not_found_error', 'model: x') });
+  assert.equal(none.status, 'blocked');
+  assert.equal(none.code, 'ANTHROPIC_DRAFTING_MODELS_NOT_AVAILABLE');
+  const key = await checkAnthropicDrafting({ ...draftingCall, fetcher: async () => apiError(401, 'authentication_error', 'invalid x-api-key') });
+  assert.equal(key.code, 'ANTHROPIC_KEY_INVALID');
+  let calls = 0;
+  const limited = await checkAnthropicDrafting({ ...draftingCall, fetcher: async () => { calls += 1; return apiError(429, 'rate_limit_error', 'rate limited'); } });
+  assert.equal(limited.code, 'ANTHROPIC_RATE_LIMIT');
+  assert.equal(calls, 1); // a refusal that is not about the model is not retried on the next model
+});
+
+test('the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for', async () => {
+  const missing = await checkAnthropicDrafting({ env: {}, models: ['claude-opus-5-5'], fetcher: () => { throw Error('called'); } });
+  assert.equal(missing.code, 'ANTHROPIC_KEY_MISSING');
+  const noModels = await checkAnthropicDrafting({ env: { ANTHROPIC_API_KEY: 'test-only-key' }, models: [], fetcher: () => { throw Error('called'); } });
+  assert.equal(noModels.code, 'ANTHROPIC_DRAFTING_MODELS_NOT_NAMED');
+  const database = async () => ({ ok: true, role: 'app_service', failures: [] });
+  let posts = 0;
+  const fetcher = async (_url, opts) => {
+    if (opts.method === 'POST') posts += 1;
+    return apiError(400, 'invalid_request_error', 'Your credit balance is too low to access the Anthropic API.');
+  };
+  const environment = { ...env, ANTHROPIC_API_KEY: 'test-only-key' };
+  const plain = await runCodespacesDoctor({ env: environment, fetcher, connectDb: database, args: [] });
+  assert.equal(posts, 0);
+  assert.equal(plain.anthropicDrafting, undefined);
+  const asked = await runCodespacesDoctor({ env: environment, fetcher, connectDb: database,
+    args: ['--probe-anthropic-usage', '--expect-anthropic-models=claude-opus-5-5'] });
+  assert.equal(posts, 1);
+  assert.equal(asked.anthropicDrafting.code, 'ANTHROPIC_QUOTA_OR_BILLING');
+  assert.equal(asked.prerequisitesVerified, false);
 });

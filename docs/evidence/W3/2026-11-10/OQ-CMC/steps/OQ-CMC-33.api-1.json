@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/808060af-b01c-4b94-b24f-58138b33098d/3.2.A.1/approve",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "Signing as the author of the records.",
+      "meaning": "authorship",
+      "reauth": {
+        "password": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "APPROVAL_IS_NOT_AUTHORSHIP",
+      "detail": "Approving a Module 3 section is not an authorship signature: it is the approval the export gate and the filing read. Sign with the meaning review, approval or responsibility — each of which must be independent of whoever entered the records the section cites. Nothing was signed."
+    }
+  }
+}

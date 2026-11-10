@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/8c05d32c-f5b2-4a79-87d5-ddd208dfb428/documents/9181592b-4d08-464c-8116-8215e43147e3/relationships",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "toDocumentId": "b108bace-7dc7-4d67-ad64-af736d9c7f64",
+      "type": "supporting"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 45,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "21aaf69a-1a24-476e-9102-06c59c536857"
+      }
+    }
+  }
+}

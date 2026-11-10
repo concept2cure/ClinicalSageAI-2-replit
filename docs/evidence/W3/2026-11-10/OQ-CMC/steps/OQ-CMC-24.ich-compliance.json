@@ -1,0 +1,157 @@
+{
+  "success": true,
+  "data": {
+    "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+    "organizationId": 2,
+    "overallStatus": "non_compliant",
+    "guidelineStatus": {
+      "Q1A(R2)": "warning",
+      "Q1E": "warning",
+      "Q2(R2)": "warning",
+      "Q3A(R2)": "fail",
+      "Q3B(R2)": "warning",
+      "Q3D(R2)": "fail",
+      "Q6A": "pass",
+      "Q6B": "not_applicable",
+      "Q8(R2)": "warning",
+      "Q9(R1)": "warning",
+      "Q10": "warning"
+    },
+    "findings": [
+      {
+        "guideline": "Q1A(R2)",
+        "ruleId": "Q1A_BATCH_COUNT",
+        "status": "warning",
+        "message": "Only 1 long-term batch(es) recorded; ICH Q1A(R2) recommends three primary batches.",
+        "evidence": [
+          "Study:  (LT, 25C/60%RH)"
+        ],
+        "citation": "ICH Q1A(R2) §2.1.3 — Selection of batches."
+      },
+      {
+        "guideline": "Q1A(R2)",
+        "ruleId": "Q1A_NO_ACCELERATED",
+        "status": "warning",
+        "message": "No accelerated stability study at 40°C/75% RH recorded.",
+        "evidence": [
+          "stability_studies accelerated count: 0"
+        ],
+        "citation": "ICH Q1A(R2) §2.1.7.1 — Accelerated condition required for shelf-life extrapolation."
+      },
+      {
+        "guideline": "Q1E",
+        "ruleId": "Q1E_NO_CLAIM",
+        "status": "warning",
+        "message": "No shelf-life claim is recorded on any stability study. §3.2.P.8.1 states the proposed shelf life and its storage condition, and the composed section has no other source for it.",
+        "evidence": [
+          "stability study count: 1; studies stating a shelf life: 0"
+        ],
+        "citation": "ICH Q1E (2003-02)"
+      },
+      {
+        "guideline": "Q2(R2)",
+        "ruleId": "Q2_UNVALIDATED_METHODS",
+        "status": "warning",
+        "message": "1 method(s) are neither validated nor shown suitable. The project records no clinical phase, so the phase-appropriate expectation cannot be applied: phase 1 needs suitable procedures, phase 3 and the marketing application need Q2(R2) validation. Record the phase in the project’s study design.",
+        "evidence": [
+          "RP-HPLC Assay: development",
+          "stage: filing type \"ind\"; no clinical phase recorded in 0 study design(s)"
+        ],
+        "citation": "FDA FDA clarification document posted via the Phase 1 IND Navigator (fda.gov/media/193163) (2026-06); EC EMA/CHMP/QWP/545525/2017 Rev. 2 (2022-01-31); ICH Q2(R2) (2023-11-01)"
+      },
+      {
+        "guideline": "Q2(R2)",
+        "ruleId": "Q2_INCOMPLETE_VALIDATION",
+        "status": "warning",
+        "message": "Method \"RP-HPLC Assay\" is missing validation evidence: specificity, linearity / range, accuracy, precision.",
+        "evidence": [
+          "Method type: HPLC",
+          "Purpose: assay"
+        ],
+        "citation": "ICH Q2(R2) (2023-11-01)"
+      },
+      {
+        "guideline": "Q3A(R2)",
+        "ruleId": "Q3A_NO_IMPURITY_PROFILE",
+        "status": "fail",
+        "message": "No impurity data is recorded for this project, on the drug substance record or in the impurity register.",
+        "evidence": [
+          "Substance: BX-701"
+        ],
+        "citation": "ICH Q3A(R2) §2 — Identification and qualification thresholds."
+      },
+      {
+        "guideline": "Q3B(R2)",
+        "ruleId": "Q3B_NO_DEGRADANTS_SPEC",
+        "status": "warning",
+        "message": "No drug product specification controls degradation products / related substances.",
+        "evidence": [
+          "drug_product specs lacking related-substance test"
+        ],
+        "citation": "ICH Q3B(R2) §2 — Degradation products in drug products."
+      },
+      {
+        "guideline": "Q3D(R2)",
+        "ruleId": "Q3D_NO_ASSESSMENT",
+        "status": "fail",
+        "message": "No elemental-impurities assessment (ICH Q3D / USP <232>/<233>) found in specifications or source objects.",
+        "evidence": [
+          "No spec test parameter matches \"elemental\"",
+          "No source object keyed to Q3D"
+        ],
+        "citation": "ICH Q3D(R2) §3 — Risk assessment for Class 1, 2A, 2B, 3 elemental impurities."
+      },
+      {
+        "guideline": "Q6A",
+        "ruleId": "Q6A_OK",
+        "status": "pass",
+        "message": "1 specification(s) recorded with justification.",
+        "evidence": [
+          "spec_count: 1"
+        ],
+        "citation": "ICH Q6A."
+      },
+      {
+        "guideline": "Q8(R2)",
+        "ruleId": "Q8_NO_QBD_EVIDENCE",
+        "status": "warning",
+        "message": "No critical process parameters or QbD source objects found. Pharmaceutical development (Q8) evidence is incomplete.",
+        "evidence": [
+          "manufacturing_processes.criticalProcessParameters empty",
+          "No qbd/design_space/control_strategy source object"
+        ],
+        "citation": "ICH Q8(R2) §2.3 — Critical quality attributes and process parameters."
+      },
+      {
+        "guideline": "Q9(R1)",
+        "ruleId": "Q9_NO_RISK_ASSESSMENT",
+        "status": "warning",
+        "message": "No quality risk management evidence (FMEA, HAZOP, or risk_assessment source object).",
+        "evidence": [
+          "No source object keyed to risk",
+          "No Module 3 section narrative referencing risk assessment"
+        ],
+        "citation": "ICH Q9(R1) §4 — Quality risk management process."
+      },
+      {
+        "guideline": "Q10",
+        "ruleId": "Q10_LIFECYCLE_THIN",
+        "status": "warning",
+        "message": "Pharmaceutical quality system lifecycle evidence is thin (1/3 signals present).",
+        "evidence": [
+          "1 approved Module 3 section(s)"
+        ],
+        "citation": "ICH Q10 §3 — Pharmaceutical quality system: management responsibility, lifecycle elements, continual improvement."
+      }
+    ],
+    "counts": {
+      "pass": 1,
+      "warning": 9,
+      "fail": 2,
+      "not_applicable": 0,
+      "not_evaluated": 0
+    },
+    "unevaluatedInputs": [],
+    "evaluatedAt": "2026-11-10T02:08:30.688Z"
+  }
+}

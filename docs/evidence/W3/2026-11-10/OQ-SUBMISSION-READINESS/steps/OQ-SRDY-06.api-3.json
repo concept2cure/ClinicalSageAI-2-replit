@@ -1,0 +1,651 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/module-subscriptions/navigation",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "organizationId": 2,
+      "tier": "enterprise",
+      "industryMode": "biotech",
+      "masterAdmin": false,
+      "resolved": true,
+      "surfaces": [
+        {
+          "id": "authoring-engine",
+          "label": "AnA Authoring Engine",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "batch-draft",
+          "label": "Parallel drafting",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "cmc",
+          "label": "CMC / Module 3",
+          "requiredTier": "professional",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "csr-workflow",
+          "label": "CSR workflow",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "device-510k",
+          "label": "510(k) and eSTAR",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-cer",
+          "label": "Clinical evaluation (CER)",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-diagnostics",
+          "label": "IVDR evidence",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-pma",
+          "label": "PMA",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-presub",
+          "label": "Pre-submission (Q-Sub)",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "doc-journey",
+          "label": "Document journey",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "document-authoring",
+          "label": "The editor",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "ectd-coauthor",
+          "label": "eCTD co-author",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "ectd-compile",
+          "label": "Compile & Export eCTD",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "inconsistency",
+          "label": "Inconsistency Intelligence",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "labeling",
+          "label": "Labeling",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "labeling-pi",
+          "label": "Prescribing information",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "nonclinical",
+          "label": "Nonclinical / Module 4",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "protocol-dev",
+          "label": "The protocol workspace",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "source-tracer",
+          "label": "Source Tracer",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "template-library",
+          "label": "Template library",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "decision-lineage",
+          "label": "Decision lineage",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "device-clinical-studies",
+          "label": "Device clinical studies",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-engineering",
+          "label": "Engineering evidence",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "device-software",
+          "label": "Software lifecycle",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "evidence-search",
+          "label": "Evidence search (RAG)",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "human-factors",
+          "label": "Human factors (IEC 62366-1)",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "insights",
+          "label": "Reporting & analytics",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "vault",
+          "label": "Vault",
+          "requiredTier": "free",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "gateway-transmittals",
+          "label": "Gateway transmittals",
+          "requiredTier": "professional",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "haq-manager",
+          "label": "Health authority questions",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "pyramid",
+          "label": "Submission pyramid",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "submission-center",
+          "label": "Submission Center",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "submission-twin",
+          "label": "Submission Twin",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "dispatch-readiness",
+          "label": "Submission Readiness",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "identity-console",
+          "label": "Enterprise identity (SSO / SCIM)",
+          "requiredTier": "enterprise",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "orchestration",
+          "label": "Orchestration & readiness",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "qmp",
+          "label": "Quality management plans",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "quality",
+          "label": "Quality",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "report-governance",
+          "label": "Report governance",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "review",
+          "label": "The review board",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "shadow-review",
+          "label": "Shadow review",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "tasks",
+          "label": "Tasks",
+          "requiredTier": "free",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "crl-library",
+          "label": "FDA CRL library",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "deep-research",
+          "label": "Deep research",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "device-postmarket",
+          "label": "Post-market surveillance and CAPA",
+          "requiredTier": "professional",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "global-ri",
+          "label": "Global regulatory intelligence",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "intelligence-catalog",
+          "label": "Intelligence catalog",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "precedent-intelligence",
+          "label": "Precedent intelligence",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "change-assessment",
+          "label": "Change assessment",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "device-udi",
+          "label": "UDI & device identification",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "lifecycle-mgmt",
+          "label": "Lifecycle management",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "market-access",
+          "label": "Market access",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "orphan",
+          "label": "Orphan & rare",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "pediatric",
+          "label": "Pediatric (PIP / PSP)",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "reg-change",
+          "label": "Regulatory change intelligence",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "registrations",
+          "label": "Registrations",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "program-journey",
+          "label": "Program journey",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "communication-center",
+          "label": "Communication",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "ind-checklist",
+          "label": "IND forms",
+          "requiredTier": "standard",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "maa-cockpit",
+          "label": "MAA Module 1 (Regional)",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "nda-cockpit",
+          "label": "NDA / BLA filing",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "pdev",
+          "label": "Product development (PDEV → IND)",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "biostatistics",
+          "label": "Biostatistics",
+          "requiredTier": "professional",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "clinical-ops",
+          "label": "Clinical operations",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "pharmacovigilance",
+          "label": "Pharmacovigilance",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "pv-cockpit",
+          "label": "PV cockpit",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "rbm",
+          "label": "Risk-based monitoring",
+          "requiredTier": "professional",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "safety-narrative",
+          "label": "Safety narrative / PV",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "cro-portfolio",
+          "label": "Sponsor portfolio",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "projects",
+          "label": "Projects",
+          "requiredTier": "free",
+          "entitled": true,
+          "source": "included"
+        },
+        {
+          "id": "research-admin",
+          "label": "Research administration",
+          "requiredTier": null,
+          "entitled": false,
+          "source": "launch-scope"
+        },
+        {
+          "id": "regulatory-workspace",
+          "label": "Regulatory workspace",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "investigator-brochure",
+          "label": "Investigator's Brochure",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "report-engine",
+          "label": "Protocol analysis",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "ana-command",
+          "label": "AnA Command",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "etmf",
+          "label": "Inspection readiness",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "client-portal",
+          "label": "Client portal (external view)",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "labeling-smpc",
+          "label": "EU SmPC (QRD)",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-cmc",
+          "label": "PDEV CMC workstream",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-nonclinical",
+          "label": "PDEV nonclinical workstream",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-clinical",
+          "label": "PDEV clinical workstream",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-regulatory",
+          "label": "PDEV regulatory workstream",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-ind-assembly",
+          "label": "IND assembly readiness",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-contradictions",
+          "label": "Contradictions registry",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "pdev-fda-interactions",
+          "label": "FDA interactions",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "training",
+          "label": "Training & enablement",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "coverage",
+          "label": "Codebase coverage",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "mission-control",
+          "label": "Mission control",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        },
+        {
+          "id": "filing-strategy",
+          "label": "Global filing strategy",
+          "entitled": false,
+          "source": "launch-scope",
+          "requiredTier": null
+        }
+      ],
+      "launchScope": {
+        "enforced": true
+      },
+      "platformAdmin": false
+    }
+  }
+}

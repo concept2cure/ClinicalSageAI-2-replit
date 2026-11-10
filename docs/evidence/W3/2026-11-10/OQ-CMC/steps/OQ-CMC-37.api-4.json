@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/3",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "title": "OQ edit probe (rev 2)",
+      "purpose": "Assay and related substances"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 57,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 3,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "methodCode": "OQE-20261110020703",
+        "title": "OQ edit probe (rev 2)",
+        "purpose": "Assay and related substances",
+        "analyte": "API",
+        "matrix": "Drug substance",
+        "technique": "HPLC",
+        "status": "development",
+        "ichQ2Parameters": null,
+        "systemSuitability": null,
+        "acceptance_criteria": null,
+        "robustness_data": null,
+        "validationDate": null,
+        "developedBy": null,
+        "validatedBy": null,
+        "createdAt": "2026-11-10T02:08:54.120Z",
+        "updatedAt": "2026-11-10T02:08:54.977Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

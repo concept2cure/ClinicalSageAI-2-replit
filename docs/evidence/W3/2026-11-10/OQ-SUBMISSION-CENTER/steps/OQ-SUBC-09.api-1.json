@@ -1,0 +1,243 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/capabilities",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "rateLimitRetries": 0,
+    "body": {
+      "environment": "production",
+      "gateways": [
+        {
+          "region": "fda",
+          "gateway": "esg",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "as2",
+            "implementation": "implemented",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "CMS signing/encryption and pinned MDN verification are implemented. FDA account UAT and agency acceptance remain unverified.",
+            "missingDependencies": [
+              "Environment-specific FDA UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "ema",
+          "gateway": "cesp",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unverified",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "The agency protocol and environment-specific acceptance have not been verified. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "ema",
+          "gateway": "eudamed",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unverified",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "The agency protocol and environment-specific acceptance have not been verified. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "pmda",
+          "gateway": "pmda_gateway",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unverified",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "The agency protocol and environment-specific acceptance have not been verified. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "ca",
+          "gateway": "hc_cesg",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unverified",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "The agency protocol and environment-specific acceptance have not been verified. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "uk",
+          "gateway": "mhra_gateway",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "cn",
+          "gateway": "nmpa_gateway",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "au",
+          "gateway": "tga_ebs",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "ch",
+          "gateway": "swissmedic_egateway",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "br",
+          "gateway": "anvisa_gateway",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "in",
+          "gateway": "cdsco_sugam",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "kr",
+          "gateway": "mfds_dbio",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        },
+        {
+          "region": "sg",
+          "gateway": "hsa_prism",
+          "configured": false,
+          "transportReadiness": {
+            "transport": "rest",
+            "implementation": "unavailable",
+            "qualification": "not_verified",
+            "qualified": false,
+            "reason": "No sourced agency wire contract exists; transmission is refused before the wire. Credentials do not establish qualification.",
+            "missingDependencies": [
+              "Verified current agency protocol contract",
+              "Environment-specific agency UAT and verified receipt evidence"
+            ]
+          }
+        }
+      ],
+      "gatewaysConfigured": 0,
+      "workspaces": {
+        "portfolio": true,
+        "planner": true,
+        "builder": true,
+        "sequences": true,
+        "validation": true,
+        "shadow-review": true,
+        "dispatch": true
+      },
+      "features": {
+        "assemble": true,
+        "deviceTechnicalFile": true,
+        "pathwayManifest": true,
+        "publishTransmit": false
+      }
+    }
+  }
+}

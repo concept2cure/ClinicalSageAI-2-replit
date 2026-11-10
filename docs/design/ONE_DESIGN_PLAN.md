@@ -2160,7 +2160,11 @@ session, so no model output was produced or claimed.
 session's brief). Each records its own progress here; as reported to this session:
 - `session_01QoxbLZMScz1c2iFESBLn9J`, **S6**: step 1 landed (`b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
   A project's Vault has "New folder", Rename and "Move to…", each audited. Its cabinet is the filing's binder from the
-  active rule pack. Steps 2 to 4 are open: other filing types, the pyramid in Vault, AnA over folders.
+  active rule pack. Steps 2 to 4 landed 2026-11-10 (`d208ba8f68`, `844b7de191`, `a36449dd90`, `c80d21ae3b`,
+  `7d918fe90e`, `f9643421e9`, `84004c287e`): IND, NDA, MAA, 510(k), EU MDR and EU IVDR each open on their own binder; a
+  binder folder lists the plan tasks that feed it; AnA files into folders as suggestions a person confirms (not walked
+  in a conversation: no model key). With it, `9d01cdb37b` stops `/api/folders` reaching another sponsor's project
+  folders.
 - `session_01QoxbLdTrwYyiaSgLDxgHQJ`, **S2**: landed (`c15afd47`..`07a1c645`). Vault has a "Data catalog" tab with
   a grade A to D per item and its basis, and "Use in this project". Open: the CSR study-data chooser putting used items
   first (S3), and AnA over the catalog.
