@@ -82,8 +82,15 @@ Checks run: the cabinet, folder, export, placement and AnA document-tool suites;
 and pyramid suites. `project-settings.pglite.test.ts` (6 cases) and `ci:check-css-selector-shadowing` fail identically
 on trunk.
 
+## 2026-11-10, second pass: move and remove, the trunk repairs, and readiness for GA
+
+- A person's folder is moved and removed (`walk-folder-moves.cjs`, `screenshots/moves-*.png`). Remove is refused for a
+  folder that holds a file, and when the session cannot be shown to see the project's documents
+  (`folder-remove-fail-closed.txt`: found live, a folder holding `adsl.xpt` had counted as empty).
+- `public.document_folders` under row security as the runtime role: `folders-rls-two-tenant.txt`.
+- Readiness for GA, with what this lane cannot close: `GA-READINESS.md`.
+
 ## Where this stops, for the next session
 
-Open items are listed in `docs/design/ONE_DESIGN_PLAN.md` §3a, "S6 — The Vault's folders and filing binders"
-("What the survey found"): multi-value search filters, moving or removing a project folder, AnA walked in a
-conversation once a model key is present, and J-NDA/Health Canada intake. Stop the app before `git push`.
+Open items: `docs/design/ONE_DESIGN_PLAN.md` §3a, "S6 — The Vault's folders and filing binders" ("Open, for the next
+session"), and `GA-READINESS.md` ("Not ready, in this lane"). Stop the app before `git push`.
