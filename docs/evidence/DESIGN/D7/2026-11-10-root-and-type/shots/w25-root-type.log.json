@@ -1,0 +1,56 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "quality-dark",
+      "theme": "dark",
+      "background": "rgb(38, 38, 36) (main)",
+      "shellBackground": "rgba(0, 0, 0, 0)",
+      "titleCell": "13px rgb(250, 249, 245)",
+      "number": "13px 600 \"JetBrains Mono\"",
+      "lede": "14px"
+    },
+    {
+      "name": "change-dark",
+      "linkCount": "12px 400",
+      "number": "13px 600"
+    },
+    {
+      "name": "biostatistics-dark",
+      "theme": "dark",
+      "background": "rgb(38, 38, 36) (main)",
+      "shellBackground": null,
+      "titleCell": null,
+      "number": null,
+      "lede": "14px"
+    },
+    {
+      "name": "quality-light",
+      "theme": null,
+      "background": "rgb(250, 249, 245) (main)",
+      "shellBackground": "rgba(0, 0, 0, 0)",
+      "titleCell": "13px rgb(20, 20, 19)",
+      "number": "13px 600 \"JetBrains Mono\"",
+      "lede": "14px"
+    },
+    {
+      "name": "change-light",
+      "linkCount": "12px 400",
+      "number": "13px 600"
+    },
+    {
+      "name": "biostatistics-light",
+      "theme": null,
+      "background": "rgb(250, 249, 245) (main)",
+      "shellBackground": null,
+      "titleCell": null,
+      "number": null,
+      "lede": "14px"
+    },
+    {
+      "name": "w25-root-type",
+      "ok": true
+    }
+  ]
+}

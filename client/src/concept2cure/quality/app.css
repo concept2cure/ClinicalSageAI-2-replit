@@ -1,13 +1,11 @@
-/* Quality system / SOP register — scoped surface styles.
+/* Quality — the styles its own records need, on the product's page.
    ──────────────────────────────────────────────────────────────
-   Tokens come from the host design system (loaded globally by the shell);
-   resets are scoped to .qms-shell so they don't clobber the host. Single
-   accent: Claude orange (--accent-main-100) is the one persistent focal
-   colour, on the primary CTA only. Body 13px. 200ms ease-out motion.
-   Mirrors the conventions of client/src/concept2cure/intelligence/app.css. */
+   Quality is a work area of the one product (D7-B): D0's page, header, tabs,
+   sections, tables, chips, buttons and drawer. Its root sets no type, colour
+   or background of its own, and it styles no button (C18, 2026-11-10). What is
+   left here is the layout of Quality's own records. Sizes are the ramp's
+   tokens. */
 
-.qms-shell, .qms-shell * { box-sizing: border-box; }
-.qms-shell :where(button):not(:where(.qms-workbench *)) { font-family: inherit; cursor: pointer; border: 0; background: transparent; color: inherit; padding: 0; }
 .qms-shell svg { flex: 0 0 auto; }
 
 /* `min-width:0` is load-bearing, not tidiness. A flex item's automatic minimum
@@ -18,14 +16,7 @@
    and the WHOLE quality page scrolled sideways instead of just the table.
    Verified in the running app, not in a fragment — a fragment has no `.page`
    ancestor and shows the intended behaviour either way. */
-.qms-shell {
-  display: flex; flex-direction: column; height: 100%; min-width: 0;
-  font-family: var(--font-sans);
-  color: var(--text-100);
-  font-size: 13px; line-height: 1.55;
-  background: var(--bg-050);
-  -webkit-font-smoothing: antialiased;
-}
+.qms-shell { display: flex; flex-direction: column; height: 100%; min-width: 0; }
 
 /* ─── Page ─────────────────────────────────────────────────────── */
 /* The page's gutters and width are D0's `.page-inner` (max 1120; D7-B): the
@@ -37,7 +28,7 @@
 .qms-workbench { height: 100%; min-height: 0; min-width: 0; }
 .qms-signed-version { border-top: 1px solid var(--border-subtle); padding: 12px 0; }
 .qms-signed-version summary { cursor: pointer; font-weight: 600; }
-.qms-signed-version h3 { font-size: 14px; margin: 16px 0 8px; }
+.qms-signed-version h3 { font-size: var(--fs-body); margin: 16px 0 8px; }
 
 /* ─── Section heads inside the tabs (D7-B) ─────────────────────────
    The tab's own head, eyebrow and serif title went to the one `.ph` header
@@ -46,30 +37,14 @@
   .qms-sec-head { flex-wrap: wrap; row-gap: 4px; }
   .qms-sec-head h2 { white-space: normal; }
 }
-.qms-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 12px; border-radius: var(--radius-lg);
-  font-size: 12.5px; font-weight: 600; white-space: nowrap;
-  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
-}
-.qms-btn.ghost { color: var(--text-200); border: 1px solid var(--bg-200); background: var(--background); }
-.qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
-.qms-btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
 
 /* ─── Sections ─────────────────────────────────────────────────── */
 .qms-sec { margin-bottom: 26px; }
-.qms-sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
-.qms-sec-head h2 { font-size: var(--fs-section); font-weight: 600; line-height: 1.4; color: var(--text-100); margin: 0; white-space: nowrap; }
-.qms-sec-head .meta { font-size: var(--fs-small); color: var(--text-300); }
-.qms-sec-head .spacer { flex: 1; }
-.qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms var(--ease); }
-.qms-link:hover { color: var(--accent-main-100); }
 
 /* ─── Register cells (the registers are D0's .reg-tbl since C6, C8 and C11) ─── */
-.qms-num { color: var(--text-200); font-weight: 600; text-align: left; }
+.qms-num { color: var(--text-200); text-align: left; }
 .qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
-.qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 /* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. */
 .qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
@@ -86,8 +61,8 @@
   width: 100%; min-height: 24px; text-align: left; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
 }
 .qms-review-open:disabled { cursor: default; }
-.qms-review-last { grid-column: 1 / -1; color: var(--text-300); font-size: 11.5px; }
-.qms-review-by { display: block; color: var(--text-300); font-size: 11px; }
+.qms-review-last { grid-column: 1 / -1; color: var(--text-300); font-size: var(--fs-caption); }
+.qms-review-by { display: block; color: var(--text-300); font-size: var(--fs-caption); }
 @media (max-width: 480px) {
   .qms-review-row { grid-template-columns: minmax(0, 1fr); }
   .qms-review-open { grid-template-columns: auto minmax(0, 1fr) auto; }
@@ -96,7 +71,7 @@
 .qms-review-row:hover { background: var(--bg-100); }
 .qms-review-num { color: var(--text-200); font-weight: 600; }
 .qms-review-title { color: var(--text-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qms-review-when { text-align: right; color: var(--text-300); font-size: 11.5px; }
+.qms-review-when { text-align: right; color: var(--text-300); font-size: var(--fs-caption); }
 
 .qms-train { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
 .qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; font-size: inherit; padding: var(--space-2) 0; border-top: 1px solid var(--border-subtle); }
@@ -107,7 +82,7 @@
 /* Job roles and who must train on a document (P-49), inside the shared dialog. */
 .qms-train-role { border-top: 1px solid var(--border-subtle); padding: var(--space-3) 0; }
 .qms-train-role-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
-.qms-train-role-head .meta, .qms-train-people .meta { color: var(--text-300); font-size: 11.5px; }
+.qms-train-role-head .meta, .qms-train-people .meta { color: var(--text-300); font-size: var(--fs-caption); }
 .qms-train-people { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .qms-train-people li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
 .qms-train-act { border-top: 1px solid var(--border-subtle); margin-top: var(--space-3); padding-top: var(--space-3); }
@@ -151,18 +126,19 @@
 }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-train-pct { color: var(--text-300); text-align: right; }
-.qms-train-when { color: var(--text-300); font-size: 11px; text-align: right; }
+.qms-train-when { color: var(--text-300); font-size: var(--fs-caption); text-align: right; }
 
 /* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
 .qcc-stages { margin: 0 0 12px; }
 .qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
 
 /* ─── Change control: the log's link count, a quiet button (C8) ─── */
-.qcc-linkcount {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 0; border: 0; background: none; cursor: pointer;
+/* `.c2c-v2` so it outranks the shell's button font reset (C18): it is the one quiet button Quality still sizes. */
+.c2c-v2 .qcc-linkcount {
+  display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-caption); padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--text-300); font-variant-numeric: tabular-nums; text-align: left;
 }
-.qcc-linkcount:hover { color: var(--text-100); }
+.c2c-v2 .qcc-linkcount:hover { color: var(--text-100); }
 
 .qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid var(--border-subtle); }
 /* In the log's table the linked records are the change's own row (C8); the cell carries the band, not a second box. */
@@ -210,7 +186,7 @@
 .qms-effective-date { display: grid; gap: 4px; margin-top: 10px; font-size: var(--fs-small); color: var(--text-200); }
 .qms-effective-date span { font-size: var(--fs-caption); color: var(--text-300); }
 .qms-effective-reach { margin: 8px 0 0; font-size: var(--fs-small); color: var(--text-200); }
-.qms-route-line, .qms-signature-line { display: block; margin-top: 4px; font-size: 11.5px; color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
+.qms-route-line, .qms-signature-line { display: block; margin-top: 4px; font-size: var(--fs-caption); color: var(--text-300); white-space: normal; overflow-wrap: anywhere; }
 .qms-route-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .qms-route-acts .de-btn { min-height: 44px; }
 @media (max-width: 600px) {
@@ -234,7 +210,7 @@
 /* The table contains its own hidden "Actions" header: an absolutely positioned .sr-only escapes a scrolling table that
    is not its containing block, and at 390 widened the whole page by 323px (walked, C6). */
 .c2c-v2 .reg-tbl.qms-reg { position: relative; }
-.c2c-v2 .reg-tbl.qms-reg .qms-num { font-size: 13px; padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap; }
+.c2c-v2 .reg-tbl.qms-reg .qms-num { font-size: var(--fs-small); font-weight: 600; padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap; }
 .c2c-v2 .reg-tbl.qms-reg td.qms-title { min-width: 180px; color: var(--text-100); }
 /* A record's prose wraps at a readable width; its facts (numbers, dates, states) stay on one line, so at 390 a date no
    longer broke at its hyphen across two lines (walked, C11). */
