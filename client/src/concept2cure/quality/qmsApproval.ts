@@ -128,6 +128,8 @@ export async function postQmsApproval(
   /** For a document approval: the day it is effective from (YYYY-MM-DD, not before today), bound in the signature (CAT2-19). */
   effectiveDate?: string,
   learningReview?: { expectedArtifactSha256: string; invariantAccepted: true },
+  /** For a change: the digest of the content the approver read (the register's `content_digest`). */
+  expectedContentDigest?: string,
 ): Promise<EsigSignedManifest> {
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
@@ -136,6 +138,7 @@ export async function postQmsApproval(
     reason: input.reason,
     ...(target.kind === 'document' && effectiveDate ? { effectiveDate } : {}),
     ...(target.kind === 'change' && learningReview ? { learningReview } : {}),
+    ...(target.kind === 'change' && expectedContentDigest ? { expectedContentDigest } : {}),
   });
   const json = (await res.json().catch(() => null)) as {
     meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };

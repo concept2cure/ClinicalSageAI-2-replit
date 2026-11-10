@@ -27,6 +27,7 @@ import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, 
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
 import { connectApprover, ensureLumenVault } from './lumen-vault.mjs';
+import { ensureLumenCsr } from './lumen-csr.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -174,6 +175,8 @@ export async function seed(ctx) {
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
   // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
   await ensureLumenVault({ ...ctx, ...c }, projects);
+  // The headline scenario: LMN-201's Phase 2 CSR, prepared up to its build (lumen-csr.mjs).
+  await ensureLumenCsr({ ...ctx, ...c }, lmn201);
   await ensureLumenSequence(c, lmn201);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);

@@ -146,11 +146,19 @@ interface Defensibility {
  * where a result was returned. One parameter, declared per calculator in
  * `biostatCalculators.ts`, rather than two copies of this function.
  */
+/** The inputs a NEEDS_PARAMETERS refusal names (its `data.errors[].field`). A field not yet filled is not an error. */
+function neededFields(e: unknown): string[] | undefined {
+  const err = e as { code?: unknown; payload?: { data?: { errors?: Array<{ field?: unknown }> } } };
+  if (err.code !== 'NEEDS_PARAMETERS') return undefined;
+  const fields = (err.payload?.data?.errors ?? []).map((x) => x.field).filter((f): f is string => typeof f === 'string');
+  return fields.length ? fields : undefined;
+}
+
 async function readData<T = any>(
   path: string,
   body: unknown,
   resultKey: 'data' | 'result' = 'data',
-): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+): Promise<{ ok: boolean; status: number; data: T | null; error: string | null; needs?: string[] }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
@@ -182,6 +190,7 @@ async function readData<T = any>(
       status: known ? (e as { status: number }).status : 0,
       data: null,
       error: known && (e as Error).message ? (e as Error).message : null,
+      needs: known ? neededFields(e) : undefined,
     };
   }
 }
@@ -658,12 +667,21 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
   });
   const [asmtRes, setAsmtRes] = useState<Defensibility | null>(null);
   const [asmtBusy, setAsmtBusy] = useState(false);
+  // The fields the engine still needs, by the labels on this form (2026-11-10: they were a red error toast in
+  // developer words, "Missing or invalid: effectSize", for a form nobody had filled yet).
+  const [asmtNeeds, setAsmtNeeds] = useState<string[]>([]);
+  const fieldLabel = (field: string): string => ({
+    effectSize: asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)',
+    controlRate: 'Control rate', treatmentRate: 'Treatment rate',
+    nonInferiorityMargin: 'Non-inferiority margin', equivalenceMargin: 'Equivalence margin',
+    alpha: 'Alpha (two-sided)', powerTarget: 'Power', attritionRate: 'Dropout rate', allocationRatio: 'Allocation ratio',
+  } as Record<string, string>)[field] ?? field;
 
   const runAssess = useCallback(async () => {
-    setAsmtBusy(true);
+    setAsmtBusy(true); setAsmtNeeds([]);
     try {
       const n = (v: string) => (v.trim() === '' ? undefined : Number(v));
-      const { ok, status, data, error } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
+      const { ok, status, data, error, needs } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
         clientTrack: 'biotech_pharma',
         phase: asmt.studyPhase, indication: asmt.indication || undefined,
         studyType: asmt.studyType, objectiveType: asmt.objectiveType, endpointType: asmt.endpointType,
@@ -673,6 +691,7 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
         alpha: n(asmt.alpha), powerTarget: n(asmt.powerTarget), attritionRate: n(asmt.attritionRate),
         allocationRatio: n(asmt.allocationRatio),
       });
+      if (needs) { setAsmtRes(null); setAsmtNeeds(needs); return; }
       if (!ok || !data) {
         setAsmtRes(null);
         fireToast(error ?? `Assessment failed (HTTP ${status}).`, 'error');
@@ -722,6 +741,11 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
         <label className="wb-f">Allocation ratio<input className="c2c-input" inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
       </div>
       <button type="button" className="btn" onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
+      {asmtNeeds.length > 0 && (
+        <p role="status" style={{ marginTop: 8, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>
+          {`To assess this design, enter: ${[...new Set(asmtNeeds.map(fieldLabel))].join(', ')}.`}
+        </p>
+      )}
 
       {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
     </section>
