@@ -2,10 +2,13 @@
  * Cross-client vault taxonomy + eTMF alignment tests.
  *
  * Covers:
- *   - the shared TMF zone MIRROR staying in lockstep with BOTH server-side
- *     zone catalogs (etmf-logic.ts and tmf-completeness.ts) — the drift
- *     guard that lets client code consume zones without importing server
- *     services (same posture as the enum-alignment schema-drift tests)
+ *   - ONE TMF reference model. shared/constants/domain/tmf-reference-model.ts
+ *     is the catalog; tmf-completeness.ts, etmf-logic.ts, the vault's TMF
+ *     folders and the eTMF screen read it. Until 2026-10-30 it existed five
+ *     times (design ETMF_CONVERGENCE_2026-10-30, slice E1), this guard
+ *     compared zone NUMBERS only, and zone 4 was spelled two ways. The guard
+ *     now compares numbers and names, requires the server catalog to be the
+ *     shared object itself, and scans the source for a re-added copy.
  *   - vault-taxonomy view integrity: every view has folders, doc kinds,
  *     and filing frameworks; ids unique; legacy filter ids preserved
  *   - the service-org rule: product owners map to their segment, CROs and
@@ -13,8 +16,13 @@
  *   - the eTMF seed skeleton: pure derivation from the reference model,
  *     essential-drives-completeness invariant
  */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, it, expect } from 'vitest';
 
+import * as SHARED_CATALOG from '../../../shared/constants/domain/tmf-reference-model';
 import {
   TMF_ZONE_REFS,
   tmfZoneById,
@@ -32,23 +40,51 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy';
 import { TMF_ZONES, zoneName } from '../etmf/etmf-logic';
-import { TMF_REFERENCE_MODEL, seedArtifacts } from '../etmf/tmf-completeness';
+import { TMF_REFERENCE_MODEL, getTmfReferenceModel, seedArtifacts } from '../etmf/tmf-completeness';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Drift guard: shared zone mirror ⇄ server catalogs
+// Drift guard: one TMF reference model
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('TMF zone mirror drift guard', () => {
-  it('mirrors etmf-logic.TMF_ZONES exactly (numbers and names)', () => {
-    expect(TMF_ZONE_REFS.map(z => ({ zone: z.zone, name: z.name }))).toEqual(
-      TMF_ZONES.map(z => ({ zone: z.zone, name: z.name })),
-    );
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const CATALOG_FILE = 'shared/constants/domain/tmf-reference-model.ts';
+const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
+
+function sourceFiles(dir: string, out: string[] = []): string[] {
+  for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+    if (e.name === 'node_modules' || e.name === 'dist' || e.name === '__tests__' || e.name.startsWith('.')) continue;
+    const rel = path.join(dir, e.name);
+    if (e.isDirectory()) sourceFiles(rel, out);
+    else if (/\.(ts|tsx|js|mjs|cjs)$/.test(e.name) && !/\.(test|spec)\./.test(e.name)) out.push(rel);
+  }
+  return out;
+}
+
+/** The source with its comments removed: a name quoted in prose is not a catalog. */
+const withoutComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+/** How many of `literals` appear in `src` as a quoted string literal. */
+function quotedCount(src: string, literals: string[]): number {
+  return literals.filter(s => src.includes(`'${s}'`) || src.includes(`"${s}"`) || src.includes(`\`${s}\``)).length;
+}
+
+describe('one TMF reference model (drift guard)', () => {
+  it('the server completeness catalog IS the shared catalog object, not a copy of it', () => {
+    expect(SHARED_CATALOG.TMF_REFERENCE_MODEL, `${CATALOG_FILE} exports no TMF_REFERENCE_MODEL`).toBeDefined();
+    expect(TMF_REFERENCE_MODEL).toBe(SHARED_CATALOG.TMF_REFERENCE_MODEL);
+    expect(getTmfReferenceModel()).toBe(SHARED_CATALOG.TMF_REFERENCE_MODEL);
   });
 
-  it('covers the same 11 zones as tmf-completeness.TMF_REFERENCE_MODEL', () => {
-    expect(new Set(TMF_ZONE_REFS.map(z => z.zone))).toEqual(
-      new Set(TMF_REFERENCE_MODEL.map(z => z.number)),
-    );
+  it('zone numbers AND names are the same in every consumer', () => {
+    const catalog = TMF_REFERENCE_MODEL.map(z => ({ zone: z.number, name: z.name }));
+    expect(catalog.map(z => z.zone)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(TMF_ZONE_REFS.map(z => ({ zone: z.zone, name: z.name })), 'TMF_ZONE_REFS').toEqual(catalog);
+    expect(TMF_ZONES.map(z => ({ zone: z.zone, name: z.name })), 'etmf-logic TMF_ZONES').toEqual(catalog);
+    for (const z of catalog) expect(zoneName(z.zone), `etmf-logic zoneName(${z.zone})`).toBe(z.name);
+    const serviceFolders = foldersForView('service');
+    for (const z of TMF_ZONE_REFS) {
+      expect(serviceFolders.find(f => f.id === z.id)?.label, `vault service folder ${z.id}`).toBe(z.name);
+    }
   });
 
   it('resolves zones by id and number consistently', () => {
@@ -57,6 +93,45 @@ describe('TMF zone mirror drift guard', () => {
       expect(tmfZoneByNumber(z.zone)).toEqual(z);
       expect(z.name).toBe(zoneName(z.zone));
     }
+  });
+
+  it('the server catalogs import the shared one', () => {
+    const fromShared = /from '\.\.\/\.\.\/\.\.\/shared\/constants\/domain\/tmf-reference-model(?:\.js)?'/;
+    const files = ['server/services/etmf/tmf-completeness.ts', 'server/services/etmf/etmf-logic.ts'];
+    expect(files.filter(f => !fromShared.test(read(f))), `files that do not import ${CATALOG_FILE}`).toEqual([]);
+  });
+
+  /* A copy is any non-test source file, other than the catalog, whose code
+     (comments aside) spells out three or more zone names, five or more artifact
+     names or six or more artifact codes as string literals. Measured on
+     2026-10-30 before the convergence: the three copies carried 10–11 zone
+     names, and two of them 41/41 artifacts; the most any other file carried
+     was 1 zone name, 3 names and 3 codes. */
+  it('no second catalog exists in server, shared or client source', () => {
+    const zones = TMF_REFERENCE_MODEL.map(z => z.name);
+    const artifacts = TMF_REFERENCE_MODEL.flatMap(z => z.artifacts);
+    const names = artifacts.map(a => a.name);
+    const codes = artifacts.map(a => a.code);
+    const copies: string[] = [];
+    for (const f of ['server', 'shared', 'client/src'].flatMap(d => sourceFiles(d))) {
+      if (f === CATALOG_FILE) continue;
+      const src = withoutComments(read(f));
+      const z = quotedCount(src, zones);
+      const n = quotedCount(src, names);
+      const c = quotedCount(src, codes);
+      if (z >= 3 || n >= 5 || c >= 6) copies.push(`${f}: ${z} zone names, ${n} artifact names, ${c} artifact codes`);
+    }
+    expect(copies).toEqual([]);
+    // It reads every source file under server, shared and client/src: about 3 s
+    // alone, past vitest's 5 s default when other suites run beside it.
+  }, 60_000);
+
+  it('the eTMF screen takes artifact names from the catalog, not from fixtures', () => {
+    const screen = read('client/src/concept2cure/v2/surfaces/Etmf.tsx');
+    expect(screen.match(/^import\b[^;]*from '(?:\.\.\/)+fixtures\/[^']+';/gm) ?? [], 'fixture imports in Etmf.tsx').toEqual([]);
+    expect(/^import \{[^}]*\btmfArtifactName\b[^}]*\} from '@shared\/constants\/domain\/tmf-reference-model';/m.test(screen),
+      'Etmf.tsx imports tmfArtifactName from the shared catalog').toBe(true);
+    expect(fs.existsSync(path.join(ROOT, 'client/src/concept2cure/v2/fixtures/etmf.ts')), 'fixtures/etmf.ts exists').toBe(false);
   });
 });
 
