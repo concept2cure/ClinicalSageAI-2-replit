@@ -9,7 +9,7 @@ async function measure(page, label) {
     const h1 = [...document.querySelectorAll('h1')].map((h) => h.textContent);
     const title = document.querySelector('[data-work-area="quality"] .ph-title');
     const tr = title ? title.getBoundingClientRect() : null;
-    const upper = [...document.querySelectorAll('[data-work-area="quality"] *')].filter((el) => getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim()).map((el) => el.className || el.tagName).slice(0, 8);
+    const upper = [...document.querySelectorAll('[data-work-area="quality"] *')].filter((el) => window.getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim()).map((el) => el.className || el.tagName).slice(0, 8);
     return {
       docScroll: se.scrollWidth - se.clientWidth, scrollers, rows, h1,
       titleHeight: tr ? Math.round(tr.height) : null,
@@ -32,7 +32,8 @@ run('w3-design', async (browser) => {
       const tag = `${width}-${dark ? 'dark' : 'light'}`;
       const { ctx, page } = await signIn(browser, 'author', width);
       await page.evaluate((d) => {
-        let p = {}; try { p = JSON.parse(localStorage.getItem('c2c-v2-prefs') || '{}'); } catch {}
+        const read = () => { try { return JSON.parse(localStorage.getItem('c2c-v2-prefs') || '{}'); } catch { return {}; } };
+        const p = read();
         p.dark = d; localStorage.setItem('c2c-v2-prefs', JSON.stringify(p));
       }, dark);
       await page.goto(`${BASE}/concept2cure/quality`, { waitUntil: 'networkidle' });

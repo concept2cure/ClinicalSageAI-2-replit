@@ -36,7 +36,7 @@ async function api(page, method, url, body) {
   return page.evaluate(async ({ method, url, body }) => {
     const token = localStorage.getItem('trialsage_access_token');
     const r = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
-    let json = null; try { json = await r.json(); } catch {}
+    const json = await r.json().catch(() => null);
     return { status: r.status, body: json };
   }, { method, url, body });
 }
