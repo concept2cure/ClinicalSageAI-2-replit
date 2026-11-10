@@ -426,6 +426,10 @@
    Stability register estimates on open (P-122), its Q1E table is on screen at
    once, and at 390 px it pushed the page 241 px sideways. */
 .c2c-v2 [data-work-area="cmc"] .reg-tbl.cm-subtable{display:block;overflow-x:auto;}
+/* Scrolling, the table takes its columns' narrowest widths, and the closing
+   prose column (Detail, Reason) wrapped a word to a line. On a phone it keeps
+   a readable measure; the box scrolls to it. */
+@media (max-width: 640px){.c2c-v2 [data-work-area="cmc"] .reg-tbl.cm-subtable :is(th, td):last-child{min-width:240px;}}
 /* The impurity register's guideline verdicts and the dissolution f2 comparison
    (P-122, cmcRegisterEngines.tsx): the engine's words, as chips that wrap. */
 .c2c-v2 .cm-verdicts{display:flex;flex-direction:column;gap:4px;min-width:220px;}
