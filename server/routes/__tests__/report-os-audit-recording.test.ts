@@ -296,7 +296,8 @@ describe('GET /runs/:id/export.pdf records the export before anything is sent', 
     sealedOnRecord({ seal, sealedDocument });
     const res = await exportPdf();
     const text = await pdfText(res.body as Buffer);
-    for (const line of ['As sealed', 'Final. Signed by Dana Reyes as approval', 'Seal verification at export: intact.']) expect(text).toContain(line);
+    // The meaning in words, as run-pdf.ts prints it since 0e5706a308 (use walk, 2026-11-09).
+    for (const line of ['As sealed', 'Final. Signed by Dana Reyes, meaning Approval,', 'Seal verification at export: intact.']) expect(text).toContain(line);
     expect(text).not.toMatch(/NOT FINAL/);
     expect(auditEntry()?.details).toMatchObject({ status: 'final', sealVerdict: 'intact' });
   });
