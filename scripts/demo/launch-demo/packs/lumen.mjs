@@ -28,6 +28,8 @@ import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
 import { connectApprover, ensureLumenVault } from './lumen-vault.mjs';
 import { ensureLumenCsr } from './lumen-csr.mjs';
+import { ensureLumenProtocol } from './lumen-protocol.mjs';
+import { ensureSubmission } from './biotech-submission.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -161,6 +163,8 @@ export async function seed(ctx) {
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
   await ensureObjective(c, lmn201, LMN201_DESIGN);
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
+  // Study & Protocol Design: the RePreve protocol, bound to its design, with deviations and a review (lumen-protocol.mjs).
+  await ensureLumenProtocol(c, lmn201);
   await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
   // The inbox's "extract commitments" (P-81, P-84) on a fictional approval letter.
   run.record('approvalLetter', await ensureAgencyLetter(c, lmn201, APPROVAL_LETTER, 'LMN-201'));
@@ -174,10 +178,16 @@ export async function seed(ctx) {
   // Risk-based monitoring: RACT, KRIs and QTLs over six monthly extracts, signals, the plan and site actions (lumen-rbm.mjs).
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
   // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
-  await ensureLumenVault({ ...ctx, ...c }, projects);
+  const vault = await ensureLumenVault({ ...ctx, ...c }, projects);
   // The headline scenario: LMN-201's Phase 2 CSR, prepared up to its build (lumen-csr.mjs).
   await ensureLumenCsr({ ...ctx, ...c }, lmn201);
-  await ensureLumenSequence(c, lmn201);
+  /* Submission Center: sequence 0000 on LMN-201's canonical submission, with its approved Vault documents placed as
+     eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
+     Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
+     "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
+  const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
+    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title }));
+  await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
 
@@ -241,26 +251,6 @@ async function ensureIbReview({ api, run, tally, signer }, program) {
     if (!(j.reviews ?? []).some((r) => r.reviewer_email === reviewer.email)) throw new Error(`request-review: ${reviewer.email} was not recorded as reviewer`);
     tally.created('authoring-review-request');
     return `sent to ${reviewer.email}`;
-  });
-}
-
-/**
- * Sequence 0000 (original) on LMN-201's canonical submission, the one intake records for the project (matched as
- * biotech-submission.mjs matches it: productName or title). Without a sequence Submission Center read "0 eCTD
- * sequences tracked yet" and the CSR's "Place into filing" asked for a sequence first (2026-11-06). Through Submission
- * Center's own route; nothing is placed, frozen or dispatched.
- */
-async function ensureLumenSequence({ api, run, tally }, program) {
-  await run.step('Submission Center: LMN-201 sequence 0000 (original)', async () => {
-    const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
-    const keys = [program.code, program.title].filter(Boolean).map((k) => k.toLowerCase());
-    const sub = list.find((x) => keys.includes(String(x.productName ?? '').toLowerCase()) || keys.includes(String(x.title ?? '').toLowerCase()));
-    if (!sub) throw new Error('LMN-201 has no canonical submission; intake records one with the project');
-    const seqs = asArray(must(await api('GET', `/api/submissions/${sub.id}/sequences`), 200, 'list LMN-201 sequences'), 'data');
-    if (seqs.some((q) => String(q.sequenceNumber ?? q.sequence_number) === '0000')) { tally.found('sequence'); return `found on submission #${sub.id}`; }
-    const seq = must(await api('POST', `/api/submissions/${sub.id}/sequences`, { region: 'fda', sequenceNumber: '0000', type: 'original' }), 201, 'create LMN-201 sequence 0000');
-    tally.created('sequence');
-    return `#${seq.id} on submission #${sub.id} (${seq.status})`;
   });
 }
 

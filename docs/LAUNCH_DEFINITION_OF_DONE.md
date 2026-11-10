@@ -2910,3 +2910,49 @@ manifest's own procedure asks "what was done and by whom" (`guidance-corpus-mani
   - Whether any publisher's terms are acceptable (item 3).
   - Any value in the table above, if the founder wants another.
 - **Evidence.** `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
+
+### P-119 — User roles by client type: a standard catalog of job roles, beside the six access levels
+
+The founder, 2026-11-10: **"Add user roles per biotech, pharma, CRO, cmc - and so on to align to the many use cases of
+the entire platform."**
+
+- **What a role is here.** A person in an organisation has two things, and they stay two things:
+  - an **access level**, which decides what the person may do. There are six, and they do not change: administrator,
+    approver, manager, reviewer, member and viewer (`shared/constants/org-roles.ts`, P-18). The signing policy, the
+    governed-write gate and the audit readers are built on them, and the validation package tests them;
+  - one or more **job roles**, which say what the person's function is: regulatory affairs lead, medical writer, CMC
+    lead, QA lead, biostatistician. A job role is the organisation's own record (`qms_job_roles`, P-49). It grants
+    nothing by itself.
+- **What is added.** A standard catalog of job roles for each client type: biotech, pharma, CRO, medical device,
+  diagnostics, academic, regulatory consultancy and medical writing. The roles are grouped by function: regulatory,
+  clinical, data and statistics, safety, nonclinical, CMC, quality, device and diagnostics, and program. Each role
+  carries one sentence on what it is accountable for, the access level it usually takes, and the work areas it uses.
+  The catalog is data (`shared/regulatory/`), as a document type is data (RULE 4).
+- **CMC.** CMC is a function group in the catalog (CMC regulatory lead, analytical development, quality control,
+  manufacturing, supply chain). It is offered to every drug and biologic client type. A CMC-only organisation, such as
+  a contract manufacturer, uses it under the client type it signed up with. Whether such an organisation becomes a
+  client type of its own is not decided here.
+- **How an organisation takes it.** Its administrator adopts the standard roles for its client type, all or some,
+  into the organisation's job roles, and may rename, add or remove any of them. Each change is a governed write with
+  a reason, through the existing writer (`server/services/qms/training-assignment.ts`). Nothing is created for an
+  organisation until its administrator adopts it.
+- **Where it shows.** In Administration, with the members. The member list's "Groups" column, which was always
+  empty, becomes the member's job roles. The administrator gives and removes a member's job roles from the member's
+  detail. The roles tab lists the organisation's job roles beside the access levels.
+- **What a job role suggests.** When the administrator invites a person or changes an access level, the job role's
+  usual access level is offered as a suggestion, with its reason. The administrator decides. No job role raises or
+  lowers anyone's access.
+- **Why not more access levels.** A permission role per function and per client type would be dozens of roles. Each
+  would need its own entry in the signing policy and its own validation. An auditor reading the access review (21
+  CFR 11.10(d)) would have to learn each one. Six levels, project sharing, the QMS approver designation and job roles
+  already express least privilege and separation of duties. A client need that no access level can express returns
+  to the founder.
+- **One vocabulary.** The program plan's task roles (`services/regulatory/pyramids/`, 24 keys such as `ra_lead` and
+  `cmc_lead`) map onto the catalog, so a task's role and a person's job role are the same thing. A test holds the
+  mapping complete.
+- **What uses it next** (each in its own package, not decided here): the program plan proposes a task's owner from
+  the people holding its job role (S11); AnA reads the person's job role in its context (S4); training is assigned by
+  job role, as today (P-49).
+- **What it does not add.** No screen, route, service, table or AnA tool (RULE 6). It completes the job-role store
+  and reaches it from Administration.
+- **Design.** `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md`.
