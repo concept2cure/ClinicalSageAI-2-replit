@@ -271,7 +271,7 @@ async function reviewIndependenceVerdict(
     return {
       met: false,
       code: 'REVIEW_REQUIRED',
-      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewers, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
+      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewer${floor.reviewers === 1 ? '' : 's'}, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
     };
   }
   return { met: true };
@@ -290,20 +290,16 @@ function placedSection(ctdSection: string | null): string | null {
 }
 
 /**
- * P-95 Q2 (ruled 2026-11-09 by the coordinating session under P-107,
- * COORDINATION.md): how many independent reviewers must approve this version.
- * Two where the contract names regulated_dual_review, read only from fields
- * no request can lower: a CTD section is set, in any module (a placed
- * artifact is a submission_component, which documentClassSemantics.ts makes
- * dual), or the type is 'section' (type is never updated). Every other
- * artifact keeps one, as the single classes (memos, summaries) do. The class
- * re-resolved per request (metadata.harness.documentClass) is not read: any
- * writer can lower it (docs/evidence/W5/2026-11-01/p95-q2/README.md).
+ * How many independent reviewers must approve this version: one, for every
+ * artifact (founder decision P-116, 2026-11-10: "Doesn't need two"). From
+ * 2026-11-09 a placed artifact or a dossier section needed two (P-95 Q2, ruled
+ * under delegation); the founder overruled that. The reason is still named
+ * from fields no request can lower, so the refusal says what the document is.
  */
 export function reviewFloor(artifact: { type: string | null; ctd_section: string | null }): { reviewers: number; because: string } {
   const section = placedSection(artifact.ctd_section);
-  if (section) return { reviewers: 2, because: `it is placed in CTD ${section}` };
-  if (artifact.type === 'section') return { reviewers: 2, because: 'it is a dossier section' };
+  if (section) return { reviewers: 1, because: `it is placed in CTD ${section}` };
+  if (artifact.type === 'section') return { reviewers: 1, because: 'it is a dossier section' };
   return { reviewers: 1, because: 'it is not placed in a filing' };
 }
 

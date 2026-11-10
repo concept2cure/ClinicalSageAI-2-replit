@@ -1198,42 +1198,52 @@ describe('a Module 3 section bridged from a compile', () => {
 });
 
 /**
- * P-95 Q2 (ruled 2026-11-09 by the coordinating session, COORDINATION.md row
- * 38): two independent reviewers where the contract names
- * regulated_dual_review, read only from fields no request can lower. That
- * means a CTD section set in any module (a placed artifact is a
- * submission_component), or type 'section'. Every other artifact keeps one. A
- * ctd_section change on an artifact with review decisions voids them, as an
- * edit does. The refusal names the count. Review readiness is the quorum's
- * own answer.
+ * P-116 (founder, 2026-11-10: "Doesn't need two"): one independent reviewer is
+ * enough for every artifact, placed or not. From 2026-11-09 a placed artifact
+ * or a dossier section needed two (P-95 Q2, ruled under delegation); these
+ * cases pinned that and now pin the founder's rule. Review itself stays
+ * mandatory (P-95): none at all is still refused, before the password. A
+ * ctd_section change on an artifact with review decisions still voids them
+ * (below). Review readiness is the quorum's own answer.
  */
-describe('P-95 Q2: two independent reviewers for a placed document', () => {
+describe('P-116: one independent reviewer is enough, placed or not', () => {
   beforeAll(addReviewers);
   const placeAt = (section: string | null) => run(`UPDATE concept2cure_artifacts SET ctd_section = $2 WHERE artifact_id = $1`, [ARTIFACT, section]);
   const reviewStatus = () => request(app()).get(`/api/c2c/projects/${PROJECT}/artifacts/${ARTIFACT}/reviews/status`);
 
-  it('placed in a CTD section, one independent reviewer: refused 409 REVIEW_REQUIRED, naming the count, before the password', async () => {
+  it('placed in a CTD section, one independent reviewer: approved', async () => {
     await seed('review');
     await placeAt('2.5');
     await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('placed in a CTD section, no reviewer at all: still refused 409 REVIEW_REQUIRED, before the password', async () => {
+    await seed('review');
+    await placeAt('2.5');
     let reauthAsked = false;
     holder.duringReauth = async () => { reauthAsked = true; };
     const res = await putStatus(APPROVE);
 
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
-    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is placed in CTD 2\.5; 1 has approved this version/);
     expect(reauthAsked).toBe(false);
     expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
   });
 
-  it('placed in Module 1 too (any module): one reviewer is refused, two are approved', async () => {
+  it('placed in Module 1 too (any module): one reviewer is approved', async () => {
     await seed('review');
     await placeAt('1.3.1');
     await reviewed();
-    expect((await putStatus(APPROVE)).status).toBe(409);
+    expect((await putStatus(APPROVE)).status).toBe(200);
+  });
 
-    await run(`DELETE FROM concept2cure_review_assignments`);
+  it('two reviewers who both approved a placed document: approved, as before', async () => {
+    await seed('review');
+    await placeAt('1.3.1');
     await reviewedBy([ADA, BEN]);
     const res = await putStatus(APPROVE);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -1246,36 +1256,29 @@ describe('P-95 Q2: two independent reviewers for a placed document', () => {
     expect((await putStatus(APPROVE)).status).toBe(200);
   });
 
-  it.each([['unassigned'], ['ana-ri.risk_memo']])('a section AnA writes to mean "none" (%s) is not a placement: one reviewer approves', async section => {
+  it.each([['unassigned'], ['ana-ri.risk_memo']])('a section AnA writes to mean "none" (%s): one reviewer approves', async section => {
     await seed('review');
     await placeAt(section);
     await reviewed();
     expect((await putStatus(APPROVE)).status).toBe(200);
   });
 
-  it('type section, not placed: one reviewer is refused', async () => {
+  it('type section, not placed: one reviewer is approved', async () => {
     await seed('review');
     await run(`UPDATE concept2cure_artifacts SET type = 'section' WHERE artifact_id = $1`, [ARTIFACT]);
     await reviewed();
     const res = await putStatus(APPROVE);
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
-    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers, because it is a dossier section/);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 
-  it('review status says not ready, with the same sentence, while the floor is unmet; ready once it is met', async () => {
+  it('review status says ready once one reviewer has approved a placed document', async () => {
     await seed('review');
     await placeAt('3.2.P.5');
     await reviewed();
     const one = await reviewStatus();
     expect(one.status, JSON.stringify(one.body)).toBe(200);
-    expect(one.body.data).toMatchObject({ allApproved: true, readyForApproval: false });
-    expect(one.body.data.notReadyReason).toMatch(/needs 2 independent reviewers.*1 has approved this version/);
-
-    await run(`DELETE FROM concept2cure_review_assignments`);
-    await reviewedBy([ADA, BEN]);
-    const two = await reviewStatus();
-    expect(two.body.data).toMatchObject({ readyForApproval: true });
-    expect(two.body.data.notReadyReason).toBeUndefined();
+    expect(one.body.data).toMatchObject({ allApproved: true, readyForApproval: true });
+    expect(one.body.data.notReadyReason).toBeUndefined();
   });
 
 });

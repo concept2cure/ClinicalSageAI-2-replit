@@ -74,9 +74,9 @@ async function runCase(tree,c){
   insert('concept2cure_review_assignments',{id:1,artifact_id:101,organization_id:7,reviewer_id:700,review_round:2,status:c.quorum==='pending'?'pending':'completed'});
   if(c.quorum!=='missing')insert('concept2cure_review_decisions',{id:1,assignment_id:1,artifact_id:101,organization_id:7,reviewer_id:c.quorum==='wrongReviewer'?701:700,review_round:2,decision:c.quorum==='reject'?'reject':'approve',version_reviewed:c.quorum==='stale'?2:3});
   if(c.quorum==='newRound')insert('concept2cure_review_assignments',{id:2,artifact_id:101,organization_id:7,reviewer_id:701,review_round:3,status:'pending'});
-  // The head is placed in CTD 2.5, so its review needs two independent reviewers
-  // (P-95 Q2, 4eb094196f). The second, 702, approved the current version; every
-  // quorum variant above still concerns reviewer 700. 'single' omits the second.
+  // A second reviewer, 702, approved the current version; every quorum variant
+  // above still concerns reviewer 700. 'single' omits the second: one reviewer
+  // is enough for a placed document (P-116; two were required under P-95 Q2).
   if(c.quorum!=='single'){insert('concept2cure_review_assignments',{id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,status:'completed'});
    insert('concept2cure_review_decisions',{id:2,assignment_id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,decision:'approve',version_reviewed:3});}
  }
