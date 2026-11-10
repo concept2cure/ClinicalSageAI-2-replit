@@ -61,9 +61,10 @@ describe('the eCTD view checks a sequence before dispatch', () => {
     render(<EctdSequenceQc programId={PID} openedSequence={null} />);
     const diff = await screen.findByTestId('ec-qc-diff');
     expect(within(diff).getByRole('heading', { name: 'What changed since sequence 0000' })).toBeTruthy();
-    expect(diff.textContent).toContain('1 leaf added, 1 replaced, 1 deleted, 1 unchanged.');
+    expect(diff.textContent).toContain('1 leaf added, 1 changed or not comparable, 1 only in sequence 0000, 1 unchanged.');
     const rows = within(diff).getAllByRole('row').slice(1).map((r) => r.textContent);
-    expect(rows).toEqual(['m1.2Cover letterDeleted', 'm2.5Clinical overviewReplaced', 'm3.2.pDrug productAdded']);
+    expect(rows).toEqual(['m1.2Cover letterOnly in sequence 0000', 'm2.5Clinical overviewChanged, or no checksum to compare',
+      'm3.2.pDrug productAdded']);
     expect(apiRequest.mock.calls.map((c) => c[1])).toContain('/api/ind-lifecycle/sequence/2/diff?priorId=1');
   });
 

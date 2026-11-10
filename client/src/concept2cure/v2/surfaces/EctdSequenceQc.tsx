@@ -37,7 +37,15 @@ interface PackageManifest {
 
 const isDiff = (v: unknown): v is SequenceDiff => !!v && Array.isArray((v as SequenceDiff).entries) && !!(v as SequenceDiff).summary;
 const isManifest = (v: unknown): v is PackageManifest => !!v && Array.isArray((v as PackageManifest).modules);
-const CHANGE: Record<DiffEntry['change'], string> = { added: 'Added', replaced: 'Replaced', deleted: 'Deleted', unchanged: 'Unchanged' };
+/* The engine's verdicts (ind-sequence-diff.ts), in words that stay true: a leaf only in the earlier sequence was not
+   deleted from the dossier (a delete is its own lifecycle operation), and "replaced" includes a leaf whose bytes
+   cannot be compared because a checksum is missing. */
+const CHANGE: Record<DiffEntry['change'], (prior: string) => string> = {
+  added: () => 'Added',
+  replaced: () => 'Changed, or no checksum to compare',
+  deleted: (prior) => `Only in sequence ${prior}`,
+  unchanged: () => 'Unchanged',
+};
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The project's sequences, each with its submission, read from Submission Center's routes. */
@@ -96,8 +104,8 @@ function DiffBlock({ seq, prior, onPdfError }: { seq: Seq; prior: Seq | null; on
         </span>
       </div>
       <p className="sec-sub">
-        {plural(summary.added, 'leaf added', 'leaves added')}, {summary.replaced} replaced, {summary.deleted} deleted,
-        {' '}{summary.unchanged} unchanged.
+        {plural(summary.added, 'leaf added', 'leaves added')}, {summary.replaced} changed or not comparable,
+        {' '}{summary.deleted} only in sequence {prior.sequenceNumber}, {summary.unchanged} unchanged.
       </p>
       {changed.length > 0 && (
         <div className="ec-qc-scroll" style={{ overflowX: 'auto', marginBottom: 12 }}>
@@ -105,7 +113,7 @@ function DiffBlock({ seq, prior, onPdfError }: { seq: Seq; prior: Seq | null; on
             <thead><tr><th scope="col">Section</th><th scope="col">Leaf</th><th scope="col">Change</th></tr></thead>
             <tbody>
               {changed.map((e) => (
-                <tr key={`${e.sectionCode}:${e.change}`}><td className="mono">{e.sectionCode}</td><td>{e.title}</td><td>{CHANGE[e.change]}</td></tr>
+                <tr key={`${e.sectionCode}:${e.change}`}><td className="mono">{e.sectionCode}</td><td>{e.title}</td><td>{CHANGE[e.change](prior.sequenceNumber)}</td></tr>
               ))}
             </tbody>
           </table>
