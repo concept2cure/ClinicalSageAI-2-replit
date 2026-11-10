@@ -518,7 +518,8 @@ typed reason on a refused key, an empty account or no drafting model (`csr/csr-d
 reads (`redisRateLimiter.ts`); the Codespace start makes one real drafting request
 (`codespaces-doctor.mjs --probe-anthropic-usage`). A whole-report build completes at 100% against the stand-in.
 
-- **→ the founder (decisions, none taken here):** imported model-drafted text is never releasable
+- **Decided 2026-11-10 under the founder's delegation: P-115** (`docs/LAUNCH_DEFINITION_OF_DONE.md`). Read it before
+  touching the CSR release path. What it decided on: imported model-drafted text is never releasable
   (`WORKFLOW_MODEL_QUALIFICATION_REQUIRED` has no branch for a PQ-passed model, and every `pq.status` is pending);
   the assembled CSR files are refused at release unconditionally (`renderedLeafNotTransmittable`; the binding to the
   signed Authoring CSR is not built); all 119 headings must hold text and none can be marked not applicable.
