@@ -18,18 +18,22 @@ const h = vi.hoisted(() => ({
   dbClient: null as null | { query: (...a: unknown[]) => Promise<{ rows: unknown[] }> },
   seen: [] as unknown[],
   writerError: null as unknown,
+  requestOrgId: undefined as unknown,
+  tenantSeen: undefined as unknown,
 }));
 
 vi.mock('../../middleware/auth', () => ({
   authenticateToken: (req: Request, _res: Response, next: NextFunction) => {
     (req as any).user = { id: 1, organizationId: 1, email: 'a@example.test', role: 'member' };
+    if (h.requestOrgId !== undefined) (req as any).organizationId = h.requestOrgId;
     if (h.dbClient) (req as any).dbClient = h.dbClient;
     next();
   },
 }));
 
 vi.mock('../../services/ana-biostats/statistical-document-save', () => ({
-  saveStatisticalDocumentToAuthoring: vi.fn(async (ctx: { pool: { query: Function; connect: Function } }) => {
+  saveStatisticalDocumentToAuthoring: vi.fn(async (ctx: { pool: { query: Function; connect: Function }; tenantId: unknown }) => {
+    h.tenantSeen = ctx.tenantId;
     try {
       await ctx.pool.query('SELECT 1');
       const client = await ctx.pool.connect();
@@ -59,7 +63,7 @@ function app() {
 const save = () => request(app()).post('/api/ana-biostats/document')
   .send({ documentType: 'sample_size_rationale', input: INPUT, action: 'save_to_authoring' });
 
-beforeEach(() => { h.seen = []; h.writerError = null; h.dbClient = null; });
+beforeEach(() => { h.seen = []; h.writerError = null; h.dbClient = null; h.requestOrgId = undefined; h.tenantSeen = undefined; });
 
 describe('the workbench save to authoring', () => {
   it('runs every query, and its transaction client, on the request own connection', async () => {
@@ -68,6 +72,24 @@ describe('the workbench save to authoring', () => {
     expect(res.status).toBe(409);
     expect(h.writerError).toBeNull();
     expect(h.seen).toEqual(['SELECT 1', 'SELECT 2']);
+  });
+
+  // 2026-11-10, the Codespace click-through: "Save as a working document" answered 503 on every project. The request
+  // carries its organization as text ("2"), the route passed it on as it was, and authoring's project access refuses
+  // any identity that is not a positive integer ("Invalid project access identity").
+  it('passes the organization to the save as a number, though the request carries it as text', async () => {
+    h.dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+    h.requestOrgId = '2';
+    await save();
+    expect(h.tenantSeen).toBe(2);
+  });
+
+  it.each(['0', 'two', '-1', ''])('refuses an organization that is not a positive integer (%j) before saving', async (org) => {
+    h.dbClient = { query: vi.fn(async () => ({ rows: [] })) };
+    h.requestOrgId = org;
+    const res = await save();
+    expect(res.status).toBe(org === '' ? 409 : 403);
+    if (org !== '') expect(h.tenantSeen).toBeUndefined();
   });
 
   it('refuses with no request connection, and never reaches for the shared pool', async () => {

@@ -50,3 +50,20 @@ The probe reads disk and environment only. The blockers, by who can close them:
   (0 of 5 passed; the protocol is still a draft), PreSTAR filing qualification.
 - **Founder only (launch rows):** D1 the hosted production account, D9 the lawyer's review and pricing, D10 a signed
   customer.
+
+## What each input from the founder unlocks (2026-11-10, second look)
+
+Each of the 18 blockers was read for its owner and its unblock step. None can be closed from code alone. These are the
+inputs that turn a blocker into engineering work a session can then finish:
+
+| Input | Unlocks | Then engineering does |
+|---|---|---|
+| Legal sign-off per file (step 1 of `docs/runbooks/ectd-dtd-vendoring.md`) | eCTD 3.2.2 supportive files; their checksum manifest; then `ECTD_REQUIRE_DTD=true` | Fetch the seven files from the ICH, FDA, EMA, PMDA and Health Canada pages, commit them verbatim, record SHA-256, run the qualification. Not done here: `assets/ectd-dtd/README.md` says page access is not that approval |
+| A model key in the Codespace, and the system owner's approval of `server/eval/pq/pq-protocol.json` (a draft) | The model qualification (0 of 5 passed); AnA over folders walked in a conversation | Run the PQ and file its record; walk the AnA turn. The `.env` here has no key |
+| The PDF/A rule decided (Product) | `ECTD_REQUIRE_PDFA` | Implement the decided rule, then Ops sets the switch |
+| Licences bought: LORENZ eValidator, MedDRA, WHODrug, the ICH eCTD 4.0 package | Four blockers, then `ECTD_REQUIRE_EVALIDATOR=true` | Wire paths and profiles; run the verification commands in the runbook |
+| The production account and secrets (D1): `RLS_ENFORCE=on`, `AUDIT_HMAC_KEY`, `MFA_ENCRYPTION_KEY`, SMTP, FDA ESG credentials | Five blockers | Verify boot, the login code to a real inbox, and the restore drill on a production-shaped target |
+| Completed PreSTAR requests as independent evidence (Regulatory QA) | PreSTAR qualification | Qualify the request-specific fields against the pinned form |
+
+Also in motion in other lanes (`.design/claude-convergence/COORDINATION.md`): trunk CI to green (no run on
+`concept2cure-v2` has completed green), and the validation package for row D4.

@@ -2736,6 +2736,35 @@ both, and says plainly when it has neither.
   - Any widening beyond a US IND (P-28, P-110 stand).
   - Whether a failed build is resumed from the screen; that is a repair (F1), not a decision.
 
+*Clarification, 2026-11-10 (the walking session, `01QoxbLZ…`, under the same delegation): item 2 needs more than a key.*
+`npx tsx server/eval/pq/run-pq.ts --preflight` was run on trunk and answers **blocked, not ready to evaluate**, with
+seven blockers. The qualification run was put first in the order above as if a working key were its only condition.
+It is not.
+
+| Blocker | What it means | Who clears it |
+|---|---|---|
+| `PROTOCOL_NOT_APPROVED` | `server/eval/pq/pq-protocol.json` is a draft with no approver. A run against unapproved acceptance criteria cannot pass | The founder, as the responsible owner. No session records that approval for them |
+| `RAG_SAMPLE_SHORTFALL` | The retrieval test bank holds 18 positive items; the protocol requires 30 | A regulatory reviewer writes 12 more |
+| `RAG_GOLD_EVIDENCE_MISSING`, `RAG_GOLD_OPEN_CHECKS` | None of the 18 items names its reviewed source, section and quotation; 5 have open checks against the official text | A regulatory reviewer, against the official texts |
+| `SOURCE_REVIEW_INCOMPLETE`, `RAG_KEYS_PROVISIONAL` | 0 of 18 required source versions are verified (version, hash, provenance) | The same reviewer |
+| `PUBLISHER_TERMS_UNVERIFIED` | Reuse terms are unverified for 4 of 4 required publishers | The founder or counsel |
+
+The drafting and extraction components are ready: 60 tasks each. Only the retrieval component is short.
+
+- **Decided.** The CSR build retrieves nothing: it drafts from the study's retained tables and the platform's ICH E3
+  record. Its qualification is therefore scoped to that use. A model is qualified for evidence-bound CSR drafting
+  on the drafting and extraction components plus a run over the CSR builder's own prompts, and that qualification
+  releases CSR text only. The retrieval component stays required for every use that retrieves (AnA's answers from
+  the knowledge base, a section drafted from selected sources), and nothing in this decision qualifies a model for
+  those. The registry already records which uses a record measured (`pq.intendedUses`) and the gateway refuses a
+  use it did not (`model-governance.ts`, `use-mismatch`); the S4 owner carries the narrower use through that
+  check. Completing the retrieval bank is not waived. It is taken off the CSR's critical path.
+- **Not decided, and not done.** The protocol is not approved here. Approving it, with this scoping written into
+  it, is the founder's act.
+- **The order above changes in one place.** Step 2 becomes: the founder approves the protocol; the CSR drafting
+  component is added to it; then the run. Steps 3 to 7 do not wait for it, except that step 5's approval stays
+  refused for model-drafted text until a model has passed.
+
 ### P-116 — One reviewer is enough, and a one-person organisation may approve its own document, on the record
 
 The founder, 2026-11-10, on learning that a placed artifact needs two independent reviewers: **"Doesn't need two. What

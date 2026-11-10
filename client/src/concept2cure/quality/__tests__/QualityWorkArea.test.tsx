@@ -132,7 +132,7 @@ describe('Quality is one work area with one header (D7-B)', () => {
   // D7-B item 6: a row is one line, its next step and "More"; the rest open in the row, same names, no menu.
   it('a register row shows its next step and More, and More reveals every other action in the row', () => {
     mount();
-    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     const shown = () => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
     expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'More actions for QS-SOP-001']);
     const more = within(row).getByRole('button', { name: 'More actions for QS-SOP-001' });
@@ -150,7 +150,7 @@ describe('Quality is one work area with one header (D7-B)', () => {
   it("does not offer its author an approval the server refuses: the author's next step is the review route", () => {
     H.user = { id: '1', name: 'Ada Author' };
     mount();
-    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     expect(within(row).queryByRole('button', { name: 'Approve' })).toBeNull();
     expect(within(row).getByTestId('qms-route-open').textContent).toBe('Review route');
   });
@@ -164,6 +164,17 @@ describe('Quality is one work area with one header (D7-B)', () => {
     for (const h of heads) expect(h.parentElement?.classList.contains('pj-sec-h'), h.textContent ?? '').toBe(true);
     expect(screen.getByRole('button', { name: 'Job roles' }).querySelector('svg')).toBeNull();
     expect((screen.getByText('How coverage is counted').closest('details') as HTMLDetailsElement).open).toBe(false);
+  });
+
+  // C6: the register is D0's table with real column headers (WCAG 1.3.1), not Quality's own boxed div grid.
+  it('is a table with column headers, one body per document', () => {
+    const { container } = mount();
+    const register = screen.getByRole('region', { name: 'Controlled documents' });
+    const table = within(register).getByRole('table');
+    expect(table.classList.contains('reg-tbl')).toBe(true);
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Number', 'Title', 'Type', 'Version', 'Status', 'Effective', 'Next review', 'Actions']);
+    expect(container.querySelectorAll('tbody.qms-doc')).toHaveLength(1);
+    expect(container.querySelector('.qms-table, .qms-thead, .qms-pill, .qms-tag')).toBeNull();
   });
 
   it('states the register in one sentence above its rows', () => {
