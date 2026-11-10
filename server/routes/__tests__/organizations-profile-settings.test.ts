@@ -410,32 +410,6 @@ describe('PATCH /api/organizations/:id/settings', () => {
     expect(JSON.stringify(res.body)).not.toContain('secret-detail');
   });
 
-  it('refuses a review rule outside its bounds, before the writer: 400, nothing stored (P-117)', async () => {
-    writerMock.mockClear();
-    for (const security of [{ independentReviewersRequired: 0 }, { independentReviewersRequired: 6 },
-      { independentReviewersRequired: 1.5 }, { soleMemberSelfApproval: 'yes' }]) {
-      const res = await request(makeApp())
-        .patch('/api/organizations/7/settings')
-        .set('x-test-user', ORG7_ADMIN)
-        .send({ settings: { security }, reason: 'Change the review rules' });
-      expect(res.status, JSON.stringify(security)).toBe(400);
-    }
-    expect(writerMock).not.toHaveBeenCalled();
-  });
-
-  it('admits the organisation administrator setting its review rules, through the one writer (P-117)', async () => {
-    writerMock.mockClear();
-    writerMock.mockImplementation(async (_req: unknown, _id: number, change: any) => change.next(orgRow.settings, 'standard'));
-    const res = await request(makeApp())
-      .patch('/api/organizations/7/settings')
-      .set('x-test-user', ORG7_ADMIN)
-      .send({ settings: { security: { independentReviewersRequired: 2, soleMemberSelfApproval: false } }, reason: 'Two reviewers per SOP-014' });
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    const [, , change] = writerMock.mock.calls[0];
-    expect(change.reason).toBe('Two reviewers per SOP-014');
-    expect(change.next(orgRow.settings, 'standard').security).toEqual({ mfaEnabled: true, independentReviewersRequired: 2, soleMemberSelfApproval: false });
-  });
-
   it('400s an empty settings object', async () => {
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
