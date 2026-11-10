@@ -521,7 +521,9 @@
     background: var(--bg-100);
   }
   /* What a phone-width bar does not draw is in More's "View" group
-     (`.ed-more-narrow`); the dirty state also shows on Save.
+     (`.ed-more-narrow`); the dirty state also shows on Save. The inspector's
+     doors (`.ed-wide`, P-122) are on the bar wider than that, and in More's
+     narrow groups at it.
      Only what More holds whole is hidden. §D4.K also hides presence and the
      lock (`.ed-collab`: Lock section, Unlock, "locked by …" and Take over),
      the Download menu (the controlled export and the PDF working copy are
@@ -534,6 +536,7 @@
   @media (max-width: 640px) {
     .ed-bar .ed-view,
     .ed-bar [data-testid='ed-comments-open'],
+    .ed-bar .ed-wide,
     .ed-bar .dcv-bar-p .ed-saved {
       display: none;
     }
