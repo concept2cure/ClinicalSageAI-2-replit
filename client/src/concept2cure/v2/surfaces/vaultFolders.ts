@@ -101,3 +101,16 @@ export function binderFolderFor(code: string, has: (treeId: string) => boolean):
   const mod = /^([1-5])/.exec(code.trim());
   return mod && has(`cab-bn:M${mod[1]}`) ? `cab-bn:M${mod[1]}` : null;
 }
+
+/**
+ * The folder vault.open-folder names: an exact binder heading ('bn:<code>', its own heading or the nearest above it),
+ * an exact tree id, or else by name (exact first, then contained). Exact ids never fall back to a name match.
+ */
+export function openFolderMatches<F extends { folder: { id: string; label: string } }>(found: F[], exactId: string, wanted: string): F[] {
+  if (exactId) {
+    const id = exactId.startsWith('bn:') ? binderFolderFor(exactId.slice(3), (t) => found.some((f) => f.folder.id === t)) : `cab-${exactId}`;
+    return id ? found.filter((f) => f.folder.id === id) : [];
+  }
+  const exact = found.filter((f) => f.folder.label.toLowerCase() === wanted);
+  return exact.length ? exact : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
+}

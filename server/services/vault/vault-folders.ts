@@ -476,3 +476,14 @@ export function folderChoices(index: ProgramFolderIndex): {
     folders,
   };
 }
+
+/** The project's folders for AnA, read on the actor's executor, or why they could not be read (never an empty list on a failure). */
+export async function projectFolderChoices(q: FolderQueryable, programId: string, orgId: number) {
+  try {
+    const { resolveVaultView } = await import('./vault-filing.service.js');
+    const view = await resolveVaultView(programId, orgId, q as never);
+    return folderChoices(await readProgramFolderIndex(q, programId, orgId, view));
+  } catch {
+    return { error: "The project's folders could not be read, so none are listed here. That is a failed read, not an empty Vault." };
+  }
+}

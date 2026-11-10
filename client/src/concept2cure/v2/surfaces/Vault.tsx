@@ -91,7 +91,7 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { binderFolderFor, cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { VaultPlanWork } from './VaultPlanWork';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
@@ -1884,17 +1884,8 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         }
       };
       walk(tree, []);
-      /* An exact binder heading (the plan's "Open in Vault", S6 step 3): the code's own heading, or the
-         nearest one the binder holds above it. Never a name match on a number. */
-      const byId = exactId.startsWith('bn:')
-        ? binderFolderFor(exactId.slice(3), (id) => found.some((f) => f.folder.id === id))
-        : exactId ? `cab-${exactId}` : null;
-      const exact = byId
-        ? found.filter((f) => f.folder.id === byId)
-        : found.filter((f) => f.folder.label.toLowerCase() === wanted);
-      const contains = exact.length || byId
-        ? exact
-        : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
+      // An exact binder heading (the plan's "Open in Vault", S6 step 3) or tree id, else the folder's name.
+      const contains = openFolderMatches(found, exactId, wanted);
       if (contains.length === 0) {
         return { ok: false, reason: exactId
           ? `This project's Vault has no folder for ${exactId.replace(/^bn:/, '')} (its binder holds no such heading).`
