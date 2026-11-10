@@ -304,9 +304,9 @@ function ChangeControlSession({
                   </div>
                   <div className="qms-cell">
                     {c.targetImplementationDate ? (
-                      <span className={overdue ? 'qms-overdue' : undefined}>
+                      <span>
                         {formatDate(c.targetImplementationDate)}
-                        {overdue && <> {I.flag}</>}
+                        {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
                       </span>
                     ) : '—'}
                   </div>

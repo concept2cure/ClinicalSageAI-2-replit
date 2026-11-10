@@ -15,29 +15,35 @@ interface TrainingCoverageProps {
   refresh: () => void;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
-  /** The coverage figure as one sentence: the server's average, or why there is none (D7-B: was the fourth tile). */
-  figure: string;
+  /** The coverage figure as one sentence when there are rows to measure; null otherwise, because the section's own
+      line (the failure, the loading line, or "No training-controlled documents yet.") already says it (C1). */
+  figure: string | null;
 }
 
 /** Existing roster coverage, qualified by the exact verified release. */
 export function TrainingCoverage(props: TrainingCoverageProps) {
   const [rolesOpen, setRolesOpen] = React.useState(false);
-  return <section className="qms-sec">
-    <div className="qms-sec-head">
-      <h2>Read-and-understood training</h2>
-      <span className="meta" data-testid="qms-coverage-figure">{props.figure}</span>
-      <span className="spacer" />
-      <button type="button" className="qms-chip" title="The job functions people hold, which documents require them to train"
-        onClick={() => setRolesOpen(true)}>{I.users} Job roles</button>
+  return <section className="pj-sec" aria-labelledby="qms-training-h">
+    <div className="pj-sec-h">
+      <h2 id="qms-training-h">Read-and-understood training</h2>
+      {props.figure && <span className="sec-sub" data-testid="qms-coverage-figure">{props.figure}</span>}
+      <div className="pj-sec-acts">
+        <button type="button" className="btn ghost small" title="The job functions people hold, which documents require them to train"
+          onClick={() => setRolesOpen(true)}>Job roles</button>
+      </div>
     </div>
     {rolesOpen && <JobRolesPanel onClose={() => setRolesOpen(false)} />}
-    <p className="qms-training-summary">Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
     <div className="qms-train">
       {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
       {props.unread && !props.failed && <div className="qms-empty" role="status">Loading training records…</div>}
       {!props.unread && props.rows.length === 0 && <div className="qms-empty">No training-controlled documents yet.</div>}
       {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
     </div>
+    {/* The method, once, closed (C1): it was a permanent paragraph above every row. */}
+    <details className="pj-more">
+      <summary>How coverage is counted</summary>
+      <p>Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
+    </details>
   </section>;
 }
 
@@ -66,16 +72,15 @@ function CoverageRow({ row, canOpen, onOpen }: Pick<TrainingCoverageProps, 'canO
       <span className="qms-train-when">{state.note}</span>
     </> : <CoverageFigure current={state.current} of={state.of} lastCycle={row.lastCycle} />}
     {mine && <span className="qms-train-when" data-testid="qms-train-me">{mine}</span>}
-    <button className="qms-link" disabled={disabled} aria-label={`My acknowledgement for ${row.doc}`} onClick={() => { if (row.documentId) onOpen(row.documentId); }}>My acknowledgement</button>
+    <button type="button" className="btn ghost small" disabled={disabled} aria-label={`My acknowledgement for ${row.doc}`} onClick={() => { if (row.documentId) onOpen(row.documentId); }}>My acknowledgement</button>
   </div>;
 }
 
+/* The figure in words (C1): the bar coloured red, amber and green at thresholds the client invented (80, 95) said
+   in colour what no word said, and no rule of the product defines. */
 function CoverageFigure({ current, of, lastCycle }: { current: number; of: number; lastCycle: string }) {
-  const pct = of > 0 ? Math.round((current / of) * 100) : 0;
-  const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
   return <>
-    <span className="qms-train-bar"><span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} /></span>
-    <span className="qms-train-pct mono" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current}/{of}</span>
+    <span className="qms-train-pct" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current} of {of} acknowledged</span>
     <span className="qms-train-when" title="Most recent acknowledgement by the people assigned">Latest {lastCycle}</span>
   </>;
 }

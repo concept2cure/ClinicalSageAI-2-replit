@@ -99,7 +99,6 @@
 .qms-title { color: var(--text-100); }
 .qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
-.qms-overdue { color: var(--error); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 
 /* status pill */
 .qms-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
@@ -120,16 +119,11 @@
 .qms-chip.ghost { border-color: transparent; padding: 3px 6px; }
 .qms-chip.ghost:hover { color: var(--accent-main-100); }
 
-/* ─── Review + training grid ───────────────────────────────────── */
-.qms-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 960px) {
-  .qms-grid2 { grid-template-columns: 1fr; }
-}
-
-.qms-review { border: 1px solid var(--bg-200); border-radius: 10px; overflow: hidden; background: var(--background); }
+/* The review schedule's rows: a plain list under its section head, no box (C1). */
+.qms-review { border-top: 1px solid var(--border-subtle); }
 .qms-review-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
-  width: 100%; padding: 9px 13px; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px;
+  width: 100%; padding: 9px 0; border-bottom: 1px solid var(--border-subtle);
   transition: background 200ms var(--ease);
 }
 .qms-review-open {
@@ -138,7 +132,6 @@
 }
 .qms-review-open:disabled { cursor: default; }
 .qms-review-last { grid-column: 1 / -1; color: var(--text-300); font-size: 11.5px; }
-.qms-review-row[data-overdue] .qms-review-last { color: var(--text-200); }
 .qms-review-by { display: block; color: var(--text-300); font-size: 11px; }
 @media (max-width: 480px) {
   .qms-review-row { grid-template-columns: minmax(0, 1fr); }
@@ -146,19 +139,16 @@
 }
 .qms-review-row:last-child { border-bottom: 0; }
 .qms-review-row:hover { background: var(--bg-100); }
-.qms-review-row[data-overdue] { background: var(--error-muted); }
 .qms-review-num { color: var(--text-200); font-weight: 600; }
 .qms-review-title { color: var(--text-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-review-when { text-align: right; color: var(--text-300); font-size: 11.5px; }
-.qms-flag-txt { color: var(--error); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
 .qms-empty { padding: 18px 14px; font-size: 12px; color: var(--text-400); text-align: center; }
 
 .qms-train { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
-.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 44px; gap: var(--space-2); align-items: center; font-size: inherit; }
+.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; font-size: inherit; padding: var(--space-2) 0; border-top: 1px solid var(--border-subtle); }
 .qms-train-row .qms-train-when { grid-column: 1 / -1; justify-self: start; }
-.qms-train-row .qms-link { grid-column: 1 / -1; justify-self: start; }
+.qms-train-row > .btn { grid-column: 1 / -1; justify-self: start; }
 .qms-train-unavailable { grid-column: 2 / -1; color: var(--text-300); text-align: right; }
-.qms-training-summary { color: var(--text-300); margin: 0 0 var(--space-4); }
 
 /* Job roles and who must train on a document (P-49), inside the shared dialog. */
 .qms-train-role { border-top: 1px solid var(--border-subtle); padding: var(--space-3) 0; }
@@ -212,10 +202,6 @@
   .qms-training-receipt dl > div { grid-template-columns: 1fr; gap: var(--space-1); }
 }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
-.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms var(--ease); }
-.qms-train-fill[data-tone="warn"] { background: var(--warning); }
-.qms-train-fill[data-tone="err"]  { background: var(--error); }
 .qms-train-pct { color: var(--text-300); text-align: right; }
 .qms-train-when { color: var(--text-300); font-size: 11px; text-align: right; }
 
