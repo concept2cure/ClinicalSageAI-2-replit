@@ -218,3 +218,42 @@ test('the approver is designated as the QMS approver, through the governed route
   assert.match(fn, /designated: true, reason: "/);
   assert.match(fn, /\/api\/auth\/logout/, 'the administrator signs out, so the session does not hold a slot');
 });
+
+// 2026-11-10, the showcase sweep: every report and bundle PDF export answered 503 REPORT_PDF_FONTS_UNAVAILABLE in a
+// Codespace-shaped stack, because only the production image and CI installed the Noto fonts the PDF writer embeds.
+test('the Codespace installs the report PDF fonts, and a failed install never blocks the start', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-fonts-'));
+  try {
+    const bin = join(dir, 'bin'); mkdirSync(bin);
+    const calls = join(dir, 'apt-calls');
+    const fake = (body) => { writeFileSync(join(bin, 'apt-get'), `#!/bin/bash\necho "$@" >> "${calls}"\n${body}\n`); chmodSync(join(bin, 'apt-get'), 0o755); };
+    writeFileSync(join(bin, 'sudo'), '#!/bin/bash\nwhile [[ "$1" == -* ]]; do shift; done\nexec "$@"\n'); chmodSync(join(bin, 'sudo'), 0o755);
+    const font = join(dir, 'NotoSans-Regular.ttf');
+    const run = () => spawnSync('bash', ['-c', `source "${postCreate}"; c2c_install_report_fonts; echo "rc=$?"`], {
+      cwd: root, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, C2C_REPORT_FONT: font, C2C_POST_CREATE_SOURCE_ONLY: '1' } });
+
+    fake('exit 100');
+    const failed = run();
+    assert.match(failed.stdout, /rc=0/, 'a failed install returns success: ' + failed.stdout + failed.stderr);
+    assert.match(failed.stdout + failed.stderr, /could not be installed/);
+    assert.match(readFileSync(calls, 'utf8'), /update/);
+
+    writeFileSync(calls, '');
+    fake(`if [[ "$1" == install ]]; then touch "${font}"; fi\nexit 0`);
+    const installed = run();
+    assert.match(installed.stdout, /rc=0/);
+    assert.match(readFileSync(calls, 'utf8'), /install -y -qq fonts-noto-core fonts-noto-cjk/);
+    assert.match(installed.stdout + installed.stderr, /Report PDF fonts installed/);
+
+    writeFileSync(calls, '');
+    const present = run();
+    assert.match(present.stdout, /rc=0/);
+    assert.equal(readFileSync(calls, 'utf8'), '', 'fonts already there: apt is not called');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const call = code.indexOf('\nc2c_install_report_fonts\n');
+  assert.ok(call >= 0, 'post-start installs the fonts: an existing Codespace never re-runs post-create');
+  assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the long demo seed');
+  assert.doesNotMatch(code, /c2c_install_report_fonts \|\|/, 'never a blocking step');
+});

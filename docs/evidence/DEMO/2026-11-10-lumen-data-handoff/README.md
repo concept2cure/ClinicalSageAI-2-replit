@@ -26,8 +26,11 @@ the Vault filing below. It runs inside `--pack all`.
 | People on tasks | `lumen.mjs` `castOf` / `castTasks` | The story's personas by name where the organisation has them; otherwise by role: author (who seeds), reviewer (`OQ_SIGNER_*`), approver (`OQ_APPROVER_*`) |
 | Review | `lumen.mjs` `ensureIbReview` | The Investigator's Brochure out for review with the second person (needs `OQ_SIGNER_*`) |
 | Communication and Respond | `lumen-content.mjs` `INFORMATION_REQUEST` | A FICTIONAL FDA information request: "1 agency communication needs a response", 3 questions |
-| Submission Center | `lumen.mjs` `ensureLumenSequence` | Sequence 0000 on LMN-201, so the CSR's "Place into filing" has a sequence |
-| Reporting | `lumen.mjs` `ensureLumenReports` | 4 computed reports run: executive digest, commitment register, IND safety readiness, eTMF completeness |
+| Submission Center | `lumen.mjs`, through `biotech-submission.mjs` `ensureSubmission` | Sequence 0000 on LMN-201, assembling, with the approved Vault documents placed as 5 leaves; Validation and Dispatch say what is missing |
+| Protocol | `lumen-protocol.mjs`, through `biotech-protocol.mjs` `ensureProtocol` | Protocol LMN-201-CDI-02 (synthetic) in the protocol workspace: sections, objectives, its own eligibility criteria, schedule, risks, amendment 2, two deviations with a CAPA, a review |
+| Team | `lumen.mjs` `ensureProjectTeam` | Each Lumen project shared with the reviewer and the approver, so the Team card lists all three with their work |
+| Reporting | `lumen.mjs` `ensureLumenReports`, `ensureLumenReportPack` | 4 computed reports run: executive digest, commitment register, IND safety readiness, eTMF completeness; a bundle of the four; two in-platform schedules |
+| The CSR | `lumen-csr.mjs` | LMN-201's Phase 2 CSR document with its study data frozen, ready for "Build CSR draft" |
 | Quality | `lumen-qms.mjs`, `lumen-qms-content.mjs` | 3 SOPs; 4 deviations; 4 CAPAs with 6 actions, linked to their sources; 5 suppliers; 3 nonconformances; 4 internal audits; a change control linked to its SOP, deviation and CAPA; 2 management reviews |
 | Risk-based monitoring | `lumen-rbm.mjs`, `lumen-rbm-content.mjs` | RACT (approved with a second person), 8 KRIs over six monthly extracts, 3 QTLs, 6 signals, the plan and site-104 actions. Subject profiles now load: the 42P10 constraint was fixed in `e10d5e962` |
 | Vault | `lumen-vault.mjs`, `lumen-vault-content.mjs` | 25 synthetic PDFs across the four projects, filed to CTD sections (Required documents counts them), reviewed, approved and sealed where the story says, with governed artifacts |
@@ -89,10 +92,9 @@ With no second or third person, every two-person step says "not executed" and no
    binder node (`cab-bn:1.14.4.1`), so the seed's folder check never matched. `readCabinet` in `lumen-vault.mjs` reads
    each document's own filing record instead. A second run in the Lumen organisation: "created 0, found 208", no
    filing repaired.
-3. **QMS: SOPs stay draft and training stays empty.** That lasts until an administrator designates a QMS approver
-   (`PUT /api/tenant-users/:org/:user/qms-approver`). It is an access grant, so it is left to the founder; the
-   question is open with them. After it, a re-run routes and approves LMN-SOP-201/202 and assigns training. That path
-   has not been run.
+3. **Done (2026-11-10): the Lumen account's SOPs go effective.** The Codespace designates the Lumen reviewer as the
+   QMS approver before the seed (`a3ab5b826`). In the running app, LMN-SOP-201 and 202 read "Effective", approved
+   by the reviewer, with training assigned.
 4. **biotech and mdx QMS with a signer.** `biotech-qms.mjs` `settleStatus` (and mdx's equivalent) approves a draft
    directly, and with `OQ_SIGNER_*` set the server answers 409 `QMS_INVALID_STATE`. It needs the author's
    `in_review` step first. Until that is fixed, the Codespace keeps the signer off `--pack all` (Codespace session's
@@ -108,10 +110,27 @@ With no second or third person, every two-person step says "not executed" and no
 7. **R1's remaining reach list.** `docs/evidence/DESIGN/R1/2026-11-01-inventory/` has 186 served-but-uncalled
    routes in no package. They need a reach-or-retire decision per route.
 
+## The showcase pass (2026-11-10, after the founder's "get everything ready for a sales showcase")
+
+The run of show for the Lumen account, by person and scene, with what was found and fixed, is
+`docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`. In short:
+
+- Three sweeps of the Lumen account (lead, reviewer, approver): no failed request except the Module 3 refusals for a
+  biologic.
+- Completed: the protocol workspace, the sequence's leaves, the project teams, Reporting's bundle and schedules.
+- A defect of this session's own, found by reading the screen and fixed (`34ecd2981`): the Lumen protocol carried
+  the psoriasis study's eligibility criteria.
+- The Codespace now installs the fonts report PDFs embed (`4a473cffe`); before, every PDF export in Reporting
+  answered 503.
+- Open: the other system packages a Codespace lacks beside the production image. See that note.
+
 ## Who to ask
 
 - **Codespace setup** (`.devcontainer/**`, `scripts/ops/codespaces-*`): `session_01QoxbLaF89iYd7wC96owa7t`.
 - **Design lead and CSR lane:** `session_011DpxUyQmE1enma4gTjcfBy`.
+- **The CSR build in the Lumen account** (from "Build CSR draft" to the sequence): `session_01QoxbLZjzhMwaBj2BdVmUUR`.
+- **The sweep of every screen and the presenter's scripts in `docs/demo/`:** `session_01QoxbLdTrwYyiaSgLDxgHQJ`.
+- **The presenter's rehearsal with the launch gate on:** `session_01T2wooCZu46W7msw4TJuuzr`.
 - **Coordination row:** `.design/claude-convergence/COORDINATION.md`. R1 and DATA hold nothing now.
 
 ## Data rules kept
