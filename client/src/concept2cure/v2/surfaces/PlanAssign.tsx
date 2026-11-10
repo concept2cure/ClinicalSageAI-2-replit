@@ -21,6 +21,7 @@
  * by the title.
  */
 import React, { useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { isRowsWith, useLiveRows } from '../dataConnect';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { I } from '../icons';
@@ -276,4 +277,64 @@ export function DueForYou({ items, unread, today = new Date() }: { items: PlanDu
         })}</ul>}
     </section>
   );
+}
+
+/** The body that moves an owner's task to the schedule's date: tasking's governed reschedule (PATCH
+ *  /api/tasks/tasks/:taskId, action 'reschedule'), with the date the person was shown, so a task moved meanwhile is
+ *  refused as stale, and the reason they state. The date is the end of that working day, as Assign records it. */
+export function buildRescheduleBody(scheduleDay: string, currentDueDate: string | null, reason: string): Record<string, unknown> {
+  const shown = currentDueDate ? new Date(currentDueDate) : null;
+  return {
+    action: 'reschedule',
+    dueDate: new Date(`${scheduleDay}T17:00:00`).toISOString(),
+    expectedDueDate: shown && Number.isFinite(shown.getTime()) ? shown.toISOString() : null,
+    reason,
+  };
+}
+
+/**
+ * "Use the schedule's date" (S11): when the plan's date for a task has moved since it was assigned, the owner's task
+ * is moved to it. A governed change: it asks for the reason and tasking records it on the ledger. Not offered to a
+ * viewer. A refusal is said, with nothing changed.
+ */
+export function UseScheduleDate({ assignment, scheduleDay, scheduleWords, onMoved }: {
+  assignment: PlanAssignment; scheduleDay: string; scheduleWords: string; onMoved: () => void;
+}) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<{ ok: boolean; text: string } | null>(null);
+  if (!canGovernedWrite(user) || !assignment.taskId) return null;
+  const submit = async (values: Record<string, string>) => {
+    setOpen(false); setBusy(true); setSaid(null);
+    try {
+      const res = await apiRequest('PATCH', `/api/tasks/tasks/${encodeURIComponent(assignment.taskId)}`,
+        buildRescheduleBody(scheduleDay, assignment.dueDate, values.reason ?? ''));
+      const json = (await res.json().catch(() => null)) as { success?: boolean; error?: string; code?: string } | null;
+      if (!res.ok || !json?.success) {
+        const unknown = json?.error === 'OUTCOME_UNKNOWN';
+        setSaid({ ok: false, text: unknown
+          ? 'The save could not be confirmed. The task is read again so you can see its date.'
+          : `The due date was not changed: ${String(json?.error ?? `the server refused it (HTTP ${res.status})`).replace(/[.\s]+$/, '')}.` });
+        if (unknown) onMoved();
+        return;
+      }
+      setSaid({ ok: true, text: `The task is now due ${scheduleWords}.` });
+      onMoved();
+    } catch (e) {
+      setSaid({ ok: false, text: `The due date was not changed: ${e instanceof Error ? e.message : 'the request failed'}.` });
+    } finally { setBusy(false); }
+  };
+  return <>
+    <button type="button" className="btn ghost" disabled={busy} onClick={() => { setSaid(null); setOpen(true); }}>
+      {I.clock} {busy ? 'Moving…' : 'Use the schedule’s date'}
+    </button>
+    {said && <p className="pf-sel-m pj-plan-assign-msg" role={said.ok ? 'status' : 'alert'}>{said.text}</p>}
+    {open && <C2CForm onCancel={() => setOpen(false)} onSubmit={v => void submit(v)} config={{
+      eyebrow: 'Plan', title: `Move this task to ${scheduleWords}`,
+      sub: 'Changes the due date of the owner’s task to the schedule’s date. The owner is reminded against the new date.',
+      governed: 'Recorded with your reason in the audit trail.', submitLabel: 'Change the due date',
+      fields: [{ key: 'reason', label: 'Reason', type: 'text', required: true, placeholder: 'e.g. The target submission date moved' }],
+    }} />}
+  </>;
 }
