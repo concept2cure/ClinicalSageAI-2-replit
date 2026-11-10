@@ -53,6 +53,9 @@ function protocolCopy(rag: { executable?: boolean; required?: boolean; floor?: n
   p.approvedBy = 'System owner (test copy)';
   p.approvedOn = '2026-09-28';
   if (!p.components.rag) throw new Error('pq-protocol.json declares no rag component; these cases measure it');
+  // The CSR drafting component (P-118) is required and cannot be executed yet, so the real protocol is INCOMPLETE on
+  // it whatever rag does. These cases measure rag, so the copy leaves that component out.
+  delete p.components.csrDrafting;
   if (rag.executable !== undefined) p.components.rag.executable = rag.executable;
   if (rag.required !== undefined) p.components.rag.required = rag.required;
   const floor = rag.floor === undefined ? FLOOR : rag.floor;
@@ -568,11 +571,43 @@ describe('rag not (required and executable) — exactly today\'s verdict, whatev
     }
   });
 
-  it('the real draft is executable, sets 30 positives per metric and cannot qualify this three-item seed', () => {
-    expect(REAL.status).toBe('draft');
+  it('the real protocol is executable for rag, sets 30 positives per metric and cannot qualify this three-item seed', () => {
     expect(REAL.components.rag.executable).toBe(true);
     expect(REAL.components.rag.criteria.minScoredItems).toBe(30);
     expect(verdictOf(clone(REAL), passingRag()).verdict).toBe('INCOMPLETE');
+  });
+});
+
+/* FOUNDER DECISION P-118 (2026-11-10). The founder approved the protocol as version 1.0.0. Approval fixes the
+   acceptance criteria; it qualifies no model. The same decision made evidence-bound CSR drafting a component of its
+   own, required and not yet executable, so that a model is never released to draft a CSR on a bank that holds no CSR.
+   These cases read the real file, unchanged. */
+describe('the real protocol, approved: approval alone qualifies nothing', () => {
+  const thirty = () => ragRun(Array.from({ length: 30 }, (_, i) => item(`q${i}`)));
+
+  it('is approved, by the system owner, on a real date', () => {
+    expect(REAL.status).toBe('approved');
+    expect(REAL.approvedBy).toMatch(/founder.*system owner.*P-118/i);
+    expect(REAL.approvedOn).toBe('2026-11-10');
+    expect(REAL.version).toBe('1.0.0');
+  });
+
+  it('a run perfect on generation, extraction and rag is INCOMPLETE, and the one reason is the CSR drafting component', () => {
+    const r = verdictOf(clone(REAL), thirty());
+    expect(r.verdict).toBe('INCOMPLETE');
+    expect(r.reasons).toHaveLength(1);
+    expect(r.reasons[0]).toMatch(/^required component "csrDrafting" cannot be executed yet: /);
+  });
+
+  it('control: the same run passes a copy without that component, so the component is what holds the verdict', () => {
+    expect(verdictOf(protocolCopy({ executable: true, floor: 30 }), thirty()).verdict).toBe('PASS');
+  });
+
+  it('the CSR drafting component is required, not executable, and tolerates no unclaimed figure', () => {
+    const csr = REAL.components.csrDrafting;
+    expect(csr).toMatchObject({ required: true, executable: false });
+    expect(csr.notExecutableReason).toMatch(/CSR builder's own prompts/);
+    expect(csr.criteria).toMatchObject({ maxUnclaimedFiguresInAcceptedText: 0, maxForbiddenHits: 0, minHeadingsAttemptedShare: 1 });
   });
 });
 

@@ -1,12 +1,37 @@
 {
-  "$comment": "The performance-qualification protocol a model must pass to be approved for high-risk regulatory drafting. DRAFT until the system owner approves it: a PQ run against unapproved acceptance criteria cannot produce a PASS, by construction in server/eval/pq/pq-verdict.ts. Every criterion names where its value came from; none was chosen for this file. Founder decision P-31 (2026-10-13, docs/MODEL_GOVERNANCE_DECISION_2026-10-13.md) reviewed this protocol and did NOT approve it. Two fail-open gates were fixed in that change (the per-item faithfulness floor below, and extraction criteria that were skipped in silence); four conditions remained before approval, listed in that record. Two landed on 2026-10-15: the extraction sample floor (minTasksPerDocType 10; the bank now holds 12 extraction tasks per document type) and headroom above both floors (gold-bank-floor.test.ts). Gold-bank coverage for CMC / Module 3 and Module 2.5-2.7 landed on 2026-11-01: module-3-quality and module-2-clinical, 12 generation and 12 extraction tasks each, from real source text (server/eval/pq/__tests__/gold-bank-coverage.test.ts). One remains: a product provider key. Amending this file after a model has passed invalidates that pass (run-pq.ts writes protocolSha256 and verify-pq-record.ts checks it), so the window to correct the criteria is open only while no model has passed.",
+  "$comment": "The performance-qualification protocol a model must pass to be approved for high-risk regulatory drafting. APPROVED by the founder as system owner on 2026-11-10 (founder decision P-118, docs/LAUNCH_DEFINITION_OF_DONE.md), as version 1.0.0. Until then it was a draft: a PQ run against unapproved acceptance criteria cannot produce a PASS, by construction in server/eval/pq/pq-verdict.ts. Approval fixes the acceptance criteria before any model has been run against them. It qualifies no model: every model's pq.status stays pending until its own executed record. Every criterion names where its value came from; none was chosen for this file. Founder decision P-31 (2026-10-13, docs/MODEL_GOVERNANCE_DECISION_2026-10-13.md) reviewed this protocol and did NOT approve it. Two fail-open gates were fixed in that change (the per-item faithfulness floor below, and extraction criteria that were skipped in silence); four conditions remained before approval, listed in that record. Two landed on 2026-10-15: the extraction sample floor (minTasksPerDocType 10; the bank now holds 12 extraction tasks per document type) and headroom above both floors (gold-bank-floor.test.ts). Gold-bank coverage for CMC / Module 3 and Module 2.5-2.7 landed on 2026-11-01: module-3-quality and module-2-clinical, 12 generation and 12 extraction tasks each, from real source text (server/eval/pq/__tests__/gold-bank-coverage.test.ts). One remained: a product provider key. P-118 approved the criteria ahead of it, because a key is a condition for running the protocol, not for fixing what it measures. P-118 also wrote the scope below into the protocol and added the csrDrafting component, which is required and cannot be executed yet, so no run can pass until it can. Amending this file after a model has passed invalidates that pass (run-pq.ts writes protocolSha256 and verify-pq-record.ts checks it), so the window to correct the criteria is open only while no model has passed. A change to an approved protocol is a new version and a new approval by the system owner.",
   "protocolId": "PQ-DRAFT-001",
   "title": "Performance qualification of a model for high-risk regulatory drafting",
-  "version": "0.1.0",
-  "status": "draft",
-  "approvedBy": null,
-  "approvedOn": null,
+  "version": "1.0.0",
+  "status": "approved",
+  "approvedBy": "The founder, as system owner (founder decision P-118, docs/LAUNCH_DEFINITION_OF_DONE.md)",
+  "approvedOn": "2026-11-10",
   "basis": "docs/LAUNCH_DEFINITION_OF_DONE.md: 'Only models with a passed PQ against server/eval/rag/ and server/eval/doc-quality/ are approved for high-risk regulatory drafting.' No validation document defined drafting PQ criteria before this file: docs/validation/VMP-001 section 2 puts model PQ out of scope, and the registry cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and 'regulatory intuition' for a different product, not drafting.",
+  "scope": {
+    "decision": "P-115 clarification (2026-11-10) and P-118 (2026-11-10), docs/LAUNCH_DEFINITION_OF_DONE.md.",
+    "rule": "A qualification is for a named use, and a model is qualified for a use only on the components that use needs. A component a use does not need is not waived for the uses that do.",
+    "uses": {
+      "evidence-bound-csr-drafting": {
+        "what": "The CSR build (server/services/csr-builder.ts): each ICH E3 narrative heading drafted from the study's retained analysis tables and the platform's ICH E3 record. It retrieves nothing.",
+        "components": [
+          "generation",
+          "extraction",
+          "csrDrafting"
+        ],
+        "releases": "CSR text only (P-115 item 1), and only as text a named reviewer has adopted and an approver has signed."
+      },
+      "source-based-drafting": {
+        "what": "Every use that retrieves: AnA's answers from the knowledge base, and a section drafted from selected sources.",
+        "components": [
+          "generation",
+          "extraction",
+          "rag"
+        ],
+        "releases": "Nothing until the retrieval bank is complete and its sources are verified (server/eval/rag/guidance-corpus-manifest.json verifyProcedure)."
+      }
+    },
+    "enforcement": "Owed (ledger package S4). server/eval/pq/pq-verdict.ts does not read this block: it applies every required component to every run, which is stricter than this rule. So today a run is INCOMPLETE until both csrDrafting and rag can be measured. When the verdict reads the use, the record names it in pq.intendedUses and the gateway already refuses a use the record did not measure (server/services/ai-gateway/model-governance.ts, use-mismatch)."
+  },
   "components": {
     "generation": {
       "required": true,
@@ -46,6 +71,19 @@
       },
       "criteriaSource": "Reviewer-draft acceptance criteria: retain minHitRate 0.6 and minFaithfulness 0.7; add minScoredItems 30 positive items per metric from the existing RAG README 30\u201350 gold-item target. Negative controls never fill either metric floor. Controlled PQ now executes canonical scoped retrieval/generation and a distinct pinned judge with actual provider-resolved identities. Operational approval, official-source review, corpus verification and live execution remain required. Founder decision P-31 (2026-10-13) adds minItemFaithfulness 0.5: minFaithfulness is applied as an arithmetic mean (pq-verdict.ts ragCriterion), and the judge is told 0 means the answer is 'unsupported or contradicted' (eval/rag/rag-metrics.ts), so at the 30-item sample floor NINE zero-scored items pass a mean of 0.70 \u2014 30% of the bank could be fabrication and the model would still qualify. The generation component already uses an absolute per-item criterion for a per-item harm (maxForbiddenHits 0); rag now matches it. The value sits where the judge's own wording changes meaning: below 0.5 the judge holds the answer more unsupported than supported, and none of those is tolerated; partial support above it is a quality question the mean measures, and the individual fabrication at run time is caught by the deterministic answer-grounding engine, not by this protocol.",
       "harness": "server/eval/pq/run-pq.ts -> rag-phase.ts; canonical server/eval/rag scope/source resolver and retrieval builder; server/services/rag-generation-request.ts source/prompt shared with production; strict server/eval/rag/rag-metrics.ts judgeFaithfulness. A controlled PQ bypasses model selection/fallback via existing evaluateModel for exact registry candidate and independent judge."
+    },
+    "csrDrafting": {
+      "required": true,
+      "executable": false,
+      "notExecutableReason": "The run over the CSR builder's own prompts is not written. It drafts every ICH E3 narrative heading of one public study (the CDISC pilot, held outside the repository) with the pinned model, through the builder's own request and its own figure and claim checks, and retains each request, response and check receipt. Owed by ledger package S4, with a verdict step that measures it (pq-verdict.ts MEASURED_COMPONENTS)",
+      "harness": "Owed. It reuses server/services/csr-builder.ts draftCSRSectionWithProvenance and server/services/csr/unsupplied-statistics.ts; it adds no second drafting path.",
+      "criteria": {
+        "minHeadingsAttemptedShare": 1,
+        "minAcceptedDraftShare": 0.85,
+        "maxUnclaimedFiguresInAcceptedText": 0,
+        "maxForbiddenHits": 0
+      },
+      "criteriaSource": "maxUnclaimedFiguresInAcceptedText 0 is CLAUDE.md RULE 2 ('Numbers, verdicts and governed content come from deterministic engines; the model narrates') and P-115 item 1 ('every figure in it is a claimed cell of the retained engine tables'); accepted text is re-checked by a second pass independent of the builder's own check. maxForbiddenHits 0 is the generation component's own criterion. minHeadingsAttemptedShare 1: every narrative heading is drafted by the pinned model, verifiably, as the other components require of every task. minAcceptedDraftShare 0.85 has no earlier document behind it: it is the share of headings whose first draft passed every check, set under the founder's delegation in P-118 at the generation component's coverage floor, on the reasoning that a model whose drafts are refused more than about one time in seven is not fit to draft a report even though each refusal is caught. It is the founder's to change before the first run."
     }
   }
 }
