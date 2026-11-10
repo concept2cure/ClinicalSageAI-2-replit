@@ -168,6 +168,14 @@ export async function openWorkspaceAfterSignup(
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * The revision of the agreement text on the last step (the Terms of Service, the Privacy Policy and the regulatory
+ * acknowledgement). It is sent with the acceptances and kept on the sign-up's audit record, so an acceptance names
+ * the text that was read. Change a word of that text and this changes with it: `signupAgreements.test.tsx` pins the
+ * text's digest to the revision.
+ */
+export const SIGNUP_AGREEMENTS_REVISION = '2026-11-10';
+
 export const ZenSignup: React.FC = () => {
   const [, setLocation] = useLocation();
   const { t } = useTranslation('auth');
@@ -327,6 +335,14 @@ export const ZenSignup: React.FC = () => {
             : {}),
           primaryUseCases: formData.useCase ? [formData.useCase] : [],
           defaultMarkets,
+          jobTitle: formData.jobTitle.trim() || undefined,
+          // What was accepted on this step, and which text it was (W1-02): the server records it on the sign-up.
+          agreements: {
+            revision: SIGNUP_AGREEMENTS_REVISION,
+            termsOfService: formData.acceptedTerms,
+            privacyPolicy: formData.acceptedPrivacy,
+            regulatoryAcknowledgement: formData.acceptedCompliance,
+          },
         }),
       });
 

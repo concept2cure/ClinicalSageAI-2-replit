@@ -1,0 +1,20 @@
+chain_seq|201
+action|user_signup
+tenant_id|8
+user_id|15
+occurred_at|2026-11-10 11:27:38.031+00
+chained|t
+new_values|{
+    "email": "<the address>",
+    "reason": "verification_sent",
+    "outcome": "success",
+    "agreements": {
+        "accepted": [
+            "terms_of_service",
+            "privacy_policy",
+            "regulatory_acknowledgement"
+        ],
+        "revision": "2026-11-10"
+    },
+    "description": "Signed up: the account waits on its e-mail confirmation link. Accepted the Terms of Service, the Privacy Policy and the regulatory acknowledgement (agreements revision 2026-11-10)"
+}

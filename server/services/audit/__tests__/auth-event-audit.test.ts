@@ -152,3 +152,40 @@ describe('what the audit ledger shows for an event', () => {
     expect(shown).toBe(sentence);
   });
 });
+
+/* Client administration walk, 2026-11-10 (W1-02): nothing recorded that a person had accepted the agreements at
+   sign-up. The sign-up's own audit row now holds it. */
+describe("a sign-up's audit row says what was agreed to", () => {
+  const SIGNUP = { action: 'user_signup', userId: 17, tenantId: 1, email: 'u@example.test', outcome: 'success' as const, reason: 'verification_sent' };
+  const written = async () => {
+    const auditService = (await import('../../auditService')).default as unknown as { logAction: { mock: { calls: unknown[][] } } };
+    return auditService.logAction.mock.calls.at(-1)![0] as { details: Record<string, unknown> };
+  };
+
+  it('holds the revision shown and each agreement accepted, and says so in its sentence', async () => {
+    await runWithPreAuthScope('auth:POST /signup', () => recordAuthEvent({
+      ...SIGNUP, agreements: { revision: '2026-11-10', accepted: ['terms_of_service', 'privacy_policy', 'regulatory_acknowledgement'] },
+    }));
+    const row = await written();
+    expect(row.details.agreements).toEqual({ revision: '2026-11-10', accepted: ['terms_of_service', 'privacy_policy', 'regulatory_acknowledgement'] });
+    expect(row.details.description).toBe(
+      'Signed up: the account waits on its e-mail confirmation link. Accepted the Terms of Service, the Privacy Policy and the regulatory acknowledgement (agreements revision 2026-11-10)',
+    );
+  });
+
+  it('says that no acceptance was sent, and records none', async () => {
+    await runWithPreAuthScope('auth:POST /signup', () => recordAuthEvent({ ...SIGNUP, agreements: null }));
+    const row = await written();
+    expect(row.details.agreements).toBeNull();
+    expect(row.details.description).toBe(
+      'Signed up: the account waits on its e-mail confirmation link. No acceptance of the agreements was sent with this sign-up',
+    );
+  });
+
+  it('adds nothing to an event that is not a sign-up', async () => {
+    await runWithPreAuthScope('auth:POST /login', () => recordAuthEvent({ ...EVENT, tenantId: 1 }));
+    const row = await written();
+    expect('agreements' in row.details).toBe(false);
+    expect(describeAuthEvent({ action: 'user_login', outcome: 'success', reason: '' })).not.toMatch(/agreement/i);
+  });
+});
