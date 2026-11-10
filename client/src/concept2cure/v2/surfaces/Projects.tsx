@@ -50,6 +50,7 @@ import { marketSupportText, useMarketSupport, type MarketSupportView } from '../
 import { PATHWAY_LABEL, REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY, pathwayKey, type RegulatoryPathway } from '@shared/constants/mdx';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
+import { ArchivedProjects, ArchivedProjectsLink } from './ProjectsArchived';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -1302,6 +1303,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      its own, so the retry the failed-load panel offers is a nonce in that list.
      The panel's copy promised a retry it did not have. */
   const [reloadNonce, setReloadNonce] = useState(0);
+  /* Archived projects, in place of the list, with a way to restore one (P-122 §3.5). */
+  const [archivedView, setArchivedView] = useState(false);
   const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
   const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
@@ -1367,6 +1370,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           'Explain what a filing type commits the project to',
         ],
       };
+    }
+    if (archivedView) {
+      return { summary: 'The archived projects are shown, each with Restore; the active portfolio is not listed.', availableActions: ['Restore an archived project, with a reason', 'Go back to the active projects'] };
     }
     if (live.loading) {
       return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
@@ -1434,7 +1440,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, wizardContext, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, truncated, counts]);
+  }, [wizardOpen, wizardContext, archivedView, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, truncated, counts]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1614,7 +1620,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
       <ClientChoicesNote hasMore={clientContext.hasMore} />
 
-      {live.loading ? (
+      {archivedView ? (
+        <ArchivedProjects portfolioUrl={portfolioUrl} needle={needle} onBack={() => setArchivedView(false)}
+          onRestored={() => setReloadNonce(n => n + 1)} />
+      ) : live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
@@ -1710,7 +1719,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </>
       )}
 
-      <PortfolioPagedNote paged={truncated} settled={settled} count={projects.length} scopedCounts={counts !== null} />
+      <ArchivedProjectsLink shown={archivedView} onOpen={() => setArchivedView(true)}>
+        <PortfolioPagedNote paged={truncated} settled={settled} count={projects.length} scopedCounts={counts !== null} />
+      </ArchivedProjectsLink>
     </div>
   );
 }
