@@ -45,3 +45,23 @@ for (const [name, register] of [
     assert.equal(s.calls.some((c) => c.method === 'POST'), false);
   });
 }
+
+/* The same walk: the LMN-201 CSR's study data. The pack now files a fuller source (v2), and a document that froze the
+   earlier one must freeze the newer: "frozen already" is asked of this source's bytes, not of any frozen study data. */
+import { studyDataFrom } from './packs/lumen-csr.mjs';
+import { CSR_SOURCE_FILE, CSR_SOURCE_TITLE } from './packs/lumen-content.mjs';
+import { readFileSync } from 'node:fs';
+
+test('a document counts as frozen from the CSR source only when one of its study data carries that source\'s bytes', () => {
+  const earlier = [{ studyDataId: 'a', sources: [{ sha256: 'old' }] }];
+  assert.equal(studyDataFrom(earlier, 'new'), false);
+  assert.equal(studyDataFrom([...earlier, { studyDataId: 'b', sources: [{ sha256: 'new' }] }], 'new'), true);
+  assert.equal(studyDataFrom([], 'new'), false);
+  assert.equal(studyDataFrom([{ studyDataId: 'c' }], 'new'), false);
+});
+
+test('the pack files the source that carries every safety domain, under its own title', () => {
+  const source = JSON.parse(readFileSync(CSR_SOURCE_FILE, 'utf8'));
+  for (const domain of ['exposure', 'labShifts', 'vitalSigns', 'concomitantMedications']) assert.ok(source.studyData[domain]?.length > 0, domain);
+  assert.match(CSR_SOURCE_TITLE, /with safety domains — SYNTHETIC, NOT CLINICAL EVIDENCE$/);
+});
