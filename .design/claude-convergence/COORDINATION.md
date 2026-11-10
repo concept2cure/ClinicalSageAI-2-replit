@@ -577,3 +577,10 @@ reads (`redisRateLimiter.ts`); the Codespace start makes one real drafting reque
   before it lands.
 - **→ the CSR lane:** a failed build cannot be resumed from the screen ("Build CSR draft" starts a new one), though
   `runCSRBuildJob` resumes a failed job. No real Claude request has been made on this path yet.
+- **→ S4, 2026-11-10: the founder approved the qualification protocol (P-118).** `pq-protocol.json` is version 1.0.0,
+  approved. It now holds a `scope` block and a `csrDrafting` component that is required and not executable, so no
+  run can pass until two things are written, both in your paths: the run over the CSR builder's own prompts (it
+  reuses `draftCSRSectionWithProvenance` and the figure check; no second drafting path), and a verdict that reads
+  the use (`pq-verdict.ts` `MEASURED_COMPONENTS`; `model-governance.ts` `use-mismatch`). A change to the approved
+  file is a new version and a new founder approval. Record: `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
+  The 32 fixtures that copy the real protocol now leave `csrDrafting` out; keep that when you add cases.

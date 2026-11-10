@@ -192,6 +192,16 @@ remain.
 
 Item 6, a product provider key, remains. When it lands, the PQ runs against this bank, and approval is a signature.
 
+**2026-11-10 — the founder approved the protocol** (P-118, `docs/LAUNCH_DEFINITION_OF_DONE.md`;
+`docs/evidence/D4/2026-11-10-pq-protocol-approved/`):
+
+- PQ-DRAFT-001 is version 1.0.0, approved by the founder as system owner. Item 6 is still open: the approval came
+  ahead of the key, because the key is a condition for running the protocol, not for fixing what it measures.
+- Approval qualifies no model. Every `pq.status` is still `pending`.
+- The same decision added a CSR drafting component, required and not yet executable, and a `scope` block: a
+  qualification is for a named use, on the components that use needs. Until the CSR run exists, no run can pass.
+- A change to the approved protocol is a new version and a new approval.
+
 ### The strongest argument against this decision
 
 That it makes a blocked gate more blocked. AnA cannot be credited as an author
