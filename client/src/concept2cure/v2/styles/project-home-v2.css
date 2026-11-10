@@ -489,6 +489,11 @@
 .c2c-v2 .pj-tracking-unmapped{padding-left:20px;}
 .c2c-v2 .pj-tracking-unmapped li{margin:8px 0;overflow-wrap:anywhere;}
 .c2c-v2 .pj-tracking-module .pj-lmod-sections li span:last-child{max-width:45%;overflow-wrap:anywhere;}
+/* The Schedule's rows carry full CTD section titles (P-122 defects, 2026-11-10): at 390 px "m1.20: Introductory
+   Statement and General Investigational Plan" took the whole row and squeezed its owner, status and date to nothing.
+   The row wraps, as Project knowledge's rows do. */
+.c2c-v2 .pj-tracking-module .pj-act{flex-wrap:wrap;min-width:0;}
+.c2c-v2 .pj-tracking-module .pj-act-w{flex-shrink:1;min-width:0;overflow-wrap:anywhere;}
 /* Review tab: this filing's reviews, grouped by what they need from the
    person (FILING_SPINE.md F7). The rows are the canvas list's own rows. */
 .c2c-v2 .pj-rv-group + .pj-rv-group{margin-top:14px;}

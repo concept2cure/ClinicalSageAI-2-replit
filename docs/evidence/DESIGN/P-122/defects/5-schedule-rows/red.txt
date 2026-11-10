@@ -1,0 +1,4 @@
+390-light schedule-c2c101 squeezed: ["m1.20: Introductory Statement and General Investigational Plan"]
+390-light schedule-lmn201 squeezed: ["m1.20: Introductory Statement and General Investigational Plan"]
+1440-light schedule-c2c101 squeezed: []
+1440-light schedule-lmn201 squeezed: []
