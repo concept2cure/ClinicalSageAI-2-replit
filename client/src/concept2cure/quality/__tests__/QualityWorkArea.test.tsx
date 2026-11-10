@@ -94,6 +94,16 @@ describe('Quality says whose records it lists', () => {
 });
 
 describe('Quality is one work area with one header (D7-B)', () => {
+  // P-122: the quality system's figures are one quiet line directly under the header, on every tab.
+  it("says the quality system's figures in one line under its header", () => {
+    const { container } = mount();
+    const line = screen.getByTestId('quality-figures');
+    expect(line.previousElementSibling?.tagName).toBe('HEADER');
+    fireEvent.click(screen.getByRole('tab', { name: 'CAPA' }));
+    expect(screen.getByTestId('quality-figures')).toBeTruthy();
+    expect(container.querySelector('.metric-card')).toBeNull();
+  });
+
   it('has one title, the rail label, and no second topbar or eyebrow', () => {
     const { container } = mount();
     const titles = screen.getAllByRole('heading', { level: 1 });

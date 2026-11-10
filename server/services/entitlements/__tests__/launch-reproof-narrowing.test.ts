@@ -68,7 +68,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/ectd/qualification',
   '/api/ectd/templates',
   '/api/ectd/v4',
-  '/api/mdx/qms/readiness',
+  /* /api/mdx/qms/readiness: served since P-122 (2026-11-10), below. */
   '/api/project-sections',
   '/api/project-sections/dependencies',
   '/api/project-sections/initialize',
@@ -105,6 +105,9 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
 const STILL_SERVED = [
+  /* Excluded as dead from 4aa204390. P-122 (2026-11-10) reaches it: Quality's figure line reads the server's
+     quality-system counts (quality/QualityFigures.tsx; quality-figures-launch-claim.test.ts). */
+  '/api/mdx/qms/readiness',
   /* Upheld on 2026-10-15: no screen read them. P-122 (2026-11-10) reaches them: the project page's Plan step reads
      the section owners, deadlines and milestones, and the Projects page's "at risk" answer reads the work due soon,
      each listing only the projects the person can open (tests/db/p122-project-management-reads.dbtest.ts). Claimed

@@ -48,6 +48,12 @@
 
 /* One line: the actions that fit the row's state, Ask AnA and "More" (D7-B item 6; P-122); the rest open in .qms-row-more. */
 .qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* A figure line's overdue or unapproved number takes its status colour, and nothing else does (P-122; §2: status
+   colour only for meaning). The work area's figure line sits under the header, one line of text, not tiles. */
+.qms-shell p.sec-sub [data-tone="err"] { color: var(--error); }
+.qms-shell p.sec-sub [data-tone="warn"] { color: var(--warning); }
+.qms-shell p.qms-figures { margin: 4px 0 14px; }
+.qms-shell p.qms-figures-unread { margin: -8px 0 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 /* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
 .qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
 .qms-ask-ico svg { width: 16px; height: 16px; }

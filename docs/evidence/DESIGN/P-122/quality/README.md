@@ -68,3 +68,36 @@ person takes in that state.
   contract tests, rewritten to the new contract).
 - Green (`item2-green.txt`): Quality's suites, AnA wave-4 and the SOP read-honesty suite, 31 files, 385 tests. Three
   cases that clicked an action through More were scoped to their row or opened More first.
+
+## Item 3 — the register figures, one quiet line of the server's numbers
+
+**What changed.** `quality/QualityFigures.tsx` puts one line of text directly under Quality's header, on every tab, in
+the register sentences' style (`p.sec-sub`): no tiles, no cards (§2's no-tile rule stands). A number takes a status
+colour only when it is overdue or unapproved. Every number is computed by the server, from four reads:
+
+| Figure | Server source |
+|---|---|
+| documents in force | `GET /api/mdx/qms/readiness` → `documents.effective` (the version in force, `in-force-release.ts`) |
+| due for review within 120 days (n overdue) | `GET /api/mdx/qms/documents/review-due?within=120`: the server's review schedule and its `overdue` flag (the Periodic review section's window) |
+| open changes (n past their implementation date) | `GET /api/mdx/qms/changes/summary` → `open`, `overdueImplementation` |
+| open CAPAs (n past target close) · open complaints · MDR reports overdue | `GET /api/capa-mdr/triage?open_only=true&limit=500`: the server's open queue and its `overdue` flags; at the 500 cap each count is said as a floor ("500+") and a zero is not said |
+| nonconformances awaiting disposition · critical suppliers not approved · open internal audits (n major findings) · lapsed acknowledgements | `GET /api/mdx/qms/readiness` → `nonconforming`, `suppliers`, `audits`, `training` |
+
+**Left out, because no server read computes them:** documents under review (readiness counts in force, under
+revision, overdue and draft, and its "draft" is everything not in force); open deviations; management reviews; and
+acknowledgement coverage, which the SOP register's training section already states from the server's summary.
+
+**Honest states.** While nothing has answered: "Reading the quality figures…", no number. A read that fails, or a
+readiness block the server marks `available: false`, is named ("Not read: change control; CAPA, complaints and MDR
+reports.") with "Read the figures again", and none of its figures is shown, never as zero. Narrowed to a project, the
+line begins "Organisation-wide · ".
+
+**Reached (R1).** `GET /api/mdx/qms/readiness` had no caller since `4aa204390` and production refused it as dead
+(`LAUNCH_EXCLUDED_API`). It is now served under Quality's existing claim on `/api/mdx/qms`, unchanged: the request's
+RLS executor (`qmsClient(req)`) and `organization_id = $1`, as every Quality read. The other three reads were already
+served (`device-postmarket` claims `/api/capa-mdr`). Its tenant isolation with RLS on is in item 4's DB test.
+
+- Red (`item3-red.txt`): the figure-line suite cannot load (no `QualityFigures.tsx`), the header test finds no line,
+  and the launch-scope test finds readiness excluded as dead.
+- Green (`item3-green.txt`): 55 files, 997 tests (Quality, entitlements, the readiness route); `ci:launch-scope-api`
+  reports nothing of Quality's (its one finding, `/api/cmc-changes`, is the CMC lane's); `ci:sql-interpolation` OK.

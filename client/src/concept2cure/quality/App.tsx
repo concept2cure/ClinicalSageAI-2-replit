@@ -42,6 +42,7 @@ import {
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
 import { WorkProjectTasks } from '../v2/surfaces/ProjectWorkTasks';
+import { QualityFigures } from './QualityFigures';
 
 /** Stable identity for an unread register, so memo deps do not churn. */
 const NO_CHANGES: ChangeControlRow[] = [];
@@ -398,6 +399,8 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
                 </div>
               )}
             </header>
+            {/* P-122: the quality system's figures, one quiet line of the server's numbers, on every tab. */}
+            <QualityFigures organisationWide={scope.programId !== null} />
             {/* P-111: opened from a Quality work project's door, its tasks under the title, above the registers. */}
             <WorkProjectTasks area="quality" />
             <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
