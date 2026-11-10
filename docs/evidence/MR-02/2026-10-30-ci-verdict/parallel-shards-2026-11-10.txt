@@ -1,0 +1,27 @@
+# One shard of eight, run one file at a time (vitest.config.ts) and three at a time (--maxWorkers=3 --fileParallelism),
+# on a 4-core, 15 GB machine (a GitHub runner's shape), trunk 8c7664b353, npm ci to the lockfile, a fresh database
+# with the 40 GCC migrations before each run. Wall time, peak RSS of all node processes, then the per-test comparison.
+
+s3-serial exit=1 wall=1508s peakRSS_kB=3621240
+s3-par3 exit=1 wall=629s peakRSS_kB=4828732
+s1-serial exit=1 wall=1704s peakRSS_kB=2079520
+s1-par3 exit=1 wall=717s peakRSS_kB=3800852
+s6-serial exit=1 wall=1876s peakRSS_kB=2064040
+s6-par3 exit=1 wall=742s peakRSS_kB=3873964
+
+shard 3/8: files 778 vs 778; failed files 1 vs 1; tests 10197 vs 10197; failed 1 vs 1; files with a different outcome 0; tests with a different outcome 0
+shard 1/8: files 778 vs 778; failed files 2 vs 1; tests 9609 vs 9609; failed 10 vs 9; files with a different outcome 1; tests with a different outcome 1
+    client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx | only accepted hazards show an acceptance signature a hazard accepted here is read once the signature is confirmed | failed -> passed
+   file client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx failed -> passed
+    failing serial only client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx | only accepted hazards show an acceptance signature a hazard accepted here is read once the signature is confirmed
+shard 6/8: files 777 vs 777; failed files 7 vs 5; tests 10856 vs 10856; failed 32 vs 30; files with a different outcome 2; tests with a different outcome 4
+    client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx | the client type chips are saved by "Save to organization" with the page’s reason for change | failed -> passed
+    client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx | versioned AnA additions use the same actual conversation and editor applies 'insert-empty' without striking the anchor, and permits a new receipt only after rejection | failed -> passed
+    server/services/authoring/__tests__/authoring-image-access.pglite.test.ts | figures are captured against the actual current authoring parent rejects missing/malformed/foreign document bc88378c-b1fe-4414-9a18-f8f19373be7b before bytes | None -> passed
+    server/services/authoring/__tests__/authoring-image-access.pglite.test.ts | figures are captured against the actual current authoring parent rejects missing/malformed/foreign document e4e85523-fae2-4e76-a349-6962b66461c7 before bytes | passed -> None
+   file client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx failed -> passed
+   file client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx failed -> passed
+    failing serial only client/src/concept2cure/v2/__tests__/adminSettingsClientTypeGoverned.test.tsx | the client type chips are saved by "Save to organization" with the page’s reason for change
+    failing serial only client/src/concept2cure/v2/editor/__tests__/workbenchRemedies.test.tsx | versioned AnA additions use the same actual conversation and editor applies 'insert-empty' without striking the anchor, and permits a new receipt only after rejection
+
+# shard 6's two differing 'tests' are one test whose name carries a random UUID: renamed, not a different outcome.
