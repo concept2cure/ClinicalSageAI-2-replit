@@ -108,7 +108,9 @@
 .qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-300); }
 
 /* row actions — AnA-first */
-.qms-rowacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. It was declared twice,
+   wrap here and nowrap below, and the later one won silently. */
+.qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
 .qms-chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-md);
@@ -280,8 +282,7 @@
 
 /* ─── A register row's next step and "More" (D7-B item 6, SopRegisterRow.tsx) ───
    The row shows one next step and "More"; the rest open in the row, on its own
-   line under the facts, never as a menu. */
-.qms-rowacts { flex-wrap: nowrap; }
+   line under the facts, never as a menu. (.qms-rowacts itself is declared once, above.) */
 .qms-row-more {
   grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
   padding: 2px 0 4px; border-top: 1px dashed var(--border-subtle);

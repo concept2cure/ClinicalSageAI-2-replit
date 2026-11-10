@@ -137,7 +137,10 @@ function readFolders(query: Record<string, unknown>, view: VaultViewId | undefin
   if (!values.length) return { values };
   if (!view) return refuse('folderId', undefined, 'A folder is one project\'s cabinet; filter by folder within a project.');
   const allowed = foldersForView(view).map((f) => f.id);
-  const bad = values.find((v) => !allowed.includes(v));
+  /* A binder heading ('bn:3.2.S.4') or a folder a person made ('uf:12') is a folder of the project too
+     (vault-folders.ts). Its shape is checked here; the search is bound to the one program, so a folder
+     that program does not have matches nothing. */
+  const bad = values.find((v) => !allowed.includes(v) && !/^bn:[^\s]{1,64}$/.test(v) && !/^uf:[1-9][0-9]{0,9}$/.test(v));
   return tooMany('folderId', values)
     ?? (bad !== undefined ? refuse('folderId', allowed, `Folder '${bad}' does not exist in this project's ${view} vault.`) : { values });
 }

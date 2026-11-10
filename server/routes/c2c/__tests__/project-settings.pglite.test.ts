@@ -28,6 +28,31 @@ async function saved() {
   return (await rows<{ description: string | null; priority: string; day: string | null }>(
     "SELECT description,priority,to_char(target_submission_date,'YYYY-MM-DD') AS day FROM regulatory_programs WHERE id=$1", [PROGRAM]))[0];
 }
+/**
+ * The request's own connection, where the settings transaction runs since ci:requestdb-coverage (3755f542ca,
+ * 2026-11-09). The statements it runs are recorded and each mode's failure is injected here; they were injected on
+ * the shared pool's connection, which the route no longer takes, so six cases stopped exercising anything. A
+ * confirmed outcome releases with no error and nothing is discarded; an unknown one asks the request's owner to
+ * discard the connection (requestConnectable), recorded in `releases`.
+ */
+function instrumentedRequestClient() {
+  const inner = makeRequestDbClient(jdb.pglite);
+  return {
+    query: async (query: unknown, params?: unknown[]) => {
+      const sql = typeof query === 'string' ? query : (query as { text: string }).text;
+      statements.push(sql);
+      if (mode === 'projection' && sql.includes('xmin::text') && statements.some(statement => statement.includes('INSERT INTO audit_logs'))) {
+        throw new Error('saved projection unavailable after actual profile and audit writes');
+      }
+      const result = await inner.query(query, params);
+      if (mode === 'revoke' && sql === 'BEGIN') await inner.query('DELETE FROM organization_users WHERE user_id=11');
+      if (mode === 'commit' && sql === 'COMMIT') throw new Error('actual commit acknowledged by server, reply lost');
+      if (mode === 'rollback' && sql === 'ROLLBACK') throw new Error('actual rollback reply lost');
+      return result;
+    },
+    discard: (error: Error) => { releases.push(error); },
+  };
+}
 async function auditCount() { return (await rows<{ n: number }>('SELECT count(*)::int AS n FROM audit_logs'))[0].n; }
 
 beforeAll(async () => {
@@ -97,7 +122,7 @@ beforeAll(async () => {
   app.use((req, _res, next) => {
     const actor = Number(req.headers['x-actor'] ?? 11);
     Object.assign(req, { user: { id: actor, userId: actor, organizationId: 1, role: 'manager' },
-      userId: actor, organizationId: 1, tenantId: 1, dbClient: makeRequestDbClient(jdb.pglite) });
+      userId: actor, organizationId: 1, tenantId: 1, dbClient: instrumentedRequestClient() });
     runWithTenantScope({ tenantId: '1', source: 'request', role: 'manager' }, next);
   });
   app.use('/api/c2c/projects', router);
@@ -154,7 +179,7 @@ describe('governed programme settings over HTTP and actual SQL', () => {
     const firstUpdateLock = statements.findIndex(sql => sql.includes('FOR UPDATE'));
     const firstShareLock = statements.findIndex(sql => sql.includes('FOR SHARE'));
     expect(firstUpdateLock).toBeGreaterThan(-1); expect(firstUpdateLock).toBeLessThan(firstShareLock);
-    expect(statements.at(-1)).toBe('COMMIT'); expect(releases).toEqual([undefined]);
+    expect(statements.at(-1)).toBe('COMMIT'); expect(releases).toEqual([]);
   });
 
   it('preserves the RBM setup choice and unrelated metadata when project settings change', async () => {
@@ -298,7 +323,7 @@ describe('current admission and honest transaction outcomes', () => {
     const revision = (await settings()).body.data.revision;
     const res = await update({ ...write(revision), reason: 'Force audit failure.' });
     expect(res.status).toBe(503); expect((await saved()).priority).toBe('medium'); expect(await auditCount()).toBe(0);
-    expect(statements.at(-1)).toBe('ROLLBACK'); expect(releases).toEqual([undefined]);
+    expect(statements.at(-1)).toBe('ROLLBACK'); expect(releases).toEqual([]);
   });
 
   it('rolls profile and audit back if the final saved receipt cannot be read before COMMIT', async () => {
@@ -306,7 +331,7 @@ describe('current admission and honest transaction outcomes', () => {
     const res = await update(write(revision));
     expect(res.status).toBe(503); expect((await saved()).priority).toBe('medium'); expect(await auditCount()).toBe(0);
     expect(statements.some(sql => sql.includes('INSERT INTO audit_logs'))).toBe(true);
-    expect(statements.at(-1)).toBe('ROLLBACK'); expect(releases).toEqual([undefined]);
+    expect(statements.at(-1)).toBe('ROLLBACK'); expect(releases).toEqual([]);
   });
 
   it('reports uncertainty after actual COMMIT with a lost reply and discards once without subsequent SQL', async () => {

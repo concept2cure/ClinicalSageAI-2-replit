@@ -74,7 +74,8 @@ import { sourceProcessingSummary } from '../../services/clinical-regulatory-evid
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import {
-  binderFolderId, buildFolderIndex, createProgramFolder, personFolderId, readProgramFolderIndex, renameProgramFolder,
+  binderFolderId, buildFolderIndex, createProgramFolder, moveProgramFolder, personFolderId, readProgramFolderIndex,
+  removeProgramFolder, renameProgramFolder,
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
@@ -2667,19 +2668,28 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
-  router.post('/:id/folders/:folderId/rename', requireEditorAccess, async (req: Request, res: Response) => {
+  /* Rename, move or remove a folder a person made: one handler shape, three governed writers (vault-folders.ts).
+     Move takes the folder's subfolders and documents with it; remove takes only an empty folder. */
+  const changeFolder = (what: 'rename' | 'move' | 'remove') => async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
     const folderId = Array.isArray(req.params.folderId) ? (req.params.folderId[0] ?? '') : req.params.folderId;
-    const body = (req.body ?? {}) as { name?: unknown; reason?: unknown };
+    const body = (req.body ?? {}) as { name?: unknown; parentFolderId?: unknown; reason?: unknown };
+    const base = { ...folderWriteBase(req, orgId, id, body.reason), folderId };
     try {
-      const outcome = await renameProgramFolder({ ...folderWriteBase(req, orgId, id, body.reason), folderId, name: body.name });
+      const outcome = what === 'rename' ? await renameProgramFolder({ ...base, name: body.name })
+        : what === 'move' ? await moveProgramFolder({ ...base,
+          parentFolderId: typeof body.parentFolderId === 'string' && body.parentFolderId.trim() ? body.parentFolderId.trim() : null })
+          : await removeProgramFolder(base);
       return sendFolderOutcome(res, outcome);
     } catch (err) {
-      return folderStorePending(res, err, 'rename');
+      return folderStorePending(res, err, what);
     }
-  });
+  };
+  router.post('/:id/folders/:folderId/rename', requireEditorAccess, changeFolder('rename'));
+  router.post('/:id/folders/:folderId/move', requireEditorAccess, changeFolder('move'));
+  router.post('/:id/folders/:folderId/remove', requireEditorAccess, changeFolder('remove'));
 
   /* POST /:id/data-room/file — File into Vault (VR-11, D2).
      Captured sources, chosen in the data room, each filed through the one
