@@ -74,7 +74,7 @@ import { VaultSeals } from './VaultSeals';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
 import {
   VaultLibraryResults, facetCounts, isSavedViewsShape, isVaultSearchShape, pendingSearchNote, savedViewKey, savedViewState, searchHitToDoc,
-  vaultFilterParams, type SavedVaultView, type SavedViewState, type SavedViewsShape, type VaultFindFilters, type VaultSearchShape,
+  vaultFilterParams, type SavedVaultView, type SavedViewState, type SavedViewsShape, type VaultClient, type VaultFindFilters, type VaultSearchShape,
 } from './VaultLibraryResults';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
 import { VaultFixityCheck } from './VaultFixityCheck';
@@ -87,8 +87,8 @@ import {
   setEditorTarget,
   isEditorFilingDocumentId,
 } from '../editorTarget';
-import { readShellProject, publishShellProject } from '../shellProject';
-import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
+import { readShellProject } from '../shellProject';
+import { VaultProjectChoice } from './VaultProjectChoice';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
 import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
@@ -1304,46 +1304,6 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
 /* Local files, private metadata and read state belong to this project and
    canonical account session. Replacement remounts the existing body; ordinary
    bearer refresh keeps the same session and preserves the person's work. */
-/**
- * The Vault with no project open lists the projects whose Vaults the person can open (2026-11-06, by the founder:
- * Vault "should be accessible all the time, not just from within the project, but on the left rail"). It read "Open
- * a project to see its vault" and sent the person to Projects. The list is the one the ⌘K palette and Projects read
- * (GET /api/c2c/projects); a row opens that project and its Vault, as the rail's Vault does inside a project.
- */
-function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
-  const read = usePaletteProjects(true);
-  const open = (p: PaletteProject) => {
-    publishShellProject({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}), ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) });
-    onNav?.('vault');
-  };
-  if (read.state !== 'ready') {
-    return read.state === 'failed'
-      ? <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>
-      : <p role="status" className="scaf-note">Reading your projects…</p>;
-  }
-  if (read.projects.length === 0) {
-    return <p className="scaf-note">You have no projects yet. A Vault belongs to a project: create one with New project in Projects.</p>;
-  }
-  return (
-    <section className="pj-sec vd-org" aria-labelledby="vault-project-list-h" data-testid="vault-project-list">
-      <div className="pj-sec-h">
-        <h2 id="vault-project-list-h">Your projects' Vaults</h2>
-        <span className="sec-sub">{read.projects.length === 1 ? '1 project' : `${read.projects.length} projects`}</span>
-      </div>
-      <div className="ctable">
-        {read.projects.map((p) => (
-          <div key={p.id} className="ct-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
-            <span className="ct-strong">{p.title}</span>
-            <button type="button" className="btn ghost small" onClick={() => open(p)} aria-label={`Open the Vault of ${p.title}`}>
-              Open its Vault
-            </button>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function Vault(props: SurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} session={session} />;
@@ -1576,8 +1536,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      open; read only when a person opens it while a project is. */
   const [orgOpen, setOrgOpen] = useState(false);
   const orgActive = !projectId || orgOpen;
-  /* Inside a project, its sponsor's projects only (F1, S6 V4): a CRO's sponsors never mix in one list. */
-  const orgRead = useOrganizationArtifacts(orgActive, projectId);
+  /* Inside a project, its sponsor's projects only (F1, S6 V4): a CRO's sponsors never mix in one list. With no project
+     open, the client the person chose, when their projects belong to more than one (P-107, VaultProjectChoice.tsx). */
+  const [vaultClient, setVaultClient] = useState<VaultClient | null>(null);
+  const orgRead = useOrganizationArtifacts(orgActive, projectId, projectId ? null : vaultClient?.id);
   const [orgFocusId, setOrgFocusId] = useState<string | null>(null);
   const downloadOrganizationArtifact = async (row: OrganizationArtifactRow) => {
     if (downloading) return;
@@ -2053,10 +2015,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      saying "0 documents" over an outage would make AnA confidently wrong about
      a customer's repository. Loading says loading for the same reason. */
   // Memoized on the read's own fields (the wrapper is new each render), so the context below changes only when they do.
-  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta } = orgRead;
+  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode } = orgRead;
   const organizationArtifacts = useMemo(
-    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta }, orgActive),
-    [orgRows, orgLoading, orgError, orgMeta, orgActive],
+    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode }, orgActive),
+    [orgRows, orgLoading, orgError, orgMeta, orgCode, orgActive],
   );
   const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
   const savedViewFact = useMemo(() => (appliedView
@@ -2065,7 +2027,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const anaContext = useMemo(() => {
     /* No project open: no tree, and the organization view is what is on screen
        (fold F3 slice C). Its failure is published as a failure, never as zero. */
-    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError }, organizationArtifacts, orgFocused);
+    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError, code: orgCode }, organizationArtifacts, orgFocused);
     if (vaultState.loading) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
@@ -2171,7 +2133,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, orgCode, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -3238,15 +3200,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
       </div>
 
       {!projectId ? (
-        <>
-          <EmptyState
-            icon={I.folder}
-            title="Choose a project's Vault"
-            hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
-          />
-          <ProjectVaults onNav={onNav} />
+        <VaultProjectChoice onNav={onNav} artifacts={orgRead} client={vaultClient} onClient={setVaultClient}>
           {organizationView}
-        </>
+        </VaultProjectChoice>
       ) : vaultState.loading && !vault ? (
         <div role="status" className="vd-loading">
           Loading the project vault…
