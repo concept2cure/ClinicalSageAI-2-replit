@@ -102,5 +102,28 @@ the packs record their two-person steps (method validation, QMS approval) as not
 - AnA answering or drafting (no model key in this container), and anything behind an e-signature.
 - Phone width. The S2 walks cover the Data room, Vault's Data catalog and the CSR chooser at 390; the wider phone pass
   is the J-series human tests (`docs/evidence/HUMAN-TEST/`).
-- A seed on a brand-new database at head. Here the seed was re-run over a database first seeded on 2026-11-06 (the
-  case a returning Codespace is in); the fresh-database case was rehearsed on 2026-11-09.
+
+## A brand-new Codespace at head (`fresh-codespace/`)
+
+Today's `.devcontainer/post-start.sh`, unmodified, on an empty database: provision, start, both organisations'
+accounts, both seeds, the CSR study, then the three sweeps above again.
+
+| Step | Result |
+|---|---|
+| Database provisioned, app serving | Yes. `/readyz` not ready only for AnA (no model key here) |
+| Lumen organisation's seed | 135 steps ok, 0 failed, 2 not executed (both need a model) |
+| Main organisation's seed (`--pack all`) | 232 ok, 0 failed, **30 not executed** → fixed below → 4 |
+| CSR study (CDISC pilot): Vault uploads, three-person approval, CSR document, frozen study data | Ready, every step passed |
+| Sweep, 8 projects, 138 stops | 0 server errors, 0 sideways, 0 failed to open. 8 flagged: the stale `409 …/intelligence` read between two sponsors, console only |
+| Inside the screens, 180 stops | 0 server errors. 7 flagged: the Module 3 composition boundary, as above |
+| C2C-201, 41 stops | None flagged; Module 3 composes |
+
+**Fixed: the Codespace's main seed had no third person.** `post-start.sh` gave the seed a second signer only. The
+Vault's review route refuses one person in two roles, so 25 review and approval steps of the Lumen packs said
+"review and approval need two people other than the uploader". The reviewer account now signs in as the third
+person (`OQ_APPROVER_*`), as the Lumen organisation's own seed already did. Re-run on the same database: exit 0,
+**4 not executed**: two Shadow Reviews (need a model) and two orchestration runs (that engine reads the integer
+project spine and is not in the launch catalog). `scripts/ops/codespaces-startup.test.mjs` 14/14.
+
+A Codespace created before this change picks it up when `scripts/demo` next changes on the branch (the seed re-runs
+then), or by deleting `demo-seed.done` in the Codespace's state folder and restarting.
