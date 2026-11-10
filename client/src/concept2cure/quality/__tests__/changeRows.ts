@@ -15,6 +15,8 @@ export const CHANGE_ROWS: ChangeControl[] = [
     description: 'Qualify a second-source 0.22 µm sterilising-grade filter for the aseptic fill line.',
     changeType: 'supplier', classification: 'critical', riskLevel: 'high', status: 'under_assessment', nextStates: ['approved', 'rejected', 'cancelled'],
     reason: 'Single-source supply risk on the primary sterilising filter.',
+    impactAssessment: 'Filter qualification and an extractables study; no filing change.',
+    implementationPlan: 'Qualify the second source, then update the aseptic fill batch record.',
     targetImplementationDate: '2026-09-15', createdAt: '2026-06-28', updatedAt: '2026-07-10',
     links: [
       { id: 11, changeId: 1, linkType: 'deviation', linkedRef: 'DEV-2026-041', linkedLabel: 'Filter integrity test excursion', relationship: 'triggered_by', note: null },

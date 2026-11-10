@@ -4,7 +4,7 @@
  * signed approval uses qmsApproval.ts and EsignModal.
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import type { ChangeState, ChangeType, Classification, LinkType, Relationship } from './changeData';
+import type { ChangeState, ChangeType, Classification, LinkType, Relationship, RiskLevel } from './changeData';
 
 /** Send a governed write and return the record `take` finds in the reply.
  *  `apiRequest` throws every refusal but a 401, which it returns; that is a
@@ -48,8 +48,24 @@ export interface NewQmsChange {
   changeType?: ChangeType;
   classification?: Classification;
   targetImplementationDate?: string;
+  riskLevel?: RiskLevel;
+  impactAssessment?: string;
+  implementationPlan?: string;
   /** The project the change belongs to (P-60); absent, an organisation-wide change. */
   programId?: string;
+}
+
+/** A change's assessment. Editable while the change is proposed or under assessment; after that the server refuses it
+ *  (409 QMS_CHANGE_CONTENT_FIXED), because the approval signs it. An empty field is sent as null: cleared. */
+export interface QmsChangeAssessment {
+  riskLevel: RiskLevel | null;
+  impactAssessment: string | null;
+  implementationPlan: string | null;
+  targetImplementationDate: string | null;
+}
+
+export function updateQmsChange(id: number, assessment: QmsChangeAssessment): Promise<{ id: number }> {
+  return qmsWrite('PATCH', `changes/${id}`, { ...assessment });
 }
 
 export function createQmsChange(input: NewQmsChange): Promise<{ id: number; change_number: string }> {

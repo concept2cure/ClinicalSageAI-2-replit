@@ -56,6 +56,10 @@ export interface ChangeControl {
   reason: string | null;
   /** Who raised it (`proposed_by`); null when the row carries none. The server refuses their approval. */
   proposedBy?: number | null;
+  /** The impact assessment and implementation plan (`impact_assessment`, `implementation_plan`). With the title,
+   *  description, type, classification, risk, reason and target date they are what the approval signs. */
+  impactAssessment?: string | null;
+  implementationPlan?: string | null;
   targetImplementationDate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -124,6 +128,13 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
   other: 'Other',
 };
 
+/** A change's risk level, in words (C9). */
+export const RISK_LABEL: Record<RiskLevel, string> = { low: 'Low', medium: 'Medium', high: 'High' };
+
+/** The states in which a change's assessment can be edited: the server's CHANGE_EDITABLE_STATES
+ *  (changeControl.service.ts). From approval on, it is what the approval signed. */
+export const ASSESSABLE_STATES: readonly ChangeState[] = ['proposed', 'under_assessment'];
+
 export const CLASSIFICATION_LABEL: Record<Classification, string> = {
   minor: 'Minor',
   major: 'Major',
@@ -145,18 +156,6 @@ export const LINK_TYPE_LABEL: Record<LinkType, string> = {
   supplier: 'Supplier',
   risk: 'Risk',
   other: 'Other',
-};
-
-/** Icon key (in ./icons `I`) used to represent each link target. */
-export const LINK_TYPE_ICON: Record<LinkType, string> = {
-  deviation: 'alertTriangle',
-  capa: 'clipboardCheck',
-  validation: 'beaker',
-  document: 'fileText',
-  sop: 'fileText',
-  supplier: 'users',
-  risk: 'shieldCheck',
-  other: 'link',
 };
 
 export const RELATIONSHIP_LABEL: Record<Relationship, string> = {

@@ -33,6 +33,7 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
+import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
 import { RegisterBody, RegisterTable } from './SopRegisterRow';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -42,9 +43,8 @@ import {
   CHANGE_TYPE_LABEL,
   CLASSIFICATION_LABEL,
   CLASSIFICATION_TONE,
-  LINK_TYPE_LABEL,
-  LINK_TYPE_ICON,
-  RELATIONSHIP_LABEL,
+  RISK_LABEL,
+  ASSESSABLE_STATES,
   deriveStageCounts,
   isImplementationOverdue,
   formatDate,
@@ -64,10 +64,10 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, updateQmsChange } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
-import type { ChangeType, Classification, Relationship } from './changeData';
+import type { ChangeType, Classification, Relationship, RiskLevel } from './changeData';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuthoringReadSession } from '../v2/editor/authoringCurrentRead';
 
@@ -111,11 +111,6 @@ const unsignedMovesOf = (c: ChangeControlRow): Exclude<ChangeState, 'approved'>[
 
 /** The open project as the change form names it. */
 const projectName = (p: ShellProject | null) => (p?.code && p.title ? `${p.code} · ${p.title}` : p?.title ?? 'The open project');
-
-/** Icon element for a link type (from the shared `I` set). */
-function linkIcon(iconKey: string): React.ReactNode {
-  return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
-}
 
 export function ChangeControl(props: ChangeControlProps) {
   const user = useAuthUser();
@@ -162,6 +157,7 @@ function ChangeControlSession({
     | { kind: 'raise' }
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
+    | { kind: 'assess'; change: ChangeControlRow }
     | { kind: 'document'; templateKey: string }
     | null
   >(null);
@@ -297,6 +293,13 @@ function ChangeControlSession({
               ) : null;
               const rest = [
                 ...(approve && advance ? [advance] : []),
+                ...(ASSESSABLE_STATES.includes(c.status) ? [
+                  <button key="assess" type="button" className="btn ghost small"
+                    title="Record the risk, impact assessment and implementation plan. They can be edited until the change is approved."
+                    onClick={() => openDrawer({ kind: 'assess', change: c })}>
+                    Edit assessment
+                  </button>,
+                ] : []),
                 <button key="link" type="button" className="btn ghost small"
                   title="Link the deviation, CAPA or validation record this change touches"
                   onClick={() => openDrawer({ kind: 'link', change: c })}>
@@ -312,7 +315,7 @@ function ChangeControlSession({
                 <RegisterBody key={c.id} name={c.changeNumber} className="qcc-change" status={c.status}
                   columns={CHANGE_COLUMNS.length} primary={approve ?? advance} rest={rest} cells={<>
                     <td>
-                      <button type="button" className="qms-num mono" onClick={toggle} aria-expanded={open} title="Show linked records">
+                      <button type="button" className="qms-num mono" onClick={toggle} aria-expanded={open} title="Read the change: its assessment and linked records">
                         {c.changeNumber}
                       </button>
                     </td>
@@ -328,7 +331,7 @@ function ChangeControlSession({
                     </td>
                     <td>
                       <button type="button" className="qcc-linkcount" onClick={toggle} aria-expanded={open}
-                        aria-label={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`}>
+                        aria-label={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`} title="Read the change: its assessment and linked records">
                         {I.link} {linkCount}
                       </button>
                     </td>
@@ -336,35 +339,7 @@ function ChangeControlSession({
                   after={open && (
                     <tr className="qcc-detail-tr">
                       <td colSpan={CHANGE_COLUMNS.length + 1}>
-                        <div className="qcc-detail">
-                          <div className="qcc-detail-head">
-                            <span className="qcc-detail-title">Linked records</span>
-                          </div>
-                          {linkCount === 0 ? (
-                            <EmptyState title="No linked records yet." hint="To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)." />
-                          ) : (
-                            <div className="qcc-links">
-                              {c.links!.map((l) => (
-                                <button
-                                  key={l.id}
-                                  type="button"
-                                  className="qcc-link"
-                                  onClick={() =>
-                                    onAsk(`Open ${LINK_TYPE_LABEL[l.linkType]} ${l.linkedRef}${l.linkedLabel ? ` (${l.linkedLabel})` : ''} and show how it relates to change ${c.changeNumber}.`)
-                                  }
-                                >
-                                  <span className="qcc-link-ico" data-type={l.linkType}>{linkIcon(LINK_TYPE_ICON[l.linkType])}</span>
-                                  <span className="qcc-link-body">
-                                    <span className="qcc-link-ref mono">{l.linkedRef}</span>
-                                    {l.linkedLabel && <span className="qcc-link-label">{l.linkedLabel}</span>}
-                                  </span>
-                                  <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
-                                  <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <ChangeRecordDetail change={c} onAsk={onAsk} />
                       </td>
                     </tr>
                   )}
@@ -432,6 +407,9 @@ function ChangeControlSession({
               { key: 'classification', label: 'Classification', type: 'seg', half: true, options: optionsOf(CLASSIFICATION_LABEL) },
               { key: 'description', label: 'Current state → proposed state', type: 'textarea', rows: 3 },
               { key: 'reason', label: 'Reason for the change', type: 'textarea', rows: 3, required: true },
+              { key: 'riskLevel', label: 'Risk', type: 'seg', options: [{ value: '', label: 'Not set' }, ...optionsOf(RISK_LABEL)] },
+              { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 3, desc: 'Product, process, validation and filings. It can be completed until the change is approved.' },
+              { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 3 },
               ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
                 desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
             ],
@@ -444,6 +422,9 @@ function ChangeControlSession({
               changeType: (v.changeType || undefined) as ChangeType | undefined,
               classification: (v.classification || undefined) as Classification | undefined,
               targetImplementationDate: v.targetImplementationDate || undefined,
+              riskLevel: (v.riskLevel || undefined) as RiskLevel | undefined,
+              impactAssessment: v.impactAssessment.trim() || undefined,
+              implementationPlan: v.implementationPlan.trim() || undefined,
               programId: v.programId || undefined,
             });
             return `${row.change_number} was raised as a proposed change.`;
@@ -488,6 +469,37 @@ function ChangeControlSession({
           />
         );
       })()}
+      {drawer?.kind === 'assess' && (() => {
+        const c = drawer.change;
+        return (
+          <C2CForm
+            config={{
+              eyebrow: 'Change control',
+              title: `Assess ${c.changeNumber}`,
+              sub: `${c.title}. The assessment can be edited while the change is proposed or under assessment. From approval on, it is what the approval signed.`,
+              governed: 'Saving writes an audit entry under your name.',
+              submitLabel: 'Save assessment',
+              ...(refusal ? { notice: refusal } : {}),
+              fields: [
+                { key: 'riskLevel', label: 'Risk', type: 'seg', options: [{ value: '', label: 'Not set' }, ...optionsOf(RISK_LABEL)], default: c.riskLevel ?? '' },
+                { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 5, default: c.impactAssessment ?? '', desc: 'Product, process, validation and filings.' },
+                { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 5, default: c.implementationPlan ?? '' },
+                { key: 'targetImplementationDate', label: 'Target implementation date', type: 'date', default: c.targetImplementationDate?.slice(0, 10) ?? '' },
+              ],
+            }}
+            onCancel={() => setDrawer(null)}
+            onSubmit={(v) => void runWrite(async () => {
+              await updateQmsChange(c.id, {
+                riskLevel: (v.riskLevel || null) as RiskLevel | null,
+                impactAssessment: v.impactAssessment.trim() || null,
+                implementationPlan: v.implementationPlan.trim() || null,
+                targetImplementationDate: v.targetImplementationDate || null,
+              });
+              return `The assessment of ${c.changeNumber} was saved.`;
+            })}
+          />
+        );
+      })()}
       {drawer?.kind === 'link' && (
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
@@ -525,8 +537,22 @@ function ChangeControlSession({
           meanings={['approval']}
           signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           commitRefusal={learningRefusal}
-          renderMeaningDetails={learningReview && !('unavailable' in learningReview) ? (_meaning, committing) => <LearningInvariantReview
-            review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} /> : undefined}
+          /* C9: the approver reads what the signature binds, before signing (change-approval-signature.ts
+             computeQmsChangeContentDigest), and the manifest records it after. Until 2026-11-10 the dialog showed only
+             the number and title. */
+          renderMeaningDetails={(_meaning, committing) => <>
+            <div className="qcc-sign-record" data-testid="change-approval-record">
+              <p className="qcc-sign-lead">What you approve</p>
+              <ChangeRecordFacts change={approving} />
+            </div>
+            {learningReview && !('unavailable' in learningReview) && <LearningInvariantReview
+              review={learningReview} accepted={learningAccepted} disabled={committing || checkedLearning !== learningReview} onChange={setLearningAccepted} />}
+          </>}
+          signedRows={[
+            { label: 'Classification', value: CLASSIFICATION_LABEL[approving.classification] },
+            ...changeRecordRows(approving),
+            { label: 'Target implementation date', value: approving.targetImplementationDate ? formatDate(approving.targetImplementationDate) : 'Not recorded yet.' },
+          ]}
           onClose={() => setApproving(null)}
           onSign={async (input) => {
             if (learningRefusal) throw new Error(learningRefusal);

@@ -264,6 +264,28 @@ describe('Change control — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
+  // C9: the assessment is edited while the change is under assessment, through the existing PATCH route.
+  it('edits the assessment through PATCH /changes/:id, starting from the recorded one', async () => {
+    renderLog();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    const d = drawer(/Assess CC-2026-014/);
+    expect((within(d).getByLabelText(/Impact assessment/) as HTMLTextAreaElement).value)
+      .toBe('Filter qualification and an extractables study; no filing change.');
+    fill(d, /Implementation plan/, 'Qualify the second source; validate the fill line; update the batch record.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
+    await waitFor(() =>
+      expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/changes/1', {
+        riskLevel: 'high',
+        impactAssessment: 'Filter qualification and an extractables study; no filing change.',
+        implementationPlan: 'Qualify the second source; validate the fill line; update the batch record.',
+        targetImplementationDate: '2026-09-15',
+      }),
+    );
+    expect(H.refresh).toHaveBeenCalled();
+    expect(asked).toEqual([]);
+  });
+
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
     fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));

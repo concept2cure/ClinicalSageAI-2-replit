@@ -128,7 +128,7 @@ describe('ChangeControl — the change-control log', () => {
     fireEvent.click(within(assessed).getByRole('button', { name: 'More actions for CC-2026-014' }));
     const more = within(assessed).getByRole('group', { name: 'Actions for CC-2026-014' });
     expect(within(more).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim()))
-      .toEqual(['Advance', 'Link a record', 'Ask AnA about this change']);
+      .toEqual(['Advance', 'Edit assessment', 'Link a record', 'Ask AnA about this change']);
     fireEvent.click(within(more).getByRole('button', { name: 'Ask AnA about this change' }));
     expect(onAsk).toHaveBeenCalledWith(expect.stringContaining('Summarize change CC-2026-014'));
     // Proposed: Advance is the next step. Closed, with no move: only More.
@@ -137,12 +137,22 @@ describe('ChangeControl — the change-control log', () => {
     expect(within(proposed).queryByRole('button', { name: 'Link a record' })).toBeNull();
     const closed = screen.getByText('CC-2026-002').closest('tbody') as HTMLElement;
     expect(within(closed).queryByRole('button', { name: /Advance|Approve/ })).toBeNull();
+    // C9: past assessment the record is what the approval signed, so it offers no edit.
+    fireEvent.click(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' }));
+    expect(within(closed).queryByRole('button', { name: 'Edit assessment' })).toBeNull();
     expect(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' })).toBeTruthy();
   });
 
   it('expands a change to its linked deviation / validation records', () => {
     render(<Harness onAsk={() => {}} />);
     fireEvent.click(screen.getByText('CC-2026-014'));
+    // C9: the record an approver signs is read here, before its links.
+    const record = screen.getByText('Impact assessment').closest('dl') as HTMLElement;
+    expect(Array.from(record.querySelectorAll('dt')).map((d) => d.textContent))
+      .toEqual(['Current state → proposed state', 'Reason for the change', 'Risk', 'Impact assessment', 'Implementation plan']);
+    expect(record.textContent).toContain('Filter qualification and an extractables study; no filing change.');
+    expect(record.textContent).toContain('Qualify the second source, then update the aseptic fill batch record.');
+    expect(within(record).getByText('High')).toBeTruthy();
     expect(screen.getByText('Linked records')).toBeTruthy();
     expect(screen.getByText('DEV-2026-041')).toBeTruthy();   // linked deviation
     expect(screen.getByText('VP-7')).toBeTruthy();           // linked validation protocol
