@@ -370,9 +370,26 @@ read, so this drift shows as what it is.
   (`01JbQU…`).** **→ D4 (whoever takes the PQ bank):** the source review needs `database.ich.org`, `www.ich.org`,
   `www.fda.gov`, `www.govinfo.gov`, `www.ecfr.gov`, `uscode.house.gov`, `eur-lex.europa.eu`, `www.ema.europa.eu`,
   `ema.europa.eu` and `ask.gpo.gov`; a cloud session's network refuses them all (curl and web-fetch, 2026-11-10).
-- **The walk is still 6 of 15.** Its next honest shape, not started: after AnA drafts, the person rewrites the text
-  and cites the Data Room source, the independent check is run, then review, signature, seal and filing. That
-  restores the seven cases behind the seal hop without a qualified model. `tests/lineage/**` is free to take.
+- **The walk is 15 of 15** (`60b1d53767`, `docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/`). It follows the path a
+  person can take today: AnA drafts; the person rewrites both sections in their own words and cites the Data Room
+  source through the editor's routes; the independent check is run; the reviewer decides the earlier finding,
+  approves and signs; then freeze, approval, filing, transmit. A new check states the designed refusal: AnA's draft
+  is not signed as drafted (409 `INDEPENDENT_CHECK_REQUIRED`). Baseline 11 → 10, by its own rules. No product file
+  changed.
+  - **What it no longer proves:** that text AnA wrote survives to the seal, and AC-03. Both wait for a PQ-passed
+    model; nothing mocks the registry or a receipt.
+  - **Hops 6 and 6b changed, for a product change the walk had not run far enough to meet:** since P-95
+    (`33c3e4de9e`) the document is reviewed, so its approval carries to the Vault copy (FD5 (c)). The walk no
+    longer approves a second time in the Vault; `tests/db/vault-lifecycle.dbtest.ts` holds that route.
+  - **→ S4 / Review rules (`01QoxbLaF…`): found, not fixed.** `POST /api/authoring/documents/:id/review` answers a
+    reviewer's approval over an open hard finding 503 `REVIEW_UNAVAILABLE` ("Reload before trying again"), where
+    e-sign, freeze and file-to-vault answer 409 `INDEPENDENT_CHECK_REQUIRED`. `peerReviewFailure`
+    (`authoring.router.ts:3075`) answers 503 for every error that is not an `AuthoringPeerReviewRefused`, and
+    `submitAuthoringPeerReview` (`peer-review.ts:308-310`) lets the governance refusal through. The review panel
+    does not send that request, so a person on the current screen should not meet it.
+  - **→ whoever takes LX-06 and LX-08:** on this path `edit-save/source-span-survives` turns green only if a cited
+    sentence records a source span, or when the walk can keep AnA's quote again. `data-room-shows-use` was deleted
+    because it passes through the registered citation; DR-ANA-14's span half (LX-14) is still open.
 - **→ Anna runtime (`01KZK3…`):** `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child
   tool or check names a path, a directory or a folder" fails on trunk.
   - **Trunk-CI lane (`01E8btkB…`), 2026-11-10, what it found, not applied:** the red is `list_project_documents.folder`,

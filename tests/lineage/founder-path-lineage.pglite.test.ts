@@ -11,9 +11,14 @@
  *   2 capture        POST /api/chat/upload (multer + uploadHandler)  server/routes/chat.ts:53-87; server/routes/chat/upload.ts:439, :558-563, :615
  *   3 ana-draft      draft_authoring_document, the stream's own ctx server/routes/ana-ri/stream.ts:1731-1744; server/services/ana/AnaToolExecutor.ts:19731;
  *                                                                    server/services/authoring/authoring-draft-tool.ts:133-136
- *   4 edit-save      PATCH /api/authoring/sections/:id               server/routes/authoring.router.ts:1647 (:1798, :1870, :1889, :1904)
- *   5 seal           POST /docs/:id/freeze, POST /docs/:id/e-sign    server/routes/authoring.router.ts:3700 (:3843), :3916 (:3994, :4065)
- *   6 file-to-vault  POST /docs/:id/file-to-vault                    server/routes/authoring.router.ts:5145; server/services/authoring/authoring-file-to-vault.ts:261, :344
+ *   4 edit-save      POST /sections/:id/cite-source, then            server/routes/authoring.router.ts:2850; :1598 (the lineage gate, the revision,
+ *                    PATCH /api/authoring/sections/:id ×2            the chained UPDATE row)
+ *   5 seal           POST /documents/:id/review (the independent     server/routes/authoring.router.ts:3255, :3395; server/services/authoring/peer-review.ts;
+ *                    check, then the reviewer's verdict and finding  server/services/authoring/workflow-import-governance.ts (assertWorkflowImportRelease);
+ *                    decisions), POST /documents/:id/request-review, server/routes/authoring.router.ts:5392, :5675
+ *                    POST /docs/:id/e-sign ×2, POST /docs/:id/freeze
+ *   6 file-to-vault  POST /docs/:id/file-to-vault                    server/routes/authoring.router.ts:7160; server/services/authoring/authoring-file-to-vault.ts;
+ *                                                                    server/services/regulatory/authoring-approval-carryover.ts (the approval carries)
  *   7 place          takeAuthoringSnapshot (the service behind       server/routes/coauthor.ts:200-208; server/services/coauthor/coauthor-snapshot.ts:423;
  *                    POST /api/coauthor/documents), then             server/routes/submissions.ts:876, :928; server/services/submission-service/submission-service.ts:1842 (:2062)
  *                    PUT /api/submissions/sequences/:id/leaves ×2
@@ -26,6 +31,24 @@
  * Then: walk BACK from the transmittal to cre_evidence_sources.checksum =
  * sha256(X) and to the project, and FORWARD from the project and from the
  * source — each walk starting from one id and following recorded keys only.
+ *
+ * THE PERSON'S PATH (2026-11-10). The walk follows what a person can do today.
+ * AnA drafts (hop 3). Its text cannot be signed or released as drafted: the
+ * independent check holds its uncited figure as a hard finding (hop 3 states
+ * that refusal as a check), and text a model wrote is released only with a
+ * gateway receipt naming a PQ-passed model, and no model has passed PQ
+ * (server/services/ai-governance/approved-models.ts; governed-machine-claims.ts
+ * ordinaryMachineGenesisMayRelease). So the person rewrites both sections in
+ * their own words and cites the Data Room source through the editor's own
+ * routes (hop 4); the independent check is run, the reviewer decides the
+ * earlier finding and signs, and the document is frozen and approved (hop 5).
+ * The approval carries to the Vault copy (hops 6, 6b).
+ *   What the walk proves now: a document AnA started reaches the agency once a
+ *   person has made its words their own, and is traced back to sha256(X) by the
+ *   citation that person registered.
+ *   What it no longer proves: that text AnA wrote survives to the seal, and
+ *   what happens to AnA's source span when a person edits around it (AC-03).
+ *   Both wait for a PQ-passed model; nothing here mocks the registry or a receipt.
  *
  * ONE `it` PER HOP. Each hop runs its product action, then a set of named
  * checks; each check asserts that the hop left a RECORDED key the next hop (or
@@ -56,16 +79,18 @@
  * pgvector's vector(1536) (migrations/20260604_evidence_graph_and_embeddings.sql:27-28)
  * and createJourneyDb opens PGlite without the vector extension; no hop reads it.
  *
- * The hop bodies live in founder-path-lineage.hops-authoring.ts (1–6) and
- * founder-path-lineage.hops-filing.ts (7–8 and the walks).
+ * The hop bodies live in founder-path-lineage.hops-authoring.ts (1–3, 6, 6b,
+ * adopt), founder-path-lineage.hops-review.ts (4–5) and
+ * founder-path-lineage.hops-filing.ts (7–8, the walks and retention).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { receiptReport } from '../../server/services/submission-gateways/__tests__/support/as2-cms-fixture';
 import { assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from '../golden-journeys/harness';
 import { T, buildWorld, baselineProblems, recordApplicant, type World } from './founder-path-lineage.world';
-import { hopProject, hopCapture, hopAnaDraft, hopEditSave, hopSeal, hopFileToVault, hopAdopt } from './founder-path-lineage.hops-authoring';
-import { hopVaultApproval, hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
+import { hopProject, hopCapture, hopAnaDraft, hopFileToVault, hopVaultApproval, hopAdopt } from './founder-path-lineage.hops-authoring';
+import { hopEditSave, hopSeal } from './founder-path-lineage.hops-review';
+import { hopPlace, hopTransmit, walkBack, walkForward, hopRetention } from './founder-path-lineage.hops-filing';
 
 const h = vi.hoisted(() => ({
   db: null as unknown,
@@ -373,11 +398,11 @@ afterAll(async () => {
 describe('LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency', () => {
   it('hop 1 · project — a project of org A, created the way the Projects surface creates it', async () => { await hopProject(world); await recordApplicant(world); }, T);
   it('hop 2 · capture — bytes X into the project’s Data Room through the upload route', () => hopCapture(world), T);
-  it('hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx', () => hopAnaDraft(world), T);
-  it('hop 4 · edit-save — a person edits the quoted section and saves it through the section save path', () => hopEditSave(world), T);
-  it('hop 5 · seal — the document is frozen and approved under a Part 11 signature', () => hopSeal(world), T);
+  it('hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx; as drafted it cannot be signed for review', () => hopAnaDraft(world), T);
+  it('hop 4 · edit-save — a person rewrites both sections in their own words, cites the Data Room source, and saves through the section save path', () => hopEditSave(world), T);
+  it('hop 5 · seal — the independent check is run, the reviewer decides its findings and signs, and the document is frozen and approved under Part 11 signatures', () => hopSeal(world), T);
   it('hop 6 · file-to-vault — the sealed document is filed to the project’s Vault', () => hopFileToVault(world), T);
-  it('hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)', () => hopVaultApproval(world), T);
+  it('hop 6b · vault approval — the Vault copy stands approved by the Authoring approval (FD5 (c): reviewed and approved in Authoring, so the approval carries)', () => hopVaultApproval(world), T);
   it('hop 7 · place — the filing copy and the Vault copy are placed as submission leaves', () => hopPlace(world), T);
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);

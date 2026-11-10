@@ -1695,9 +1695,18 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
-The founder-path walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) is 6 of 15 at head. Its seal hop is
-refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it do not run. Read from the code and run, not
-inferred:
+**Update, later on 2026-11-10: the walk is 15 of 15** (`60b1d53767`,
+`docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/`). It follows the path a person can take before a model is
+qualified: AnA drafts; the person rewrites both sections in their own words and cites the Data Room source; the
+independent check is run; the reviewer decides the earlier finding, approves and signs; then freeze, approval,
+filing and transmit. A new check states that AnA's draft is not signed as drafted (409). The approval now carries
+to the Vault copy (FD5 (c)), because the document is reviewed (P-95). Baseline 11 → 10. The walk no longer proves
+that text AnA wrote survives to the seal, nor AC-03: both wait for a PQ-passed model. Found, not fixed: the review
+route answers `INDEPENDENT_CHECK_REQUIRED` as 503 `REVIEW_UNAVAILABLE` (`authoring.router.ts:3075`).
+
+When this entry was first written the walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) was 6 of 15: its
+seal hop was refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it did not run. Read from the code
+and run, not inferred:
 
 - **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
   `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
@@ -1747,8 +1756,7 @@ inferred:
 
 1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
 2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
-3. The walk follows the path a person can take before a model is qualified: rewrite AnA's text, cite the source,
-   run the check, review, sign, seal, file. That restores the seven cases behind the seal hop.
+3. ~~The walk follows the path a person can take before a model is qualified.~~ Done (`60b1d53767`), above.
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
