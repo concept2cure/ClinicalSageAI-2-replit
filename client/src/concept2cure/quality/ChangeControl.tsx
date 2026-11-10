@@ -53,7 +53,7 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
+import { EmptyState, ErrorState, readRefusalWords, type FailedRead } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
@@ -232,8 +232,10 @@ function ChangeControlSession({
           <h2 id="qcc-log-h">Change control log</h2>
           {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
               (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
-          {!(summary && summary.total === 0) && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
-            {summary === null ? (sum.error ? 'The change-log totals could not be read.' : 'Change-log totals appear once the change register loads.') : <>
+          {/* Nothing here while the log's own panel reports its failure: said once (review C4-1). */}
+          {!(summary && summary.total === 0) && !failed && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
+            {summary === null ? (sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
+              : 'Change-log totals appear once the change register loads.') : <>
               {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
               {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
               {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
@@ -256,7 +258,7 @@ function ChangeControlSession({
           <ErrorState
             title="The change log could not be read"
             message={error}
-            retry={onRetry}
+            retry={() => { onRetry?.(); sum.refresh?.(); }}
             read={failure}
             readWhat="the change log"
             testId="change-log-failed"

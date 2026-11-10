@@ -57,6 +57,7 @@ import {
 } from '../services/csr-builder.js';
 import {
   csrBuildFailureText,
+  csrLiveBuild,
   getCSRBuildJobStatus,
   getCSRSectionOutputs,
 } from '../services/csr/csr-job-runner.js';
@@ -316,6 +317,10 @@ router.get('/', async (req: Request, res: Response) => {
       jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
       updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
       failure: row.status === 'failed' ? csrBuildFailureText(row.error) : null,
+      // What a drafting build is writing now, for the person watching it (csr-job-runner.ts csrLiveBuild): the
+      // heading, how far the build is and the prose so far. Unsaved, unchecked work in progress, to this project's
+      // readers only; null when the build is not drafting or another process runs it.
+      writing: row.status === 'drafting' ? csrLiveBuild(row.id) : null,
     })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });

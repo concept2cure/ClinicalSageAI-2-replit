@@ -238,6 +238,38 @@ const FAILURE_BY_REASON: Readonly<Record<string, string>> = {
   invalid_section_selection: 'The build’s section selection does not name ICH E3 report sections, so nothing was drafted.',
 };
 /**
+ * What a running build is writing now: the heading, how many headings are written, and the prose so far. The build
+ * panel shows it (GET /api/csr/jobs, `writing`) so a person can watch a report being drafted. Until 2026-11-10 a
+ * drafting build showed one line with a percentage.
+ *
+ * In memory, in the process that runs the build, and gone when the build ends: it is a view of work in progress, not
+ * a record. The text is not yet checked against the study's tables and is never saved from here; the saved section
+ * is the complete reply, after its checks. A second server process answers with no live text, and the panel then
+ * shows the progress alone.
+ */
+export interface CsrLiveBuild { number: string; title: string; text: string; written: number; total: number }
+const LIVE_TEXT_LIMIT = 40_000;
+const liveBuilds = new Map<number, CsrLiveBuild>();
+
+/** The prose of a draft in progress: a results heading ends with a fenced claims block, which is not prose. */
+const liveProse = (text: string): string => text.split('```')[0].replace(/`+$/, '').trimEnd();
+
+export function csrLiveBuild(jobId: number): CsrLiveBuild | null {
+  const live = liveBuilds.get(jobId);
+  return live ? { ...live, text: liveProse(live.text) } : null;
+}
+
+/** Begin showing `section` as the heading build `jobId` is writing; returns the sink its drafting call writes to. */
+function showWriting(jobId: number, section: { number: string; title: string }, written: number, total: number) {
+  const live: CsrLiveBuild = { number: section.number, title: section.title, text: '', written, total };
+  liveBuilds.set(jobId, live);
+  return {
+    start: () => { live.text = ''; },
+    text: (chunk: string) => { if (live.text.length < LIVE_TEXT_LIMIT) live.text += chunk; },
+  };
+}
+
+/**
  * A build the provider or the gateway would not draft for (csr-builder.ts CsrDraftingUnavailableError): what stopped
  * it and who can change that. Fixed sentences by typed code; the provider's own text is never stored or shown.
  */
@@ -669,7 +701,7 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
       const drafted = await draftCSRSectionWithProvenance(
         section,
         request,
-        aiCtx,
+        { ...aiCtx, live: showWriting(jobId, section, sectionsCompleted, totalSections) },
         evidence
       );
 
@@ -867,6 +899,9 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
         }': ${refusal.message}`
       );
     }
+  } finally {
+    // The live view is of a build in progress; a build that has ended, however it ended, has none.
+    liveBuilds.delete(jobId);
   }
 }
 

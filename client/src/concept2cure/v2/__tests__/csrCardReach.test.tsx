@@ -22,7 +22,7 @@ vi.mock('../editor/SourceImportDialog', async original => ({ ...(await original<
       {onOpenDocument && <button type="button" onClick={() => onOpenDocument('saved-csr-copy', '11.4.1')}>Open confirmed copy</button>}</div> }));
 import { OrchestratorRunControls } from '../surfaces/OrchestratorRunControls';
 import { StudyDataBuild } from '../editor/StudyDataBuild';
-import { BUILD_POLL_MS } from '../surfaces/CsrRunBuilds';
+import { BUILD_POLL_MS, LIVE_POLL_MS } from '../surfaces/CsrRunBuilds';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
 
 const PROGRAM = '11111111-2222-4333-8444-000000000001';
@@ -55,15 +55,20 @@ const nav = vi.fn();
 /** §10.1's saved text, as GET /api/csr/jobs/:jobId/sections?sectionNumber= returns it (csr-jobs.ts). */
 const SAVED_10 = '<p>Of 23 randomized participants, 21 completed the study.</p><p>Two withdrew consent.</p>';
 let headingRows: unknown[] = headings;
+/** True while a test keeps the next read of the headings unanswered. */
+let holdHeadings = false;
 
 const RUNS_LIST = `/api/submission-orchestrator/runs?programId=${PROGRAM}`;
 function routes(method: string, path: string) {
   if (path === RUNS_LIST) return ok({ runs: [{ runId: RUN, status: 'completed', startedAt: '2026-10-30T08:00:00Z' }] });
-  if (method === 'GET' && path === '/api/csr/jobs/41/sections?sectionNumber=10.1') {
+  if (method === 'GET' && /^\/api\/csr\/jobs\/\d+\/sections\?sectionNumber=10\.1$/.test(path)) {
     return ok({ sections: [{ sectionNumber: '10.1', contentHash: HASH_10, content: SAVED_10 }] });
   }
   return jobRoutes(method, path);
 }
+
+/** The headings, or no answer yet while a test holds the read. */
+const headingsReply = () => (holdHeadings ? new Promise(() => undefined) : ok({ headings: headingRows }));
 
 function jobRoutes(method: string, path: string) {
   if (path.includes('/csr/sources?')) return ok({ format: 'concept2cure.csr-source.v1', limitReached: false, sources: [] });
@@ -71,7 +76,7 @@ function jobRoutes(method: string, path: string) {
   if (path.includes('/clinical-tables?')) return ok({ runId: RUN, programId: PROGRAM, historical: true, studies: [{ source: receipt, tables }] });
   if (method === 'GET' && path === BUILDS) return ok({ jobs: builds });
   if (method === 'POST' && path === '/api/csr/jobs') { builds = [build(42, 'queued'), ...builds]; return ok({ jobId: 42, status: 'queued' }, 202); }
-  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return ok({ headings: headingRows });
+  if (method === 'GET' && /\/api\/csr\/jobs\/\d+\/headings$/.test(path)) return headingsReply();
   if (method === 'POST' && /\/sections\/[\d.]+\/review$/.test(path)) return ok({ review: { state: 'approved' } });
   if (/\/narratives\/status$/.test(path)) return ok({ run: null });
   if (/\/narratives$/.test(path)) return ok({ subjects: [] });
@@ -152,6 +157,61 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
     for (let i = 0; i < 3; i += 1) await act(async () => { await vi.advanceTimersByTimeAsync(BUILD_POLL_MS); });
     expect(reads()).toBe(settled);
   } finally { vi.useRealTimers(); }
+});
+
+// The founder, 2026-11-10: "I want to see it happening, or in the background, I want to see that it's progressing,
+// and then I want to see the result." A drafting build showed one line, "CSR build N · drafting · 13%", for as long as
+// it ran: no heading, no text, and the heading list blinked out each time a heading was saved.
+it('shows the heading a build is writing, its text as it is written, how far it is, and keeps the headings on screen', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const writing = { number: '9.1', title: 'Overall Study Design and Plan', text: 'This was a randomized', written: 9, total: 69 };
+    builds = [{ ...build(45, 'drafting'), progress: 13, writing }];
+    await card();
+    const region = await screen.findByLabelText('CSR builds from this study data');
+    expect(await within(region).findByText(/Writing §9\.1 Overall Study Design and Plan/)).toBeTruthy();
+    expect(within(region).getByText(/9 of 69 headings written/)).toBeTruthy();
+    const bar = within(region).getByLabelText('Headings written');
+    expect([bar.getAttribute('aria-valuemax'), bar.getAttribute('aria-valuenow')]).toEqual(['69', '9']);
+    const live = () => within(region).getByLabelText(/^Text being written for §/).textContent;
+    expect(live()).toBe('This was a randomized');
+    expect(within(region).getByText(/saved only after every figure in it is checked/i)).toBeTruthy();
+    await within(region).findByText('Disposition of patients');
+    // A person opens a heading that is already written, to read it while the build goes on.
+    fireEvent.click(within(region).getAllByRole('button', { name: 'Read saved section text' })[0]);
+    expect((await within(region).findByLabelText('Saved text for §10.1')).textContent).toMatch(/21 completed the study/);
+
+    // The text grows on the next read, which comes sooner than the list's ordinary re-read.
+    expect(LIVE_POLL_MS).toBeLessThan(BUILD_POLL_MS);
+    builds = [{ ...build(45, 'drafting'), progress: 13, writing: { ...writing, text: 'This was a randomized, double-blind study.' } }];
+    await act(async () => { await vi.advanceTimersByTimeAsync(LIVE_POLL_MS); });
+    expect(live()).toBe('This was a randomized, double-blind study.');
+
+    // A heading is saved: the next one starts, and the heading list stays while it is read again.
+    holdHeadings = true;
+    builds = [{ ...build(45, 'drafting'), progress: 14, updatedAt: '2026-10-30T09:01:00Z',
+      writing: { number: '9.2', title: 'Discussion of Study Design', text: '', written: 10, total: 69 } }];
+    await act(async () => { await vi.advanceTimersByTimeAsync(LIVE_POLL_MS); });
+    expect(within(region).getByText(/Writing §9\.2 Discussion of Study Design/)).toBeTruthy();
+    expect(within(region).getByText(/10 of 69 headings written/)).toBeTruthy();
+    expect(live()).toMatch(/Reading the study’s tables/);
+    expect(within(region).queryByText('Reading the build’s sections…')).toBeNull();
+    expect(within(region).getByText('Disposition of patients')).toBeTruthy();
+    // The heading the person opened is still open: the list was not taken down and put back.
+    expect(within(region).getByLabelText('Saved text for §10.1').textContent).toMatch(/21 completed the study/);
+  } finally { holdHeadings = false; vi.useRealTimers(); }
+});
+
+it('shows no live writing for a build that is not drafting, and refuses a list whose live writing is malformed', async () => {
+  builds = [build(46)];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByText(/CSR build 46 · complete · 100%/)).toBeTruthy();
+  expect(within(region).queryByLabelText('Headings written')).toBeNull();
+  cleanup();
+  builds = [{ ...build(47, 'drafting'), writing: { number: '9.1', title: 'Design', text: 7, written: 1, total: 69 } }];
+  await card();
+  expect(await screen.findByText(/could not be listed/)).toBeTruthy();
 });
 
 it('says why a failed build stopped, as the list states it, and refuses a list whose reason is not text', async () => {

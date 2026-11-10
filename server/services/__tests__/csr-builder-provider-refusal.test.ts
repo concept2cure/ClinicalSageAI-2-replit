@@ -128,6 +128,24 @@ it('asks for the heading as a stream, so a long heading is not cut off at the ga
   expect(typeof options.onStream).toBe('function');
 });
 
+// The founder, 2026-11-10, wants to watch a heading being written. The stream's text goes to the build's live view
+// as it arrives (reasoning is not text), and a heading drafted again after a refused call starts its text over.
+it('hands the text the model streams to the build\'s live view, and starts it over when the heading is drafted again', async () => {
+  const seen: string[] = [];
+  const live = { start: vi.fn(() => { seen.length = 0; }), text: (chunk: string) => { seen.push(chunk); } };
+  const streamed = (parts: string[]) => async (_messages: unknown, options: { onStream: (chunk: string, meta?: { type: string; thinkingContent?: string }) => void }) => {
+    options.onStream('', { type: 'thinking', thinkingContent: 'working it out' });
+    for (const part of parts) options.onStream(part, { type: 'text' });
+    return DRAFT;
+  };
+  chat.mockImplementationOnce(async (messages: unknown, options: never) => { await streamed(['Half a sen'])(messages, options); throw userLimit(); })
+    .mockImplementationOnce(streamed(['This report ', 'describes the study.']));
+  const { value } = await settled(draftCSRSectionWithProvenance(section(), request, { organizationId: 7, live }));
+  expect(value).toMatchObject({ source: 'ai' });
+  expect(live.start).toHaveBeenCalledTimes(2);
+  expect(seen).toEqual(['This report ', 'describes the study.']);
+});
+
 it.each([
   ['CSR_DRAFTING_KEY_REFUSED', /refused this deployment.s API key/i],
   ['CSR_DRAFTING_ACCOUNT_REFUSED', /no credit|access to the drafting model/i],

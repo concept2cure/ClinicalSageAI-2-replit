@@ -166,6 +166,7 @@ describe('ChangeControl — a failed read is not an empty log', () => {
     renderLog({ error: 'Request failed (500)', onRetry });
     expect(screen.getByTestId('change-log-failed').textContent).toMatch(/change log could not be read/);
     expect(screen.queryByText('No changes at this stage.')).toBeNull();
+    expect(screen.queryByText('No changes in the log yet.')).toBeNull();
     expect(screen.queryByText(/0 changes/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -175,6 +176,7 @@ describe('ChangeControl — a failed read is not an empty log', () => {
     renderLog({ loading: true });
     expect(screen.getAllByText('Loading the change log…').length).toBeGreaterThan(0);
     expect(screen.queryByText('No changes at this stage.')).toBeNull();
+    expect(screen.queryByText('No changes in the log yet.')).toBeNull();
   });
 
   it('shows a log that answered empty as empty', () => {
