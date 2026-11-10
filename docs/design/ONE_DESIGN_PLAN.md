@@ -1034,6 +1034,13 @@ RBM, QMS and more; Vault … and tasking too")
   - the CSR study's package identity.
 
   Each is in `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md`.
+- **The Lumen account in the Codespace** (2026-11-10, the founder: "Make sure it's set up in the Codespace"),
+  `92f589838`.
+  - The Codespace creates "Lumen Bioscience (demo)" with its lead, reviewer and approver. The people come from
+    Codespaces secrets, with fictional defaults.
+  - It seeds the Lumen pack there first, and "Demo access" lands on it.
+  - The Vault seed now records an artifact's review before its approval (P-95).
+  - Run end to end against a fresh local database; `codespaces:doctor:test` 50/50.
 
 **Finding shared with the design lead**
 

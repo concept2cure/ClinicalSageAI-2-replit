@@ -226,6 +226,68 @@ c2c_install_deps() {
   c2c_lock_hash >"$C2C_CODESPACE_STATE/npm-ci.lock-sha256"
 }
 
+# The Lumen demonstration account (the founder, 2026-11-06: "create an account for Lumen … a biotech with multiple
+# users"): its own organisation, three people. No real person's identity is built in (2026-10-15). The people come
+# from Codespaces secrets when set, with fictional defaults otherwise, so the account always loads:
+#   C2C_FOUNDER_EMAIL, C2C_FOUNDER_NAME   the lead; "Demo access" signs in as them
+#   C2C_LUMEN_REVIEWER_NAME               the reviewer and second signer
+#   C2C_LUMEN_APPROVER_NAME               the approver
+# The reviewer's and approver's sign-in addresses are derived from their names at the non-deliverable
+# lumen-demo.example. Everyone signs in with DEMO_SIGNER_PASSWORD (app.env).
+C2C_LUMEN_ORG_SLUG="lumen-bioscience-demo"
+C2C_LUMEN_ORG_NAME="Lumen Bioscience (demo)"
+c2c_demo_address() {
+  printf '%s@lumen-demo.example' "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/./g; s/^[.]+//; s/[.]+$//')"
+}
+c2c_lumen_roster() {
+  local lead_name="${C2C_FOUNDER_NAME:-${C2C_FOUNDER_EMAIL:-Lumen Lead}}"
+  local lead_email="${C2C_FOUNDER_EMAIL:-$(c2c_demo_address "$lead_name")}"
+  local reviewer="${C2C_LUMEN_REVIEWER_NAME:-Lumen Reviewer}" approver="${C2C_LUMEN_APPROVER_NAME:-Lumen Approver}"
+  printf '%s\n' "$lead_email|$lead_name|lead" \
+    "$(c2c_demo_address "$reviewer")|$reviewer|reviewer" \
+    "$(c2c_demo_address "$approver")|$approver|approver"
+}
+c2c_lumen_person() { c2c_lumen_roster | awk -F'|' -v r="$1" '$3 == r { print $1 }'; }
+c2c_lumen_accounts_current() {
+  [[ "$(cat "$C2C_CODESPACE_STATE/lumen-accounts.done" 2>/dev/null)" == "$(c2c_lumen_roster)" ]]
+}
+c2c_seed_lumen_accounts() {
+  local signer_pw email name role
+  signer_pw="$(sed -n 's/^DEMO_SIGNER_PASSWORD=//p' "$C2C_CODESPACE_STATE/app.env")"
+  while IFS='|' read -r email name role; do
+    ( cd "$C2C_REPO_ROOT" && c2c_with_owner_env env DATABASE_URL="$(sed -n 's/^DATABASE_OWNER_URL=//p' "$C2C_CODESPACE_STATE/owner.env")" \
+        ADMIN_EMAIL="$email" ADMIN_NAME="$name" ADMIN_PASSWORD="$signer_pw" \
+        ADMIN_ORG_SLUG="$C2C_LUMEN_ORG_SLUG" ADMIN_ORG_NAME="$C2C_LUMEN_ORG_NAME" \
+        NODE_ENV=development node scripts/seed-admin.mjs ) >>"$C2C_CODESPACE_STATE/accounts.log" 2>&1 || {
+      c2c_log "BLOCKED: could not create the Lumen $role account ($email); see $C2C_CODESPACE_STATE/accounts.log"
+      return 1
+    }
+  done < <(c2c_lumen_roster)
+  c2c_lumen_roster >"$C2C_CODESPACE_STATE/lumen-accounts.done"
+  c2c_log "Lumen account ready: $C2C_LUMEN_ORG_NAME, with $(c2c_lumen_roster | cut -d'|' -f2 | paste -sd, - | sed 's/,/, /g')."
+}
+
+# The Lumen pack, seeded into that organisation as its lead, with its reviewer and approver as the second and third
+# people (OQ_SIGNER_*, OQ_APPROVER_*), so its reviews, approvals and seals are signed. Again when scripts/demo or the
+# people change; the pack is idempotent by title. $1 is the demo version (git rev-parse HEAD:scripts/demo).
+c2c_seed_lumen_org() {
+  local version pw
+  version="$1|$(c2c_lumen_roster)"
+  [[ "$(cat "$C2C_CODESPACE_STATE/lumen-seed.done" 2>/dev/null)" == "$version" ]] && return 0
+  pw="$(sed -n 's/^DEMO_SIGNER_PASSWORD=//p' "$C2C_CODESPACE_STATE/app.env")"
+  c2c_log "Seeding the Lumen account ($C2C_LUMEN_ORG_NAME) as $(c2c_lumen_person lead); log: $C2C_CODESPACE_STATE/lumen-seed.log"
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests-lumen" \
+      OQ_SIGNER_EMAIL="$(c2c_lumen_person reviewer)" OQ_SIGNER_PASSWORD="$pw" \
+      OQ_APPROVER_EMAIL="$(c2c_lumen_person approver)" OQ_APPROVER_PASSWORD="$pw" \
+      npm run --silent demo:seed -- --pack lumen --base-url "http://127.0.0.1:$C2C_PORT" --email "$(c2c_lumen_person lead)" \
+      >"$C2C_CODESPACE_STATE/lumen-seed.log" 2>&1; then
+    printf '%s\n' "$version" >"$C2C_CODESPACE_STATE/lumen-seed.done"
+    c2c_log "Lumen account seeded: $(grep -o 'lumen pack: created [0-9]*, found [0-9]*' "$C2C_CODESPACE_STATE/lumen-seed.log" | tail -n 1)."
+  else
+    c2c_log "The Lumen seed did not finish; see $C2C_CODESPACE_STATE/lumen-seed.log. It re-runs on the next start."
+  fi
+}
+
 c2c_post_create_main() {
   echo "C2C Codespace setup (Node.js 22, PostgreSQL $C2C_PG_VERSION + pgvector, local database)"
   node -e "if (Number(process.versions.node.split('.')[0]) !== 22) { console.error('Node.js 22 is required'); process.exit(1) }"
