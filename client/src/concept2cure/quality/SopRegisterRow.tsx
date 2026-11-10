@@ -19,21 +19,18 @@
  */
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { registerRowMinWidth } from './registerGrid';
-import { DOC_TYPE_LABEL, STATUS_LABEL, STATUS_TONE, formatDate, isReviewOverdue, reviewRowOf, todayUtc, type QmsDoc, type ReviewDueRow } from './data';
+import { DOC_TYPE_LABEL, STATUS_LABEL, formatDate, isReviewOverdue, reviewRowOf, todayUtc, type QmsDoc, type ReviewDueRow } from './data';
 import { canRecordReview, lastReviewLine } from './PeriodicReview';
 import { myTurn, qmsRouteView } from './qmsReviewRoute';
 import { routeHeadline } from '../v2/reviewRoute/routeRound';
 import { RegisterSignatureLine } from './RegisterSignatureLine';
 import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
 
-/* Number · Title · Type · Version · Status · Effective · Next review · next step and More. The fixed tracks
-   (776px) leave the title its 160px floor inside the 1038px table a 1440 window gives the page, so a row fits
-   without scrolling there; the last track holds the longest next step, "Read and acknowledge", and "More". */
-export const GRID = '100px minmax(0, 1fr) 100px 52px 120px 96px 104px 204px';
-/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
-   resolves to 0px and the row's last columns are clipped away. */
-export const ROW_MIN = registerRowMinWidth(GRID);
+/** The register's columns, in order; the table's header row (C6: D0's .reg-tbl, real column headers). */
+export const REGISTER_COLUMNS = ['Number', 'Title', 'Type', 'Version', 'Status', 'Effective', 'Next review'] as const;
+
+/** D0's chip tone for a document state: in force is ok, superseded and retired are dim, the rest neutral. */
+const STATUS_CHIP: Record<QmsDoc['status'], string> = { effective: ' tone-ok', superseded: ' tone-dim', retired: ' tone-dim', draft: '', in_review: '' };
 
 /** What a row can do; each handler is the register's own, unchanged. */
 export interface RegisterRowActions {
@@ -65,7 +62,7 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
     ? `${lastReviewLine(review)} The date its approval signed: ${d.signedReviewDate ? formatDate(d.signedReviewDate) : 'none'}.`
     : undefined;
   return (
-    <div className="qms-cell" title={title}>
+    <td title={title}>
       {d.nextReviewDate ? (
         <span>
           {formatDate(d.nextReviewDate)}
@@ -79,7 +76,7 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
           {review.outcome === 'current' ? 'Reviewed' : 'Revision required,'} {formatDate(review.reviewedAt)}
         </span>
       )}
-    </div>
+    </td>
   );
 }
 
@@ -177,46 +174,54 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
      or superseded row past its signed date is not, and saying so contradicted the figure line (review C1-2). */
   const canBeDue = d.status === 'effective' || d.status === 'in_review' || (d.status === 'draft' && !!d.inForce);
   const overdue = canBeDue && isReviewOverdue(d.nextReviewDate);
+  /* One document is one <tbody>: its row and, when "More" is open, the row of its other actions, kept together for
+     a screen reader and for the eye (C6: D0's .reg-tbl, in place of Quality's own boxed div grid). */
   return (
-    <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status} data-more={more || undefined}>
-      <button type="button" className="qms-cell qms-num mono" title="Open the controlled document" onClick={() => act.open(d)}>
-        {d.docNumber}
-      </button>
-      <div className="qms-cell qms-title" title={d.title}>{d.title}<RegisterSignatureLine doc={d} /></div>
-      <div className="qms-cell">
-        <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
-      </div>
-      <div className="qms-cell mono">{d.version}</div>
-      <div className="qms-cell" title={d.inForce ? (d.status === 'effective'
-        ? `Version ${d.inForce.version} stays in force until version ${d.version} is effective.`
-        : `Version ${d.inForce.version} stays in force until version ${d.version} is approved.`) : undefined}>
-        {d.inForce && (
-          <span className="qms-pill" data-tone="effective" data-testid="qms-in-force">v{d.inForce.version} in force</span>
-        )}{d.inForce ? ' ' : null}
-        <span className="qms-pill" data-tone={STATUS_TONE[d.status]}>
-          {STATUS_LABEL[d.status]}
-        </span>
-        <RouteLine doc={d} meId={act.meId} />
-      </div>
-      <div className="qms-cell">
-        {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
-        {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
-          <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
-        )}
-      </div>
-      <NextReviewCell doc={d} overdue={overdue} />
-      <div className="qms-cell qms-rowacts">
-        {primary?.node}
-        <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
-          aria-label={`More actions for ${d.docNumber}`} onClick={() => setMore((m) => !m)}>
-          More
-        </button>
-      </div>
+    <tbody className="qms-doc" data-status={d.status} data-more={more || undefined}>
+      <tr>
+        <td>
+          <button type="button" className="qms-num mono" title="Open the controlled document" onClick={() => act.open(d)}>
+            {d.docNumber}
+          </button>
+        </td>
+        <td className="qms-title">{d.title}<RegisterSignatureLine doc={d} /></td>
+        <td>{DOC_TYPE_LABEL[d.docType] ?? d.docType}</td>
+        <td className="mono">{d.version}</td>
+        <td title={d.inForce ? (d.status === 'effective'
+          ? `Version ${d.inForce.version} stays in force until version ${d.version} is effective.`
+          : `Version ${d.inForce.version} stays in force until version ${d.version} is approved.`) : undefined}>
+          <span className="qms-chips">
+            {d.inForce && <span className="rd-chip tone-ok" data-testid="qms-in-force">In force: v{d.inForce.version}</span>}
+            <span className={`rd-chip${STATUS_CHIP[d.status] ?? ''}`}>{STATUS_LABEL[d.status]}</span>
+          </span>
+          <RouteLine doc={d} meId={act.meId} />
+        </td>
+        <td>
+          {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
+          {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
+            <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
+          )}
+        </td>
+        <NextReviewCell doc={d} overdue={overdue} />
+        <td>
+          <div className="qms-rowacts">
+            {primary?.node}
+            <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
+              aria-label={`More actions for ${d.docNumber}`} onClick={() => setMore((m) => !m)}>
+              More
+            </button>
+          </div>
+        </td>
+      </tr>
       {more && (
-        <div className="qms-row-more" id={moreId} role="group" aria-label={`Actions for ${d.docNumber}`}>
-          {rest.map((a) => a.node)}
-        </div>
+        <tr className="qms-row-more-tr">
+          <td colSpan={REGISTER_COLUMNS.length + 1}>
+            <div className="qms-row-more" id={moreId} role="group" aria-label={`Actions for ${d.docNumber}`}>
+              {rest.map((a) => a.node)}
+            </div>
+          </td>
+        </tr>
       )}
-    </div>
+    </tbody>
   );
 }
