@@ -1,0 +1,36 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "author",
+      "assessed": [
+        {
+          "number": "CC-F1-264291",
+          "status": "under_assessment",
+          "next": [
+            "Advance",
+            "More"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "approver",
+      "assessed": [
+        {
+          "number": "CC-F1-264291",
+          "status": "under_assessment",
+          "next": [
+            "Approve",
+            "More"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "w14-proposer",
+      "ok": true
+    }
+  ]
+}
