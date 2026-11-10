@@ -505,6 +505,55 @@ export async function getAcceptanceHistory(userId: number): Promise<AcceptanceRe
   }));
 }
 
+/** What a publish must carry before anything is written: the text it asks people to accept, and why. */
+function checkedPublishInput(input: { body?: string; url?: string; reason: string }): {
+  body: string | undefined; url: string | undefined; reason: string;
+} {
+  const body = input.body?.trim() ? input.body : undefined;
+  const url = input.url?.trim() ? input.url : undefined;
+  if (!body && !url) throw new AgreementPublishTextMissingError();
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  if (reason.length < MIN_PUBLISH_REASON_LENGTH) throw new AgreementPublishReasonRequiredError();
+  return { body, url, reason };
+}
+
+/** One agreement version as the audit row keeps it: its identity and the digest of its text. */
+function agreementAuditView(r: any) {
+  return {
+    id: r.id,
+    version: r.version,
+    title: r.title,
+    scope: r.scope,
+    required: r.required !== false,
+    contentHash: hashAgreementContent({ body: r.body ?? null, url: r.url ?? null }),
+  };
+}
+
+/**
+ * The publish's sealed audit row, written inside the publish transaction.
+ * Platform-wide act: the platform's own chain (tenant 0), as the other
+ * platform-staff routes write it (routes/admin/access-management.ts).
+ */
+async function auditPublish(
+  client: Parameters<typeof writeChainedAuditRow>[0],
+  p: { agreementKey: string; actorUserId?: number | null; reason: string; superseded: any[]; published: any },
+): Promise<void> {
+  await writeChainedAuditRow(client, {
+    tenantId: 0,
+    userId: p.actorUserId ?? undefined,
+    action: 'license_agreement_published',
+    resourceType: 'license_agreements',
+    resourceId: p.published.id,
+    reason: p.reason,
+    details: {
+      agreementKey: p.agreementKey,
+      before: p.superseded.map(agreementAuditView),
+      after: agreementAuditView(p.published),
+      reason: p.reason,
+    },
+  });
+}
+
 /**
  * Publish a new agreement version. Supersedes the prior active version with the
  * same key. Existing acceptances of the prior version remain valid history, but
@@ -529,11 +578,7 @@ export async function publishAgreement(input: {
   /** Why this version is published. Required, at least 3 characters. */
   reason: string;
 }): Promise<LicenseAgreement> {
-  const body = input.body?.trim() ? input.body : undefined;
-  const url = input.url?.trim() ? input.url : undefined;
-  if (!body && !url) throw new AgreementPublishTextMissingError();
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
-  if (reason.length < MIN_PUBLISH_REASON_LENGTH) throw new AgreementPublishReasonRequiredError();
+  const { body, url, reason } = checkedPublishInput(input);
   await ensureSchema();
   const client = await pool.connect();
   try {
@@ -562,29 +607,9 @@ export async function publishAgreement(input: {
       ]
     );
     const published = rows[0];
-    const auditView = (r: any) => ({
-      id: r.id,
-      version: r.version,
-      title: r.title,
-      scope: r.scope,
-      required: r.required !== false,
-      contentHash: hashAgreementContent({ body: r.body ?? null, url: r.url ?? null }),
-    });
-    // Platform-wide act: the platform's own chain (tenant 0), as the other
-    // platform-staff routes write it (routes/admin/access-management.ts).
-    await writeChainedAuditRow(client, {
-      tenantId: 0,
-      userId: input.actorUserId ?? undefined,
-      action: 'license_agreement_published',
-      resourceType: 'license_agreements',
-      resourceId: published.id,
-      reason,
-      details: {
-        agreementKey: input.agreementKey,
-        before: (superseded.rows ?? []).map(auditView),
-        after: auditView(published),
-        reason,
-      },
+    await auditPublish(client, {
+      agreementKey: input.agreementKey, actorUserId: input.actorUserId, reason,
+      superseded: superseded.rows ?? [], published,
     });
     await client.query('COMMIT');
     return mapAgreement(published);
