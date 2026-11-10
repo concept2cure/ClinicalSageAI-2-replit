@@ -121,6 +121,8 @@ c2c_start_app() {
     set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
     # "Demo access" signs in as the Lumen account's lead once that account exists (the founder's landing account).
     if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then VITE_DEV_LOGIN_EMAIL="$(c2c_lumen_person lead)"; fi
+    # The people "Demo access" offers to choose from, by account and role (c2c_demo_accounts).
+    export VITE_DEMO_ACCOUNTS="$(c2c_demo_accounts)"
     exec env "${C2C_UNSET[@]}" NODE_ENV=development PORT="$C2C_PORT" ALLOWED_ORIGINS="$C2C_ORIGINS" \
       setsid nohup npm run dev >"$C2C_APP_LOG" 2>&1 </dev/null
   ) &
@@ -322,7 +324,7 @@ cat <<EOF
 
 ============================================================================
  Concept2Cure is running: $C2C_PUBLIC_URL
- Sign in: press "Demo access" on the sign-in page (signs in as $C2C_DEMO_ACCESS_EMAIL).
+ Sign in: press "Demo access" on the sign-in page; choose who under "Sign in as" (default $C2C_DEMO_ACCESS_EMAIL).
  Lumen account: $C2C_LUMEN_ORG_NAME, with $C2C_LUMEN_PEOPLE.
  Development organisation: $DEMO_SEED_EMAIL (password sign-in), with the CDISC CSR study.
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
