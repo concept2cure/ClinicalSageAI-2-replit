@@ -61,6 +61,28 @@ destination, clicked in turn, and every document the Author stage lists, opened 
 - Checks: the 12 Biostatistics client suites, 196 cases, and the engine's 6 suites, 76 cases, pass; no new lint
   warning; the project typechecks.
 
+## Fixed: the demo seed stopped before the one project whose Module 3 composes
+
+Re-running the seed at head on this database, as a Codespace does on its next start (`npm run demo:seed -- --pack all`):
+**the biotech pack failed at "Projects: program C2C-201"**, 409 `AMBIGUOUS_CLIENT_WORKSPACE`, "Choose a client
+workspace before creating this project. Nothing was saved." Everything after it in the pack was skipped.
+
+- C2C-201 is the pack's small-molecule programme, added on 2026-11-09 so a demo can show Module 3 composing. It was
+  created with no client named. That is accepted while the organisation has one sponsor, and refused once it has two,
+  which it does as soon as the Lumen pack has run. So every Codespace seeded before 2026-11-09, and any `--pack all`
+  run after Lumen, never got C2C-201.
+- **The fix** (`scripts/demo/launch-demo/packs/biotech.mjs`, `sameSponsor`): C2C-201 is created under C2C-101's own
+  client workspace, the same fictional sponsor. A run that names a workspace keeps it. No server change.
+- After it: the biotech pack exits 0, "created 28, found 207"; C2C-201 created, its registers recorded, "21
+  section(s) composed, 13 with recorded data". In the browser (`sweep-tabs-c2c-201.json`, 41 stops, none flagged):
+  CMC / Module 3 → Module 3 build shows the 21 sections and the export gate
+  (`screens/demo-biotech-c2c-201-o-cmc-module-3-tab-module-3.png`).
+- Pack tests: `node --test scripts/demo/launch-demo/*.test.mjs`, 127/127, two new for this.
+- The script gained stop 6b, CMC / Module 3 on C2C-201 (`docs/demo/biotech-walkthrough.md`).
+
+Still as the 2026-11-09 rehearsal found: with no second signer configured (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`),
+the packs record their two-person steps (method validation, QMS approval) as not executed, and say so in the seed log.
+
 ## For the presenter
 
 - **Run the migration step before the app restarts** on any environment that pulls trunk (`npm run db:provision` or
@@ -80,5 +102,5 @@ destination, clicked in turn, and every document the Author stage lists, opened 
 - AnA answering or drafting (no model key in this container), and anything behind an e-signature.
 - Phone width. The S2 walks cover the Data room, Vault's Data catalog and the CSR chooser at 390; the wider phone pass
   is the J-series human tests (`docs/evidence/HUMAN-TEST/`).
-- A fresh-database seed at head. This database was seeded on 2026-11-06 and migrated forward; the fresh-seed faults
-  found on 2026-11-09 are fixed in the packs, and that seed was not re-run here.
+- A seed on a brand-new database at head. Here the seed was re-run over a database first seeded on 2026-11-06 (the
+  case a returning Codespace is in); the fresh-database case was rehearsed on 2026-11-09.

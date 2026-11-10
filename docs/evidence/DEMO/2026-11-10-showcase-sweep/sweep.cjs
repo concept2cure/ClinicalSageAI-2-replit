@@ -42,32 +42,55 @@ async function signIn(page) {
   if (who.status !== 200) throw new Error(`dev-login answered ${who.status}`);
 }
 
+/** Something on a stop a person should look at: it failed, a 5xx, a console error, error wording, sideways scroll. */
+function flagged(r) {
+  return Boolean(r.error || r.sideways || r.consoleErrors.length || r.errorText.length || r.apiFailures.some((f) => /^5/.test(f)));
+}
+
+/** One line per stop, with only what it has to say. */
+function report(r) {
+  const parts = [
+    r.error ? `ERROR ${r.error}` : '',
+    r.apiFailures.length ? `api ${r.apiFailures.join('; ').slice(0, 200)}` : '',
+    r.consoleErrors.length ? `console ${r.consoleErrors.length}` : '',
+    r.errorText.length ? `text ${JSON.stringify(r.errorText).slice(0, 200)}` : '',
+    r.sideways ? 'SIDEWAYS' : '',
+  ].filter(Boolean);
+  console.info([`${flagged(r) ? 'LOOK' : 'ok  '} ${r.stop}`, ...parts].join(' | '));
+}
+
+/** What the page says and whether it scrolls sideways. */
+async function readPage(page) {
+  const errorText = await page.evaluate((src) => {
+    const re = new RegExp(src, 'i');
+    return [...document.querySelectorAll('[role="alert"], .es-title, .empty-title, .scaf-note, p, span, div')]
+      .filter((el) => el.children.length === 0 && re.test(el.textContent || '') && el.getBoundingClientRect().height > 0)
+      .map((el) => el.textContent.trim().slice(0, 180)).slice(0, 5);
+  }, ERR_WORDS.source);
+  const sideways = await page.evaluate(() => document.scrollingElement.scrollWidth > window.innerWidth + 1);
+  return { errorText, sideways };
+}
+
 async function stop(page, name, watch, act) {
   const before = { net: watch.net.length, cons: watch.cons.length };
-  const r = { stop: name };
+  const r = { stop: name, errorText: [], sideways: false };
   try {
     await act();
     await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => undefined);
     await page.waitForTimeout(1200);
     r.url = page.url().replace(BASE, '');
-    r.errorText = await page.evaluate((src) => {
-      const re = new RegExp(src, 'i');
-      return [...document.querySelectorAll('[role="alert"], .es-title, .empty-title, .scaf-note, p, span, div')]
-        .filter((el) => el.children.length === 0 && re.test(el.textContent || '') && el.getBoundingClientRect().height > 0)
-        .map((el) => el.textContent.trim().slice(0, 180)).slice(0, 5);
-    }, ERR_WORDS.source);
-    r.sideways = await page.evaluate(() => document.scrollingElement.scrollWidth > window.innerWidth + 1);
-    const flagged = r.errorText.length || r.sideways || watch.cons.length > before.cons || watch.net.slice(before.net).some((f) => /^5/.test(f));
-    if (process.env.DEPTH !== 'tabs' || flagged) await page.screenshot({ path: path.join(SHOTS, `${slug(name)}.png`) });
+    Object.assign(r, await readPage(page));
   } catch (e) {
-    r.error = String(e && e.message || e).split('\n')[0].slice(0, 240);
-    await page.screenshot({ path: path.join(SHOTS, `${slug(name)}-ERR.png`) }).catch(() => undefined);
+    r.error = String((e && e.message) || e).split('\n')[0].slice(0, 240);
   }
   r.apiFailures = watch.net.slice(before.net);
   r.consoleErrors = watch.cons.slice(before.cons).slice(0, 6);
+  // The depth pass keeps a screenshot only where there is something to look at.
+  if (process.env.DEPTH !== 'tabs' || process.env.PICK || flagged(r)) {
+    await page.screenshot({ path: path.join(SHOTS, `${slug(name)}${r.error ? '-ERR' : ''}.png`) }).catch(() => undefined);
+  }
   out.stops.push(r);
-  const bad = r.error || r.apiFailures.some((f) => /^5/.test(f)) || r.consoleErrors.length || (r.errorText || []).length || r.sideways;
-  console.info(`${bad ? 'LOOK' : 'ok  '} ${name}${r.error ? ' | ERROR ' + r.error : ''}${r.apiFailures.length ? ' | api ' + r.apiFailures.join('; ').slice(0, 200) : ''}${r.consoleErrors.length ? ' | console ' + r.consoleErrors.length : ''}${(r.errorText || []).length ? ' | text ' + JSON.stringify(r.errorText).slice(0, 200) : ''}${r.sideways ? ' | SIDEWAYS' : ''}`);
+  report(r);
 }
 
 function watcher(page) {
@@ -86,7 +109,8 @@ const rail = (page, label) => page.getByRole('navigation').getByRole('button', {
  * tab of every rail destination, clicked in turn, and every document the Author stage lists, opened in the editor.
  * Writes ./sweep-tabs.json; screenshots only for a stop with something to look at.
  */
-const PICK = [/C2C-101/, /LMN-801/, /NeuroPanel/, /CDISCPILOT01/];
+/* One project of each kind; PICK=<text>[,<text>] names others (PICK=C2C-201 for the small-molecule CMC project). */
+const PICK = process.env.PICK ? process.env.PICK.split(',').map((t) => new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))) : [/C2C-101/, /LMN-801/, /NeuroPanel/, /CDISCPILOT01/];
 async function depth(page, watch, listed) {
   for (const p of PICK.map((re) => listed.find((x) => re.test(x.name))).filter(Boolean)) {
     const tag = slug(p.name).slice(0, 22);
@@ -162,9 +186,9 @@ async function depth(page, watch, listed) {
     process.exitCode = 1;
   } finally {
     out.finishedAt = new Date().toISOString();
-    const look = out.stops.filter((r) => r.error || r.apiFailures.some((f) => /^5/.test(f)) || r.consoleErrors.length || (r.errorText || []).length || r.sideways);
+    const look = out.stops.filter(flagged);
     out.summary = { stops: out.stops.length, toLookAt: look.length, serverErrors: out.stops.reduce((n, r) => n + r.apiFailures.filter((f) => /^5/.test(f)).length, 0) };
-    fs.writeFileSync(path.join(HERE, process.env.DEPTH === 'tabs' ? 'sweep-tabs.json' : 'sweep.json'), JSON.stringify(out, null, 2) + '\n');
+    fs.writeFileSync(path.join(HERE, process.env.DEPTH === 'tabs' ? `sweep-tabs${process.env.PICK ? '-' + slug(process.env.PICK) : ''}.json` : 'sweep.json'), JSON.stringify(out, null, 2) + '\n');
     console.info(JSON.stringify(out.summary));
     await browser.close();
   }

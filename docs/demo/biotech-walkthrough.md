@@ -134,6 +134,19 @@ placed from the Vault by UUID are reported as unresolvable because the checker o
 reads integer document ids. It's logged as a finding; the gate is doing exactly what a
 gate should do with it: refusing."*
 
+## 6b · CMC / Module 3 (1 min, optional) — the dossier that composes, and the one that says why not
+
+Open **Projects** and choose **C2C-201 oral JAK1 inhibitor** (the same sponsor's small molecule), then **CMC /
+Module 3** in the rail, tab **Module 3 build**. Point at the line "21 sections in CTD §3.2 · 0 of 21 approved · 18
+ready to compile", then **Export readiness**: "Not export ready", with the reason beside it (sections not approved,
+and sections with no recorded source lineage).
+
+Say: *"Module 3 is compiled from the study's own registers: drug substance and product, methods, specifications,
+stability, batches and release results. The export gate fails closed: nothing leaves until every section is approved
+and traced to its source."* Then, if asked about biologics, open **CMC / Module 3** on C2C-101: it says Module 3 is
+not composed here for a biologic and names the guidelines that apply (ICH Q6B, Q5A(R2), Q5C). That boundary is
+deliberate; the platform says it instead of composing something wrong.
+
 ## 7 · Quality (1 min) — the SOPs the work runs under
 
 Open **Quality & Assurance**. In the **Controlled-document register** point at:
