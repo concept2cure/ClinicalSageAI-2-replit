@@ -1,0 +1,11 @@
+Every test file that loads authoring.router.ts or authoring-review-route.ts (109 files), with the change:
+  Tests  13 failed | 1551 passed
+The 13 failures are in three files and fail the same way on trunk without this change
+(git stash; same 13 of 30 fail):
+  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts   3
+  server/routes/__tests__/authoringSignerPrintedName.test.ts                       1
+  tests/lineage/founder-path-lineage.pglite.test.ts                                9
+None reads the review rules. They belong to the trunk's open test failures (MR-02 lanes).
+
+A first run failed 10 more, in fixtures whose organizations table has no settings column. The rules are now read
+as to_jsonb(row) -> 'settings', so a row without that column reads as unset (the defaults), and those 10 pass.

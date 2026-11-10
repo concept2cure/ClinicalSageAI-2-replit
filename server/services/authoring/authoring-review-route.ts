@@ -179,11 +179,16 @@ const reviewRequired = (message: string) => new ReviewRouteRefusal(409, 'REVIEW_
  * route withdrawn or returned), still open, or about earlier text: each is
  * refused with what to do. The reviewer is never an author (the member validator
  * and separationOfDutiesRefused). Whether the approver may also be a reviewer
- * (P-95 question 1) and the two-reviewer floor (question 2) are later slices.
+ * (P-95 question 1) is a later slice. How many reviewers the route must name is
+ * the organisation's own setting (P-117), one unless its administrator raised it.
  */
-export function approvalReviewRefusal(standing: RouteStanding, digest: string): ReviewRouteRefusal | null {
+export function approvalReviewRefusal(standing: RouteStanding, digest: string, reviewersRequired = 1): ReviewRouteRefusal | null {
   const reviewers = standing.members.filter((m) => m.role === 'reviewer');
   if (!standing.route || reviewers.length === 0) return reviewRequired(NOT_REVIEWED);
+  // P-117: the organisation's own reviewer count, never below one.
+  if (reviewers.length < reviewersRequired) {
+    return reviewRequired(`Your organisation's review rules ask for ${reviewersRequired} independent reviewers, and this review names ${reviewers.length}. Send it for review to ${reviewersRequired - reviewers.length} more; once every reviewer has signed this version, it can be approved.`);
+  }
   if (standing.state === 'live' && !standing.reviewComplete) {
     const signed = reviewers.filter((m) => m.outcome === 'signed').length;
     return reviewRequired(`Its review is not finished: ${signed} of ${reviewers.length} reviewers have signed. Once every reviewer has signed this version, it can be approved.`);
@@ -198,9 +203,9 @@ export function approvalReviewRefusal(standing: RouteStanding, digest: string): 
 /** The P-95 check on the signing transaction: the route read under its lock (after the document's), then the verdict. Throws on a read failure. */
 export async function authoringApprovalReviewRefusal(
   q: RouteQueryable,
-  p: { tenantId: number; docId: string; digest: string },
+  p: { tenantId: number; docId: string; digest: string; reviewersRequired?: number },
 ): Promise<ReviewRouteRefusal | null> {
-  return approvalReviewRefusal(await authoringStanding(q, p.tenantId, p.docId, true), p.digest);
+  return approvalReviewRefusal(await authoringStanding(q, p.tenantId, p.docId, true), p.digest, p.reviewersRequired);
 }
 
 // ── The REVIEWER e-sign (§2.8) ──────────────────────────────────────────────
