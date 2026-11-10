@@ -71,6 +71,8 @@ beforeAll(async () => {
     );
     -- P-116: the quorum and the separation-of-duties check ask whether the signer is the
     -- organisation's only member. Organisation 99 has two, so there is someone to be independent of.
+    CREATE TABLE organizations (id integer PRIMARY KEY, settings jsonb);
+    INSERT INTO organizations (id) VALUES (99);
     CREATE TABLE organization_users (id serial PRIMARY KEY, organization_id integer NOT NULL, user_id integer NOT NULL);
     INSERT INTO organization_users (organization_id, user_id) VALUES (99, ${SIGNER}), (99, ${AUTHOR});
   `);

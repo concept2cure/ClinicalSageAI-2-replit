@@ -52,7 +52,8 @@ import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
 import {
-  assertSignerIsNotAuthor, isSoleMember, resolveTargetAuthors, separationOfDutiesRefusal, SOLE_MEMBER_RECORD,
+  assertSignerIsNotAuthor, organizationReviewPolicy, resolveTargetAuthors, separationOfDutiesRefusal, soleMemberMayApprove,
+  SOLE_MEMBER_RECORD,
   type SeparationOfDutiesResult,
 } from './governance/separation-of-duties';
 
@@ -115,9 +116,10 @@ export async function reviewQuorumVerdict(
   /** Who would sign the approval. Both approval doors pass it (P-95 Q1). */
   signerId?: number
 ): Promise<ReviewQuorumVerdict> {
-  // P-116: the signer is the organisation's only member, so no independent
-  // review can exist. The approval is admitted and recorded as unreviewed.
-  if (signerId !== undefined && (await isSoleMember(q, organizationId, signerId))) {
+  // P-116, P-117: the signer is the organisation's only member, so no
+  // independent review can exist, and its review rules admit that. The
+  // approval is admitted and recorded as unreviewed.
+  if (signerId !== undefined && (await soleMemberMayApprove(q, organizationId, signerId))) {
     return { met: true, soleMember: true };
   }
   return recordedReviewQuorum(q, artifactPk, organizationId, currentVersion, signerId);
@@ -290,7 +292,7 @@ async function reviewIndependenceVerdict(
       message: `Cannot approve: ${authorReviewers.length} reviewer(s) in the latest review round wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`,
     };
   }
-  const floor = reviewFloor(artifact);
+  const floor = reviewFloor(artifact, (await organizationReviewPolicy(q, organizationId)).independentReviewersRequired);
   if (active.length < floor.reviewers) {
     return {
       met: false,
@@ -314,17 +316,23 @@ function placedSection(ctdSection: string | null): string | null {
 }
 
 /**
- * How many independent reviewers must approve this version: one, for every
- * artifact (founder decision P-116, 2026-11-10: "Doesn't need two"). From
- * 2026-11-09 a placed artifact or a dossier section needed two (P-95 Q2, ruled
- * under delegation); the founder overruled that. The reason is still named
- * from fields no request can lower, so the refusal says what the document is.
+ * How many independent reviewers must approve this version: the number the
+ * organisation's administrator set in its security settings, one unless they
+ * raised it (founder decisions P-116, "Doesn't need two", and P-117, "set by
+ * the client super admin", both 2026-11-10). From 2026-11-09 a placed artifact
+ * or a dossier section needed two (P-95 Q2, ruled under delegation); the
+ * founder overruled that. The refusal still says what the document is, from
+ * fields no request can lower.
  */
-export function reviewFloor(artifact: { type: string | null; ctd_section: string | null }): { reviewers: number; because: string } {
+export function reviewFloor(
+  artifact: { type: string | null; ctd_section: string | null }, required = 1,
+): { reviewers: number; because: string } {
+  const reviewers = Math.max(1, Math.floor(required));
+  const rule = reviewers === 1 ? '' : ", and your organisation's review rules ask for that many";
   const section = placedSection(artifact.ctd_section);
-  if (section) return { reviewers: 1, because: `it is placed in CTD ${section}` };
-  if (artifact.type === 'section') return { reviewers: 1, because: 'it is a dossier section' };
-  return { reviewers: 1, because: 'it is not placed in a filing' };
+  if (section) return { reviewers, because: `it is placed in CTD ${section}${rule}` };
+  if (artifact.type === 'section') return { reviewers, because: `it is a dossier section${rule}` };
+  return { reviewers, because: `it is not placed in a filing${rule}` };
 }
 
 /**

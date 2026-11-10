@@ -3,6 +3,7 @@
  *
  * Handles tenant-specific configuration settings.
  */
+import { MAX_INDEPENDENT_REVIEWERS, MIN_INDEPENDENT_REVIEWERS } from '@shared/artifact-governance';
 import { Router } from 'express';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
@@ -103,6 +104,9 @@ const tenantSettingsSchema = z.object({
         .optional(),
       sessionTimeoutMinutes: z.number().int().positive().optional(),
       ipRestrictions: z.array(z.string()).optional(),
+      // The organisation's review rules (P-117; shared/artifact-governance.ts).
+      independentReviewersRequired: z.number().int().min(MIN_INDEPENDENT_REVIEWERS).max(MAX_INDEPENDENT_REVIEWERS).optional(),
+      soleMemberSelfApproval: z.boolean().optional(),
     })
     .optional(),
 
