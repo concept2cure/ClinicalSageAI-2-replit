@@ -84,7 +84,7 @@ const facts = () => {
       await openStep(page, 'Plan');
       run.facts.plan = await page.evaluate(facts);
       run.shots.push(await shotAt(page, '.pj-lc', `${key}-plan-steps`));
-      run.shots.push(await shotAt(page, '[data-testid="pj-plan-schedule"], [aria-label="Tasks and approvals"]', `${key}-plan-schedule`));
+      run.shots.push(await shotAt(page, LABEL === 'before' ? '[aria-label="Tasks and approvals"]' : '[data-testid="pj-plan-schedule"]', `${key}-plan-schedule`));
       await openStep(page, 'Review');
       run.facts.review = await page.evaluate(facts);
       run.shots.push(await shotAt(page, '.pj-lc', `${key}-review`));
