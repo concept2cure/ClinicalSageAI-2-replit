@@ -217,6 +217,12 @@ function HeadingActions({ heading, busy, inspected, sendingBack, onDecide, onSen
 }
 
 /** The read button, a failed read, and the saved text once read. */
+/** A heading's prose, saved or being written (CsrRunBuilds.tsx LiveDraft), in the page's own type on a quiet ground:
+ * it is a report to read, not a log. Until 2026-11-10 the saved text was shown in small monospace. */
+export const CSR_PROSE_STYLE = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', margin: 0,
+  padding: 16, font: 'inherit', lineHeight: 1.6, color: 'var(--text-100)', background: 'var(--bg-000)',
+  border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' } as const;
+
 function SavedSectionText({ heading, busy, read }: {
   heading: CsrBoardHeading; busy: boolean; read: ReturnType<typeof useSavedSectionText>;
 }) {
@@ -225,8 +231,7 @@ function SavedSectionText({ heading, busy, read }: {
       {read.reading ? 'Reading saved section…' : 'Read saved section text'}
     </button>}
     {read.readError && <p role="alert">{read.readError}</p>}
-    {read.inspected && read.savedText && <pre aria-label={`Saved text for §${heading.num}`}
-      style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 360, overflowY: 'auto', padding: 12 }}>
+    {read.inspected && read.savedText && <pre aria-label={`Saved text for §${heading.num}`} style={CSR_PROSE_STYLE}>
       {read.savedText.text}
     </pre>}
   </>;
