@@ -58,9 +58,33 @@ app at this commit:
 `audit-row.txt` shows the audit rows for those writes, with the reason and both values before and after. The
 organisation was then set back to 1 reviewer and self-approval on, through the same card, also audited.
 
+## The editor's approver signature (added later the same day, P-120)
+
+The founder then asked for the open questions to be researched and decided, and the work continued. The decisions are
+P-120 in `docs/LAUNCH_DEFINITION_OF_DONE.md`, with their sources.
+
+**What already exists.** An APPROVER signature on the editor's document is taken by E-sign or by the workflow sign
+(`server/routes/authoring.router.ts`). Both refused an author (`separationOfDutiesRefused`, P-18) and a document whose
+review route was not complete (`reviewRefused`, `approvalReviewRefusal` in
+`server/services/authoring/authoring-review-route.ts`, P-95). Freeze with the meaning AUTHOR was already open to an
+author, so a sole member could always freeze.
+
+**What changed.** One function, `approverIndependenceRefused`, now answers both doors:
+
+- the organisation's only member, where its review rules allow it, approves with no reviewer, and the signing
+  transaction's audit trail carries `APPROVAL_WITHOUT_INDEPENDENT_REVIEW`;
+- everyone else is checked as before, and the review route must name at least the number of reviewers the
+  organisation set (`independentReviewersRequired`).
+
+**Red, then green.** `editor-door-red.txt`: against the router as it was, 3 of the 7 new cases fail (the sole member
+is refused on both doors, and one reviewer satisfies a rule of two). `editor-door-green.txt`: all 7 pass, with the 7
+existing P-95 cases. The editor's other suites that load the router or the review route pass, apart from 13 that already fail on trunk (`editor-suites.txt`).
+
 ## Not done here
 
-- The editor's APPROVER e-signature and Freeze (`server/routes/authoring.router.ts`) and the other doors P-116 lists do
-  not yet admit a sole member, so the settings do not reach them yet. Each reads the same two values when it is built.
+- The editor door was not signed in the browser by a one-person organisation: the demo organisations all have
+  several members. It is proven by the route tests above, which run the real router over a fake database.
+- Sequence freeze and dispatch, QMS controlled documents, Module 3 sections, labeling approvals and the document
+  lifecycle do not yet admit a sole member, so the settings do not reach them yet. P-120 item 7 orders them.
 - No approval was signed in the browser under a changed rule; that path is proven by the integration tests above, which
   run the real route and the real signed act on PGlite.
