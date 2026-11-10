@@ -12,6 +12,8 @@ function stand(existing = []) {
   const api = async (method, path, body) => {
     if (method === 'GET' && path.endsWith('/leaves')) return { status: 200, json: leaves };
     if (method === 'PUT' && path.endsWith('/leaves')) {
+      // As the route does: every placement and every edit states its reason (REASON_REQUIRED otherwise).
+      if (typeof body.reason !== 'string' || body.reason.trim().length < 8) return { status: 400, text: 'REASON_REQUIRED' };
       puts.push(body);
       if (body.leafId) Object.assign(leaves.find((l) => l.id === body.leafId), { studyId: body.studyId, stfFileTag: body.stfFileTag });
       else leaves.push({ id: leaves.length + 1, sectionCode: body.sectionCode, title: body.title, documentUuid: body.documentUuid, studyId: body.studyId ?? null, stfFileTag: body.stfFileTag ?? null });

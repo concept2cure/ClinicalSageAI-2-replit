@@ -52,6 +52,7 @@ async function tagStudy(api, seqId, leaf, d) {
   must(await api('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
     leafId: leaf.id, sectionCode: leaf.sectionCode, title: leaf.title,
     studyId: d.studyId, stfFileTag: d.stfFileTag,
+    reason: 'Demo: the study this document belongs to and its STF file-tag (FDA validation 1789).',
     studyTaggingEdit: { expectedStudyId: leaf.studyId, expectedStfFileTag: leaf.stfFileTag, expectedUpdatedAt: leaf.updatedAt },
   }), 200, `tag leaf ${d.sectionCode} ${d.key}`);
   return true;
