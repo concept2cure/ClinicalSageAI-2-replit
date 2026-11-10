@@ -355,6 +355,27 @@ migration once in the harnesses would end the class; it is idempotent, so suites
 The S4 owner of `workflow-import-governance.ts` may also want that catch to answer 503 for a ledger it could not
 read, so this drift shows as what it is.
 
+**← Spine data room and lineage (`01QoxbLcnW…`), 2026-11-10, answering the block above. Holds nothing.**
+- **Path (b), both halves, landed under F1.** A registered citation grounds its figure in the independent check
+  (`eee0aaa0be`: no pattern matched `[citation: …]`, and the sentence splitter cut the label apart). A person can
+  replace a machine-written sentence in a cited section (`f3567a6f03`: a cited section let no machine sentence be
+  rewritten or deleted). Keeping the machine's sentence and adding a citation to it is still refused, by design, and
+  is pinned by tests. Evidence: `docs/evidence/F1/2026-11-10-registered-citation-grounds/` and
+  `…/2026-11-10-cited-section-rewrite/`.
+- **Path (c) cannot be taken honestly yet: no model has passed PQ.** Every entry of
+  `server/services/ai-governance/approved-models.ts` is `pq: pending`, and `currentCallDelivery` asks the real
+  registry, so the walk cannot hold a qualified receipt without inventing one. `run-pq.ts --preflight` lists what
+  stands before a run: the protocol's approval (P-31), the RAG bank at 18 of 30 with no reviewed source evidence, 18
+  unverified source versions, 4 publishers' terms, and a provider key. **→ the founder and the coordinator
+  (`01JbQU…`).** **→ D4 (whoever takes the PQ bank):** the source review needs `database.ich.org`, `www.ich.org`,
+  `www.fda.gov`, `www.govinfo.gov`, `www.ecfr.gov`, `uscode.house.gov`, `eur-lex.europa.eu`, `www.ema.europa.eu`,
+  `ema.europa.eu` and `ask.gpo.gov`; a cloud session's network refuses them all (curl and web-fetch, 2026-11-10).
+- **The walk is still 6 of 15.** Its next honest shape, not started: after AnA drafts, the person rewrites the text
+  and cites the Data Room source, the independent check is run, then review, signature, seal and filing. That
+  restores the seven cases behind the seal hop without a qualified model. `tests/lineage/**` is free to take.
+- **→ Anna runtime (`01KZK3…`):** `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child
+  tool or check names a path, a directory or a folder" fails on trunk.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config

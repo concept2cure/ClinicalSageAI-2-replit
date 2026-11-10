@@ -36,7 +36,7 @@ import {
   type LiveMachineSpan,
 } from './span-lineage.service';
 import { replaceVaultFigureSpans, retireStaleFigureSpans } from './span-lineage-vault';
-import { attributeMachineSpans, formattingCarryForwardSafety, subtractAttributedRanges, tagsMaskedForSplit,
+import { attributeMachineSpans, contentOutsideSpans, formattingCarryForwardSafety, machineWordsKept, subtractAttributedRanges, tagsMaskedForSplit,
   type AcceptedMachineText, type MachineAttributedSpan } from './machine-attribution';
 import {
   attributeQuotedSpans,
@@ -143,16 +143,54 @@ interface MachinePassInput {
 }
 
 /** Exact raw carry needs no formatting inference. Consume each retained
- * occurrence once and require the original attribution, including unknowns. */
-function allPreviousMachineSpansCarriedExactly(live: LiveMachineSpan[], current: MachineAttributedSpan[]): boolean {
+ * occurrence once and require the original attribution, including unknowns.
+ * Returns the prior machine spans this save did not carry that way. */
+function previousMachineSpansNotCarriedExactly(live: LiveMachineSpan[], current: MachineAttributedSpan[]): LiveMachineSpan[] {
   const remaining = [...current];
-  return live.every(previous => {
+  return live.filter(previous => {
     const index = remaining.findIndex(span => hashSpanText(span.spanText) === previous.spanTextSha256
       && span.machineAuthorId === previous.machineAuthorId && (span.assertedBy ?? null) === previous.assertedBy
       && (span.createdBy ?? null) === previous.createdBy && (span.signatureId ?? null) === previous.signatureId);
-    if (index === -1) return false;
+    if (index === -1) return true;
     remaining.splice(index,1);
-    return true;
+    return false;
+  });
+}
+
+/**
+ * Whether a save whose formatting cannot be re-anchored still accounts for
+ * every prior machine span.
+ *
+ * Carried exactly: always. Otherwise only when the one obstacle, in the prior
+ * content and in the new, is an element a reader prints something else for (a
+ * citation, a footnote, a cross-reference), and no sentence of the span is
+ * left in the part of the new content this save credits to its saver. Its
+ * words are then either still credited to the machine (an unchanged sentence
+ * of a span another sentence was rewritten in, carried by formatting) or gone
+ * (a person replaced or deleted them). Until 2026-11-10 both were refused, so
+ * a section of machine text took no cited sentence, and a cited section let no
+ * machine sentence be rewritten or deleted
+ * (docs/evidence/F1/2026-11-10-cited-section-rewrite/).
+ *
+ * Words that were kept and would become the saver's are still refused, however
+ * they were dressed (machineWordsKept): the machine's words do not become a
+ * person's by a citation. Any other obstacle (source mode, a place two readers
+ * disagree, unsupported markup) is refused as before, and so is a prior span
+ * whose stored hash the prior content no longer matches.
+ */
+function previousMachineSpansAccountedFor(live: LiveMachineSpan[], current: MachineAttributedSpan[],
+  previousContent: string, content: string): boolean {
+  const lost = previousMachineSpansNotCarriedExactly(live, current);
+  if (lost.length === 0) return true;
+  const onlyPrinting = [previousContent, content].every(value => {
+    const own = formattingCarryForwardSafety(value, value);
+    return own.safe || own.reason === 'printing-annotation';
+  });
+  if (!onlyPrinting) return false;
+  const saverContent = contentOutsideSpans(content, current);
+  return lost.every(previous => {
+    const prior = previousContent.slice(previous.charStart, previous.charEnd);
+    return hashSpanText(prior) === previous.spanTextSha256 && !machineWordsKept(prior, saverContent);
   });
 }
 
@@ -185,7 +223,7 @@ async function attributeMachineThenAuthor(
   });
   if (input.previousContent !== undefined && live.length > 0) {
     const safety = formattingCarryForwardSafety(input.previousContent,input.content);
-    if (!safety.safe && !allPreviousMachineSpansCarriedExactly(live,machine)) {
+    if (!safety.safe && !previousMachineSpansAccountedFor(live, machine, input.previousContent, input.content)) {
       throw new UnverifiedMachineFormattingError(safety.reason);
     }
   }

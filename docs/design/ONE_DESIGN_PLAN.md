@@ -1637,6 +1637,63 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
 
+#### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The founder-path walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) is 6 of 15 at head. Its seal hop is
+refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it do not run. Read from the code and run, not
+inferred:
+
+- **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
+  `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
+  machine-written text is signed for review, frozen or approved only with a gateway receipt naming a PQ-passed model
+  pin (`governed-machine-claims.ts` `ordinaryMachineGenesisMayRelease`, RULE 2). Production refuses high-risk
+  drafting for the same reason. This is the gate working, not a defect.
+- **What stands before a PQ run**, from `npx tsx server/eval/pq/run-pq.ts --preflight`:
+  - `PROTOCOL_NOT_APPROVED`: PQ-DRAFT-001 needs the founder's signature (P-31);
+  - the RAG bank holds 18 of 30 positive items, none with reviewed source evidence, and 5 open gold checks;
+  - 18 source versions and 4 publishers' terms are unverified;
+  - a product provider key.
+- **The source review is blocked on network access.** `server/eval/rag/guidance-corpus-manifest.json` verifies a
+  source by downloading the issuer's own file. Every issuer host is refused from a cloud session, by curl (403 on
+  CONNECT) and by web-fetch (seen again 2026-11-10 for `database.ich.org`, `www.ich.org`, `www.fda.gov`,
+  `www.ema.europa.eu`). The hosts are `database.ich.org`, `www.ich.org`, `www.fda.gov`, `www.govinfo.gov`,
+  `www.ecfr.gov`, `uscode.house.gov`, `eur-lex.europa.eu`, `www.ema.europa.eu`, `ema.europa.eu` and `ask.gpo.gov`.
+  The session's environment must allow them, or the review is done from a machine that reaches them.
+
+**Delivered**
+
+- **A registered citation grounds the figure it is cited for** (`eee0aaa0be`,
+  `docs/evidence/F1/2026-11-10-registered-citation-grounds/`). The independent check reads a citation as
+  `[citation: <name>, <locator>]`. No pattern matched it, and the sentence splitter cut the label apart, so the
+  product's own citation grounded nothing while a typed `[1]` did. The figure stayed a hard finding nobody could
+  resolve. Red first (5 cases), then 61 of 61; 686 pass across the 26 suites that use the checker. A citation in
+  another sentence, an empty label, and a citation not registered to its section still ground nothing.
+
+- **A person can replace a machine-written sentence in a section that holds a citation** (`f3567a6f03`,
+  `docs/evidence/F1/2026-11-10-cited-section-rewrite/`). A cited section let no machine sentence be rewritten or
+  deleted, and a sentence could not be rewritten and cited in one save: the lineage gate refused each with
+  "unsupported markup". It now accepts a prior machine span whose words are gone or still the machine's. Red first
+  (4 cases), then 24 of 24; 557 pass across the 30 suites around the gate.
+
+**Found, not fixed here**
+
+- A person still cannot put a citation into a sentence AnA wrote and keep the sentence (422
+  `MACHINE_LINEAGE_FORMATTING_UNVERIFIED`). That is deliberate and is pinned by five tests: the machine's words do
+  not become a person's by a citation.
+- A deletion that leaves an unchanged machine sentence of the same span unmatched is still refused (the pinned limit
+  in the same evidence).
+- The check does not read the figure spans `draft_authoring_document` records from its Vault receipts
+  (`sourceReferences`), so a figure AnA verified against its source still reads as uncited (LX-06's remaining half).
+- `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child tool or check names a path" fails
+  on trunk. **→ Anna runtime (`01KZK3…`).**
+
+**Next, in order**
+
+1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
+2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
+3. The walk follows the path a person can take before a model is qualified: rewrite AnA's text, cite the source,
+   run the check, review, sign, seal, file. That restores the seven cases behind the seal hop.
+
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
 - **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
