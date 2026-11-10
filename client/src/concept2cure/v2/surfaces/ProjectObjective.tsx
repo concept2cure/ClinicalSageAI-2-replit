@@ -21,7 +21,7 @@ import { C2CToast, useToast } from '../toast';
 
 type SourceKind = 'protocol' | 'registry' | 'publication' | 'press_release' | 'data_room' | 'other';
 interface ObjectiveSource { kind: SourceKind; title: string; url?: string; locator?: string }
-interface ObjectiveContent { objective: string; successCriteria: string | null; sources: ObjectiveSource[] }
+interface ObjectiveContent { objective: string; successCriteria: string | null; strategy?: string | null; sources: ObjectiveSource[] }
 interface ObjectiveRecord {
   charterId: number | null;
   current: { content: ObjectiveContent; version: number; updatedAt: string } | null;
@@ -83,6 +83,8 @@ function ObjectiveView({ record }: { record: ObjectiveRecord }) {
   );
 }
 
+const strategyOf = (current: ObjectiveRecord['current']): string => current?.content.strategy ?? '';
+
 /** The governed form that records a version of the objective, with its reason. */
 function ObjectiveForm({ current, onCancel, onSubmit }: {
   current: ObjectiveRecord['current'];
@@ -102,6 +104,9 @@ function ObjectiveForm({ current, onCancel, onSubmit }: {
           { key: 'objective', label: 'Objective', type: 'textarea', required: true, default: current?.content.objective ?? '' },
           { key: 'successCriteria', label: 'Success criteria (optional)', type: 'textarea', default: current?.content.successCriteria ?? '',
             placeholder: 'e.g. The primary endpoint met at one-sided alpha 0.025' },
+          { key: 'strategy', label: 'Regulatory strategy (optional)', type: 'textarea', default: strategyOf(current),
+            placeholder: 'How the project will reach the objective, e.g. the pathway, the pivotal evidence and the agency interactions planned',
+            desc: 'Shown at the head of the Plan step, and given to AnA with the objective.' },
           { key: 'sourceKind', label: 'Taken from', type: 'select', options: SOURCE_KINDS, half: true, default: first?.kind ?? 'protocol' },
           { key: 'sourceTitle', label: 'Source', type: 'text', half: true, default: first?.title ?? '', placeholder: 'e.g. Protocol C2C-101-201' },
           { key: 'sourceLink', label: 'Section or link (optional)', type: 'text', default: first?.url ?? first?.locator ?? '',
@@ -115,39 +120,53 @@ function ObjectiveForm({ current, onCancel, onSubmit }: {
   );
 }
 
-export function ProjectObjective({ programId, canEdit, onAsk }: {
-  programId: string;
-  canEdit: boolean;
-  onAsk?: (text: string) => void;
-}) {
+/* A recorded version is read again wherever the objective of record is shown: the block under the project's name and
+   the strategy at the head of the Plan step are two readers of one record, and neither may show the older version. */
+const recorded = { n: 0, listeners: new Set<() => void>() };
+const onRecorded = (listener: () => void) => { recorded.listeners.add(listener); return () => { recorded.listeners.delete(listener); }; };
+function announceRecorded() { recorded.n += 1; recorded.listeners.forEach((l) => l()); }
+
+/** The objective of record for one project: its read, and the governed write of a new version. Shared by the block
+ *  under the project's name and the Plan step's strategy, so there is one form and one write. */
+function useObjectiveOfRecord(programId: string) {
   const [toast, notify] = useToast();
   const path = `/api/charters/by-project/${encodeURIComponent(programId)}/objectives`;
-  const [version, setVersion] = React.useState(0);
+  const version = React.useSyncExternalStore(onRecorded, () => recorded.n, () => recorded.n);
   const read = useLiveData<ObjectiveRecord>(path, [path, version], isRecord);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-
-  // Nothing is shown while it loads; a failed or unreadable read says so and never takes the page down.
-  if (!read.data) return read.loading ? null : <p className="pj-objective pj-objective-s" role="note">The project's objective could not be read.</p>;
-  const record = read.data;
-  const current = record.current;
+  const current = read.data?.current ?? null;
 
   const save = async (v: Record<string, string>) => {
     setBusy(true);
     try {
       const edited = sourceFrom(v);
       const sources = [...(edited ? [edited] : []), ...(current?.content.sources.slice(1) ?? [])];
-      const res = await apiRequest('PUT', path, { objective: v.objective, successCriteria: v.successCriteria || undefined, sources, reason: v.reason });
+      const res = await apiRequest('PUT', path, { objective: v.objective, successCriteria: v.successCriteria || undefined,
+        strategy: v.strategy?.trim() || undefined, sources, reason: v.reason });
       if (!res.ok) await assertApiResponseOk(res);
       notify(current ? "The project's objective is recorded as a new version." : "The project's objective is recorded.");
       setEditing(false);
-      setVersion((n) => n + 1);
+      announceRecorded();
     } catch (e) {
       notify(`The objective was not recorded: ${e instanceof Error ? e.message : 'the save failed'}. Nothing was changed.`, 'error');
     } finally {
       setBusy(false);
     }
   };
+  return { read, current, editing, setEditing, busy, save, toast };
+}
+
+export function ProjectObjective({ programId, canEdit, onAsk }: {
+  programId: string;
+  canEdit: boolean;
+  onAsk?: (text: string) => void;
+}) {
+  const { read, current, editing, setEditing, busy, save, toast } = useObjectiveOfRecord(programId);
+
+  // Nothing is shown while it loads; a failed or unreadable read says so and never takes the page down.
+  if (!read.data) return read.loading ? null : <p className="pj-objective pj-objective-s" role="note">The project's objective could not be read.</p>;
+  const record = read.data;
 
   return (
     <section className="pj-objective" aria-labelledby={`pj-objective-${programId}`}>
@@ -159,6 +178,35 @@ export function ProjectObjective({ programId, canEdit, onAsk }: {
         </span>
       </div>
       <ObjectiveView record={record} />
+      {editing && <ObjectiveForm current={current} onCancel={() => setEditing(false)} onSubmit={(v) => void save(v)} />}
+      <C2CToast msg={toast} />
+    </section>
+  );
+}
+
+/**
+ * The regulatory strategy at the head of the Plan step (THE_PROGRAM §8 item 1): how the project means to reach its
+ * objective. The objective itself is said once, under the project's name, where it is in view on every step; the plan
+ * opens with the strategy. It is part of the objective of record, so stating or changing it records a new version
+ * with a reason, through the same form. No strategy is said as none, never an invented one.
+ */
+export function PlanStrategy({ programId, canEdit }: { programId: string; canEdit: boolean }) {
+  const { read, current, editing, setEditing, busy, save, toast } = useObjectiveOfRecord(programId);
+  if (!read.data) {
+    return read.loading ? null : <p className="pj-desc pj-fact-none" role="note" data-testid="pj-plan-strategy">The project&apos;s regulatory strategy could not be read.</p>;
+  }
+  const strategy = current?.content.strategy?.trim() || null;
+  return (
+    <section className="pj-sec" aria-labelledby="pj-strategy-h" data-testid="pj-plan-strategy">
+      <div className="pj-sec-h">
+        <h2 id="pj-strategy-h">Strategy</h2>
+        {canEdit && <button type="button" className="btn ghost small" disabled={busy} onClick={() => setEditing(true)}>{strategy ? 'Edit' : 'State the strategy'}</button>}
+      </div>
+      {strategy ? <p className="pj-desc pj-strategy-t">{strategy}</p>
+        : <p className="pj-desc pj-fact-none">{current
+          ? 'No regulatory strategy is recorded yet: how this project will reach its objective.'
+          : 'No objective or regulatory strategy is recorded yet. The objective is stated at the top of this page; the strategy is recorded with it.'}</p>}
+      {strategy && current && <p className="pj-desc pj-fact-none">Recorded with the objective, version {current.version}, {dayOf(current.updatedAt)}.</p>}
       {editing && <ObjectiveForm current={current} onCancel={() => setEditing(false)} onSubmit={(v) => void save(v)} />}
       <C2CToast msg={toast} />
     </section>
