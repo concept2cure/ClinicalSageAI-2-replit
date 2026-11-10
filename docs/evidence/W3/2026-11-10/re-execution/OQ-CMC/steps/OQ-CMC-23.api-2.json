@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971/approve",
+    "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e/approve",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
@@ -16,13 +16,13 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 312,
+    "durationMs": 394,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
-        "project_id": "78731580-7719-4562-985d-a412edebff5a",
+        "id": "ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
+        "project_id": "6270d978-aff3-43f0-ad87-1e6726350bf8",
         "tenant_id": 2,
         "material_type": "drug_substance",
         "material_name": "BX-701",
@@ -39,14 +39,14 @@
           "ich": "ICH Q6A"
         },
         "approval_status": "approved",
-        "created_at": "2026-11-10T03:39:25.353Z",
-        "updated_at": "2026-11-10T03:42:30.623Z"
+        "created_at": "2026-11-10T13:06:31.094Z",
+        "updated_at": "2026-11-10T13:22:00.679Z"
       },
       "governance": {
-        "actionId": "act_203a723c45f040ac86f086d5d0666abb",
-        "sha256Chain": "bec37ba0874f74edbf1869b5c400e4406ac77b67d64690955a410ff2c2216b65"
+        "actionId": "act_37be556133624de7938d3258506349b7",
+        "sha256Chain": "a2e8d2a13d9019f65fa732bc3144b1ff074fbf030f3c0f5d93cf5da296450084"
       },
-      "timestamp": "2026-11-10T03:42:30.636Z",
+      "timestamp": "2026-11-10T13:22:00.698Z",
       "module3Linked": true
     }
   }

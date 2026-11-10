@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "78731580-7719-4562-985d-a412edebff5a",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
       "title": "OQ edit probe comparability",
       "type": "process",
       "product": "Scale"
@@ -14,19 +14,19 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 21,
+    "durationMs": 35,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": "808e80f6-2af3-403a-a6de-3f51ea4a163e",
-        "project_id": "78731580-7719-4562-985d-a412edebff5a",
+        "id": "cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
+        "project_id": "6270d978-aff3-43f0-ad87-1e6726350bf8",
         "title": "OQ edit probe comparability",
         "product": "Scale",
         "type": "process",
         "status": "draft",
-        "createdAt": "2026-11-10T03:45:41.294Z",
-        "updatedAt": "2026-11-10T03:45:41.294Z",
+        "createdAt": "2026-11-10T13:26:12.135Z",
+        "updatedAt": "2026-11-10T13:26:12.135Z",
         "methods": [],
         "outcome": null,
         "owner": null

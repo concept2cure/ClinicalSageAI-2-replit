@@ -10,6 +10,7 @@ import { requireSigner } from '../../lib/credentials.mjs';
 import { serverIsDevelopment } from '../../lib/harness.mjs';
 import { completeUnapprovedKey, dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
+import { module3RequirementFindings } from './complete-programme.mjs';
 
 await step(
   {
@@ -83,21 +84,38 @@ await step(
     id: 'OQ-CMC-27',
     urs: ['URS-CMC-017'],
     title: 'A release signature covers the manifest that would be transmitted',
-    action: 'sign the sequence’s release, then read the dispatch gate',
-    expected: 'the signature is bound to this sequence’s leaf manifest; a manifest that differs reads as no release signature for the sequence',
+    action: 'as the signer, sign the second programme’s sequence for dispatch; read the release verdict; place Module 3 again; read the verdict again',
+    expected: 'signed and bound to the current leaf manifest; after the placement the signature no longer clears the sequence, and the verdict says to sign the current content',
     dependsOn: ['OQ-CMC-19'],
+    note: 'v0.13: executed for the first time. Until v0.12 the step posted to /api/submissions/sequences/:id/sign-release, which is no route; a sequence\'s release is a governed signature (POST /api/c2c/actions/sign, intent `dispatch`), as the Submission Center signs it.',
   },
   async (ctx) => {
-    const { api, deviation } = ctx;
+    const { api, expect, attach } = ctx;
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
-    const sign = await postAsSigner(ctx, signer, `/api/submissions/sequences/${state.sequenceId}/sign-release`, {
-      reason: 'Releasing sequence 0001 for transmission.', meaning: 'approval',
+    const { projectId, submissionId, sequenceId } = state.complete;
+    const release = async () => {
+      const r = await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`);
+      expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
+      return r.json?.releaseSignature ?? {};
+    };
+    const unsigned = await release();
+    expect(unsigned.cleared === false, 'the sequence read as released before anyone signed it', unsigned);
+    const sign = await postAsSigner(ctx, signer, '/api/c2c/actions/sign', {
+      target: `ectd-sequence:${sequenceId}`, reason: 'Releasing sequence 0001 for transmission.', payload: { intent: 'dispatch', meaning: 'approval' },
     });
-    if (sign.status !== 200) {
-      deviation(`not executed — the release signature could not be made (${sign.status}); the Submission Center path (OQ-SUBC) owns that act.`, sign.json);
-    }
-    const readiness = await api('GET', `/api/submissions/sequences/${state.sequenceId}/dispatch-readiness`);
-    return `release signed; dispatch readiness ${readiness.status}`;
+    expect(sign.status === 200 && sign.json?.state === 'executed', `the release signature expected 200 executed, got ${sign.status} ${sign.json?.state}`, sign.json);
+    const signed = await release();
+    expect(signed.cleared === true && signed.verdict === 'signed', `the signed sequence expected a clearing release, got ${signed.verdict}`, signed);
+
+    const placed = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${projectId}`, {
+      submissionId, sequenceId, reason: 'Placing Module 3 again after the release was signed.',
+    });
+    expect(placed.status === 200, `the further placement expected 200, got ${placed.status}`, placed.json);
+    const after = await release();
+    attach('release-signature.json', { unsigned, signed, afterFurtherPlacement: after });
+    expect(after.cleared === false && after.verdict !== 'signed', `the signature still clears the sequence after its content changed (${after.verdict})`, after);
+    expect(/sign/i.test(String(after.detail ?? '')), 'the verdict does not say to sign the current content', after);
+    return `unsigned; signed and bound to the current leaf manifest (signature ${signed.signatureId}); after a further placement: ${after.verdict}, not cleared — ${after.detail}`;
   },
 );
 
@@ -106,21 +124,38 @@ await step(
     id: 'OQ-CMC-28',
     urs: ['URS-CMC-018'],
     title: 'An original IND carrying no 3.2.S and no 3.2.P is not dispatch-ready',
-    action: 'read the dispatch readiness of the original IND sequence',
-    expected: 'the verdict speaks to the Module 3 requirement, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies',
+    action: 'read the dispatch verdict of the first programme’s original IND sequence, which carries no Module 3; then of the second programme’s, where Module 3 is placed',
+    expected: 'blocked for 3.2.S and for 3.2.P, citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; no such finding once Module 3 is placed',
     dependsOn: ['OQ-CMC-19'],
+    note: 'v0.13: executed for the first time, on two live sequences. The third case the row names, clearance by a cross-referenced Drug Master File with its Letter of Authorization, is not executed and is owed.',
   },
   async ({ api, expect, attach }) => {
-    const r = await api('GET', `/api/submissions/sequences/${state.sequenceId}/dispatch-readiness`);
-    attach('dispatch-readiness.json', r.json ?? {});
-    expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
-    const text = JSON.stringify(r.json ?? {});
-    expect(
-      /312\.23/.test(text) || /3\.2\.S/.test(text),
-      'the verdict says nothing about the Module 3 requirement',
-      text.slice(0, 300),
-    );
-    return 'readiness read 200; the verdict speaks to the Module 3 requirement';
+    const submissions = await api('GET', '/api/submissions');
+    const rows = Array.isArray(dataOf(submissions)) ? dataOf(submissions) : [];
+    const own = rows.find((x) => String(x.programId ?? x.projectId ?? x.project_id) === String(state.projectId));
+    expect(Boolean(own), 'the first programme has no submission', rows.length);
+    const seq = await api('POST', `/api/submissions/${own.id}/sequences`, { region: 'fda', sequenceNumber: '0001', type: 'original' });
+    expect([200, 201].includes(seq.status), `the sequence create expected 200/201, got ${seq.status}`, seq.json);
+    const read = async (sequenceId) => {
+      const r = await api('GET', `/api/submissions/sequences/${sequenceId}/dispatch-readiness`);
+      expect(r.status === 200, `the readiness read expected 200, got ${r.status}`, r.json);
+      return r.json ?? {};
+    };
+    const without = await read(dataOf(seq).id);
+    const required = module3RequirementFindings(without);
+    const withModule3 = await read(state.complete.sequenceId);
+    const stillRequired = module3RequirementFindings(withModule3);
+    attach('dispatch-readiness.json', { withoutModule3: { gate: without.gate, findings: required }, withModule3: { gate: withModule3.gate, findings: stillRequired } });
+    const headings = required.map((f) => f.sectionCode).sort();
+    expect(headings.join(',') === '3.2.P,3.2.S', `expected a blocking finding for 3.2.S and for 3.2.P, got ${headings.join(',') || 'none'}`, required);
+    for (const f of required) {
+      const m = String(f.message ?? '');
+      expect(f.severity === 'error' && /312\.23\(a\)\(7\)/.test(m) && /312\.23\(b\)/.test(m), `the ${f.sectionCode} finding does not cite 21 CFR 312.23(a)(7) and (b)`, f);
+      expect(/place Module 3/i.test(m) && /Letter of Authorization/i.test(m), `the ${f.sectionCode} finding does not name both remedies`, f);
+    }
+    expect(without.gate?.cleared === false, 'the sequence with no Module 3 read dispatch-clear', without.gate);
+    expect(stillRequired.length === 0, 'the sequence that carries Module 3 is still asked for it', stillRequired);
+    return 'with no Module 3: blocked for 3.2.S and 3.2.P, each citing 21 CFR 312.23(a)(7) and (b) and naming both remedies; with Module 3 placed: no such finding';
   },
 );
 

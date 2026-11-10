@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "OQ-008: the comparability assessment is approved on the evidence recorded against it.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 306,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "effad986-6462-4b01-b6de-21402161171a",
+        "project_id": "78731580-7719-4562-985d-a412edebff5a",
+        "title": "OQ probe comparability",
+        "product": "Scale",
+        "type": "process",
+        "status": "approved",
+        "createdAt": "2026-11-10T03:42:50.992Z",
+        "updatedAt": "2026-11-10T03:45:30.597Z",
+        "methods": [],
+        "outcome": "Comparable on every attribute against the pre-change criteria.",
+        "owner": "oq-runner@validation.local"
+      },
+      "governance": {
+        "actionId": "act_16027918b92d4a6bbb950410a3d70eea",
+        "sha256Chain": "9e0c001ff2abb484acab311c730552d93181f6fad8625ea3e4d71178397cd4cf"
+      },
+      "module3Linked": true
+    }
+  }
+}

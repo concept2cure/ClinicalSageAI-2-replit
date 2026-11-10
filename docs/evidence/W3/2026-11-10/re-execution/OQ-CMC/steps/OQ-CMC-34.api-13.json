@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "78731580-7719-4562-985d-a412edebff5a",
-      "sampleId": "OQ-QC-171545",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "sampleId": "OQ-QC-988716",
       "sampleType": "finished-product",
       "testMethod": "HPLC assay",
       "passFailStatus": "pass",
@@ -18,7 +18,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 21,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
