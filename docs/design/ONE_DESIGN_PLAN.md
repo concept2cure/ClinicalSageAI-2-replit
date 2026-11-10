@@ -2205,7 +2205,7 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
     (M7), and the IVD 510(k) outline (M6(a)).
 
-#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
 Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
 
@@ -2268,6 +2268,33 @@ session's brief). Each records its own progress here; as reported to this sessio
   first (S3), and AnA over the catalog.
 - **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
   D3-4 (`d50c5f07e9`).
+
+**2026-11-10, launch row D2: the Codespace click-through's second run**
+(`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`). The founder's Codespace was rebuilt from an empty
+database with trunk's own `.devcontainer` scripts, then clicked through as Ana Author and as the Lumen lead.
+
+| Commit | What it does |
+|---|---|
+| `8c4a9e5a8a`, `912ec3cf35` | Approving a controlled document no longer makes every project Vault in the organisation answer 500. The Vault checks only its own project's sources and refreshes its captured Quality records first. The data room no longer counts those records as files awaiting a classifier. |
+| `11aa491184`, `ff49ebed77` | The Codespace's demo seed signs its two-person steps: the approver is the second signer, designated QMS approver through the governed route. From an empty database every SOP approval, method validation and the RACT's approval run. |
+| `7aeecfc654`, `c9a3680a24` | The seed re-runs over its own data: a document already frozen or approved is found, and two people's same-titled acknowledgement tasks do not stop it. |
+| `44f25b3fdb` | Biostatistics "Save as a working document" saved nothing (503) on every project: the sign-in token carries the organisation as text. |
+| `1c26e6aed8` | Biostatistics names an unfilled field beside "Assess defensibility", not as a red error. |
+| `cc06768a51` | The CSR study is prepared as an open IND with a clearly fictional sponsor (P-115 item 4), so its package identity is complete. |
+| `a3c57ccdf5` | A refused "Close letter" ends its message with one full stop. |
+| `70ec16da36` (the CSR walk session, from this run's finding) | A fresh Codespace's CSR study preparation finishes. |
+
+- **Coverage:** runs A (projects and authoring, 120 clicks) and C (work areas and administration, 265 clicks) finished
+  with nothing further. B (Communication, Vault, Submission Center, Tasks) and D (the Lumen account) are recorded in
+  the evidence README as they end. The crawler resumes from its log and restarts its browser every 60 clicks.
+- **Found and handed on:** every sign-in mints the token's organisation and user ids as strings (platform owner); a
+  page open reads the session six times and the project five (shell owner); `lumen-vault`'s 24 review, approval and
+  seal steps want a third person in the development organisation (the Codespace session, DATA).
+- **Seen red on trunk, not this lane's:** `section-sources-unverifiable-native.pglite` (3),
+  `tests/routes/chat-governed-upload` (1).
+- **GA readiness** (`scripts/ops/ga-readiness-report.mjs`, 8 of 42 ready, 18 blockers): none is code in this lane.
+  They are production secrets, SMTP for the sign-in code, the PQ protocol's approval and run, a production restore
+  rehearsal and the AWS apply (rows D1, D5, D6, D9, D10).
 
 **Open for the founder:**
 - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
