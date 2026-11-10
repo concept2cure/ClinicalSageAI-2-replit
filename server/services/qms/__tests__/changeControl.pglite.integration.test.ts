@@ -307,6 +307,26 @@ const close = (id: number, client?: RequestSqlClient) => svc.transitionChange(OR
   userId: 11, effectivenessReview: 'The approved acceptance criteria were met.',
 }, client);
 
+/* The approval signature binds the change's content (change-approval-signature.ts computeQmsChangeContentDigest).
+   Until 2026-11-10 updateChange rewrote it in approved, in_implementation and verification. */
+describe('content is editable until approval', () => {
+  it.each(['proposed', 'under_assessment'])('edits a change that is %s', async (status) => {
+    const change = await svc.createChange(ORG, { changeNumber: `CC-EDIT-${++sequence}`, title: 'Editable', proposedBy: 10 });
+    await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
+    const row = await svc.updateChange(ORG, change.id, { impactAssessment: 'Assessed.', implementationPlan: 'Planned.' });
+    expect(row).toMatchObject({ status, impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])(
+    'refuses an edit to a change that is %s, and leaves its content as it was', async (status) => {
+      const change = await svc.createChange(ORG, { changeNumber: `CC-EDIT-${++sequence}`, title: 'As approved',
+        impactAssessment: 'As approved.', implementationPlan: 'As approved.', proposedBy: 10 });
+      await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
+      expect(await svc.updateChange(ORG, change.id, { title: 'Rewritten', implementationPlan: 'Rewritten after approval.' })).toBeNull();
+      expect(await svc.getChange(ORG, change.id)).toMatchObject({ status, title: 'As approved', impact_assessment: 'As approved.', implementation_plan: 'As approved.' });
+    });
+});
+
 describe('change closure requires an admitted verifier and effectiveness review', () => {
   it.each([undefined, null, '', '   '])('requires a recorded effectiveness review: %j', async effectivenessReview => {
     const change = await verification();
@@ -414,14 +434,15 @@ describe('change closure refuses stale requirements and later mutation', () => {
     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status: 'verification', closed_at: null });
   });
 
-  it.each(['state', 'content', 'link'])('refuses a stale closure after an interleaved %s change', async kind => {
+  /* An interleaved content edit is no longer possible in verification (CHANGE_EDITABLE_STATES): the content is what the
+     approval signed. That is pinned below, in "content is editable until approval". */
+  it.each(['state', 'link'])('refuses a stale closure after an interleaved %s change', async kind => {
     const change = await verification();
     let changed = false;
     const client: RequestSqlClient = { query: async (sql, params) => {
       if (!changed && /UPDATE qms_change_controls/.test(sql)) {
         changed = true;
         if (kind === 'state') await svc.transitionChange(ORG, change.id, 'in_implementation', { userId: 12 });
-        if (kind === 'content') await svc.updateChange(ORG, change.id, { implementationPlan: 'A revised plan needing review.' });
         if (kind === 'link') await svc.addLink(ORG, change.id, { linkType: 'validation', linkedRef: 'VP-LATE', relationship: 'requires' });
       }
       return pool.query(sql, params);

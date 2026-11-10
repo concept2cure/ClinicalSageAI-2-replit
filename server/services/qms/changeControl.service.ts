@@ -277,6 +277,17 @@ export async function getChange(orgId: number, id: number, client: RequestSqlCli
   return rows[0] ? { ...rows[0], learning_review: learningReviewView(rows[0]) } : null;
 }
 
+/**
+ * The states in which a change's content may still be edited: proposed and under assessment. From approval on, the
+ * content is what the approver's signature binds (change-approval-signature.ts computeQmsChangeContentDigest: title,
+ * description, type, classification, risk, reason, impact assessment, implementation plan, target date, document), so
+ * it is fixed, and amending an approved change is a new change request.
+ *
+ * Until 2026-11-10 every state but closed, cancelled and rejected took an edit: an approved, implementing or verifying
+ * change's assessment, plan, title or target could be rewritten under its approval signature, and nothing said so.
+ */
+export const CHANGE_EDITABLE_STATES = ['proposed', 'under_assessment'] as const;
+
 export async function updateChange(orgId: number, id: number, p: {
   title?: string; description?: string | null; changeType?: string; classification?: string;
   riskLevel?: string | null; reason?: string | null; impactAssessment?: string | null;
@@ -285,7 +296,8 @@ export async function updateChange(orgId: number, id: number, p: {
 }, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
   // Build a COALESCE-guarded partial update (only provided fields change).
   const sets: string[] = [];
-  const args: unknown[] = [];
+  /* The id, the organization and the editable states are bound first, so the statement names them as $1-$3. */
+  const args: unknown[] = [id, orgId, [...CHANGE_EDITABLE_STATES]];
   const add = (col: string, val: unknown) => { args.push(val); sets.push(`${col} = $${args.length}`); };
   if (p.title !== undefined) add('title', p.title);
   if (p.description !== undefined) add('description', p.description);
@@ -299,11 +311,9 @@ export async function updateChange(orgId: number, id: number, p: {
   if (p.qmsDocumentId !== undefined) add('qms_document_id', p.qmsDocumentId);
   if (p.assessedBy !== undefined) add('assessed_by', p.assessedBy);
   if (sets.length === 0) return getChange(orgId, id, client);
-  args.push(id, orgId);
   const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = clock_timestamp()
-      WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
-        AND status NOT IN ('closed','cancelled','rejected')
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[])
       RETURNING *`,
     args,
   );
