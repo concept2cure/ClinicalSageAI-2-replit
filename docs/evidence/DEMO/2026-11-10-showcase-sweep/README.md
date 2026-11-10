@@ -31,6 +31,16 @@ sideways scroll, a screenshot (`screens/` keeps the flagged stops and one clean 
 | `409` on `GET …/intelligence`, console only, nothing on the page | 11 stops on the Lumen projects | The sweep moving between two sponsors' projects faster than a person does: a read for the project just left is refused as stale. Not reproduced at a person's pace (three projects opened in turn: none) | Nothing to fix; no words reach the screen |
 | `429`, "Couldn't load the reporting canvas" | one stop, the 36th, two and a half minutes in | The request rate limit: 600 API requests a minute for one signed-in person (`server/config/platform-limits.ts`). A project page load makes about 40, so it takes more than about a dozen full page loads inside one minute. It cleared on the next stop | **Presenter advice** (below). The limit is a security control and is unchanged |
 
+## Inside the screens (`DEPTH=tabs`, `sweep-tabs.json`)
+
+For one project of each kind (C2C-101, LMN-801, NeuroPanel-Dx, the CDISC pilot CSR): every tab of every rail
+destination, clicked in turn, and every document the Author stage lists, opened in the editor. 180 stops.
+**0 server errors, no error wording on any page.** 7 flagged, all one thing:
+
+| Seen | Where | What it is |
+|---|---|---|
+| `409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE`; the page says "Module 3 is not composed here for this project" | CMC / Module 3 → Quality by design and Module 3 build, on every one of these four projects | The composition boundary (P-28): Module 3 is composed for a small-molecule drug only, and these are biologics and a device. The page says so in the server's own words (`screens/*cmc-module-3-tab-*.png`). **For a showcase, show CMC / Module 3 on C2C-201**, the small-molecule project the biotech pack has seeded since 2026-11-09 for this purpose |
+
 ## Fixed: Biostatistics opens a device or diagnostics project on a sized design
 
 `docs/evidence/DEMO/2026-11-10-showcase-sweep/screens/demo-mdx-neuropanel-dx-510-rail-biostatistics.png` (before) and

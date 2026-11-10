@@ -57,7 +57,8 @@ async function stop(page, name, watch, act) {
         .map((el) => el.textContent.trim().slice(0, 180)).slice(0, 5);
     }, ERR_WORDS.source);
     r.sideways = await page.evaluate(() => document.scrollingElement.scrollWidth > window.innerWidth + 1);
-    await page.screenshot({ path: path.join(SHOTS, `${slug(name)}.png`) });
+    const flagged = r.errorText.length || r.sideways || watch.cons.length > before.cons || watch.net.slice(before.net).some((f) => /^5/.test(f));
+    if (process.env.DEPTH !== 'tabs' || flagged) await page.screenshot({ path: path.join(SHOTS, `${slug(name)}.png`) });
   } catch (e) {
     r.error = String(e && e.message || e).split('\n')[0].slice(0, 240);
     await page.screenshot({ path: path.join(SHOTS, `${slug(name)}-ERR.png`) }).catch(() => undefined);
@@ -80,6 +81,45 @@ function watcher(page) {
 const openProject = (page, id) => page.goto(`${BASE}/concept2cure/project-home?program=${id}`, { waitUntil: 'domcontentloaded' });
 const rail = (page, label) => page.getByRole('navigation').getByRole('button', { name: label, exact: true }).or(page.getByRole('navigation').getByRole('link', { name: label, exact: true })).first();
 
+/**
+ * DEPTH=tabs: inside the screens. For one project of each kind (the first whose title matches each of PICK): every
+ * tab of every rail destination, clicked in turn, and every document the Author stage lists, opened in the editor.
+ * Writes ./sweep-tabs.json; screenshots only for a stop with something to look at.
+ */
+const PICK = [/C2C-101/, /LMN-801/, /NeuroPanel/, /CDISCPILOT01/];
+async function depth(page, watch, listed) {
+  for (const p of PICK.map((re) => listed.find((x) => re.test(x.name))).filter(Boolean)) {
+    const tag = slug(p.name).slice(0, 22);
+    for (const label of RAIL.filter((l) => l !== 'Home')) {
+      await openProject(page, p.id);
+      await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+      await rail(page, label).click({ timeout: 15000 }).catch(() => undefined);
+      await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+      await page.waitForTimeout(2000);
+      const tabs = await page.getByRole('tab').evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().height > 0 && !e.disabled).map((e) => e.textContent.trim()).slice(0, 14));
+      for (const [i, name] of tabs.entries()) {
+        await stop(page, `${tag} ${label} tab ${name.replace(/\s*·.*$/, '')}`, watch, async () => {
+          await page.getByRole('tab').filter({ hasText: name }).first().click({ timeout: 10000 });
+        });
+        void i;
+      }
+    }
+    // Every document the Author stage offers, opened in the editor.
+    await openProject(page, p.id);
+    await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click({ timeout: 15000 }).catch(() => undefined);
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+    const docs = await page.getByRole('button', { name: /^Open / }).evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') || e.textContent.trim()).filter((t) => /^Open /.test(t)).slice(0, 8));
+    for (const doc of docs) {
+      await stop(page, `${tag} editor ${doc.replace(/^Open /, '')}`, watch, async () => {
+        await openProject(page, p.id);
+        await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click({ timeout: 15000 });
+        await page.getByRole('button', { name: doc, exact: true }).first().click({ timeout: 15000 });
+        await page.waitForURL(/document-authoring/, { timeout: 30000 });
+      });
+    }
+  }
+}
+
 (async () => {
   fs.mkdirSync(SHOTS, { recursive: true });
   const browser = await chromium.launch();
@@ -94,6 +134,7 @@ const rail = (page, label) => page.getByRole('navigation').getByRole('button', {
       return (j.projects ?? j.data ?? j).map((p) => ({ id: p.id, name: p.name ?? p.title }));
     });
     out.projects = listed;
+    if (process.env.DEPTH === 'tabs') { await depth(page, watch, listed); return; }
     await stop(page, 'home', watch, () => page.goto(BASE + '/concept2cure', { waitUntil: 'domcontentloaded' }));
     await stop(page, 'projects', watch, () => page.goto(BASE + '/concept2cure/projects', { waitUntil: 'domcontentloaded' }));
     for (const p of listed) {
@@ -123,7 +164,7 @@ const rail = (page, label) => page.getByRole('navigation').getByRole('button', {
     out.finishedAt = new Date().toISOString();
     const look = out.stops.filter((r) => r.error || r.apiFailures.some((f) => /^5/.test(f)) || r.consoleErrors.length || (r.errorText || []).length || r.sideways);
     out.summary = { stops: out.stops.length, toLookAt: look.length, serverErrors: out.stops.reduce((n, r) => n + r.apiFailures.filter((f) => /^5/.test(f)).length, 0) };
-    fs.writeFileSync(path.join(HERE, 'sweep.json'), JSON.stringify(out, null, 2) + '\n');
+    fs.writeFileSync(path.join(HERE, process.env.DEPTH === 'tabs' ? 'sweep-tabs.json' : 'sweep.json'), JSON.stringify(out, null, 2) + '\n');
     console.info(JSON.stringify(out.summary));
     await browser.close();
   }
