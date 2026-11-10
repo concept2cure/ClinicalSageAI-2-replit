@@ -84,8 +84,8 @@ signed as itself."*
 
 ## Leave out, as of 2026-11-10
 
-- **Evidence** on the project's journey. Its data room list leads with Quality-system records ("Training
-  assignment: 4") and file wording they should not have. Show the Vault instead. Handed to its owners.
+- **Evidence** on the project's journey, unless asked. Its data room holds what AnA reads beside the Vault: two
+  agency letters, then the project's Quality records. The study's documents are in the Vault, so show the Vault.
 - **CMC / Module 3 → Quality by design** and **Module 3 build** in the Lumen account (see above).
 - **Search**, without `OPENAI_API_KEY`.
 
