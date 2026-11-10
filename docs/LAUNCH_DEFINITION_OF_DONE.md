@@ -2998,3 +2998,33 @@ Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of
 to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
 through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
 against the primary texts before the first real filing by a one-person client.
+
+### P-121 — Decided under the founder's delegation: Vault questions the Vault parity lane met on 2026-11-10
+
+The founder, 2026-11-10: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane). Each is reversible by the founder.
+
+1. **In a pharma or biotech Vault, a "Risk management plan" is the dossier's.** The name means two documents: in a
+   device file, part of the ISO 14971 risk management file; in a medicinal product's dossier, the Risk Management Plan
+   (the EU RMP at Module 1.8.2, Japan's at 1.11; FDA's Module 1 has no single heading for it, as the Module 1 record
+   states). The Vault's view decides. In a drug project the device rule no longer claims the name and the CTD
+   detector proposes it for Module 1 at its region's heading, as it already did for "RMP". A name that also says it
+   is the device's (ISO 14971, RMF, DHF, "device", FMEA) stays the device rule's. A device or IVD Vault is unchanged.
+   Built: `8e5f7cd0b`, `docs/evidence/SPINE/S6/2026-11-10-rmp-classifier/`.
+2. **The server refuses a read that would span clients; "no client" is its own choice.** P-107 item 3 says search
+   never spans sponsors. The Vault page asks first, in the browser (`47a306700`). The server now holds the same
+   line for every caller: a governed-artifacts listing or a library search with no project is one client's, or it is
+   refused with the clients named. Projects that record no client are listed apart from every named client, never
+   with one. Built: `6dac0b836`, `cc1af9221`, `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`.
+3. **A 510(k)'s or De Novo's section the eSTAR mapper has no slot for keeps the rule pack's flag.** P-107 item 3 has
+   device coverage follow the mapper. Read to the letter that drops "Required" from 510(k) A2 and B3 and De Novo B2,
+   C2 and C4, which the mapper says nothing about and the FDA form shows. Asking too much is the safer error for a
+   filing, so those keep the pack's mark, and each answer says which of the two decided it. The mapper gaining slots
+   for them is the device lane's. Built: `9cff33fe4`,
+   `docs/evidence/SPINE/S6/2026-11-10-p107-device-coverage-estar/`.
+4. **Open, and not decided here: a second layer for PDF renditions of uploaded Word files.** The converter no longer
+   requests what a Word file links to (`4cc352ccf`), which is now the only protection between an upload and a request
+   from the server. Refusing every file that names outside content would also refuse ordinary web links. Whether to
+   add a second layer, and which, is a security decision for the coordinator and the rendition's owner
+   (`docs/evidence/SPINE/S6/2026-11-10-p107-renditions/README.md`).
+
