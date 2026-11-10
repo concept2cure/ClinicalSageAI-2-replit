@@ -1745,6 +1745,15 @@ and run, not inferred:
   "unsupported markup". It now accepts a prior machine span whose words are gone or still the machine's. Red first
   (4 cases), then 24 of 24; 557 pass across the 30 suites around the gate.
 
+- **A sealed document's Vault filing names the seal it rendered** (`46d849a026`,
+  `docs/evidence/SPINE/S2/2026-11-10-vault-filing-names-seal/`; LX-10's seal half, rows D5 and D7). From a Vault
+  leaf, nothing reached the frozen record its bytes were rendered from; the filing-copy leaf of the same document did.
+  The chained filing row and the export history now record the frozen version and its content hash, held to the
+  filed text by the seal check the filing copy uses, and the receipt reader carries it into the package's governance
+  record. Red first (13 cases), then 52 of 52; 440 pass across the 32 suites around the filing. The walk's baseline
+  10 → 8, still 15 of 15. **For the founder:** when a sealed document's seal does not hold, the filing records why
+  and names none; the filing copy refuses in that state. Whether the Vault filing should refuse too is not decided.
+
 **Found, not fixed here**
 
 - A person still cannot put a citation into a sentence AnA wrote and keep the sentence (422
