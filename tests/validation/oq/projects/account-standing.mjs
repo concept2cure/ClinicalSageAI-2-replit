@@ -1,6 +1,6 @@
 /**
  * OQ-PROJ-18 (URS-PROJ-012): an account taken out of use can do nothing, and
- * works again when restored. run.mjs names the step (its id and requirement,
+ * works again when restored, through a new sign-in (P0-4b). run.mjs names the step (its id and requirement,
  * which ci:validation-traceability reads there); what it does, what it expects
  * and how it runs are here, so each part stays small enough to read.
  */
@@ -9,12 +9,12 @@ import { STANDING_CREDENTIALS_NOT_SUPPLIED, standingCredentials } from '../../li
 
 /** The step's text, as OQ-001 §3 gives it; the harness writes it into the record. */
 export const ACCOUNT_STANDING_TEXT = {
-  title: 'An account taken out of use can do nothing, and works again when restored',
+  title: 'An account taken out of use can do nothing, and works again when restored and signed in again',
   action:
-    'Credentialed. Sign in as the standing subject (OQ_STANDING_EMAIL: password and authenticator code) and GET /api/c2c/projects with that session. As the platform administrator (OQ_PLATFORM_ADMIN_EMAIL), PATCH /api/admin/master/users/:subjectId/status {status:"suspended", reason}. With the subject\'s session: GET /api/c2c/projects and GET /api/auth/session; then POST /api/auth/login as the subject. Read the ledger (GET /api/audit-trail/ledger?limit=50) with the run session before and after. Then PATCH {status:"active", reason} and read projects with the subject\'s session again',
+    'Credentialed. Sign in as the standing subject (OQ_STANDING_EMAIL: password and authenticator code) and GET /api/c2c/projects with that session. As the platform administrator (OQ_PLATFORM_ADMIN_EMAIL), PATCH /api/admin/master/users/:subjectId/status {status:"suspended", reason}. With the subject\'s session: GET /api/c2c/projects and GET /api/auth/session; then POST /api/auth/login as the subject. Read the ledger (GET /api/audit-trail/ledger?limit=50) with the run session before and after. Then PATCH {status:"active", reason}, read projects with the subject\'s old session, sign the subject in again (password and a new authenticator code) and read projects with the new session',
   expected:
-    'Projects 200 before; the suspension 200. Suspended: the subject\'s session reads projects 401 ACCOUNT_INACTIVE; the session check answers authenticated=false with AUTH_ACCOUNT_INACTIVE; the password step answers 403 AUTH_ACCOUNT_INACTIVE and issues no challenge; the newest ledger entry the step added for the subject reads "Sign-in refused: the account is not active (suspended or deprovisioned)", hash-chained. Restored: the same session reads projects 200. Without the two credentials the step is recorded "not executed — credential not supplied"',
-  note: 'Until VSR-001 F-28 and F-29 (2026-09-23) nothing read users.status except the release signature: a suspended or deprovisioned account signed in, signed, and kept every session it held. Taking an account out of use needs a platform administrator or the identity provider, so the step needs a platform administrator\'s credential; the account it suspends is one no other step uses, and it is restored in every outcome. A restored account\'s unexpired sessions work again: the check reads the standing, it does not revoke (VSR-001 §16). The platform administrator is a member, not an administrator, of its organisation, and the record says so: Master Administration admits the platform role alone (VSR-001 F-31).',
+    'Projects 200 before; the suspension 200. Suspended: the subject\'s session reads projects 401 ACCOUNT_INACTIVE; the session check answers authenticated=false with AUTH_ACCOUNT_INACTIVE; the password step answers 403 AUTH_ACCOUNT_INACTIVE and issues no challenge; the newest ledger entry the step added for the subject reads "Sign-in refused: the account is not active (suspended or deprovisioned)", hash-chained. Restored: the old session stays ended, 401 SESSION_ENDED; a new sign-in reads projects 200. Without the two credentials the step is recorded "not executed — credential not supplied"',
+  note: 'Until VSR-001 F-28 and F-29 (2026-09-23) nothing read users.status except the release signature: a suspended or deprovisioned account signed in, signed, and kept every session it held. Taking an account out of use needs a platform administrator or the identity provider, so the step needs a platform administrator\'s credential; the account it suspends is one no other step uses, and it is restored in every outcome. Since P0-4b (f8d4047454, 2026-10-01, IAM-04 b) a suspension ends every session the account held, durably: restoring the account does not bring one back, and the person signs in again (OQ-001 v0.11; until then the step expected the old session to work again, as VSR-001 §16 had recorded). The platform administrator is a member, not an administrator, of its organisation, and the record says so: Master Administration admits the platform role alone (VSR-001 F-31).',
 };
 
 const REFUSAL = 'Sign-in refused: the account is not active (suspended or deprovisioned)';
@@ -140,12 +140,15 @@ export async function accountStandingStep({ api, expect, deviation, baseUrl }) {
   expectRefused(expect, { read, probe, signIn });
   const entry = await expectRefusalOnLedger({ api, expect }, seen, subjectId);
 
-  const reopened = (await call(subject.accessToken, 'GET', PROJECTS)).status;
-  expect(reopened === 200, `the restored subject's session read projects ${reopened}`);
+  const old = await call(subject.accessToken, 'GET', PROJECTS);
+  expect(old.status === 401 && codeOf(old.json) === 'SESSION_ENDED', `the restored subject's old session read projects ${old.status} ${codeOf(old.json)}, not 401 SESSION_ENDED`, old.json);
+  const again = await passwordLogin(baseUrl, creds.subject);
+  const reopened = (await call(again.accessToken, 'GET', PROJECTS)).status;
+  expect(reopened === 200, `the restored subject's new session read projects ${reopened}`);
   return (
     `subject user:${subjectId} (${subject.method}): projects ${openBefore}; suspended by the platform administrator user:${admin.user.id} ` +
     `(${adminStanding}), ${suspended.status}; its session read projects ${read.status} ${codeOf(read.json)}, session check ` +
     `${probe.status} ${codeOf(probe.json)}, password step ${signIn.status} ${signIn.code}, no challenge; newest new ledger entry ` +
-    `"${entry.event}", chained; restored, the same session read projects ${reopened}`
+    `"${entry.event}", chained; restored, the old session ${old.status} ${codeOf(old.json)}, a new sign-in (${again.method}) read projects ${reopened}`
   );
 }

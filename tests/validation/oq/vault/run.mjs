@@ -223,9 +223,10 @@ await step(
     kind: 'unscripted',
     urs: ['URS-VAULT-009'],
     title: 'Vault surface renders the data room with the document',
-    action: 'Open /concept2cure/vault with the program selected',
+    action: 'Open /concept2cure/vault with the program selected; open its Uploads tab',
     expected: 'The data room renders and the document title is visible',
     dependsOn: ['OQ-VAULT-03'],
+    note: 'v0.16: since 2e4a9fe677 (2026-11-01, "Vault opens on its library") the Vault opens on the filing\'s binder, the required documents in their CTD folders, and an uploaded file is on the Uploads tab. Until v0.15 the step expected the upload on the first view.',
     // The surface reads GET /api/c2c/project-vault/:id, which OQ-VAULT-04 shows
     // answers 500 on this installation (IQ-DEV-001); attribute from the log.
     attributeEnvFromLog: true,
@@ -233,6 +234,7 @@ await step(
   async (ctx) => {
     await ctx.newPage({ id: state.programId, name: state.programName });
     await ctx.goto('/concept2cure/vault');
+    await ctx.page.getByRole('tab', { name: /^Uploads/ }).click();
     await ctx.expectText(state.docTitle);
     await ctx.screenshot();
     return 'data room shows the document';

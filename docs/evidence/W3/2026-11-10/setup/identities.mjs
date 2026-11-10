@@ -33,9 +33,13 @@ if (!LOG || !RUN.email || !RUN.password || !outEnv || !transcriptPath) {
 }
 
 /* Each identity a protocol reads, by its environment prefix, and the role it is added with. Signing authority comes
-   with admin, approver or reviewer (P-18; OQ-003 §1). */
+   with admin, approver or reviewer (P-18; OQ-003 §1). The signer is an approver, not an admin: OQ-006 v0.8 §1 names it
+   the QMS approver, which an organisation that designates none admits by the Approver role, and OQ-003 v0.5 (d)
+   needs a reviewer whose organisation role is not an administrator's (an admin passes the object gate). This run first
+   added it as an admin, as OQ-001 §1 v0.9 said, and changed the role through user administration
+   (transcripts/user-administration.transcript.txt). */
 const OTHERS = [
-  { prefix: 'OQ_SIGNER', email: 'oq-signer@validation.local', name: 'OQ Signer', role: 'admin' },
+  { prefix: 'OQ_SIGNER', email: 'oq-signer@validation.local', name: 'OQ Signer', role: 'approver' },
   { prefix: 'OQ_APPROVER', email: 'oq-approver@validation.local', name: 'OQ Approver', role: 'admin' },
   { prefix: 'OQ_PLATFORM_ADMIN', email: 'oq-platform@validation.local', name: 'OQ Platform', role: 'member' },
   { prefix: 'OQ_STANDING', email: 'oq-standing@validation.local', name: 'OQ Standing', role: 'member' },
