@@ -97,3 +97,8 @@ export const num = (s: string) => (s.trim() === '' ? undefined : Math.max(0, Mat
 
 /** A refusal the drawer shows; the write was not attempted. */
 export class Refused extends Error {}
+
+/** A register's name inside a sentence: lower case, keeping acronyms ("CAPA", "SOP register", "management reviews"). */
+export function inSentence(label: string): string {
+  return label.split(' ').map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
+}
