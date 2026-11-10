@@ -90,11 +90,12 @@ function destinations(): CmcDestination[] {
 describe('every CMC destination says what it is and what to do on it', () => {
   it('declares all nine, with both sentences', () => {
     const d = destinations();
-    /* The order is the two halves, Module 3 first (D5 §A.4.1). The IDS are
-       unchanged from the flat nine-tab row, because `cmc.open-tab`,
-       `__cmSetTab` and the cases below address a destination by id. */
+    /* The order the work is done, which is also each tab's "Next step"
+       (P-122, 2026-11-10; the row D5-1 split, restored). The IDS are unchanged,
+       because `cmc.open-tab`, `__cmSetTab` and the cases below address a
+       destination by id. */
     expect(d.map((x) => x.id)).toEqual([
-      'overview', 'quality', 'build', 'pathway', 'materials', 'specs', 'stability', 'batch', 'change',
+      'overview', 'materials', 'specs', 'stability', 'batch', 'change', 'quality', 'build', 'pathway',
     ]);
     for (const x of d) {
       expect(x.blurb.length, `${x.id} blurb`).toBeGreaterThan(10);
@@ -108,10 +109,9 @@ describe('every CMC destination says what it is and what to do on it', () => {
     /* Was: "keeps the shape the project steps carry, so one band renders
        both" — the nine destinations were rendered by the project's `StageBand`
        as a "What to do now / NEXT STEP" box above the title. That box is a
-       retired pattern (ONE_DESIGN_PLAN §2; D5 §A.4.3): its `blurb` is each
-       tab's tooltip and its lead's meta, and its `now` is published to AnA as
-       `facts.whatToDoHere`, which the page's first starter asks for. So this
-       case now pins the arrangement that replaced it. */
+       retired pattern (ONE_DESIGN_PLAN §2; D5 §A.4.3). Since P-122 its `now` is
+       printed again as a quiet line under the one tab row, and published to
+       AnA as `facts.whatToDoHere`. The halves are the row's two groups. */
     const d = destinations();
     const byHalf = (h: string) => d.filter((x) => x.half === h).map((x) => x.id);
     expect(byHalf('module3')).toEqual(['overview', 'quality', 'build', 'pathway']);
@@ -130,10 +130,11 @@ describe('every CMC destination says what it is and what to do on it', () => {
     expect(CMC_CODE).not.toMatch(/\bCmConnectBar\b/);
     expect(CMC_CODE).not.toMatch(/className="cm-sub"/);
     /* And what the page opens with instead: one h1, then the ask row, then the
-       halves — the tabs are BELOW the header, never above it. */
+       one tab row and its "what to do now" line — the tabs are BELOW the
+       header, never above it (P-122). */
     const page = /<div className="page-inner" data-work-area="cmc">([\s\S]*?)<Surf /.exec(CMC_CODE);
     expect(page, 'the work-area root is not where this case can read it').not.toBeNull();
-    const order = ['<ProjectBack', '<h1 className="ph-title">', '<CmStarters', '<CmHalves'];
+    const order = ['<ProjectBack', '<h1 className="ph-title">', '<CmStarters', '<CmTabs', '<CmNow'];
     let at = -1;
     for (const piece of order) {
       const next = page![1].indexOf(piece);

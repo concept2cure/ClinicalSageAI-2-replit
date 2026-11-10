@@ -371,6 +371,22 @@
    so it carries a little more air before its body than a section inside one
    (D5 §A.4.7). CMC's own class, in CMC's sheet. */
 .c2c-v2 .cm-lead{margin-bottom:16px;}
+/* All nine destinations in one row (P-122, 2026-11-10). The founder's two
+   groups — Study records, then Module 3 — are divided by a hairline, never by a
+   toggle that hides one of them. At 1440 the nine fit (1,026 of 1,040 px,
+   measured) at a slightly tighter inset than the shared `.tab`; below that the
+   row scrolls sideways in place, as every `.tabs` row does, and the open tab is
+   scrolled into view. */
+.c2c-v2 [data-work-area] .cm-tabs{margin-bottom:12px;gap:0;}
+.c2c-v2 [data-work-area] .cm-tabs .tab{padding:0 7px;flex-shrink:0;}
+.c2c-v2 .cm-tabs-sep{flex:0 0 1px;align-self:center;height:16px;margin:0 4px;background:var(--border-strong);}
+/* On a phone the row scrolls; its scrollbar shows, so the tabs past the edge read as there. */
+@media (max-width: 640px) { .c2c-v2 [data-work-area] .cm-tabs{scrollbar-width:thin;} }
+/* The open tab's "what to do now" and its next step: the band D5-1 removed, as
+   one grey line under the row (it is a `p.sec-sub`). */
+.c2c-v2 [data-work-area] .cm-now{margin:0 0 24px;line-height:1.55;max-width:860px;}
+.c2c-v2 [data-work-area] .cm-now strong{font-weight:500;color:var(--text-200);}
+.c2c-v2 [data-work-area] .cm-now .cm-now-next{background:none;border:0;padding:0;cursor:pointer;white-space:nowrap;}
 /* auto-fit, not a fixed four: a board with five or six measures must not wrap
    a lone tile onto a row of its own. */
 .c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}

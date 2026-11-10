@@ -158,7 +158,7 @@ import '../styles/project-home-v2.css';
  * It used to be a superset of `LifecycleStage` so `StageBand` could render
  * these nine as a project-style band. That band is retired (D5 §A.4.3,
  * ONE_DESIGN_PLAN §2 "Retired patterns"), so the shape is now only what the
- * two tab rows and the AnA context read.
+ * one tab row, its "what to do now" line and the AnA context read.
  */
 interface CmcNavItem {
   id: string;
@@ -166,16 +166,17 @@ interface CmcNavItem {
   icon: string;
   blurb: string;
   /**
-   * What to do on this destination. It is no longer PRINTED (D5 §A.4.3 retires
-   * the "What to do now / Next step" box, ONE_DESIGN_PLAN §2 "Retired
-   * patterns"): it reaches AnA as `facts.whatToDoHere`, so the first starter
-   * — "What do I do on <tab>?" — answers with the same sentence the box showed.
+   * What to do on this destination. Printed again under the tab row as one
+   * quiet line with its "Next step" (P-122, 2026-11-10): D5-1 had moved it into
+   * AnA only, as `facts.whatToDoHere`, which it still reaches. The retired
+   * pattern was the grey box above the title, not the sentence.
    */
   now: string;
   /**
    * Which half of the work area the destination belongs to (D5 §A.3): what is
    * captured while the study runs, and what is composed for the IND from it.
-   * The founder named the two halves; they are modes, not nested tabs.
+   * The founder named the two halves. Since P-122 they are groups in one tab
+   * row, divided by a hairline, never a toggle that hides one of them.
    */
   half: 'module3' | 'records';
 }
@@ -253,35 +254,21 @@ interface CmcBoardData {
    once there — the founder's recorded complaint about the catalog, inside one
    work area.
 
-   The order is the two halves the founder named (ONE_DESIGN_PLAN §1a, D5 §A.3):
-   Module 3 — what is composed for the IND — first, then Study records — what is
-   captured while the study runs and composed from. Within each half the order is
-   still the order the work is done. Every `id` is unchanged: the `cmc.open-tab`
-   surface action, `__cmSetTab('build')`, `__cmSetTab('pathway')` and the tests
-   address destinations by id, never by position. */
+   The order is the order the work is done (P-122, 2026-11-10, restoring the
+   row D5-1 split): Overview first, then the Study records — what is captured
+   while the study runs — then the Module 3 destinations composed from them.
+   It is also the order of each tab's "Next step". All nine are one row: D5-1
+   showed only the open half's tabs, so the eighteen registers in Study records
+   sat behind a toggle and a first-time viewer saw none of them. `half` stays
+   the founder's grouping (ONE_DESIGN_PLAN §1a) and draws the row's divider.
+   Every `id` is unchanged: the `cmc.open-tab` surface action,
+   `__cmSetTab('build')`, `__cmSetTab('pathway')` and the tests address
+   destinations by id, never by position. */
 const CMC_NAV: CmcNavItem[] = [
   {
     id: 'overview', label: 'Overview', icon: 'beaker', half: 'module3',
     blurb: 'How far Module 3 has got, and what is blocking it',
     now: 'Start here. See how far Module 3 has got, what the export gate still refuses, and which agency questions on Module 3 are open — then open the destination that holds the work.',
-  },
-  {
-    id: 'quality', label: 'Quality by design', icon: 'sigma', half: 'module3',
-    blurb: 'The control strategy and the ICH check over these records',
-    now: 'Derive this project’s critical attributes and process parameters from the study records, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
-  },
-  {
-    id: 'build', label: 'Module 3 build', icon: 'layers', half: 'module3',
-    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
-    now: 'Compile §3.2 from the study records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
-  },
-  {
-    /* Label 2026-11-01 (D5 §A.4.1): "Project records" → "Approvals & audit".
-       The blurb already said what it holds, and "Project records" collided with
-       the project page's own Knowledge "Records" (D3). The id stays `pathway`. */
-    id: 'pathway', label: 'Approvals & audit', icon: 'scroll', half: 'module3',
-    blurb: 'Who did what, and the agency’s questions about it',
-    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
   },
   {
     id: 'materials', label: 'Substance & product', icon: 'atom', half: 'records',
@@ -307,6 +294,24 @@ const CMC_NAV: CmcNavItem[] = [
     id: 'change', label: 'Change control', icon: 'gitBranch', half: 'records',
     blurb: 'Changes to the substance, product or process, and what they affect',
     now: 'Record each change with its justification and disposition, and see which Module 3 sections read the evidence it touches, so those sections are rebuilt before the next approval.',
+  },
+  {
+    id: 'quality', label: 'Quality by design', icon: 'sigma', half: 'module3',
+    blurb: 'The control strategy and the ICH check over these records',
+    now: 'Derive this project’s critical attributes and process parameters from the study records, generate its control strategy, and run the ICH check to see which requirements are not yet met.',
+  },
+  {
+    id: 'build', label: 'Module 3 build', icon: 'layers', half: 'module3',
+    blurb: 'Compile §3.2, resolve what contradicts, approve and export',
+    now: 'Compile §3.2 from the study records, resolve every contradiction the sweep finds, approve each section under signature, then check the export gate before placing the module into a submission sequence.',
+  },
+  {
+    /* Label 2026-11-01 (D5 §A.4.1): "Project records" → "Approvals & audit".
+       The blurb already said what it holds, and "Project records" collided with
+       the project page's own Knowledge "Records" (D3). The id stays `pathway`. */
+    id: 'pathway', label: 'Approvals & audit', icon: 'scroll', half: 'module3',
+    blurb: 'Who did what, and the agency’s questions about it',
+    now: 'Read what was done and by whom: each section’s audit chain, the approval gates it passed, and the agency questions asked about Module 3.',
   },
 ];
 
@@ -645,41 +650,30 @@ function cmStarters(tab: string, label: string): Array<{ label: string; prompt: 
   return [first, ...(CMC_SUGGEST[tab] ?? []).slice(0, 2).map((t) => ({ label: t, prompt: t }))];
 }
 
-/** Which half of the work area a tab belongs to; `module3` for an unknown id. */
-function halfOf(tab: string): 'module3' | 'records' {
-  return CMC_NAV.find((n) => n.id === tab)?.half ?? 'module3';
-}
+/* All nine destinations in one tab row (P-122, 2026-11-10). D5-1 rendered two
+   halves as a segmented control and showed only the open half's tabs, so CMC
+   opened on four tabs and the eighteen registers of Study records were behind
+   a toggle a first-time viewer had no reason to press. The founder's grouping
+   stays legible as a hairline between the groups — a presentational divider
+   inside the tablist, hidden from assistive technology, so the row is still
+   nine tabs to a screen reader and arrow keys move tab to tab.
 
-/* The two halves the founder named, then the active half's views (D5 §A.3).
-   The half is DERIVED from the open tab, never stored: one piece of state means
-   the AnA action `cmc.open-tab`, `__cmSetTab` and these two rows cannot
-   disagree about which half is showing. The ids are untouched, so every caller
-   that addresses a destination by id still reaches it.
-
-   The half button remembers where you were in that half (§A.6 item 2). It is a
-   ref, not state: it changes nothing on screen by itself, and the rendered half
-   is still read off `tab` alone. Without it, glancing at Module 3 from
-   Stability and coming back drops you on Substance & product — the first tab
-   of the half — and you lose your place for having looked. */
-function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
-  const half = halfOf(tab);
-  const inHalf = CMC_NAV.filter((n) => n.half === half);
-  const lastIn = useRef<Record<string, string>>({});
-  lastIn.current[half] = tab;
-  const openHalf = (want: 'module3' | 'records') => {
-    const first = CMC_NAV.find((n) => n.half === want)?.id;
-    onTab(lastIn.current[want] ?? first ?? 'overview');
-  };
+   One piece of state, the tab, as before: `cmc.open-tab`, `__cmSetTab` and
+   this row cannot disagree about what is open. */
+function CmTabs({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  /* On a phone the row scrolls sideways; a tab opened by "Next step" or by AnA
+     is brought into view so the row never shows a selection off its edge. */
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const open = row.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    open?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [tab]);
   return (
-    <>
-      <div className="seg" role="group" aria-label="CMC / Module 3">
-        <button type="button" className="seg-b" aria-pressed={half === 'module3'} onClick={() => openHalf('module3')}>Module 3</button>
-        <button type="button" className="seg-b" aria-pressed={half === 'records'} onClick={() => openHalf('records')}>Study records</button>
-      </div>
-      <div className="tabs" role="tablist" aria-label={half === 'module3' ? 'Module 3' : 'Study records'}>
-        {inHalf.map((n) => (
+    <div ref={row} className="tabs cm-tabs" role="tablist" aria-label="CMC / Module 3">
+      {CMC_NAV.map((n, i) => (
+        <React.Fragment key={n.id}>
+          {i > 0 && CMC_NAV[i - 1].half !== n.half && <span className="cm-tabs-sep" role="presentation" aria-hidden="true" />}
           <button
-            key={n.id}
             type="button"
             role="tab"
             className="tab"
@@ -689,9 +683,41 @@ function CmHalves({ tab, onTab }: { tab: string; onTab: (id: string) => void }) 
           >
             {n.label}
           </button>
-        ))}
-      </div>
-    </>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* What to do on the open tab, and its next step — one quiet line under the row
+   (P-122). The wording is the band D5-1 removed (`StageBand`, `943b78cb7`):
+   "What to do now:" and the tab's own `now`, then "Next step" to the following
+   destination in the order the work is done. It is a grey line and a link, not
+   the boxed band above the title that ONE_DESIGN_PLAN §2 retires. The last
+   destination has no next step and offers none. */
+function CmNow({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
+  const at = CMC_NAV.findIndex((n) => n.id === tab);
+  const step = CMC_NAV[at];
+  if (!step) return null;
+  const next = CMC_NAV[at + 1];
+  return (
+    <p className="sec-sub cm-now" data-testid="cm-now">
+      <strong>What to do now:</strong> {step.now}
+      {next && (
+        <>
+          {' '}
+          <button
+            type="button"
+            className="cm-linkish cm-now-next"
+            aria-label={`Next step: ${next.label}`}
+            title={next.blurb}
+            onClick={() => onTab(next.id)}
+          >
+            Next step: {next.label} <span aria-hidden="true">→</span>
+          </button>
+        </>
+      )}
+    </p>
   );
 }
 
@@ -3340,8 +3366,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
 
   const Surf = CMC_SURF[tab] || CmOverview;
   /* One calm column (D5 §WA.3): the project, the title, one sentence, the ask
-     row, the two halves, the active half's tabs, then the work. Nothing above
-     the title. What used to be above it — a sticky nine-tab bar, the
+     row, all nine tabs in one row, the open tab's "what to do now" line, then
+     the work (P-122). Nothing above the title. What used to be above it — a sticky nine-tab bar, the
      "What to do now / NEXT STEP" band and the "THIS WORK FLOWS INTO" chip row,
      three bands that filled the first screen at 1440 and pushed the title
      below the fold at 390 — is gone; D5 §A.5 records where each outcome
@@ -3361,7 +3387,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
         {/* P-111: opened from a CMC work project's door, its tasks above the whole project's records (placed with the CMC session). */}
         <WorkProjectTasks area="cmc" />
         <CmStarters tab={tab} label={tabLabel} ask={ask} />
-        <CmHalves tab={tab} onTab={setTab} />
+        <CmTabs tab={tab} onTab={setTab} />
+        <CmNow tab={tab} onTab={setTab} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />
         <Surf ask={ask} nav={onNav} />
       </div>
