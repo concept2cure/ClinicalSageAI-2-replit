@@ -555,6 +555,20 @@ describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
     expect(res.body.message).toBe(sentence);
   });
 
+  // 2026-11-10, the Codespace click-through: with its identity recorded, LMN-201's "Download an inspection copy"
+  // answered 500 "eCTD operation failed". The packager had refused for a filing reason it states in full (FDA validation
+  // 1789: study files no Study Tagging File would reference), and the route reported its refusal as a server failure.
+  it('a package the packager refuses for a filing reason is refused 422 in its words, with its findings, and returns no zip', async () => {
+    const { ValidationError } = await import('../../server/services/submission-gateways/types');
+    const sentence = 'FDA validation 1789 (technical rejection): 1 file(s) in Module 4/5 study sections would be referenced by no Study Tagging File — report.pdf (section 5.3.5.1, no study id). Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.';
+    const findings = [{ ruleId: 'FDA-TRC-1789', severity: 'error', filePath: 'report.pdf', message: 'No study id.' }];
+    hoisted.assembleSubmissionEctd.mockRejectedValueOnce(new ValidationError(sentence, findings));
+    const res = await request(makeApp()).post('/api/ectd/export/42').send({ ...REVIEWED });
+    expect(res.status).toBe(422);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body).toMatchObject({ code: 'PACKAGE_VALIDATION_REFUSED', message: sentence, findings });
+  });
+
   it('refuses an incomplete package when requireComplete is set', async () => {
     const { EctdCompletenessError } = await import('../../server/services/ectd/completeness');
     hoisted.assembleSubmissionEctd.mockRejectedValueOnce(
