@@ -203,3 +203,18 @@ test('the demo seed is given the approver as its second signer', () => {
   assert.match(seed, /OQ_SIGNER_PASSWORD="\$DEMO_SIGNER_PASSWORD"/);
   assert.doesNotMatch(seed, /OQ_SIGNER_EMAIL="\$(DEMO_SEED_EMAIL|DEMO_AUTHOR_EMAIL)"/);
 });
+
+// 2026-11-10, a fresh Codespace: every demo person is an administrator, and with no QMS approver designated only the
+// Approver role approves, so the QMS packs' approvals by the second signer were refused (MEMBER_NOT_QMS_APPROVER) and
+// the seed never finished. The approver is designated first, through the governed route an administrator uses.
+test('the approver is designated as the QMS approver, through the governed route, before the demo seed', () => {
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const call = code.indexOf('c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"');
+  assert.ok(call >= 0, 'the designation is called for the approver, as the seeding administrator');
+  assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the demo seed');
+  const fn = code.slice(code.indexOf('c2c_designate_qms_approver() {'), call);
+  assert.match(fn, /\/api\/tenant-users\/" \+ org \+ "\/" \+ person\.id \+ "\/qms-approver"/);
+  assert.match(fn, /method: "PUT"/);
+  assert.match(fn, /designated: true, reason: "/);
+  assert.match(fn, /\/api\/auth\/logout/, 'the administrator signs out, so the session does not hold a slot');
+});
