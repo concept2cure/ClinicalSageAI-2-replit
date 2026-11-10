@@ -223,7 +223,7 @@ describe('POST /api/mdx/qms/changes/:id/approve — the signed door', () => {
   });
 
   it('400 without the digest of the content read; nothing verified or written', async () => {
-    const { expectedContentDigest: _omitted, ...withoutDigest } = { ...VALID_BODY, expectedContentDigest: READ_DIGEST() };
+    const withoutDigest = { password: VALID_BODY.password, meaning: VALID_BODY.meaning, reason: VALID_BODY.reason };
     const res = await request(app()).post('/api/mdx/qms/changes/1/approve').send(withoutDigest);
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toMatch(/expectedContentDigest/);
