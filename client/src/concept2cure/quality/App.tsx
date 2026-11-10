@@ -129,11 +129,17 @@ export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext |
     return { summary: `The user is on the ${here} tab of Quality. The register could not be read — a failure, not an empty register.`, facts: { tab, registerRead: 'failed' }, availableActions: actions };
   }
   const n = ctx.count ?? 0;
-  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}`).join('; ');
+  const counts = ctx.counts.map((c) => `${c.label}: ${c.val}${c.detail ? ` (${c.detail})` : ''}`).join('; ');
+  const noun = n === 1 ? ctx.noun[0] : ctx.noun[1];
+  /* At the server's cap the read is the most recent rows, not the register (C12): "holds 100" would be a claim about
+     records nobody read. */
+  const held = ctx.partial
+    ? `The register read stopped at the server's cap: it shows the ${n} most recent ${noun}, and there may be more, so its figures are of those ${n}`
+    : `The register holds ${n} ${noun}`;
   return {
-    summary: `The user is on the ${here} tab of Quality. The register holds ${n} ${n === 1 ? ctx.noun[0] : ctx.noun[1]}` +
+    summary: `The user is on the ${here} tab of Quality. ${held}` +
       (counts ? ` (${counts})` : '') + '.' + (ctx.truncated ? ` Only the first ${ctx.records.length} are listed in the facts.` : ''),
-    facts: { tab, recordCount: n, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
+    facts: { tab, about: ctx.about, recordCount: n, partial: ctx.partial, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
     availableActions: actions,
   };
 }

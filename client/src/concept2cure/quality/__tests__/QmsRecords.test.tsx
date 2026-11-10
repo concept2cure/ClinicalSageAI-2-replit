@@ -245,7 +245,8 @@ describe('Quality records', () => {
     }] }, loading: false, error: null };
     H.reads['/api/mdx/qms/documents'] = { data: null, loading: false, error: 'HTTP 500' };
     render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
-    expect(screen.getByText('document #31 (register not read)')).toBeTruthy();
+    // C12: the cell says it in a word, with the document's id on hover.
+    expect(screen.getByText('Not read').getAttribute('title')).toBe('Controlled document 31');
   });
 
   it('moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result', async () => {
@@ -418,6 +419,35 @@ describe('Quality records', () => {
     H.reads['/api/capa-mdr/capa'] = { data: null, loading: false, error: 'HTTP 500' };
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
     expect(within(screen.getByText('NC-2026-004').closest('tbody') as HTMLElement).getByText('not read')).toBeTruthy();
+  });
+
+  /* C12: GET /api/capa-mdr/capa returns the 100 most recently updated. At that cap the register says so, its figures
+     are of those rows, AnA is told it is partial, and a record's CAPA column cannot say "none". */
+  it('says a capped read is the most recent rows, and its figures are theirs', async () => {
+    const rows = Array.from({ length: 100 }, (_, i) => ({ ...CAPA, id: `c0ffee00-0000-4000-8000-${String(i).padStart(12, '0')}`, capaCode: `CAPA-${100 + i}` }));
+    H.reads['/api/capa-mdr/capa'] = { data: { rows, count: 100 }, loading: false, error: null };
+    const onContext = vi.fn();
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} onContext={onContext} />);
+    expect(screen.getByTestId('qms-record-figures').textContent).toMatch(/^The 100 most recently updated CAPAs: Open CAPAs: 100 \(0 closed\)/);
+    await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'ready', count: 100, partial: true })));
+    cleanup();
+
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+    expect(within(screen.getByText('NC-2026-004').closest('tbody') as HTMLElement).getByText('not all read')).toBeTruthy();
+    expect(screen.queryByTestId('qms-record-partial')).toBeNull();
+  });
+
+  it('keeps the facts the figures carried, in brackets, and tells AnA what the register is', async () => {
+    H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA, { ...CAPA, id: 'c0ffee00-0000-4000-8000-000000000002', capaCode: 'CAPA-008', state: 'closed_effective' }] }, loading: false, error: null };
+    const onContext = vi.fn();
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} onContext={onContext} />);
+    const line = screen.getByTestId('qms-record-figures').textContent;
+    expect(line).toMatch(/^Open CAPAs: 1 \(1 closed\)/);
+    expect(line).toContain('High or critical risk, open: 1');
+    expect(screen.queryByTestId('qms-record-partial')).toBeNull();
+    await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ partial: false, about: expect.stringMatching(/^Corrective and preventive actions/) })));
+    expect(onContext.mock.calls.at(-1)![0].counts).toContainEqual({ label: 'Open CAPAs', val: '1', detail: '1 closed' });
   });
 
   it('tells the shell for AnA what the register read, and that a failed read is a failure', async () => {

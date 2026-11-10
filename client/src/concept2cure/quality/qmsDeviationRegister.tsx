@@ -130,6 +130,8 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
   noun: ['deviation', 'deviations'],
   listPath: '/api/mdx/qms/deviations',
   name: (r) => r.deviation_number,
+  /* GET /api/mdx/qms/deviations: the 500 most recently detected (mdx-qms-deviations.ts). */
+  readCap: { rows: 500, order: 'most recently detected' },
   columns: [
     { label: 'Deviation', cell: (r) => <span className="mono">{r.deviation_number}</span> },
     {
@@ -153,9 +155,9 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
     const critical = open.filter((r) => r.classification === 'critical').length;
     const late = open.filter((r) => isPast(r.target_closure_date, today)).length;
     return [
-      { label: 'Open', val: String(open.length), sub: `${rows.length - open.length - cancelled} closed${cancelled ? `, ${cancelled} cancelled` : ''}` },
-      { label: 'Critical, open', val: String(critical), sub: critical ? 'Not yet closed' : 'None', tone: critical ? 'err' : 'ok' },
-      { label: 'Past target close', val: String(late), sub: late ? 'Target date has passed' : 'None past due', tone: late ? 'warn' : 'ok' },
+      { label: 'Open', val: String(open.length), detail: `${rows.length - open.length - cancelled} closed${cancelled ? `, ${cancelled} cancelled` : ''}` },
+      { label: 'Critical, open', val: String(critical), tone: critical ? 'err' : 'ok' },
+      { label: 'Past target close', val: String(late), tone: late ? 'warn' : 'ok' },
     ];
   },
   createLabel: 'Record deviation',
