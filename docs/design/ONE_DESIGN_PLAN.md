@@ -2545,7 +2545,9 @@ under `docs/evidence/DESIGN/D7/`.
 | — F1: a record's 404 names the record in the one refusal panel (`readSubject`); Quality's two local 404 overrides converge onto it | `94c4c6699` | Version history, notification target, editing copy, CAPA action items |
 | — D7: the capped CAPA figures read as one line | `c9c0b5409` | The CAPA register's figures |
 
-The sweep's C1–C18 are done, except C7. The review of 2026-11-10 is repaired; its evidence is under
+The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
+registers, the data room, the project team, its records), for which "this project" is the right subject, so no other
+caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence is under
 `docs/evidence/DESIGN/D7/2026-11-10-*`, `docs/evidence/MR-12/2026-11-10-training-assessed/` and
 `docs/evidence/F1/2026-11-10-not-found-words/`.
 
