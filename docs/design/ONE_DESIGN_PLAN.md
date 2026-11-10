@@ -1431,8 +1431,9 @@ Vault features yet … this is a multi tenant environment").
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
-Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting
-with the person in control".
+Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. **Handed off on 2026-11-08.** The note for whoever
+picks this up is `docs/evidence/D2-CSR-DRAFT-CONTROL/HANDOFF.md`: what landed, the open work in order, the blockers, how
+to verify and walk, and what was handed on. Its row in COORDINATION.md holds no file.
 
 **Delivered** (2026-11-06)
 
@@ -1485,11 +1486,24 @@ All were proven by tests. Until this walk, none was opened in the running app.
 - Real drafting needs a model key, and this environment has none.
 - The account's monthly spend limit stopped this session's agents on 2026-11-06.
 
-**Next**
+**Next** (in order; details, files and the binding decisions are in the hand-off note)
 
-1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
-   alternatives.
+1. With a model key, walk the figure gate live on an imported CSR's §11.4.1, with revise and passage alternatives. No
+   cloud environment here has a key; the Codespace lane runs with the founder's.
+2. Slice 4b, adding a paragraph after an existing one: a block-boundary insert in `editor/suggestions.ts`, which is
+   D4's editor.
+3. Slices 5 (review by keyboard, after an accessibility review of the keys), 6 (progressive arrival) and 7 (citations
+   for chosen paragraphs).
+4. P-72 slices 2–7. Before slice 6, the tenant chain verdict must walk in the tenant's own scope.
+5. The purge-residue classification (design only), and the independent re-checks of P-72 slice 1a and CSR slices
+   3–4.
+
+**Handed on, open at hand-off** (re-check first):
+- the seeded C2C-101 QOS drafting hold (`authoring-draft-region-projection.ts`);
+- five workbench suites red since `53b179b99`, 46 tests at `f9631c065`;
+- D4's two layout issues and `onReviewSection`.
+
+At `f9631c065`, every suite of this lane passes.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 
@@ -2304,6 +2318,38 @@ session's brief). Each records its own progress here; as reported to this sessio
 - MR-03 Stage 6 (OPS-17).
 - Stage 7 steps 2–4 and 8.
 - Switch the common rule set to block two weeks after the first apply.
+
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-10)
+
+The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
+just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
+quiet sections, no tiles or type cards. The sweep plan is C1–C18, each with its findings. The evidence for each step is
+under `docs/evidence/DESIGN/D7/`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| The work area | `a65f886a7` | Quality: one header, three starters, registers as tabs |
+| Rows: one next step and More | `606a9a302`, `63ff5b495`, `b02be8a1d`, `8a0e2836a` | Each register row |
+| Change control as one log section | `6f651cc23` | The Change control tab: stage filter as one segmented control, procedure in a closed disclosure |
+| C1–C2: the SOP tab's quiet sections, honest dates and all-clears | `0561109d1` | SOP register, Periodic review, Training |
+| C3–C5: toasts; refusals said as refusals; every Open reaches the one editor | `ff2a66369`, `3f2ab6ad1`, `1a69d42a1` | Every Quality write and read |
+| Independent review of C1–C5: 23 confirmed findings repaired | `58bed0a70` | `2026-11-10-review-repairs/` |
+| C6: the SOP register is D0's table | `62c7f0031` | SOP register (the 390 sideways scroll found and fixed) |
+| C8: the change log is D0's table, one next step per change, no Approve for the proposer | `ea1d59957` | Change control log |
+| F1: an approved change's signed content cannot be rewritten (409, not 404) | `c555f4a2a`, `faa4b737e` | `PATCH /api/mdx/qms/changes/:id`; checked first by three independent readers |
+| C9: the change record is read and assessed in its row, and read inside the approval ceremony | `135394180` | A change's row; "Edit assessment"; "What you approve" in the signature dialog |
+| F1: a change's approval signs the content the approver read | `c284f3cb4`, `78e9705ef` | The signature is refused, and nothing signed, when the change was edited after the dialog opened |
+| C10: change-control documents open the one "New controlled document" door | `b61c5b088` | Change control: Change-control documents and forms |
+
+**Next** (sweep plan order):
+- C11: the records registers (CAPA, deviations, nonconformances, suppliers, audits, management reviews) as D0's table.
+- C12: the records' read caps and dropped figures.
+- C13: action items as a table.
+- C14: Quality opened from a project, scoped to it (QP3).
+- C15–C18: the dialogs into the product's drawer; the reader; the route sheets; the root and the type ramp.
+- C7 waits on a decision: 48 px rows.
+- Outside D7, from the review of F1 (Part 11 review L-2): an edit while a change is still editable records no reason
+  or before-and-after values, and `DELETE /qms/changes/:id` soft-deletes an approved change.
 
 ## 4. How everyone works
 

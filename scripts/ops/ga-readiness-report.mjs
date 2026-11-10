@@ -790,6 +790,20 @@ for (const f of ENFORCEMENT_FLAGS) {
     }
   }
 
+  /** Whether the system owner has approved the protocol, read from the file: this line said "it is draft" in prose. */
+  function protocolApprovalState() {
+    const draft = 'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS).';
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const approved = protocol?.status === 'approved' && protocol.approvedBy && protocol.approvedOn;
+      return approved
+        ? `The system owner approved server/eval/pq/pq-protocol.json version ${protocol.version} on ${protocol.approvedOn}; approval qualifies no model.`
+        : draft;
+    } catch {
+      return draft;
+    }
+  }
+
   /**
    * Which required PQ components still cannot execute, read from the protocol
    * rather than listed here. Same reason as goldBankState: this line named "a
@@ -842,7 +856,7 @@ for (const f of ENFORCEMENT_FLAGS) {
       'Until this row is ready, production refuses both. Not covered: callers that draft under another task label (listed in docs/evidence/ANA-AGENTS/2026-09-27/H3-gateway-governance/README.md), and model text returned in an answer without being stored. PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
-      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
+      `${protocolApprovalState()} Engineering: ` +
       `${goldBankState()}; ${unexecutableComponentsState()}. ` +
       'Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
   });

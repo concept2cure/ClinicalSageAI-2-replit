@@ -242,6 +242,6 @@ describe('existing PQ runner supplemental mode', () => {
     expect(result.credentialPresence.OPENAI_API_KEY).toBe(true);
     expect(result.credentialPresence.ANTHROPIC_API_KEY).toBe(false);
     expect(JSON.stringify(result)).not.toContain('secret-value');
-    expect(result.protocol.status).toBe('draft');
+    expect(result.protocol.status).toBe('approved');
   });
 });

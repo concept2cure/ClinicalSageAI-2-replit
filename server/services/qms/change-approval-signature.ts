@@ -153,6 +153,12 @@ export interface ApproveQmsChangeSignedParams {
   secondFactorVerified: boolean;
   ipAddress: string | null;
   learningReview?: { expectedArtifactSha256: string; invariantAccepted: true };
+  /**
+   * The content digest of the change as the approver read it: the register read sends each change's
+   * `content_digest`, and the signature dialog shows that row. The approval signs only that content (§11.50, §11.70);
+   * a change edited since it was read is refused, and nothing is signed.
+   */
+  expectedContentDigest: string;
 }
 
 async function reviewedLearningApproval(client: SignatureDbClient, row: QmsChangeRow, params: ApproveQmsChangeSignedParams) {
@@ -209,6 +215,20 @@ async function lockApprovableChange(
 }
 
 /**
+ * Sign what was read: the content digest of the locked row, which must be the digest of the change as the approver
+ * read it. Until 2026-11-10 an edit landing between the dialog opening and the signature was signed unseen: the dialog
+ * sent no revision, and the digest was computed from whatever the row then held. Nothing is written when it refuses.
+ */
+function contentAsRead(row: QmsChangeRow, expectedContentDigest: string): string {
+  const contentDigest = computeQmsChangeContentDigest(row);
+  if (expectedContentDigest !== contentDigest) {
+    throw new QmsApprovalRefusedError('CHANGED_SINCE_READ',
+      'This change was edited after you opened it, so it is not what you read. Nothing was signed. Read it again, then approve.');
+  }
+  return contentDigest;
+}
+
+/**
  * Approve a change as a signed act, on the caller's transaction client. See the
  * module header for the three writes and the rollback rule.
  */
@@ -218,10 +238,10 @@ export async function approveQmsChangeSigned(
 ): Promise<ApproveQmsChangeSignedResult> {
   const { orgId, userId, changeId } = params;
   const row = await lockApprovableChange(client, orgId, userId, changeId);
+  const contentDigest = contentAsRead(row, params.expectedContentDigest);
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-change:${changeId}` });
   const learningReview = await reviewedLearningApproval(client, row, params);
   const twoPersonRule = row.proposed_by != null ? 'enforced' : 'not_applicable_no_proposer_recorded';
-  const contentDigest = computeQmsChangeContentDigest(row);
   const target = `qms-change:${changeId}`;
   const occurredAt = new Date();
 

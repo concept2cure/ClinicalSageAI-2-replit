@@ -2828,3 +2828,131 @@ admin in client security user settings."**
 - **A consequence to know.** An administrator who is also the organisation's only member sets their own rule. That is
   what a one-person organisation is. The settings change is itself an audited act with a reason.
 - **Evidence.** `docs/evidence/W5/2026-11-10-review-rules-settings/`.
+
+### P-118 — The founder approves the qualification protocol; the retrieval test bank is completed without a regulatory reviewer, and says so
+
+The founder, 2026-11-10, answering the three things P-115's clarification left with them (a working key, the
+protocol's approval with the CSR scoping written into it, and a regulatory reviewer for the retrieval test bank):
+**"I can try to again load a new Anthropic api key tomorrow and yes I approve"**, and on the reviewer:
+**"impossible right not to get a human reviewer so figure out alternatives."**
+
+- **What the founder approved.** `server/eval/pq/pq-protocol.json` (PQ-DRAFT-001), with P-115's scoping written into
+  it, as **version 1.0.0, approved 2026-11-10** by the founder as system owner. The file records it.
+- **What approval does.** It fixes the acceptance criteria before any model has been run against them. P-31: "a PQ
+  against acceptance criteria nobody has approved is not a PQ."
+- **What approval does not do.** It qualifies no model and changes nothing a model may do. Every `pq.status` in
+  `approved-models.ts` is still `pending`, and production still refuses to store model-authored text in a governed
+  record. On the approved protocol a run that is perfect on drafting, extraction and retrieval is still INCOMPLETE
+  (`pq-verdict-rag.test.ts`, "approval alone qualifies nothing").
+- **P-31's sixth condition, a product provider key, is not yet met.** The founder approved ahead of it. A key is a
+  condition for running the protocol, not for fixing what it measures, and criteria fixed before the first run are
+  the stronger record.
+- **How it changes from here.** A change to the approved protocol is a new version and a new approval by the
+  founder. A change after a model has passed invalidates that pass (P-31).
+
+**Written into the protocol by the walking session (`01QoxbLZ…`) under P-115's delegation. The founder may overrule
+any of it before the first run.**
+
+- **The scope** (the file's `scope` block). A qualification is for a named use, on the components that use needs:
+  - evidence-bound CSR drafting: drafting, extraction and the CSR drafting run. It releases CSR text only;
+  - every use that retrieves: drafting, extraction and retrieval.
+- **A CSR drafting component** (`csrDrafting`): the pinned model drafts every ICH E3 narrative heading of one public
+  study through the CSR builder's own request and its own checks. Its criteria:
+
+  | Criterion | Value | Where the value comes from |
+  |---|---|---|
+  | Figures in accepted text that are not a claimed cell of the retained tables | 0 | RULE 2 and P-115 item 1 |
+  | Forbidden or overclaiming phrases | 0 | the drafting component's own criterion |
+  | Share of narrative headings the pinned model verifiably drafted | all | as every other component requires of its tasks |
+  | Share of headings whose first draft passed every check | at least 85% | **no earlier document.** Set here, at the drafting component's coverage floor |
+
+- **That component is required and cannot be executed yet**: the run is not written (ledger package S4). So no run
+  can pass today, for any use. This is stricter than the scope above, on purpose. The test bank holds 510(k), CER,
+  IND, Module 2 and Module 3 tasks and no CSR. Without this, a model that passed on that bank would be admitted to
+  draft a CSR it was never measured on, the failure P-31's fourth condition names.
+
+**The retrieval test bank without a regulatory reviewer.** Decided under the same delegation.
+
+What the record check asks of the bank is facts, not a credential (`verify-pq-record.ts`, `reviewedSource` and
+`reviewedGold`): each source's official URL, version, date and SHA-256, the publisher's reuse terms quoted with
+their URL, and for each test item the section and a verbatim quotation that states its answer. The corpus
+manifest's own procedure asks "what was done and by whom" (`guidance-corpus-manifest.json`, `verifyProcedure` step
+6). So the work is split by kind.
+
+1. **The CSR does not wait for any of this.** The CSR build retrieves nothing (P-115's clarification stands).
+2. **Mechanical steps: the founder, from the Codespace.** The official URL, the download, its SHA-256 and size, and
+   the title, revision and date on the cover, for the 18 required sources. The publishers' sites are refused from
+   the sessions' containers, so a session prepares the commands and the founder runs them. Each entry's
+   `verification` names who ran it and when.
+3. **Reuse terms: the founder reads each of the four publishers' posted terms.** The operative sentence is quoted
+   with its URL and the date read. Recording what a publisher posts needs no counsel. Whether those terms permit
+   this product's use is the founder's call as the owner of the business; a session does not make it. A publisher
+   whose terms are unclear has its texts left out, and the items that rely on them are replaced.
+4. **Judgement steps: replaced by a check anyone can re-run.** The five open checks and the twelve further items
+   are worked by a session from the downloaded official text. Every item carries its section and a verbatim
+   quotation that states the answer. The quotation is checked, character for character, against the file whose hash
+   is pinned, and the check's output is retained. The founder reads each item's quotation beside its answer and
+   confirms it. An item whose quotation does not state its answer plainly is dropped, not argued for.
+5. **The bank says what it is.** Its record, and every qualification record that uses it, states: *sources verified
+   by download and hash, answers verified by verbatim quotation, confirmed by the system owner; no regulatory
+   professional reviewed this bank.* Nothing calls it independently reviewed.
+6. **Two ways to a reviewer's name later; neither changes a criterion.**
+   - The buyer's own regulatory staff review the bank as part of accepting the system. A regulated company
+     qualifies a system for its own intended use, on the supplier's protocol and evidence, as a matter of course.
+   - A contract regulatory writer, for about a day.
+7. **Until the bank is complete,** every use that retrieves stays as it is today: the model assists, and its text
+   is not stored in a governed record as the model's.
+
+- **The order in P-115 changes in one place.** Step 2 is now: the CSR drafting run and a verdict that reads the use
+  (S4); then the run with the founder's key.
+- **Not decided here.**
+  - Whether the buyer is offered the review in item 6.
+  - Whether any publisher's terms are acceptable (item 3).
+  - Any value in the table above, if the founder wants another.
+- **Evidence.** `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
+
+### P-119 — User roles by client type: a standard catalog of job roles, beside the six access levels
+
+The founder, 2026-11-10: **"Add user roles per biotech, pharma, CRO, cmc - and so on to align to the many use cases of
+the entire platform."**
+
+- **What a role is here.** A person in an organisation has two things, and they stay two things:
+  - an **access level**, which decides what the person may do. There are six, and they do not change: administrator,
+    approver, manager, reviewer, member and viewer (`shared/constants/org-roles.ts`, P-18). The signing policy, the
+    governed-write gate and the audit readers are built on them, and the validation package tests them;
+  - one or more **job roles**, which say what the person's function is: regulatory affairs lead, medical writer, CMC
+    lead, QA lead, biostatistician. A job role is the organisation's own record (`qms_job_roles`, P-49). It grants
+    nothing by itself.
+- **What is added.** A standard catalog of job roles for each client type: biotech, pharma, CRO, medical device,
+  diagnostics, academic, regulatory consultancy and medical writing. The roles are grouped by function: regulatory,
+  clinical, data and statistics, safety, nonclinical, CMC, quality, device and diagnostics, and program. Each role
+  carries one sentence on what it is accountable for, the access level it usually takes, and the work areas it uses.
+  The catalog is data (`shared/regulatory/`), as a document type is data (RULE 4).
+- **CMC.** CMC is a function group in the catalog (CMC regulatory lead, analytical development, quality control,
+  manufacturing, supply chain). It is offered to every drug and biologic client type. A CMC-only organisation, such as
+  a contract manufacturer, uses it under the client type it signed up with. Whether such an organisation becomes a
+  client type of its own is not decided here.
+- **How an organisation takes it.** Its administrator adopts the standard roles for its client type, all or some,
+  into the organisation's job roles, and may rename, add or remove any of them. Each change is a governed write with
+  a reason, through the existing writer (`server/services/qms/training-assignment.ts`). Nothing is created for an
+  organisation until its administrator adopts it.
+- **Where it shows.** In Administration, with the members. The member list's "Groups" column, which was always
+  empty, becomes the member's job roles. The administrator gives and removes a member's job roles from the member's
+  detail. The roles tab lists the organisation's job roles beside the access levels.
+- **What a job role suggests.** When the administrator invites a person or changes an access level, the job role's
+  usual access level is offered as a suggestion, with its reason. The administrator decides. No job role raises or
+  lowers anyone's access.
+- **Why not more access levels.** A permission role per function and per client type would be dozens of roles. Each
+  would need its own entry in the signing policy and its own validation. An auditor reading the access review (21
+  CFR 11.10(d)) would have to learn each one. Six levels, project sharing, the QMS approver designation and job roles
+  already express least privilege and separation of duties. A client need that no access level can express returns
+  to the founder.
+- **One vocabulary.** The program plan's task roles (`services/regulatory/pyramids/`, 24 keys such as `ra_lead` and
+  `cmc_lead`) map onto the catalog, so a task's role and a person's job role are the same thing. A test holds the
+  mapping complete.
+- **What uses it next** (each in its own package, not decided here): the program plan proposes a task's owner from
+  the people holding its job role (S11); AnA reads the person's job role in its context (S4); training is assigned by
+  job role, as today (P-49).
+- **What it does not add.** No screen, route, service, table or AnA tool (RULE 6). It completes the job-role store
+  and reaches it from Administration.
+- **Design.** `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md`.
