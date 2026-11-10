@@ -78,6 +78,8 @@ function mockApi(extra: Route = () => undefined) {
       if (hit instanceof Error) throw hit;
       return hit;
     }
+    // The projects the person can open (P-107 item 3): none here, so there is no sponsor to ask about.
+    if (method === 'GET' && url === '/api/c2c/projects?limit=200') return ok({ success: true, data: [] });
     if (method === 'GET' && url === ORG) return ok(orgBody());
     if (method === 'GET' && url.startsWith('/api/artifacts-center/')) {
       return { ok: true, status: 200, headers: new Headers({ 'Content-Disposition': 'attachment; filename="IND_cover_letter.docx"' }), blob: async () => new Blob(['docx']) } as unknown as Response;
@@ -134,7 +136,8 @@ describe('with no project open, the Vault lists the governed artifacts of the pr
   it('says the signature on the current version in words, four states', async () => {
     mockApi(() => undefined);
     apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })])) : ok({}));
+      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })]))
+        : url === '/api/c2c/projects?limit=200' ? ok({ success: true, data: [] }) : ok({}));
     render(<Vault {...props()} />);
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
@@ -437,3 +440,47 @@ describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
   });
 });
 
+
+/* P-107 item 3 (2026-11-08): "With no project open, the Vault first asks which sponsor; every view is inside one
+   sponsor." */
+describe('with no project open and several sponsors, the Vault asks which sponsor first', () => {
+  const PROJECTS = [
+    { id: 'p-lumen-1', title: 'LMN-201', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+    { id: 'p-acme-1', title: 'ACM-7', ws: 'Biotech', client_workspace_id: 9, client_name: 'Acme' },
+    { id: 'p-lumen-2', title: 'LMN-301', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+  ];
+  const sponsored: Route = (method, url) => {
+    if (method !== 'GET') return undefined;
+    if (url === '/api/c2c/projects?limit=200') return ok({ success: true, data: PROJECTS });
+    if (url.startsWith(`${ORG}?sameClientAs=`)) return ok(orgBody([orgRow({ prog: 'LMN-201' })]));
+    return undefined;
+  };
+
+  it('lists the sponsors, and reads and shows nothing of any sponsor until one is chosen', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    expect(within(choice).getByText(/Acme/)).toBeTruthy();
+    expect(within(choice).getByText(/Lumen/)).toBeTruthy();
+    expect(screen.queryByTestId('vault-project-list')).toBeNull();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
+    expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
+  });
+
+  it('once chosen, lists that sponsor\'s projects only and reads its artifacts by one of its projects', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    fireEvent.click(within(choice).getByRole('button', { name: 'Show the Vaults of Lumen' }));
+    const list = await screen.findByTestId('vault-project-list');
+    expect(within(list).getByText('LMN-201')).toBeTruthy();
+    expect(within(list).getByText('LMN-301')).toBeTruthy();
+    expect(within(list).queryByText('ACM-7')).toBeNull();
+    await orgPanel();
+    await waitFor(() => expect(urls()).toContain(`${ORG}?sameClientAs=p-lumen-1`));
+    expect(urls()).not.toContain(ORG);
+    fireEvent.click(screen.getByTestId('vault-sponsor-change'));
+    expect(await screen.findByTestId('vault-sponsor-choice')).toBeTruthy();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
+  });
+});

@@ -351,6 +351,24 @@ async function ensureCapas(ctx, program, rec, label) {
 
 const CHANGE_PATH = ['proposed', 'under_assessment', 'approved', 'in_implementation'];
 
+/**
+ * The approver signs the content they read. The register returns each change's content_digest and the signed route
+ * requires it back as expectedContentDigest (change-approval-signature.ts, since c284f3cb4): an approval that names
+ * none is refused, and one that names an edited change is refused. So the signer reads the register first, as the
+ * approval dialog does (quality/qmsApproval.ts).
+ */
+export async function approveChangeAsRead(signer, change, number) {
+  const register = rowsOf(must(await signer.api('GET', '/api/mdx/qms/changes'), 200, `read ${number} as its approver`));
+  const digest = register.find((c) => c.id === change.id)?.content_digest;
+  if (typeof digest !== 'string' || !/^[a-f0-9]{64}$/.test(digest)) {
+    throw new Error(`${number}: the register gave its approver no content digest to sign. Nothing was signed.`);
+  }
+  return must(await signer.api('POST', `/api/mdx/qms/changes/${change.id}/approve`, {
+    password: signer.password, meaning: 'APPROVED', expectedContentDigest: digest,
+    reason: 'Impact assessed; change approved for implementation (demo seed, second signer).',
+  }), [200, 201], `approve ${number}`).data;
+}
+
 async function ensureChange(ctx, program, rec, label) {
   const { api, run, tally } = ctx;
   await run.step(`Quality: change control ${CHANGE.changeNumber} on ${label}`, async () => {
@@ -383,9 +401,7 @@ async function ensureChange(ctx, program, rec, label) {
         return must(await api('POST', `/api/mdx/qms/changes/${cur.id}/transition`, { to, reason: `Demo: move ${CHANGE.changeNumber} to ${to.replace('_', ' ')}` }), 200, `move ${CHANGE.changeNumber} to ${to}`).data;
       }
       if (!ctx.signer) { unsigned(ctx, `approval of ${CHANGE.changeNumber}`); return null; }
-      return must(await ctx.signer.api('POST', `/api/mdx/qms/changes/${cur.id}/approve`, {
-        password: ctx.signer.password, meaning: 'APPROVED', reason: 'Impact assessed; change approved for implementation (demo seed, second signer).',
-      }), [200, 201], `approve ${CHANGE.changeNumber}`).data;
+      return approveChangeAsRead(ctx.signer, cur, CHANGE.changeNumber);
     }, `qms-change ${CHANGE.changeNumber}`);
     rec.change = { id: ch.id, changeNumber: CHANGE.changeNumber, status: ch.status, links: wanted.map((w) => w.linkedRef) };
     return `#${ch.id} ${ch.status}, linked to ${wanted.map((w) => w.linkedRef).join(', ')}`;

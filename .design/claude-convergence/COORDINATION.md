@@ -15,7 +15,7 @@ The founder delegated the open questions to the coordinating session ("No you de
 
 | Lane | Decided | Next |
 |---|---|---|
-| Vault parity (`01KnUG…`) or S6's holder | (1) No cross-sponsor library view for a CRO: with no project open, the Vault asks which sponsor first. (2) Device coverage follows the eSTAR mapper; the rule pack converges onto it (D4/D6 is a defect, red first). (3) A seal says when its version was superseded. (4) Retention is FD3 (c). (5) Renditions are PDFs through the existing `pdf-converter.ts`, bound to the source's SHA-256. (6) Binders are editable views, audited, never altering a document | Take them in your order, red first, with hold rows here |
+| Vault parity (`01KnUG…`) or S6's holder | (1) No cross-sponsor library view for a CRO: with no project open, the Vault asks which sponsor first. (2) Device coverage follows the eSTAR mapper; the rule pack converges onto it (D4/D6 is a defect, red first). (3) A seal says when its version was superseded. (4) Retention is FD3 (c). (5) Renditions are PDFs through the existing `pdf-converter.ts`, bound to the source's SHA-256. (6) Binders are editable views, audited, never altering a document | **2026-11-10, S6's holder (`01QoxbLZMS…`):** (3) landed, a seal says when its version was superseded; (1) landed, the no-project Vault asks which sponsor first; (4) already holds in `retentionCron.ts` (destruction refused, tombstone only; Object Lock is D1's); (6) is the folders and binders of `docs/evidence/SPINE/S6/2026-11-06/`. **Open, not held: (2) device coverage onto the eSTAR mapper; (5) PDF renditions.** Record: `docs/evidence/SPINE/S6/2026-11-10/README.md` |
 | R1 (`01QoxbLdKp…`) | R1's next area is CMC / Module 3, then RBM. The 171 uncalled route files are retired by their owning lane only when there is no caller in any history and the capability is reachable elsewhere. The replacement is named by path, the inventory re-run, batches of 20 or fewer, nothing dropped (RULE 1) | Turn the list into per-lane batches with replacements named; release `ProtocolDev*` and `pdev-view-*` unless CMC's reach needs them |
 | Design continuation (`011Dpx…`) | Its §3a progress entry may be committed under `Founder-Decision: P-100`; that is not a plan amendment. Handoff item (a), the empty-state `tone-idle` class, was already fixed by `1d789b516` | Commit the entry |
 | Anna runtime (`01KZK3…`, messaged) | §14.5 decided: internal first; budgets per document type from measured spike runs (2× p95, stop and ask; until measured, 60 s interactive, 30 min background); internal dispositions in the validation package by risk | Plan §1d row updated |
@@ -330,6 +330,28 @@ runs on the real schema and stops at the seal hop. 9 of 15 cases fail behind it.
   a citation, and let a person cite inside machine text; (c) the walk records a qualified-generation receipt through
   the gateway path. (b) is a defect a customer meets on the first CSR. The baseline must not grow, and the walk's
   text must not gain a page reference only to satisfy the pattern.
+
+**→ Vault folders and binders (S6, `01QoxbLZMS…`): AnA records its own rationale as the person's reason for change
+(D5, Part 11), red on trunk.** Since `7d918fe90e` (S6 step 4), `place_project_document` with `new_folder` creates the
+folder through `createProgramFolder` with `reason: parsed.rationale` (`server/services/ana/document-placement-tools.ts`,
+folderForPlacement). The chained `vault.folder.create` row then carries AnA's rationale in `details.reason` under the
+person's user id, and the person was asked only at the confirm tier, never for a reason. The row already records the
+rationale as AnA's (`agentReason`). `governed-reason-not-invented.test.ts` fails 2 of 75: the reason written is not the
+one stated, and the tool is not in `REASON_REQUIRED_TOOLS`. The test is right. A proposed fix, kept to your files and
+tested to 75/75 in a scratch worktree, is `docs/evidence/F1/2026-11-10-trunk-ci/s6-place-document-reason-proposed.diff`:
+the tool joins `REASON_REQUIRED_TOOLS`, takes `reason: STATED_REASON_INPUT`, and the folder write takes
+`gatedReason(input)`. Its trade-off is yours: the reason tier would apply to every placement, not only to `new_folder`;
+withdrawing `new_folder` (a person makes folders in the Vault) is the other way. Not edited by this lane: your session
+changed those files within six hours.
+
+**→ the holders of the shared PGlite harnesses (`server/db/pglite-harness.ts` `AUDIT_LOGS_PGLITE_DDL`,
+`server/services/document-data-disposition/__tests__/disposition-fixture.ts`):** their `audit_logs` still has no
+`chain_seq`. Since `b8cee0745c` every release reads the independent-check ledger by it, and the read's catch answers
+409 INDEPENDENT_CHECK_REQUIRED, so each suite on those harnesses that reaches a release goes red until it applies
+`migrations/20260921_audit_logs_chain_seq.sql` itself. This lane fixed seven such suites one by one. Applying the
+migration once in the harnesses would end the class; it is idempotent, so suites that already apply it are unaffected.
+The S4 owner of `workflow-import-governance.ts` may also want that catch to answer 503 for a ledger it could not
+read, so this drift shows as what it is.
 
 ## What every session does
 
