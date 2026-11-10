@@ -1,7 +1,8 @@
 /** Read-only signed snapshots. Content rendering stays in Authoring's renderer. */
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { DialogPanel } from './ControlledDocumentDialogs';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
+import { DialogPanel, failedReadOf } from './ControlledDocumentDialogs';
 import { formatDate, type QmsDoc } from './data';
 import { readQmsSignedVersions, type QmsSignedVersion, type QmsVersionStanding } from './qmsDocuments';
 
@@ -23,20 +24,21 @@ const AuthoredHtml = React.lazy(async () => {
 
 export function ControlledDocumentHistory({ document, onClose }: { document: QmsDoc; onClose: () => void }) {
   const [versions, setVersions] = React.useState<QmsSignedVersion[] | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<{ message: string; read: FailedRead } | null>(null);
   const [retry, setRetry] = React.useState(0);
   React.useEffect(() => {
     let cancelled = false;
     setError(null); setVersions(null);
     void readQmsSignedVersions(document.id).then(rows => { if (!cancelled) setVersions(rows); }).catch(err => {
-      if (!cancelled) setError(redactInternals(err instanceof Error ? err.message : '', 'The signed version history could not be read. Try again.'));
+      if (!cancelled) setError({ message: redactInternals(err instanceof Error ? err.message : '', 'The signed version history could not be read. Try again.'), read: failedReadOf(err) });
     });
     return () => { cancelled = true; };
   }, [document.id, retry]);
-  return <DialogPanel title={`Version history of ${document.docNumber}`} busy={false} onClose={onClose}>
-    <p>{document.title}. Retained signed versions and earlier registry records are read-only; revisions use a separate draft.</p>
-    {error ? <div role="alert">{error} <button className="qms-btn ghost" onClick={() => setRetry(n => n + 1)}>Try again</button></div> :
-      versions === null ? <p role="status">Loading document versions…</p> :
+  return <DialogPanel title={`Version history of ${document.docNumber}`} busy={false} onClose={onClose}
+    sub={`${document.title}. Retained signed versions and earlier registry records are read-only; revisions use a separate draft.`}>
+    {error ? <ErrorState title="The signed version history could not be read" message={error.message} read={error.read} readWhat="this document's version history"
+      retry={() => setRetry(n => n + 1)} testId="qms-history-failed" /> :
+      versions === null ? <EmptyState title="Loading document versions…" busy /> :
       versions.length === 0 ? <p>No document versions recorded yet.</p> : versions.map((version, index) => (
         <details key={`${version.version}:${version.approved_at}`} open={index === 0} className="qms-signed-version">
           <summary>
@@ -51,6 +53,5 @@ export function ControlledDocumentHistory({ document, onClose }: { document: Qms
           </React.Suspense>
         </details>
       ))}
-    <div className="qms-dialog-actions"><button className="qms-btn ghost" onClick={onClose}>Close</button></div>
   </DialogPanel>;
 }

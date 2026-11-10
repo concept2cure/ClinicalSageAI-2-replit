@@ -3,7 +3,7 @@ import { redactInternals } from '@/lib/queryClient';
 import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import type { QmsDoc, TrainingRow } from './data';
 import { I } from '../v2/icons';
-import { DialogPanel } from './ControlledDocumentDialogs';
+import { DialogPanel, DrawerField } from './ControlledDocumentDialogs';
 import { useJobRoles, useTrainingAssignments, type JobRole, type JobRoleListing, type TrainingAssignment, type TrainingAssignmentListing } from './hooks';
 import { qmsWrite } from './qmsWrites';
 
@@ -117,13 +117,15 @@ function ReasonAct({ label, action, hint, extra, ready = true, onSubmit, onCance
     finally { setBusy(false); }
   };
   return <form className="qms-train-act" aria-label={label} onSubmit={event => void submit(event)}>
+    <h3 className="de-label">{label}</h3>
     {extra}
-    <label>Reason<textarea value={reason} onChange={event => setReason(event.target.value)} minLength={REASON_MIN} maxLength={2000} required disabled={busy} /></label>
-    <p className="qms-dialog-hint">{hint} State the reason in at least {REASON_MIN} characters; it is kept with the change.</p>
-    {error && <div role="alert">{error}</div>}
-    <div className="qms-dialog-actions">
-      <button type="button" className="qms-btn ghost" onClick={onCancel} disabled={busy}>Cancel</button>
-      <button type="submit" className="qms-btn primary" disabled={busy || !ready || reason.trim().length < REASON_MIN}>{busy ? 'Saving…' : action}</button>
+    <DrawerField label="Reason" hint={`${hint} State the reason in at least ${REASON_MIN} characters; it is kept with the change.`}>
+      <textarea className="de-textarea" rows={3} value={reason} onChange={event => setReason(event.target.value)} minLength={REASON_MIN} maxLength={2000} required disabled={busy} />
+    </DrawerField>
+    {error && <div className="de-err" role="alert">{error}</div>}
+    <div className="ph-acts">
+      <button type="button" className="de-btn ghost" onClick={onCancel} disabled={busy}>Cancel</button>
+      <button type="submit" className="de-btn primary" disabled={busy || !ready || reason.trim().length < REASON_MIN}>{busy ? 'Saving…' : action}</button>
     </div>
   </form>;
 }
@@ -135,18 +137,18 @@ export function JobRolesPanel({ onClose }: { onClose: () => void }) {
   const jr = useJobRoles();
   const [act, setAct] = React.useState<RoleAct | null>(null);
   const done = async (write: Promise<unknown>) => { await write; setAct(null); jr.refresh(); };
-  return <DialogPanel title="Job roles" onClose={onClose} busy={false}>
-    <p>A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.</p>
+  const footer = jr.listing?.canAdminister && !act
+    ? <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'create' })}>{I.plus} New job role</button> : undefined;
+  return <DialogPanel title="Job roles" onClose={onClose} busy={false} footer={footer}
+    sub="A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.">
     {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} read={jr.failure} readWhat="the job roles list" testId="qms-job-roles-failed" />}
     {!jr.failed && !jr.listing && <EmptyState title="Loading job roles…" busy />}
     {jr.listing && <>
-      {!jr.listing.canAdminister && <p className="qms-dialog-hint">Only an administrator changes job roles and who holds them.</p>}
-      {jr.listing.roles.length === 0 && <div className="qms-empty">No job roles yet.</div>}
+      {!jr.listing.canAdminister && <p className="de-desc">Only an administrator changes job roles and who holds them.</p>}
+      {jr.listing.roles.length === 0 && <p className="de-desc">No job roles yet.</p>}
       {jr.listing.roles.map(role => <JobRoleRow key={role.id} role={role} canAdminister={jr.listing!.canAdminister} onAct={setAct} />)}
-      {jr.listing.canAdminister && !act && <button type="button" className="qms-btn ghost" onClick={() => setAct({ kind: 'create' })}>{I.plus} New job role</button>}
       {act && <JobRoleActForm act={act} people={jr.listing.people} onDone={done} onCancel={() => setAct(null)} />}
     </>}
-    <div className="qms-dialog-actions"><button type="button" className="qms-btn ghost" onClick={onClose}>Close</button></div>
   </DialogPanel>;
 }
 
@@ -156,18 +158,18 @@ function JobRoleRow({ role, canAdminister, onAct }: { role: JobRole; canAdminist
       <strong>{role.name}</strong>
       <span className="meta">{role.documentCount === 1 ? '1 document' : `${role.documentCount} documents`}</span>
       {canAdminister && <>
-        <button type="button" className="qms-link" onClick={() => onAct({ kind: 'add', role })}>Add a person</button>
-        <button type="button" className="qms-link" onClick={() => onAct({ kind: 'rename', role })}>Rename</button>
-        <button type="button" className="qms-link" disabled={role.documentCount > 0}
+        <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'add', role })}>Add a person</button>
+        <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'rename', role })}>Rename</button>
+        <button type="button" className="btn ghost small" disabled={role.documentCount > 0}
           title={role.documentCount > 0 ? 'Assigned to a document: withdraw those assignments first.' : undefined}
           onClick={() => onAct({ kind: 'delete', role })}>Delete</button>
       </>}
     </div>
-    {role.description && <p className="qms-dialog-hint">{role.description}</p>}
-    {role.members.length === 0 ? <div className="qms-empty">Nobody holds this role.</div> : <ul className="qms-train-people">
+    {role.description && <p className="de-desc">{role.description}</p>}
+    {role.members.length === 0 ? <p className="de-desc">Nobody holds this role.</p> : <ul className="qms-train-people">
       {role.members.map(m => <li key={m.userId}>
         {m.label}{m.active ? '' : ' (no longer an active member)'} <span className="meta">since {day(m.addedAt)}</span>
-        {canAdminister && <button type="button" className="qms-link" onClick={() => onAct({ kind: 'remove', role, userId: m.userId, label: m.label })}>Remove</button>}
+        {canAdminister && <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'remove', role, userId: m.userId, label: m.label })}>Remove</button>}
       </li>)}
     </ul>}
   </div>;
@@ -181,8 +183,8 @@ function JobRoleActForm({ act, people, onDone, onCancel }: {
   const [userId, setUserId] = React.useState('');
   const held = new Set(act.kind === 'add' ? act.role.members.map(m => m.userId) : []);
   const nameFields = <>
-    <label>Name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} required /></label>
-    <label>Description (optional)<input value={description} onChange={event => setDescription(event.target.value)} maxLength={500} /></label>
+    <DrawerField label="Name"><input className="de-input" value={name} onChange={event => setName(event.target.value)} maxLength={80} required /></DrawerField>
+    <DrawerField label="Description (optional)"><input className="de-input" value={description} onChange={event => setDescription(event.target.value)} maxLength={500} /></DrawerField>
   </>;
   switch (act.kind) {
     case 'create':
@@ -196,10 +198,10 @@ function JobRoleActForm({ act, people, onDone, onCancel }: {
         onCancel={onCancel} onSubmit={reason => onDone(qmsWrite('DELETE', `job-roles/${act.role.id}`, { reason }))} />;
     case 'add':
       return <ReasonAct label={`Add a person to ${act.role.name}`} action="Add" hint="They must then train on every document this role is assigned to." ready={userId !== ''}
-        extra={<label>Person<select value={userId} onChange={event => setUserId(event.target.value)} required>
+        extra={<DrawerField label="Person"><select className="de-select" value={userId} onChange={event => setUserId(event.target.value)} required>
           <option value="">Choose a person</option>
           {people.filter(p => !held.has(p.userId)).map(p => <option key={p.userId} value={String(p.userId)}>{p.label}</option>)}
-        </select></label>}
+        </select></DrawerField>}
         onCancel={onCancel} onSubmit={reason => onDone(qmsWrite('POST', `job-roles/${act.role.id}/members`, { userId: Number(userId), reason }))} />;
     case 'remove':
       return <ReasonAct label={`Remove ${act.label} from ${act.role.name}`} action="Remove" hint={`${act.label} no longer trains through ${act.role.name}.`}
@@ -232,12 +234,15 @@ export function TrainingAssignmentsPanel({ doc, onClose }: { doc: QmsDoc; onClos
   const jr = useJobRoles();
   const [act, setAct] = React.useState<AssignAct | null>(null);
   const done = async (write: Promise<unknown>) => { await write; setAct(null); ta.refresh(); jr.refresh(); };
-  return <DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={false}>
-    <p>{doc.docNumber} {doc.title}. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.</p>
+  const footer = ta.listing?.canAssign === true && !act ? <>
+    <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'role' })}>Assign a job role</button>
+    <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'person' })}>Assign a person</button>
+  </> : undefined;
+  return <DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={false} footer={footer}
+    sub={`${doc.docNumber} ${doc.title}. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.`}>
     {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} read={ta.failure} readWhat="who must train" testId="qms-assignments-failed" />}
     {!ta.failed && !ta.listing && <EmptyState title="Loading assignments…" busy />}
     {ta.listing && <AssignmentsBody documentId={doc.id} listing={ta.listing} roles={jr.listing} rolesFailed={jr.failed} act={act} onAct={setAct} onDone={done} />}
-    <div className="qms-dialog-actions"><button type="button" className="qms-btn ghost" onClick={onClose}>Close</button></div>
   </DialogPanel>;
 }
 
@@ -248,20 +253,16 @@ function AssignmentsBody({ documentId, listing, roles, rolesFailed, act, onAct, 
   const can = listing.canAssign === true;
   return <>
     <TrainableLine trainable={listing.trainable} />
-    {listing.canAssign === null && <div role="status">Whether you can change these assignments could not be checked. Try again later.</div>}
-    {listing.canAssign === false && <p className="qms-dialog-hint">Only an administrator or a designated QMS approver who can edit changes who must train on this document.</p>}
-    {listing.assignments.length === 0 ? <div className="qms-empty">Nobody is assigned to train on this document.</div> : <ul className="qms-train-people">
+    {listing.canAssign === null && <p className="de-desc" role="status">Whether you can change these assignments could not be checked. Try again later.</p>}
+    {listing.canAssign === false && <p className="de-desc">Only an administrator or a designated QMS approver who can edit changes who must train on this document.</p>}
+    {listing.assignments.length === 0 ? <p className="de-desc">Nobody is assigned to train on this document.</p> : <ul className="qms-train-people">
       {listing.assignments.map(a => <li key={a.id}>
         {a.kind === 'role' ? <>Job role <strong>{a.jobRoleName ?? 'a deleted role'}</strong></> : <><strong>{a.userLabel}</strong>{a.active === false ? ' (no longer an active member)' : ''}</>}
         {' '}<span className="meta">assigned by {a.assignedByLabel} on {day(a.assignedAt)}</span>
-        {can && <button type="button" className="qms-link" onClick={() => onAct({ kind: 'withdraw', assignment: a })}>Withdraw</button>}
+        {can && <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'withdraw', assignment: a })}>Withdraw</button>}
       </li>)}
     </ul>}
     <PeopleLine listing={listing} />
-    {can && !act && <div className="qms-dialog-actions">
-      <button type="button" className="qms-btn ghost" onClick={() => onAct({ kind: 'role' })}>Assign a job role</button>
-      <button type="button" className="qms-btn ghost" onClick={() => onAct({ kind: 'person' })}>Assign a person</button>
-    </div>}
     {can && act && <AssignActForm act={act} documentId={documentId} listing={listing} roles={roles} rolesFailed={rolesFailed} onDone={onDone} onCancel={() => onAct(null)} />}
   </>;
 }
@@ -270,7 +271,7 @@ function TrainableLine({ trainable }: { trainable: TrainingAssignmentListing['tr
   const parts: string[] = [];
   if (trainable.inForce) parts.push(`Version in force: v${trainable.inForce.version}`);
   if (trainable.pending) parts.push(`v${trainable.pending.version} takes effect ${day(trainable.pending.effectiveDate)}`);
-  return <p className="qms-dialog-hint">{parts.length ? parts.join(' · ') : 'No version is approved yet: training opens when one is.'}</p>;
+  return <p className="de-desc">{parts.length ? parts.join(' · ') : 'No version is approved yet: training opens when one is.'}</p>;
 }
 
 function viaWords(via: string[], listing: TrainingAssignmentListing): string {
@@ -305,7 +306,7 @@ function AssignActForm({ act, documentId, listing, roles, rolesFailed, onDone, o
       onCancel={onCancel} onSubmit={reason => onDone(qmsWrite('DELETE', `${path}/${act.assignment.id}`, { reason }))} />;
   }
   if (rolesFailed || !roles) {
-    return <div role={rolesFailed ? 'alert' : 'status'}>{rolesFailed ? 'The job roles and people could not be read, so nothing can be assigned now.' : 'Loading job roles and people…'}</div>;
+    return <p className={rolesFailed ? 'de-err' : 'de-desc'} role={rolesFailed ? 'alert' : 'status'}>{rolesFailed ? 'The job roles and people could not be read, so nothing can be assigned now.' : 'Loading job roles and people…'}</p>;
   }
   const taken = new Set(listing.assignments.map(a => (a.kind === 'role' ? `r${a.jobRoleId}` : `p${a.userId}`)));
   const options = act.kind === 'role'
@@ -314,10 +315,10 @@ function AssignActForm({ act, documentId, listing, roles, rolesFailed, onDone, o
   const noun = act.kind === 'role' ? 'Job role' : 'Person';
   return <ReasonAct label={`Assign a ${noun.toLowerCase()}`} action="Assign" ready={choice !== ''}
     hint={act.kind === 'role' ? 'Everyone who holds the role, now or later, must train on this document.' : 'They must train on this document while they are a member.'}
-    extra={<label>{noun}<select value={choice} onChange={event => setChoice(event.target.value)} required>
+    extra={<DrawerField label={noun}><select className="de-select" value={choice} onChange={event => setChoice(event.target.value)} required>
       <option value="">{options.length ? `Choose a ${noun.toLowerCase()}` : `No ${noun.toLowerCase()} left to assign`}</option>
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select></label>}
+    </select></DrawerField>}
     onCancel={onCancel}
     onSubmit={reason => onDone(qmsWrite('POST', path, { [act.kind === 'role' ? 'jobRoleId' : 'userId']: Number(choice), reason }))} />;
 }

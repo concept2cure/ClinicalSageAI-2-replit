@@ -23,7 +23,7 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
-import { DialogPanel } from './ControlledDocumentDialogs';
+import { DialogPanel, DrawerField } from './ControlledDocumentDialogs';
 import { formatDate, type PeriodicReviewSummary, type ReviewDueRow } from './data';
 import { postQmsPeriodicReview, type QmsPeriodicReviewDecision } from './qmsApproval';
 
@@ -162,6 +162,7 @@ function ReviewDecision({ row, onClose, onContinue }: {
   const [date, setDate] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const dateRef = React.useRef<HTMLInputElement>(null);
+  const formId = React.useId();
   const earliest = localDay(1);
   const latest = localDay(5 * 365);
   const submit = (event: React.FormEvent) => {
@@ -171,49 +172,40 @@ function ReviewDecision({ row, onClose, onContinue }: {
     setError(date ? `Enter a next review date from ${earliest} to ${latest}.` : 'Enter the next review date.');
     dateRef.current?.focus();
   };
+  const outcomes: [QmsPeriodicReviewDecision['outcome'], string][] = [['current', 'Remains current'], ['revision-required', 'Revision required']];
+  const footer = <>
+    <button type="button" className="de-btn ghost" onClick={onClose}>Cancel</button>
+    <button type="submit" form={formId} className="de-btn primary">Continue to sign</button>
+  </>;
   return (
-    <DialogPanel title="Record periodic review" onClose={onClose} busy={false}>
-      <p>
-        {row.docNumber} {row.title}. You are reviewing v{row.version}, the version in force. You sign the review in the
-        next step. It does not change the document or its approval.
-      </p>
-      <form onSubmit={submit} noValidate>
-        <fieldset className="qms-dialog-choice">
-          <legend>Review outcome</legend>
-          <label>
-            <input type="radio" name="qms-review-outcome" value="current" checked={outcome === 'current'} onChange={() => setOutcome('current')} />
-            Remains current
-          </label>
-          <label>
-            <input type="radio" name="qms-review-outcome" value="revision-required" checked={outcome === 'revision-required'}
-              onChange={() => { setOutcome('revision-required'); setError(null); }} />
-            Revision required
-          </label>
-        </fieldset>
+    <DialogPanel title="Record periodic review" onClose={onClose} busy={false} footer={footer}
+      sub={`${row.docNumber} ${row.title}. You are reviewing v${row.version}, the version in force. You sign the review in the next step. It does not change the document or its approval.`}>
+      <form id={formId} onSubmit={submit} noValidate>
+        {/* The product's single choice (C2CForm's seg): a radiogroup, each option saying whether it is chosen. */}
+        <div className="de-field">
+          <div className="de-label" id={`${formId}-outcome`}>Review outcome</div>
+          <div className="de-seg" role="radiogroup" aria-labelledby={`${formId}-outcome`}>
+            {outcomes.map(([value, label]) => (
+              <button key={value} type="button" role="radio" aria-checked={outcome === value} className="de-seg-opt" data-on={outcome === value || undefined}
+                onClick={() => { setOutcome(value); if (value === 'revision-required') setError(null); }}>{label}</button>
+            ))}
+          </div>
+        </div>
         {outcome === 'current' ? (
-          <>
-            <label>Next periodic review
-              <input ref={dateRef} type="date" value={date} min={earliest} max={latest} required
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? 'qms-review-date-hint qms-review-date-error' : 'qms-review-date-hint'}
-                onChange={(event) => { setDate(event.target.value); setError(null); }} />
-            </label>
-            <p className="qms-dialog-hint" id="qms-review-date-hint">
-              Enter a date after today and within five years. The register lists the document as due from this date.
-            </p>
-            {error && <div role="alert" id="qms-review-date-error">{error}</div>}
-          </>
+          <DrawerField label="Next periodic review" error={error}
+            hint="Enter a date after today and within five years. The register lists the document as due from this date.">
+            <input ref={dateRef} className="de-input" type="date" value={date} min={earliest} max={latest} required
+              onChange={(event) => { setDate(event.target.value); setError(null); }} />
+          </DrawerField>
         ) : (
-          <p className="qms-dialog-hint">
-            The document keeps the review date its approval set{row.signedReviewDate ? ` (${formatDate(row.signedReviewDate)})` : ''}.
-            Recording this does not open a revision; open one with Revise in the register. Approving the revision sets the next
-            review date.
+          <p className="de-desc">
+            {row.signedReviewDate
+              ? `The document keeps the review date its approval set (${formatDate(row.signedReviewDate)}).`
+              : 'Its approval set no periodic review date, and recording this does not set one.'}
+            {' '}Recording this does not open a revision; open one with Revise in the register. Approving the revision sets the
+            next review date.
           </p>
         )}
-        <div className="qms-dialog-actions">
-          <button type="button" className="qms-btn ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="qms-btn primary">Continue to sign</button>
-        </div>
       </form>
     </DialogPanel>
   );

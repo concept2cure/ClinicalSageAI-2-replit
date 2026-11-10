@@ -43,6 +43,7 @@ vi.mock('../../v2/surfaceActions', () => ({ useSurfaceActionHandlers: () => unde
 vi.mock('../../v2/surfaceContext', () => ({ usePublishSurfaceContext: () => undefined }));
 
 import { QualityApp } from '../App';
+import { ceremonyOpen } from '../../v2/ceremony';
 
 beforeEach(() => {
   H.asked = [];
@@ -142,6 +143,22 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(within(dialog).getByText('A governing statement of intent.')).toBeTruthy();
     expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('Policy');
     expect((within(dialog).getByLabelText('Document type') as HTMLSelectElement).value).toBe('policy');
+  });
+
+  // C15: the form is the product's one drawer (D0 `.de`, as C2CForm's), and a ceremony while it is open, so AnA does
+  // not change the screen under it (v2/ceremony.ts; the shell refuses AnA's moves while one is open).
+  it('opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open', () => {
+    mount();
+    expect(ceremonyOpen()).toBe(false);
+    fireEvent.click(within(screen.getByRole('region', { name: 'Controlled documents' })).getByRole('button', { name: 'New controlled document' }));
+    const dialog = screen.getByRole('dialog', { name: 'New controlled document' });
+    expect(dialog.className).toBe('de');
+    expect(dialog.parentElement!.className).toBe('de-bd');
+    expect(within(dialog).getByRole('button', { name: 'Create and open' }).closest('.de-f')).toBeTruthy();
+    expect(ceremonyOpen()).toBe(true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(ceremonyOpen()).toBe(false);
   });
 
   it("keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out", () => {
