@@ -222,6 +222,10 @@ beforeAll(async () => {
     readFileSync(path.resolve(__dirname, '../../../migrations/20260814d_document_alias_map.sql'), 'utf8'),
   );
   await h.pglite.exec(readFileSync(path.resolve(__dirname, '../../../db/migrations/20260725_authoring_audit_trail.sql'), 'utf8'));
+  // The chain's order key, as the deployed set has it: since b8cee0745c the placement's release gate reads the
+  // source's chained ledger ordered by chain_seq (workflow-import-governance.ts independentLedger), and without
+  // the column every placement answered INDEPENDENT_CHECK_REQUIRED.
+  await h.pglite.exec(readFileSync(path.resolve(__dirname, '../../../migrations/20260921_audit_logs_chain_seq.sql'), 'utf8'));
 }, 120_000);
 
 afterAll(async () => {

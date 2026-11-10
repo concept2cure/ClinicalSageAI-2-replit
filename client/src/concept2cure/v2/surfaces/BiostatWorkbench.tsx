@@ -58,7 +58,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   IVD_CALCULATOR_BASE,
@@ -730,40 +729,50 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
 }
 
 /**
+ * Resolve the design engine AnA named: an exact id, then an exact title, then
+ * one title containing the phrase. Honest misses and ambiguity refusals.
+ */
+export function resolveCalculatorByName(name: string): { ok: true; calc: Calculator } | { ok: false; reason: string } {
+  const raw = name.trim();
+  if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
+  const needle = raw.toLowerCase();
+  const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
+  const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
+  const hits = byId.length ? byId
+    : byTitle.length ? byTitle
+    : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
+  if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
+  if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
+  return { ok: true, calc: hits[0] };
+}
+
+/**
  * The design calculators — a section of the Biostatistics surface.
  *
  * It was the bottom half of `biostat-workbench`. The surface action AnA uses to
- * open an engine by name moved with it, and is registered here under the
- * surviving surface's id.
+ * open an engine by name moved with it to `biostatistics`, whose ONE handler
+ * set registers it (`Biostatistics.tsx`): the surface owns the open engine and
+ * passes it here as `activeId` / `onSelect`. Rendered without them (a test
+ * mounting the section alone), the section keeps its own choice.
  */
-export function DesignCalculatorsSection({ fireToast, onNav, deviceProject }: { fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
-  const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
+export function DesignCalculatorsSection({ fireToast, onNav, deviceProject, activeId: chosenId, onSelect }: {
+  fireToast: FireToast;
+  onNav?: (id: string) => void;
+  deviceProject?: boolean;
+  activeId?: string;
+  onSelect?: (id: string) => void;
+}) {
+  const [ownId, setOwnId] = useState<string>(CALCULATORS[0].id);
+  const activeId = onSelect ? (chosenId ?? CALCULATORS[0].id) : ownId;
+  const setActiveId = onSelect ?? setOwnId;
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
-  /* AnA can open any design engine by its name — the same tile click a person
-     makes — so a drive can land on the right calculator before its inputs are
-     discussed. The registry (CALCULATORS) is static, so no not-ready state;
-     opening an engine is view-state only — computing a result stays deliberate.
-     Registered under `biostatistics` since 2026-11-09: the action's id moved
-     with the section (shared/navigation/surface-actions.ts). */
-  useSurfaceActionHandlers('biostatistics', {
-    'biostatistics.select-calculator': (params) => {
-      const raw = String(params.calculator ?? '').trim();
-      if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
-      const needle = raw.toLowerCase();
-      const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
-      const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
-      const hits = byId.length ? byId
-        : byTitle.length ? byTitle
-        : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
-      if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
-      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
-      const c = hits[0];
-      if (activeId === c.id) return { ok: true, detail: `Already on ${c.title}` };
-      setActiveId(c.id);
-      return { ok: true, detail: `Opened ${c.title}` };
-    },
-  });
+  /* No action registration here. The bus holds ONE registration, and this
+     section's (made under `biostatistics` on 2026-11-09) ran its effect before
+     the surface's (React runs a child's effects first): it answered a design
+     held while the list loaded with "This screen does not support", and the
+     surface's registration then replaced it, so `select-calculator` was never
+     reachable on the mounted screen. The surface registers it now. */
 
   return (
     <section className="pj-sec" aria-label="Design calculators">
