@@ -1,0 +1,1268 @@
+diff --git a/client/src/concept2cure/v2/surfaces/Vault.tsx b/client/src/concept2cure/v2/surfaces/Vault.tsx
+index d1ffa32725..71cd6ed73c 100644
+--- a/client/src/concept2cure/v2/surfaces/Vault.tsx
++++ b/client/src/concept2cure/v2/surfaces/Vault.tsx
+@@ -13,6 +13,7 @@ import { FolderExportButton } from './VaultFolderExport';
+ import { VaultVersions } from './VaultVersions';
+ import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
+ import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
++import { VaultTrialMasterFile, revealVaultTrialMasterFile } from './VaultTrialMasterFile';
+ import {
+   ARTIFACTS_BRANCH,
+   ArtifactAuditReport,
+@@ -3097,17 +3098,21 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
+   );
+ 
+   const requiredView = (
+-    <VaultCoverage
+-      coverage={vault?.coverage}
+-      documents={coverageDocuments}
+-      onUpload={() => uploadControls.current?.chooseFiles()}
+-      onFileHere={(docId, target) =>
+-        void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+-      }
+-      busy={filing}
+-      defaultOpen
+-      onShowOutline={() => setView('library')}
+-    />
++    <>
++      <VaultCoverage
++        coverage={vault?.coverage}
++        documents={coverageDocuments}
++        onUpload={() => uploadControls.current?.chooseFiles()}
++        onFileHere={(docId, target) =>
++          void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
++        }
++        busy={filing}
++        defaultOpen
++        onShowOutline={() => setView('library')}
++      />
++      {/* The study's trial master file (P-75: the eTMF lives inside the Vault): a section of this view, read once it is opened. */}
++      <VaultTrialMasterFile projectId={projectId} active={view === 'required'} documents={coverageDocuments} />
++    </>
+   );
+ 
+   const artifactsView = (
+@@ -3170,14 +3175,14 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
+           ) : null}
+         </div>
+         <div className="ph-acts">
+-          {/* Offered only where the eTMF can be opened: outside this release it
+-              led to the locked panel (FILING_SPINE.md F16). */}
++          {/* Offered only where the eTMF can be opened (FILING_SPINE.md F16). It shows the
++              trial master file where it now lives, in Required documents (2026-11-10). */}
+           {available('etmf') && (
+             <button
+               type="button"
+               className="btn ghost"
+-              onClick={() => onNav && onNav('etmf')}
+-              title="TMF inspection-readiness — completeness, timeliness & QC"
++              onClick={() => { setView('required'); revealVaultTrialMasterFile(); }}
++              title="The study’s trial master file, in Required documents"
+             >
+               {I.shieldCheck} Inspection readiness
+             </button>
+diff --git a/client/src/concept2cure/v2/surfaces/VaultTrialMasterFile.tsx b/client/src/concept2cure/v2/surfaces/VaultTrialMasterFile.tsx
+new file mode 100644
+index 0000000000..1de29a994d
+--- /dev/null
++++ b/client/src/concept2cure/v2/surfaces/VaultTrialMasterFile.tsx
+@@ -0,0 +1,612 @@
++/**
++ * The trial master file, inside the Vault's Required documents view.
++ *
++ * The founder, 2026-11-10: "I don't see the TMF on the vault UI anywhere." The
++ * eTMF lives inside the Vault and files against the project's protocol-design
++ * study (P-74, P-75; docs/design/ETMF_CONVERGENCE_2026-10-30.md). The Vault
++ * reached it only through a header button to a separate screen
++ * (surfaces/Etmf.tsx), which a release locks. This is a section of the
++ * Required documents view, split out of Vault.tsx: not a tab, a screen, a card
++ * or a surface id (RULE 4).
++ *
++ * GET    /api/study-design?program_id=<project>                    the project's studies
++ * GET    /api/etmf/trials/:studyId/completeness?scope=essential    the verdict and the zones
++ * GET    /api/etmf/trials/:studyId/artifacts                       each filing and its document
++ * POST   /api/etmf/trials/:studyId/artifacts  { artifactCode, documentRef, reason }
++ * DELETE /api/etmf/artifacts/:id              { reason }
++ * GET    /api/etmf/trials/:studyId/inspection-package?scope=essential
++ *
++ * In words first: which study, whether its essential records are all filed,
++ * then each zone with what is filed and what is missing, by the record's name
++ * in the one catalog (shared/constants/domain/tmf-reference-model.ts). A
++ * verdict the server could not determine is said as not determined. A read
++ * that failed or was refused is said as that, through the one read classifier,
++ * and is never an empty trial master file. A record is filed against a version
++ * chosen from this project's Vault, never against a reference made up here,
++ * and with a reason; a filing is removed with a reason. Both are offered only
++ * to a role that may write the Vault. Nothing is read until the Required
++ * documents view is first on screen.
++ */
++import React, { useEffect, useId, useState } from 'react';
++import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
++import { tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
++import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
++// The completeness response, typed by the service that computes it.
++import type { TmfCompletenessResult, TmfUnverifiedEvidence, ZoneCompleteness } from '../../../../../server/services/etmf/tmf-completeness';
++import { describeReadFailure, readFailureFor } from '../../mdx/hooks/useFetchJson';
++import type { StudyDesignRow } from '../../mdx/hooks/useStudyDesign';
++import { assessmentStateFor, mayReassure } from '../assessmentState';
++import { useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
++import { downloadBlob, safeFileName } from '../download';
++import { VaultVersionPicker, type PickedVaultVersion } from './VaultLibraryResults';
++import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
++import { sha256Hex } from './vaultArchiveDownload';
++
++export const VAULT_TMF_SECTION_ID = 'vault-trial-master-file';
++
++/**
++ * Bring the section into view: the Vault header's "Inspection readiness".
++ * Deferred one task, so the Required documents view the caller has just asked
++ * for is on screen first.
++ */
++export function revealVaultTrialMasterFile(): void {
++  setTimeout(() => {
++    const section = document.getElementById(VAULT_TMF_SECTION_ID);
++    if (!section) return;
++    if (typeof section.scrollIntoView === 'function') section.scrollIntoView({ block: 'start' });
++    section.focus({ preventScroll: true });
++  }, 0);
++}
++
++/** A document of this project's Vault, to name what a record is filed against. */
++export interface TmfVaultDocument { docId: string; title: string }
++
++type Study = Pick<StudyDesignRow, 'studyId' | 'title' | 'phase'>;
++/** A filing as GET /api/etmf/trials/:studyId/artifacts lists it (tmf_artifact_filings). */
++interface Filing { id: string; artifactCode: string; documentRef: string | null; filedAt?: string | null }
++type Note = { tone: 'ok' | 'error'; text: string };
++type RecordState = 'filed' | 'missing' | TmfUnverifiedEvidence;
++interface TmfRecord { code: string; name: string; state: RecordState; filing: Filing | null }
++type TmfVerdict = 'complete' | 'incomplete' | 'undetermined' | 'not-assessed';
++
++const SESSION_EXPIRED = 'Your session has expired. Sign in again.';
++const PACKAGE_FAILED = 'The inspection package was not downloaded.';
++const VAULT_REF = /^vault:\/\/(.+)$/;
++const tmfBase = (studyId: string) => `/api/etmf/trials/${encodeURIComponent(studyId)}`;
++const studyLabel = (s: Study) => [s.title?.trim(), s.phase ? `Phase ${s.phase}` : ''].filter(Boolean).join(' · ') || s.studyId;
++const are = (n: number) => (n === 1 ? 'is' : 'are');
++
++/* ── What the reads must carry. A 200 that is not the shape is a failed read, never an empty one. ── */
++
++const isStudyList: ShapeGuard<{ designs: Study[] }> = (v): v is { designs: Study[] } => {
++  const designs = (v as { designs?: unknown } | null)?.designs;
++  return Array.isArray(designs) && designs.every((d) => typeof d?.studyId === 'string' && d.studyId.trim() !== '');
++};
++const isCodes = (v: unknown): v is string[] => Array.isArray(v) && v.every((c) => typeof c === 'string');
++function isZone(v: unknown): v is ZoneCompleteness {
++  const z = v as Partial<ZoneCompleteness> | null;
++  return !!z && typeof z.number === 'number' && typeof z.name === 'string' &&
++    isCodes(z.required) && isCodes(z.present) && isCodes(z.missing) && Array.isArray(z.unverified);
++}
++/** `ready` must be stated: true, false or null (not determined). An absent one is not an answer. */
++const isCompleteness: ShapeGuard<TmfCompletenessResult> = (v): v is TmfCompletenessResult => {
++  const r = v as Partial<TmfCompletenessResult> | null;
++  const s = r?.summary as Record<string, unknown> | undefined;
++  return !!r && (r.ready === null || typeof r.ready === 'boolean') && Array.isArray(r.zones) && r.zones.every(isZone) &&
++    !!s && ['zoneCount', 'totalRequired', 'totalMissing'].every((k) => Number.isSafeInteger(s[k]));
++};
++/** The answer names the study it is about (`study`, since 2026-11-10). One that names another study is not this study's answer. */
++function isAboutStudy(result: TmfCompletenessResult, studyId: string): boolean {
++  const named = (result as { study?: { studyId?: unknown } }).study?.studyId;
++  return named === undefined || named === studyId;
++}
++const isFilingList: ShapeGuard<Filing[]> = (v): v is Filing[] =>
++  Array.isArray(v) && v.every((f) => typeof f?.id === 'string' && f.id !== '' && typeof f.artifactCode === 'string' &&
++    (f.documentRef == null || typeof f.documentRef === 'string'));
++
++/* ── A read or a request that returned nothing, said as what it was ── */
++
++/** A read's failure in words: a refusal through the one read classifier, or a failure that is not an empty answer. */
++function readFailure(
++  read: Pick<DataState<unknown>, 'status' | 'code'>,
++  words: { what: string; failed: string; subject: string },
++): { message: string; retryable: boolean } {
++  if (read.status === 401) return { message: `Your session has expired. Sign in again to read ${words.what}.`, retryable: false };
++  const kind = readFailureFor(read.status, read.code);
++  if (kind === 'failed') return { message: words.failed, retryable: true };
++  const said = describeReadFailure(kind, words.what, { subject: words.subject });
++  return { message: said.message, retryable: said.retryable };
++}
++const STUDIES_READ = { what: 'this project’s studies', subject: 'this project',
++  failed: 'This project’s studies could not be read. This does not mean the project has no study.' };
++const TMF_READ = { what: 'the trial master file', subject: 'this study',
++  failed: 'The trial master file could not be read. This is not an empty trial master file.' };
++const FILINGS_READ = { what: 'the list of filings', subject: 'this study', failed: 'The list of filings could not be read.' };
++const FILINGS_UNREAD = 'The document each record is filed against is not shown, and a filing cannot be removed here.';
++
++/**
++ * A request the server did not carry out. `refused`: it answered and said no,
++ * so nothing changed. Otherwise no verdict arrived (a dropped connection, a
++ * server error) and a write may have been recorded.
++ */
++function requestFailure(e: unknown): { refused: boolean; words: string } {
++  const { status, code, payload } = (e ?? {}) as { status?: unknown; code?: unknown; payload?: unknown };
++  if (typeof status !== 'number' || status <= 0) return { refused: false, words: 'The server did not answer.' };
++  const kind = readFailureFor(status, typeof code === 'string' ? code : undefined);
++  const refused = status < 500;
++  if (kind === 'failed') return { refused, words: redactInternals(serverMessage(payload), `The server answered HTTP ${status}.`) };
++  if (kind !== 'not-found') return { refused, words: `${describeReadFailure(kind, 'it').title}.` };
++  if (code === 'STUDY_NOT_FOUND') return { refused, words: 'This study was not found in your organization.' };
++  return { refused, words: redactInternals(serverMessage(payload), 'It was not found in your organization.') };
++}
++
++/** A governed write that did not succeed. `unknown`: it may have been recorded. */
++class TmfWriteError extends Error {
++  constructor(message: string, readonly unknown: boolean) { super(message); this.name = 'TmfWriteError'; }
++}
++
++async function governedWrite(method: 'POST' | 'DELETE', path: string, body: unknown, words: { refused: string; unknown: string }): Promise<void> {
++  let res: Response;
++  try {
++    res = await apiRequest(method, path, body);
++  } catch (e) {
++    const failure = requestFailure(e);
++    throw failure.refused ? new TmfWriteError(`${words.refused} ${failure.words}`, false) : new TmfWriteError(words.unknown, true);
++  }
++  // apiRequest resolves a 401 instead of throwing it.
++  if (!res.ok) throw new TmfWriteError(`${words.refused} ${res.status === 401 ? SESSION_EXPIRED : `The server answered HTTP ${res.status}.`}`, false);
++}
++/** What a write says when it was refused (nothing changed), and when no answer came (it may have been recorded). */
++const writeWords = (done: string, act: string, doing: string) => ({
++  refused: `Nothing was ${done}.`,
++  unknown: `The server did not confirm the ${act}, so it is not known whether it was recorded. The trial master file was read again: check the record below before ${doing} it again.`,
++});
++const FILE_WORDS = writeWords('filed', 'filing', 'filing');
++const REMOVE_WORDS = writeWords('removed', 'removal', 'removing');
++
++/* ── The inspection package ── */
++
++function packageSaved(ready: string | null, stated: string, received: string | null): string {
++  const says = ready === 'true' ? ' It records every essential record as filed.'
++    : ready === 'undetermined' ? ' It records the verdict as not determined.'
++      : ready === 'false' ? ' It records essential records still missing.' : '';
++  const hash = !stated ? ' The server did not state its SHA-256.'
++    : received === null ? ` SHA-256 stated by the server: ${stated}. This browser could not check it.`
++      : ` Its SHA-256, checked on receipt: ${stated}.`;
++  return `Inspection package saved: the index of filings and the completeness record, not the documents themselves.${says}${hash}`;
++}
++
++/** Fetch the study's inspection package and save it. The outcome in words; a failure with its reason. */
++async function downloadInspectionPackage(studyId: string): Promise<Note> {
++  let res: Response;
++  try {
++    res = await apiRequest('GET', `${tmfBase(studyId)}/inspection-package?scope=essential`);
++  } catch (e) {
++    return { tone: 'error', text: `${PACKAGE_FAILED} ${requestFailure(e).words}` };
++  }
++  if (!res.ok) return { tone: 'error', text: `${PACKAGE_FAILED} ${res.status === 401 ? SESSION_EXPIRED : `The server answered HTTP ${res.status}.`}` };
++  const header = (name: string) => (res.headers && typeof res.headers.get === 'function' ? res.headers.get(name) : null);
++  const stated = (header('X-TMF-SHA256') ?? '').toLowerCase();
++  const sha = /^[0-9a-f]{64}$/.test(stated) ? stated : '';
++  const bytes = await res.arrayBuffer();
++  const received = await sha256Hex(bytes);
++  if (sha && received !== null && received !== sha) {
++    return { tone: 'error', text: `${PACKAGE_FAILED} The file received does not match the SHA-256 the server stated for it, so it was not saved.` };
++  }
++  const named = /filename="?([^";]+)"?/.exec(header('Content-Disposition') ?? '');
++  const name = named ? named[1] : `${safeFileName(studyId, 'study')}_inspection-package.zip`;
++  if (!downloadBlob(name, new Blob([bytes], { type: 'application/zip' }))) {
++    return { tone: 'error', text: 'The inspection package was received, but the browser refused to save it.' };
++  }
++  return { tone: 'ok', text: packageSaved(header('X-TMF-Ready'), sha, sha ? received : null) };
++}
++
++/* ── The verdict ── */
++
++/**
++ * The one verdict the section states. Complete needs positive evidence
++ * (assessmentState.ts): the server called it ready, it listed required records
++ * to check, and none is open. The server's `ready: null` is not determined,
++ * never complete and never incomplete.
++ */
++export function tmfVerdict(result: TmfCompletenessResult): TmfVerdict {
++  const { zoneCount, totalRequired, totalMissing } = result.summary;
++  if (zoneCount <= 0 || totalRequired <= 0) return 'not-assessed';
++  const listed = Math.max(totalMissing, result.zones.reduce((n, z) => n + z.missing.length, 0));
++  // Anything the server did not call ready carries at least one open record, listed or not.
++  const open = result.ready === true ? listed : Math.max(1, listed);
++  const state = assessmentStateFor({ loading: false }, { scopeExists: true, findingCount: open, assessmentRan: true });
++  if (mayReassure(state)) return 'complete';
++  return result.ready === null ? 'undetermined' : 'incomplete';
++}
++
++export function tmfVerdictSentence(verdict: TmfVerdict, result: TmfCompletenessResult): string {
++  const { totalRequired, totalMissing } = result.summary;
++  const filed = totalRequired - totalMissing;
++  if (verdict === 'complete') return `Every essential record is filed: all ${totalRequired}, each against a Vault document that exists now.`;
++  if (verdict === 'not-assessed') return 'No verdict. The read listed no essential records to check, so nothing is said about this trial master file.';
++  if (verdict === 'undetermined') {
++    return `Not determined. ${filed} of ${totalRequired} essential records are filed against a Vault document. The other ${totalMissing} ${are(totalMissing)} ` +
++      'filed against a reference outside the Vault, which cannot be checked here, so this is neither complete nor incomplete.';
++  }
++  if (totalMissing <= 0) return 'Not complete, by this read: it did not state every essential record as filed, and it gave no count of what is missing.';
++  const unverified = result.summary.totalUnverified ?? 0;
++  const without = unverified > 0 ? ` ${unverified} of them ${are(unverified)} filed, but not against a Vault document that exists now.` : '';
++  return `${filed} of ${totalRequired} essential records are filed. ${totalMissing} ${are(totalMissing)} missing.${without}`;
++}
++
++/* ── The records of a zone ── */
++
++function recordsOf(zone: ZoneCompleteness, filings: ReadonlyMap<string, Filing> | null): TmfRecord[] {
++  const present = new Set(zone.present);
++  const unverified = new Map(zone.unverified.map((u) => [u.code, u.evidence]));
++  return zone.required.map((code) => ({
++    code,
++    name: tmfArtifactName(code),
++    // Counted as filed only where the server lists it as present; anything else is open.
++    state: present.has(code) ? 'filed' : unverified.get(code) ?? 'missing',
++    filing: filings?.get(code) ?? null,
++  }));
++}
++
++function documentName(ref: string | null, documents: readonly TmfVaultDocument[]): string {
++  const id = VAULT_REF.exec((ref ?? '').trim())?.[1]?.trim();
++  if (!id) return 'a Vault document';
++  const title = documents.find((d) => d.docId === id)?.title;
++  return title ? `“${title}”` : `Vault document ${id.slice(0, 8)}… (not among this project’s current documents)`;
++}
++
++function recordSentence(r: TmfRecord, documents: readonly TmfVaultDocument[]): string {
++  if (r.state === 'missing') return 'Not filed.';
++  if (r.state === 'no_document') return 'Filed with no document, so it does not count as filed.';
++  if (r.state === 'unresolved') return 'Filed against a Vault document that no longer exists, so it does not count as filed.';
++  if (r.state === 'unverifiable') {
++    return `Filed against a reference outside the Vault${r.filing?.documentRef ? ` (${r.filing.documentRef})` : ''}, which cannot be checked here.`;
++  }
++  if (!r.filing) return 'Filed against a Vault document.';
++  const on = typeof r.filing.filedAt === 'string' && r.filing.filedAt ? ` on ${r.filing.filedAt.slice(0, 10)}` : '';
++  return `Filed against ${documentName(r.filing.documentRef, documents)}${on}.`;
++}
++
++/* ── The governed acts: file a document, remove a filing ── */
++
++type Act = { code: string; kind: 'file' | 'remove' };
++interface ActProps { record: TmfRecord; onDone: (note: Note) => void; onCancel: () => void }
++
++/** One governed write: a refusal stays in the form; an outcome (done, or not known) closes it and is said above the list. */
++function useGovernedAct(onDone: (note: Note) => void, unknown: string) {
++  const [busy, setBusy] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  const run = async (write: () => Promise<void>, done: string) => {
++    setBusy(true);
++    setError(null);
++    try {
++      await write();
++      onDone({ tone: 'ok', text: done });
++    } catch (e) {
++      if (e instanceof TmfWriteError && !e.unknown) setError(e.message);
++      else onDone({ tone: 'error', text: unknown });
++    } finally {
++      setBusy(false);
++    }
++  };
++  return { busy, error, run };
++}
++
++function ReasonField({ id, label, value, onChange, disabled }: { id: string; label: string; value: string; onChange: (v: string) => void; disabled: boolean }) {
++  return (
++    <>
++      <label className="vd-dr-meta" htmlFor={id}>{label}</label>
++      <textarea id={id} className="vd-d-filing-reason" rows={2} value={value} disabled={disabled}
++        onChange={(e) => onChange(e.target.value)} placeholder={`Required, at least ${GOVERNED_REASON_MIN} characters`} />
++    </>
++  );
++}
++
++function FileForm({ projectId, studyId, record, onDone, onCancel }: ActProps & { projectId: string; studyId: string }) {
++  const [picked, setPicked] = useState<PickedVaultVersion | null>(null);
++  const [reason, setReason] = useState('');
++  const { busy, error, run } = useGovernedAct(onDone, FILE_WORDS.unknown);
++  const reasonId = useId();
++  const short = reason.trim().length < GOVERNED_REASON_MIN;
++  const file = () => {
++    if (!picked) return;
++    const version = picked.version ? `, version ${picked.version}` : '';
++    // The reference is the id of the version chosen from the Vault, never one made up here.
++    const body = { artifactCode: record.code, documentRef: `vault://${picked.id}`, reason: reason.trim() };
++    void run(() => governedWrite('POST', `${tmfBase(studyId)}/artifacts`, body, FILE_WORDS),
++      `${record.name} is filed against “${picked.title}”${version}. Your reason is recorded with the filing.`);
++  };
++  return (
++    <div className="vd-confirm-form" data-testid={`vault-tmf-file-${record.code}`}>
++      {picked ? (
++        <p className="vd-dr-meta">
++          Document: <b>{picked.title}</b>, version {picked.version ?? 'not recorded'}.{' '}
++          <button type="button" className="btn ghost small" disabled={busy} onClick={() => setPicked(null)}>Choose another</button>
++        </p>
++      ) : (
++        <VaultVersionPicker programId={projectId} disabled={busy} label={`Search this project’s Vault for the document to file as ${record.name}`} onChoose={setPicked} autoFocus />
++      )}
++      <ReasonField id={reasonId} label="Reason for filing it. Recorded with the filing in the audit trail." value={reason} onChange={setReason} disabled={busy} />
++      <div className="vd-confirm-acts">
++        <button type="button" className="btn ghost small" disabled={busy || !picked || short} onClick={file}>
++          {busy ? 'Filing…' : `File as ${record.name}`}
++        </button>
++        <button type="button" className="vd-dr-toggle" onClick={onCancel} disabled={busy}>Cancel</button>
++      </div>
++      {error ? <div className="vd-dr-err" role="alert">{error}</div> : null}
++    </div>
++  );
++}
++
++function RemoveForm({ record, onDone, onCancel }: ActProps) {
++  const [reason, setReason] = useState('');
++  const { busy, error, run } = useGovernedAct(onDone, REMOVE_WORDS.unknown);
++  const reasonId = useId();
++  const filingId = record.filing?.id;
++  if (!filingId) return null;
++  const remove = () => void run(
++    () => governedWrite('DELETE', `/api/etmf/artifacts/${encodeURIComponent(filingId)}`, { reason: reason.trim() }, REMOVE_WORDS),
++    `The filing of ${record.name} was removed from this study’s trial master file. Your reason is recorded with the removal. The document stays in the Vault.`,
++  );
++  return (
++    <div className="vd-confirm-form" data-testid={`vault-tmf-remove-${record.code}`}>
++      <ReasonField id={reasonId} label={`Reason for removing the filing of ${record.name}. The document stays in the Vault; the reason is recorded in the audit trail.`}
++        value={reason} onChange={setReason} disabled={busy} />
++      <div className="vd-confirm-acts">
++        <button type="button" className="btn ghost small" disabled={busy || reason.trim().length < GOVERNED_REASON_MIN} onClick={remove}>
++          {busy ? 'Removing…' : 'Remove the filing'}
++        </button>
++        <button type="button" className="vd-dr-toggle" onClick={onCancel} disabled={busy}>Cancel</button>
++      </div>
++      {error ? <div className="vd-dr-err" role="alert">{error}</div> : null}
++    </div>
++  );
++}
++
++interface ZoneProps {
++  zone: ZoneCompleteness;
++  filings: ReadonlyMap<string, Filing> | null;
++  documents: readonly TmfVaultDocument[];
++  /** Offer the acts: a role that may write the Vault. They wait while a read is in flight. */
++  canWrite: boolean;
++  busy: boolean;
++  act: Act | null;
++  onAct: (act: Act | null) => void;
++  form: (record: TmfRecord, kind: Act['kind']) => React.ReactNode;
++}
++
++/** A zone's line, then each of its essential records: what it is filed against, or that it is missing. */
++function ZoneRows({ zone, filings, documents, canWrite, busy, act, onAct, form }: ZoneProps) {
++  return (
++    <>
++      <div className="vd-dr-row vd-cov-mod" data-testid={`vault-tmf-zone-${zone.number}`}>
++        <span className="vd-dr-kind">Zone {zone.number}</span>
++        <span className="vd-dr-name">{zone.name}</span>
++        <span className="vd-dr-detail">{zone.present.length} of {zone.required.length} filed</span>
++      </div>
++      {recordsOf(zone, filings).map((r) => (
++        <React.Fragment key={r.code}>
++          <div className="vd-dr-row" data-testid={`vault-tmf-record-${r.code}`} data-state={r.state}>
++            <span className="vd-dr-name" title={r.name}>{r.name}</span>
++            <span className="vd-dr-detail">{recordSentence(r, documents)}</span>
++            {canWrite && r.state !== 'filed' ? (
++              <button type="button" className="btn ghost small" disabled={busy} aria-label={`File a document as ${r.name}`} onClick={() => onAct({ code: r.code, kind: 'file' })}>
++                File a document
++              </button>
++            ) : null}
++            {canWrite && r.filing ? (
++              <button type="button" className="btn ghost small" disabled={busy} aria-label={`Remove the filing of ${r.name}`} onClick={() => onAct({ code: r.code, kind: 'remove' })}>
++                Remove
++              </button>
++            ) : null}
++          </div>
++          {/* Open only from a button above, so only for a role that may write; a re-read does not close it. */}
++          {act?.code === r.code ? form(r, act.kind) : null}
++        </React.Fragment>
++      ))}
++    </>
++  );
++}
++
++/* ── The section ── */
++
++function SectionHead({ headingId, sub, chooser, act }: { headingId: string; sub?: string; chooser?: React.ReactNode; act?: React.ReactNode }) {
++  return (
++    <div className="pj-sec-h">
++      <h2 id={headingId}>Trial master file</h2>
++      {sub ? <span className="sec-sub">{sub}</span> : null}
++      {chooser || act ? <div className="pj-sec-acts">{chooser}{act}</div> : null}
++    </div>
++  );
++}
++
++function ReadFailureNote({ failure, onRetry, testId }: { failure: { message: string; retryable: boolean }; onRetry: () => void; testId: string }) {
++  return (
++    <p className="vd-dr-err" role="alert" data-testid={testId}>
++      {failure.message}{' '}
++      {failure.retryable ? <button type="button" className="btn ghost small" onClick={onRetry}>Try again</button> : null}
++    </p>
++  );
++}
++
++/** What the last act came to: a filing, a removal or the package. Said under the verdict, and kept when a read after it fails. */
++function SaidNote({ note }: { note: Note | null }) {
++  if (!note) return null;
++  return <div className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'} data-testid="vault-tmf-note">{note.text}</div>;
++}
++
++interface StudyTmfProps { projectId: string; study: Study; headingId: string; chooser: React.ReactNode; documents: readonly TmfVaultDocument[] }
++
++function WhatCountsAsFiled({ basis }: { basis: TmfCompletenessResult['basis'] }) {
++  return (
++    <details className="pj-more">
++      <summary>What counts as filed</summary>
++      <p>
++        The essential records are those of the DIA TMF Reference Model that ICH E6(R3) Appendix C names.{' '}
++        {basis === 'verified_documents'
++          ? 'A record counts as filed only when its filing names a Vault document that existed when this was read. A filing with no document, with a document that no longer exists, or with a reference outside the Vault does not count.'
++          : 'These were counted from the record codes as listed; no document was checked.'}{' '}
++        When a record was filed and whether it passed a quality check are not assessed. A document that is not yet in this project’s Vault is
++        added with Add files, then filed here. The inspection package is the index of filings and this completeness record; it does not contain
++        the documents.
++      </p>
++    </details>
++  );
++}
++
++/** The package download: its button's state, and its outcome said where the section's other outcomes are. */
++function usePackageDownload(studyId: string, say: (note: Note | null) => void) {
++  const [downloading, setDownloading] = useState(false);
++  const download = async () => {
++    setDownloading(true);
++    say(null);
++    try {
++      say(await downloadInspectionPackage(studyId));
++    } catch (e) {
++      say({ tone: 'error', text: `${PACKAGE_FAILED} ${e instanceof Error && e.message ? e.message : 'The file could not be read.'}` });
++    } finally {
++      setDownloading(false);
++    }
++  };
++  return { downloading, download };
++}
++
++/** A study's assessed trial master file: the verdict in a sentence, the package, then the zones. */
++function AssessedTmf({ projectId, study, headingId, chooser, documents, result, rereading, filed, reread, note, say }: StudyTmfProps & {
++  result: TmfCompletenessResult; rereading: boolean; filed: DataState<Filing[]>; reread: () => void; note: Note | null; say: (note: Note | null) => void;
++}) {
++  const canWrite = useVaultCanWrite();
++  const [act, setAct] = useState<Act | null>(null);
++  const { downloading, download } = usePackageDownload(study.studyId, say);
++  const verdict = tmfVerdict(result);
++  const filings = filed.data ? new Map(filed.data.map((f) => [f.artifactCode, f])) : null;
++  const filingsFailure = !filings && !filed.loading ? readFailure(filed, FILINGS_READ) : null;
++  const done = (said: Note) => { say(said); setAct(null); reread(); };
++  const form = (record: TmfRecord, kind: Act['kind']) => (kind === 'file'
++    ? <FileForm projectId={projectId} studyId={study.studyId} record={record} onDone={done} onCancel={() => setAct(null)} />
++    : <RemoveForm record={record} onDone={done} onCancel={() => setAct(null)} />);
++  const packageButton = (
++    <button type="button" className="btn ghost small" disabled={downloading} onClick={() => void download()} data-testid="vault-tmf-download">
++      {downloading ? 'Building the package…' : 'Download the inspection package'}
++    </button>
++  );
++  return (
++    <>
++      <SectionHead headingId={headingId} sub={`Of ${studyLabel(study)}`} chooser={chooser} act={packageButton} />
++      {rereading ? (
++        <p className="vd-seals-empty" role="status">Reading the trial master file again…</p>
++      ) : (
++        <p className="vd-seals-note" role="status" data-testid="vault-tmf-verdict" data-verdict={verdict}>{tmfVerdictSentence(verdict, result)}</p>
++      )}
++      <SaidNote note={note} />
++      {filingsFailure ? (
++        <ReadFailureNote failure={{ ...filingsFailure, message: `${filingsFailure.message} ${FILINGS_UNREAD}` }} onRetry={reread} testId="vault-tmf-filings-error" />
++      ) : null}
++      {canWrite ? null : <VaultViewOnly act="file a document in the trial master file or remove a filing" testId="vault-tmf-view-only" />}
++      <div className="vd-dr-rows vd-cov-rows">
++        {result.zones.filter((z) => z.required.length > 0).map((z) => (
++          <ZoneRows key={z.number} zone={z} filings={filings} documents={documents} canWrite={canWrite} busy={rereading || filed.loading}
++            act={act} onAct={setAct} form={form} />
++        ))}
++      </div>
++      <WhatCountsAsFiled basis={result.basis} />
++    </>
++  );
++}
++
++/** One study's trial master file: its two reads, then what they say. */
++function StudyTmf(props: StudyTmfProps) {
++  const { study, headingId, chooser } = props;
++  /* Bumped after a write, so the verdict and the list are what the server holds, never a local patch. */
++  const [epoch, setEpoch] = useState(0);
++  const [note, setNote] = useState<Note | null>(null);
++  const base = tmfBase(study.studyId);
++  const completeness = useLiveData<TmfCompletenessResult>(`${base}/completeness?scope=essential`, [base, epoch],
++    (v): v is TmfCompletenessResult => isCompleteness(v) && isAboutStudy(v, study.studyId));
++  const filed = useLiveData<Filing[]>(`${base}/artifacts`, [base, epoch], isFilingList);
++  const reread = () => setEpoch((n) => n + 1);
++  if (completeness.data) {
++    return <AssessedTmf {...props} result={completeness.data} rereading={completeness.loading} filed={filed} reread={reread} note={note} say={setNote} />;
++  }
++  return (
++    <>
++      <SectionHead headingId={headingId} sub={`Of ${studyLabel(study)}`} chooser={chooser} />
++      <SaidNote note={note} />
++      {completeness.loading ? (
++        <p className="vd-seals-empty" role="status">Reading the trial master file…</p>
++      ) : completeness.error ? (
++        <ReadFailureNote failure={readFailure(completeness, TMF_READ)} onRetry={reread} testId="vault-tmf-error" />
++      ) : (
++        <p className="vd-seals-empty" role="status" data-testid="vault-tmf-unassessed">
++          The server returned no assessment for this study, so nothing is said about its trial master file.
++        </p>
++      )}
++    </>
++  );
++}
++
++/** The project's studies: one is used, several are chosen between, none is said plainly. */
++function ProjectTmf({ projectId, headingId, documents }: { projectId: string; headingId: string; documents: readonly TmfVaultDocument[] }) {
++  const [attempt, setAttempt] = useState(0);
++  const [chosen, setChosen] = useState('');
++  const path = `/api/study-design?program_id=${encodeURIComponent(projectId)}`;
++  const studies = useLiveData<{ designs: Study[] }>(path, [path, attempt], isStudyList);
++  if (!studies.data) {
++    return (
++      <>
++        <SectionHead headingId={headingId} />
++        {studies.loading
++          ? <p className="vd-seals-empty" role="status">Reading this project’s studies…</p>
++          : <ReadFailureNote failure={readFailure(studies, STUDIES_READ)} onRetry={() => setAttempt((n) => n + 1)} testId="vault-tmf-error" />}
++      </>
++    );
++  }
++  const list = studies.data.designs;
++  if (list.length === 0) {
++    return (
++      <>
++        <SectionHead headingId={headingId} />
++        <p className="vd-seals-empty" data-testid="vault-tmf-no-study">
++          This project has no study yet, so it has no trial master file. A study is created in Protocol design, on the Study design tab of the
++          project’s protocol.
++        </p>
++      </>
++    );
++  }
++  const study = list.length === 1 ? list[0] : list.find((s) => s.studyId === chosen) ?? null;
++  const chooser = list.length > 1 ? (
++    <select className="c2c-input vd-cov-pick" aria-label="Study" value={study?.studyId ?? ''} onChange={(e) => setChosen(e.target.value)} data-testid="vault-tmf-study">
++      <option value="">Choose a study…</option>
++      {list.map((s) => <option key={s.studyId} value={s.studyId}>{studyLabel(s)}</option>)}
++    </select>
++  ) : null;
++  if (!study) {
++    return (
++      <>
++        <SectionHead headingId={headingId} sub={`${list.length} studies in this project`} chooser={chooser} />
++        <p className="vd-seals-empty" role="status" data-testid="vault-tmf-choose">
++          A trial master file is of one study. Choose the study to see its trial master file.
++        </p>
++      </>
++    );
++  }
++  return <StudyTmf key={study.studyId} projectId={projectId} study={study} headingId={headingId} chooser={chooser} documents={documents} />;
++}
++
++export function VaultTrialMasterFile({ projectId, active, documents }: {
++  projectId: string | null;
++  /** The Required documents view is on screen. Nothing is read before it first is. */
++  active: boolean;
++  documents: readonly TmfVaultDocument[];
++}) {
++  const [opened, setOpened] = useState(active);
++  useEffect(() => { if (active) setOpened(true); }, [active]);
++  const headingId = useId();
++  if (!projectId) return null;
++  return (
++    <section className="pj-sec" id={VAULT_TMF_SECTION_ID} tabIndex={-1} aria-labelledby={headingId} data-testid="vault-tmf">
++      {opened ? <ProjectTmf projectId={projectId} headingId={headingId} documents={documents} /> : <SectionHead headingId={headingId} />}
++    </section>
++  );
++}
+diff --git a/client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx b/client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx
+new file mode 100644
+index 0000000000..2b042a85fe
+--- /dev/null
++++ b/client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx
+@@ -0,0 +1,580 @@
++// @vitest-environment jsdom
++/**
++ * The trial master file inside the Vault's Required documents view
++ * (surfaces/VaultTrialMasterFile.tsx; P-74, P-75; the founder, 2026-11-10: "I
++ * don't see the TMF on the vault UI anywhere").
++ *
++ * The transport is mocked. The completeness answers are computed by the
++ * service's own pure assessment (server/services/etmf/tmf-completeness.ts)
++ * over a small in-memory set of filings, so a filing or a removal changes what
++ * the next read says the way the server's would.
++ *
++ * What is pinned:
++ *   - it is a section of Required documents, never a view of its own, and it
++ *     reads nothing until that view is opened;
++ *   - which study: one is used, several are chosen between, none is said;
++ *   - the verdict in a sentence; not determined is never complete or incomplete;
++ *     a read with nothing to check states no verdict;
++ *   - the zones, each record by its catalog name, with what it is filed against;
++ *   - a refusal said as itself, and a failed read never an empty trial master file;
++ *   - filing: a version picked from this project's Vault, a reason of at least
++ *     8 characters, and the reference the Vault returned; removing with a reason;
++ *   - no write control for a role that may not write the Vault;
++ *   - the inspection package: saved, or the failure with its reason;
++ *   - the header's "Inspection readiness" shows Required documents and brings
++ *     the section into view, and no longer opens the separate screen.
++ */
++import React from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
++import { createHash } from 'node:crypto';
++
++const H = vi.hoisted(() => ({ apiRequest: vi.fn(), canWrite: true, locked: new Set<string>(), saved: [] as Array<{ name: string; blob: Blob }> }));
++vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: H.apiRequest }));
++vi.mock('../surfaces/VaultViewOnly', async (original) => ({ ...(await original<typeof import('../surfaces/VaultViewOnly')>()), useVaultCanWrite: () => H.canWrite }));
++vi.mock('../download', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('../download')>()),
++  downloadBlob: (name: string, blob: Blob) => { H.saved.push({ name, blob }); return true; },
++}));
++/* The release's verdicts: a surface in `locked` is outside it, as production reports one (filingPathNoDeadEnds.test.tsx). */
++vi.mock('../navEntitlements', async (importOriginal) => ({
++  ...(await importOriginal<typeof import('../navEntitlements')>()),
++  useNavEntitlements: () => ({
++    verdictFor: (id: string) => (H.locked.has(id) ? { id, label: id, entitled: false, source: 'launch-scope', requiredTier: null } : null),
++    resolved: true, masterAdmin: false, platformAdmin: false, tier: null,
++  }),
++}));
++
++import { ApiRequestError, extractApiError } from '@/lib/queryClient';
++import { assessTmfCompleteness, type TmfDocumentEvidence } from '../../../../../server/services/etmf/tmf-completeness';
++import { TMF_REFERENCE_MODEL, tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
++import { Vault } from '../surfaces/Vault';
++import { VAULT_TMF_SECTION_ID, VaultTrialMasterFile, tmfVerdict } from '../surfaces/VaultTrialMasterFile';
++import { PID, mockVaultApi, ok, props, vaultPayload } from './_vault-surface-fixtures';
++
++const STUDY = { studyId: 'BX-204-201', programId: PID, title: 'BX-204 in plaque psoriasis', phase: '2', indication: 'Plaque psoriasis', status: 'draft', updatedAt: null };
++const EXTENSION = { ...STUDY, studyId: 'BX-204-301', title: 'BX-204 long-term extension', phase: '3' };
++const PLAN_DOC = '22222222-2222-4222-8222-222222222222';
++const PROTOCOL_DOC = '33333333-3333-4333-8333-333333333333';
++const DOCS = [{ docId: PLAN_DOC, title: 'Monitoring Plan v2' }, { docId: PROTOCOL_DOC, title: 'Protocol BX-204-201 v1.0' }];
++const ESSENTIAL = TMF_REFERENCE_MODEL.flatMap((z) => z.artifacts.filter((a) => a.essential).map((a) => a.code));
++const BASE = `/api/etmf/trials/${STUDY.studyId}`;
++
++type FilingRow = { id: string; artifactCode: string; documentRef: string | null; filedAt: string };
++const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
++/* The refusals as their senders write them, read into the error apiRequest throws by its own reader (extractApiError). */
++const GATE = (code: string, message: string) => ({ error: { code, message } }); // server/middleware/moduleEntitlementGate.ts
++const ROUTE = (code: string, message: string) => ({ success: false, error: code, message }); // server/routes/etmf.routes.ts
++const ROLE = { error: 'Insufficient permissions' }; // the role guard: no code
++const NOT_RELEASED = GATE('LAUNCH_SCOPE', 'This part of the product is not in this release.');
++const NOT_LICENSED = GATE('MODULE_NOT_LICENSED', 'This module is not part of your subscription.');
++const NO_STUDY = ROUTE('STUDY_NOT_FOUND', 'No study with this id is in a project you can open. Nothing was read or changed.');
++const FAILED = ROUTE('INTERNAL', 'eTMF request failed.');
++function refusal(status: number, payload: unknown): ApiRequestError {
++  const { message, code } = extractApiError(payload, status);
++  return new ApiRequestError(message, status, payload, code);
++}
++const filing = (artifactCode: string, documentRef: string | null, n = 1): FilingRow =>
++  ({ id: `f${n}f${n}f${n}f${n}-0000-4000-8000-00000000000${n}`, artifactCode, documentRef, filedAt: '2026-11-02T09:30:00.000Z' });
++
++/* The server's state for one study: its live filings and the Vault documents that exist. */
++let studies: unknown[];
++let filings: FilingRow[];
++let vaultDocs: Set<string>;
++let refuseWith: Partial<Record<'studies' | 'completeness' | 'filings' | 'file' | 'remove' | 'package', () => Response>>;
++
++function evidenceOf(row: FilingRow): TmfDocumentEvidence {
++  const ref = (row.documentRef ?? '').trim();
++  if (!ref) return 'no_document';
++  const id = /^vault:\/\/(.+)$/.exec(ref)?.[1];
++  if (!id) return 'unverifiable';
++  return vaultDocs.has(id) ? 'verified' : 'unresolved';
++}
++/* As GET …/completeness answers: the service's assessment of the live filings, with the study it is about. */
++const completenessNow = () => ({
++  ...assessTmfCompleteness({
++    providedArtifacts: filings.map((f) => f.artifactCode),
++    scope: 'essential',
++    documentEvidence: Object.fromEntries(filings.map((f) => [f.artifactCode, evidenceOf(f)])),
++  }),
++  study: { id: 7, studyId: STUDY.studyId, programId: PID, protocolId: 'BX-204-201', title: STUDY.title, phase: STUDY.phase, indication: STUDY.indication, status: 'draft' },
++});
++
++const PACKAGE = new TextEncoder().encode('PK-inspection-package');
++const packageSha = createHash('sha256').update(PACKAGE).digest('hex');
++const packageResponse = (sha: string) => new Response(PACKAGE, {
++  status: 200,
++  headers: { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="BX-204-201_inspection-package.zip"', 'X-TMF-SHA256': sha, 'X-TMF-Ready': 'false' },
++});
++
++const SEARCH = { data: { query: 'plan', total: 1, limit: 25, offset: 0,
++  results: [{ id: PLAN_DOC, title: 'Monitoring Plan v2', version: '2', current: true, snippet: null, contentHash: 'a'.repeat(64) }] } };
++/** The refusal a case has set for a route, thrown or returned as the transport would; null when the route answers. */
++const refused = (route: keyof typeof refuseWith) => refuseWith[route]?.() ?? null;
++function fileIt(body: unknown): Response {
++  const sent = body as { artifactCode?: string; documentRef?: string };
++  const row = filing(String(sent.artifactCode), sent.documentRef ?? null, 9);
++  filings = [...filings.filter((f) => f.artifactCode !== row.artifactCode), row];
++  return json(row, 201);
++}
++function removeIt(url: string): Response {
++  filings = filings.filter((f) => f.id !== decodeURIComponent(url.slice('/api/etmf/artifacts/'.length)));
++  return new Response(null, { status: 204 });
++}
++const ROUTES: Array<{ method: string; match: (url: string) => boolean; answer: (url: string, body: unknown) => Response }> = [
++  { method: 'GET', match: (u) => u === `/api/study-design?program_id=${PID}`, answer: () => refused('studies') ?? json({ designs: studies }) },
++  { method: 'GET', match: (u) => u === `${BASE}/completeness?scope=essential`, answer: () => refused('completeness') ?? json(completenessNow()) },
++  { method: 'GET', match: (u) => u === `${BASE}/artifacts`, answer: () => refused('filings') ?? json(filings) },
++  { method: 'GET', match: (u) => u === `${BASE}/inspection-package?scope=essential`, answer: () => refused('package') ?? packageResponse(packageSha) },
++  { method: 'GET', match: (u) => u.startsWith(`/api/c2c/project-vault/${PID}/search?q=`), answer: () => json(SEARCH) },
++  { method: 'POST', match: (u) => u === `${BASE}/artifacts`, answer: (_u, body) => refused('file') ?? fileIt(body) },
++  { method: 'DELETE', match: (u) => u.startsWith('/api/etmf/artifacts/'), answer: (u) => refused('remove') ?? removeIt(u) },
++];
++/** The routes the section calls, answered from the state above; null for any other request. */
++async function tmfApi(method: string, url: string, body?: unknown): Promise<Response | null> {
++  const route = ROUTES.find((r) => r.method === method && r.match(url));
++  return route ? route.answer(url, body) : null;
++}
++
++const calls = (method: string, match: (url: string) => boolean) =>
++  H.apiRequest.mock.calls.filter(([m, u]) => m === method && match(String(u)));
++const etmfCalls = () => H.apiRequest.mock.calls.filter(([, u]) => String(u).startsWith('/api/etmf') || String(u).startsWith('/api/study-design'));
++const record = (code: string) => screen.getByTestId(`vault-tmf-record-${code}`);
++const section = () => render(<VaultTrialMasterFile projectId={PID} active documents={DOCS} />);
++
++beforeEach(() => {
++  H.canWrite = true; H.saved = []; H.locked.clear();
++  studies = [STUDY];
++  vaultDocs = new Set([PLAN_DOC, PROTOCOL_DOC]);
++  filings = [filing('protocol', `vault://${PROTOCOL_DOC}`, 1)];
++  refuseWith = {};
++  H.apiRequest.mockReset();
++  H.apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => (await tmfApi(method, url, body)) ?? json({}));
++});
++afterEach(() => {
++  cleanup();
++  delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
++  delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
++});
++
++describe('which study the trial master file is of', () => {
++  it('reads nothing until the Required documents view is first on screen', async () => {
++    const view = render(<VaultTrialMasterFile projectId={PID} active={false} documents={DOCS} />);
++    expect(screen.getByRole('heading', { name: 'Trial master file' })).toBeTruthy();
++    expect(H.apiRequest).not.toHaveBeenCalled();
++    view.rerender(<VaultTrialMasterFile projectId={PID} active documents={DOCS} />);
++    await screen.findByTestId('vault-tmf-verdict');
++    expect(calls('GET', (u) => u === `/api/study-design?program_id=${PID}`)).toHaveLength(1);
++    // Kept once read: leaving the view does not drop it, and coming back does not read it again.
++    view.rerender(<VaultTrialMasterFile projectId={PID} active={false} documents={DOCS} />);
++    expect(screen.getByTestId('vault-tmf-verdict')).toBeTruthy();
++  });
++
++  it('uses the project’s one study and says which', async () => {
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    expect(screen.getByTestId('vault-tmf').textContent).toContain('Of BX-204 in plaque psoriasis · Phase 2');
++    expect(screen.queryByTestId('vault-tmf-study')).toBeNull();
++    expect(calls('GET', (u) => u === `${BASE}/completeness?scope=essential`)).toHaveLength(1);
++  });
++
++  it('asks which study when the project has several, and reads none until one is chosen', async () => {
++    studies = [STUDY, EXTENSION];
++    section();
++    const chooser = await screen.findByTestId('vault-tmf-study');
++    expect(screen.getByTestId('vault-tmf-choose').textContent).toMatch(/Choose the study to see its trial master file/);
++    expect(screen.queryByTestId('vault-tmf-verdict')).toBeNull();
++    expect(calls('GET', (u) => u.startsWith('/api/etmf'))).toHaveLength(0);
++    fireEvent.change(chooser, { target: { value: STUDY.studyId } });
++    await screen.findByTestId('vault-tmf-verdict');
++    expect(screen.getByTestId('vault-tmf').textContent).toContain('Of BX-204 in plaque psoriasis · Phase 2');
++    expect(calls('GET', (u) => u.startsWith('/api/etmf/trials/BX-204-301'))).toHaveLength(0);
++  });
++
++  it('says plainly that a project with no study has no trial master file, and where a study is created', async () => {
++    studies = [];
++    section();
++    const none = await screen.findByTestId('vault-tmf-no-study');
++    expect(none.textContent).toMatch(/This project has no study yet, so it has no trial master file\./);
++    expect(none.textContent).toMatch(/created in Protocol design/);
++    expect(calls('GET', (u) => u.startsWith('/api/etmf'))).toHaveLength(0);
++    expect(screen.queryByTestId('vault-tmf-verdict')).toBeNull();
++  });
++
++  it('a study list that is not a list is a failed read, never "no study"', async () => {
++    refuseWith.studies = () => json({});
++    section();
++    const error = await screen.findByTestId('vault-tmf-error');
++    expect(error.textContent).toMatch(/This project’s studies could not be read\. This does not mean the project has no study\./);
++    expect(screen.queryByTestId('vault-tmf-no-study')).toBeNull();
++    refuseWith = {};
++    fireEvent.click(within(error).getByRole('button', { name: 'Try again' }));
++    await screen.findByTestId('vault-tmf-verdict');
++  });
++});
++
++describe('whether the essential records are all filed', () => {
++  it('says what is filed and what is missing in a sentence, then each zone by the record’s name', async () => {
++    filings = [filing('protocol', `vault://${PROTOCOL_DOC}`, 1), filing('tmf_plan', null, 2)];
++    section();
++    const verdict = await screen.findByTestId('vault-tmf-verdict');
++    expect(verdict.getAttribute('data-verdict')).toBe('incomplete');
++    expect(verdict.textContent).toBe(
++      `1 of ${ESSENTIAL.length} essential records are filed. ${ESSENTIAL.length - 1} are missing. 1 of them is filed, but not against a Vault document that exists now.`,
++    );
++    // Every zone of the catalog, by number and name, with its count.
++    for (const z of TMF_REFERENCE_MODEL) {
++      expect(screen.getByTestId(`vault-tmf-zone-${z.number}`).textContent).toContain(`Zone ${z.number}${z.name}`);
++    }
++    expect(screen.getByTestId('vault-tmf-zone-2').textContent).toContain('1 of 4 filed');
++    // Every essential record, by its catalog name, never by its code.
++    for (const code of ESSENTIAL) expect(record(code).textContent).toContain(tmfArtifactName(code));
++    expect(record('protocol').getAttribute('data-state')).toBe('filed');
++    expect(record('protocol').textContent).toContain('Filed against “Protocol BX-204-201 v1.0” on 2026-11-02.');
++    expect(record('monitoring_plan').getAttribute('data-state')).toBe('missing');
++    expect(record('monitoring_plan').textContent).toContain('Not filed.');
++    // A filing with no document is said, and is not counted as filed.
++    expect(record('tmf_plan').getAttribute('data-state')).toBe('no_document');
++    expect(record('tmf_plan').textContent).toContain('Filed with no document, so it does not count as filed.');
++    // Records that are not essential are not in this list.
++    expect(screen.queryByTestId('vault-tmf-record-recruitment_plan')).toBeNull();
++  });
++
++  it('says a document that no longer exists, and names a document it cannot find by its reference', async () => {
++    vaultDocs = new Set([PROTOCOL_DOC, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
++    filings = [
++      filing('protocol', 'vault://99999999-9999-4999-8999-999999999999', 1),
++      filing('sap', 'vault://aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 2),
++    ];
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    expect(record('protocol').getAttribute('data-state')).toBe('unresolved');
++    expect(record('protocol').textContent).toContain('Filed against a Vault document that no longer exists, so it does not count as filed.');
++    expect(record('sap').getAttribute('data-state')).toBe('filed');
++    expect(record('sap').textContent).toContain('Filed against Vault document aaaaaaaa… (not among this project’s current documents) on 2026-11-02.');
++  });
++
++  it('says complete only when every essential record is filed against a document', async () => {
++    filings = ESSENTIAL.map((code, i) => ({ ...filing(code, `vault://${PROTOCOL_DOC}`, 1), id: `row-${i}` }));
++    section();
++    const verdict = await screen.findByTestId('vault-tmf-verdict');
++    expect(verdict.getAttribute('data-verdict')).toBe('complete');
++    expect(verdict.textContent).toBe(`Every essential record is filed: all ${ESSENTIAL.length}, each against a Vault document that exists now.`);
++  });
++
++  it('says not determined when the server could not determine it, never complete and never incomplete', async () => {
++    // Every essential record is filed; two against a reference outside the Vault, which the server cannot check.
++    filings = ESSENTIAL.map((code, i) => ({
++      ...filing(code, i < 2 ? 'https://archive.example.org/tmf/box-14' : `vault://${PROTOCOL_DOC}`, 1), id: `row-${i}`,
++    }));
++    expect(completenessNow().ready).toBeNull();
++    section();
++    const verdict = await screen.findByTestId('vault-tmf-verdict');
++    expect(verdict.getAttribute('data-verdict')).toBe('undetermined');
++    expect(verdict.textContent).toMatch(/^Not determined\. /);
++    expect(verdict.textContent).toMatch(/so this is neither complete nor incomplete\.$/);
++    expect(verdict.textContent).not.toMatch(/Every essential record is filed|are missing/);
++    expect(record(ESSENTIAL[0]).textContent).toContain('Filed against a reference outside the Vault (https://archive.example.org/tmf/box-14), which cannot be checked here.');
++  });
++
++  it('states no verdict over a read that checked nothing, even one the server called ready', async () => {
++    const nothing = { ...completenessNow(), ready: true, zones: [], summary: { zoneCount: 0, zonesComplete: 0, totalRequired: 0, totalMissing: 0, totalUnverified: 0 } };
++    expect(tmfVerdict(nothing)).toBe('not-assessed');
++    // And a payload that calls itself ready while listing a missing record is not complete.
++    const inconsistent = { ...completenessNow(), ready: true };
++    expect(tmfVerdict(inconsistent)).toBe('incomplete');
++    refuseWith.completeness = () => json(nothing);
++    section();
++    const verdict = await screen.findByTestId('vault-tmf-verdict');
++    expect(verdict.getAttribute('data-verdict')).toBe('not-assessed');
++    expect(verdict.textContent).toMatch(/^No verdict\./);
++  });
++
++  it('an answer about another study is not shown as this study’s', async () => {
++    refuseWith.completeness = () => json({ ...completenessNow(), study: { ...completenessNow().study, studyId: EXTENSION.studyId } });
++    section();
++    expect((await screen.findByTestId('vault-tmf-error')).textContent).toMatch(/The trial master file could not be read\./);
++    expect(screen.queryByTestId('vault-tmf-verdict')).toBeNull();
++  });
++
++  it('a completeness answer with no stated verdict is a failed read', async () => {
++    refuseWith.completeness = () => json({ ...completenessNow(), ready: undefined });
++    section();
++    expect((await screen.findByTestId('vault-tmf-error')).textContent).toMatch(/The trial master file could not be read\. This is not an empty trial master file\./);
++    expect(screen.queryByTestId('vault-tmf-verdict')).toBeNull();
++  });
++});
++
++describe('a refusal is said as itself, and a failed read is never an empty trial master file', () => {
++  it.each([
++    ['not in this release (403 LAUNCH_SCOPE)', 403, NOT_RELEASED, 'This part of the product is not in this release, so the trial master file was not read.'],
++    ['not enabled for the organization (403 MODULE_NOT_LICENSED)', 403, NOT_LICENSED, 'This feature is not enabled for your organization, so the trial master file was not read.'],
++    ['the person’s role (403, no code)', 403, ROLE, 'Your role cannot do this, so the trial master file was not read.'],
++    ['not found (404 STUDY_NOT_FOUND)', 404, NO_STUDY, 'This study was not found in your organization, so the trial master file was not read.'],
++  ])('%s', async (_name, status, payload, words) => {
++    refuseWith.completeness = () => { throw refusal(status, payload); };
++    section();
++    const error = await screen.findByTestId('vault-tmf-error');
++    expect(error.textContent?.trim()).toBe(words);
++    // A refusal is an answer: trying again cannot change it, so it is not offered.
++    expect(within(error).queryByRole('button', { name: 'Try again' })).toBeNull();
++    expect(screen.queryByTestId('vault-tmf-verdict')).toBeNull();
++    expect(screen.queryByTestId('vault-tmf-zone-1')).toBeNull();
++    expect(screen.queryByTestId('vault-tmf-download')).toBeNull();
++  });
++
++  it('a failed read says so, offers another try, and shows no record as missing', async () => {
++    refuseWith.completeness = () => { throw refusal(500, FAILED); };
++    section();
++    const error = await screen.findByTestId('vault-tmf-error');
++    expect(error.textContent).toMatch(/The trial master file could not be read\. This is not an empty trial master file\./);
++    expect(screen.queryByText('Not filed.')).toBeNull();
++    refuseWith = {};
++    fireEvent.click(within(error).getByRole('button', { name: 'Try again' }));
++    expect((await screen.findByTestId('vault-tmf-verdict')).getAttribute('data-verdict')).toBe('incomplete');
++  });
++
++  it('when only the list of filings cannot be read, the verdict stands and no document or removal is shown', async () => {
++    refuseWith.filings = () => { throw refusal(500, FAILED); };
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    const error = await screen.findByTestId('vault-tmf-filings-error');
++    expect(error.textContent).toMatch(/The list of filings could not be read\. The document each record is filed against is not shown, and a filing cannot be removed here\./);
++    expect(record('protocol').textContent).toContain('Filed against a Vault document.');
++    expect(screen.queryByRole('button', { name: /^Remove the filing of/ })).toBeNull();
++  });
++});
++
++describe('filing a document against a missing record', () => {
++  const openForm = async () => {
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    fireEvent.click(await screen.findByRole('button', { name: 'File a document as Monitoring Plan' }));
++    return screen.getByTestId('vault-tmf-file-monitoring_plan');
++  };
++  const pick = async (form: HTMLElement) => {
++    fireEvent.change(within(form).getByLabelText('Search this project’s Vault for the document to file as Monitoring Plan'), { target: { value: 'plan' } });
++    fireEvent.click(within(form).getByRole('button', { name: 'Search Vault' }));
++    fireEvent.click(await within(form).findByRole('button', { name: 'Select document' }));
++  };
++  const reason = (form: HTMLElement, text: string) =>
++    fireEvent.change(within(form).getByLabelText(/^Reason for filing it\./), { target: { value: text } });
++  const submit = (form: HTMLElement) => within(form).getByRole('button', { name: 'File as Monitoring Plan' }) as HTMLButtonElement;
++
++  it('files the version picked from this project’s Vault, with the reason, against the reference the Vault gave', async () => {
++    const form = await openForm();
++    // Nothing can be filed until a document is chosen and a reason of at least 8 characters is given.
++    expect(submit(form).disabled).toBe(true);
++    reason(form, 'Signed monitoring plan, version 2');
++    expect(submit(form).disabled).toBe(true);
++    await pick(form);
++    expect(calls('GET', (u) => u === `/api/c2c/project-vault/${PID}/search?q=plan&limit=25`)).toHaveLength(1);
++    expect(form.textContent).toContain('Document: Monitoring Plan v2, version 2.');
++    reason(form, 'short');
++    expect(submit(form).disabled).toBe(true);
++    reason(form, '  Signed monitoring plan, version 2  ');
++    expect(submit(form).disabled).toBe(false);
++    fireEvent.click(submit(form));
++
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(note.textContent).toBe('Monitoring Plan is filed against “Monitoring Plan v2”, version 2. Your reason is recorded with the filing.');
++    expect(note.getAttribute('role')).toBe('status');
++    expect(calls('POST', () => true)).toEqual([
++      ['POST', `${BASE}/artifacts`, { artifactCode: 'monitoring_plan', documentRef: `vault://${PLAN_DOC}`, reason: 'Signed monitoring plan, version 2' }],
++    ]);
++    // What is shown next is what the server holds: both reads are made again.
++    await waitFor(() => expect(record('monitoring_plan').getAttribute('data-state')).toBe('filed'));
++    expect(record('monitoring_plan').textContent).toContain('Filed against “Monitoring Plan v2”');
++    expect(screen.getByTestId('vault-tmf-verdict').textContent).toMatch(/^2 of /);
++    expect(calls('GET', (u) => u === `${BASE}/completeness?scope=essential`)).toHaveLength(2);
++    expect(calls('GET', (u) => u === `${BASE}/artifacts`)).toHaveLength(2);
++    expect(screen.queryByTestId('vault-tmf-file-monitoring_plan')).toBeNull();
++  });
++
++  it('a refused filing says the server’s reason, files nothing and keeps the form', async () => {
++    refuseWith.file = () => { throw refusal(400, ROUTE('UNRESOLVABLE_DOCUMENT_REF', 'No vault document exists, so this artifact cannot be recorded as filed against it.')); };
++    const form = await openForm();
++    await pick(form);
++    reason(form, 'Signed monitoring plan, version 2');
++    fireEvent.click(submit(form));
++    const alert = await within(form).findByRole('alert');
++    expect(alert.textContent).toBe('Nothing was filed. No vault document exists, so this artifact cannot be recorded as filed against it.');
++    expect(record('monitoring_plan').getAttribute('data-state')).toBe('missing');
++    expect(screen.queryByTestId('vault-tmf-note')).toBeNull();
++  });
++
++  it.each([
++    ['not in this release', 403, NOT_RELEASED, 'Nothing was filed. Not in this release.'],
++    ['not enabled for the organization', 403, NOT_LICENSED, 'Nothing was filed. Not enabled for your organization.'],
++    ['the person’s role', 403, ROLE, 'Nothing was filed. Your role cannot do this.'],
++    ['the study not found', 404, NO_STUDY, 'Nothing was filed. This study was not found in your organization.'],
++  ])('a filing refused as %s is said as that refusal', async (_name, status, payload, words) => {
++    refuseWith.file = () => { throw refusal(status, payload); };
++    const form = await openForm();
++    await pick(form);
++    reason(form, 'Signed monitoring plan, version 2');
++    fireEvent.click(submit(form));
++    expect((await within(form).findByRole('alert')).textContent).toBe(words);
++  });
++
++  it('keeps what was filed on screen when the read after it fails', async () => {
++    let reads = 0;
++    refuseWith.completeness = () => { reads += 1; if (reads > 1) throw refusal(500, FAILED); return json(completenessNow()); };
++    const form = await openForm();
++    await pick(form);
++    reason(form, 'Signed monitoring plan, version 2');
++    fireEvent.click(submit(form));
++    expect((await screen.findByTestId('vault-tmf-error')).textContent).toMatch(/The trial master file could not be read\./);
++    expect(screen.getByTestId('vault-tmf-note').textContent).toMatch(/^Monitoring Plan is filed against “Monitoring Plan v2”/);
++  });
++
++  it('when the server does not confirm the filing, it is not called filed or refused, and the list is read again', async () => {
++    refuseWith.file = () => { throw new TypeError('Failed to fetch'); };
++    const form = await openForm();
++    await pick(form);
++    reason(form, 'Signed monitoring plan, version 2');
++    fireEvent.click(submit(form));
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(note.getAttribute('role')).toBe('alert');
++    expect(note.textContent).toMatch(/^The server did not confirm the filing, so it is not known whether it was recorded\./);
++    await waitFor(() => expect(calls('GET', (u) => u === `${BASE}/completeness?scope=essential`)).toHaveLength(2));
++  });
++});
++
++describe('removing a filing', () => {
++  it('removes it with a reason of at least 8 characters, and reads the trial master file again', async () => {
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    fireEvent.click(await screen.findByRole('button', { name: 'Remove the filing of Protocol and amendments' }));
++    const form = screen.getByTestId('vault-tmf-remove-protocol');
++    const remove = within(form).getByRole('button', { name: 'Remove the filing' }) as HTMLButtonElement;
++    expect(remove.disabled).toBe(true);
++    fireEvent.change(within(form).getByLabelText(/^Reason for removing the filing of Protocol and amendments\./), { target: { value: 'Filed against the wrong study' } });
++    expect(remove.disabled).toBe(false);
++    fireEvent.click(remove);
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(note.textContent).toMatch(/^The filing of Protocol and amendments was removed from this study’s trial master file\./);
++    expect(calls('DELETE', () => true)).toEqual([['DELETE', '/api/etmf/artifacts/f1f1f1f1-0000-4000-8000-000000000001', { reason: 'Filed against the wrong study' }]]);
++    await waitFor(() => expect(record('protocol').getAttribute('data-state')).toBe('missing'));
++    expect(screen.getByTestId('vault-tmf-verdict').textContent).toMatch(/^0 of /);
++  });
++
++  it('a refused removal says why and removes nothing', async () => {
++    refuseWith.remove = () => { throw refusal(404, ROUTE('NOT_FOUND', 'TMF artifact not found.')); };
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    fireEvent.click(await screen.findByRole('button', { name: 'Remove the filing of Protocol and amendments' }));
++    const form = screen.getByTestId('vault-tmf-remove-protocol');
++    fireEvent.change(within(form).getByLabelText(/^Reason for removing/), { target: { value: 'Filed against the wrong study' } });
++    fireEvent.click(within(form).getByRole('button', { name: 'Remove the filing' }));
++    expect((await within(form).findByRole('alert')).textContent).toBe('Nothing was removed. TMF artifact not found.');
++    expect(record('protocol').getAttribute('data-state')).toBe('filed');
++  });
++});
++
++describe('a role that may not write the Vault', () => {
++  it('reads the trial master file and is offered no filing or removal', async () => {
++    H.canWrite = false;
++    section();
++    await screen.findByTestId('vault-tmf-verdict');
++    await waitFor(() => expect(record('protocol').textContent).toContain('Protocol BX-204-201 v1.0'));
++    expect(screen.queryByRole('button', { name: /^File a document/ })).toBeNull();
++    expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
++    expect(screen.getByTestId('vault-tmf-view-only').textContent).toMatch(/^View only\./);
++    expect(screen.getByTestId('vault-tmf-download')).toBeTruthy();
++  });
++});
++
++describe('the inspection package', () => {
++  it('downloads it for the study and says what it is, and its SHA-256 checked on receipt', async () => {
++    section();
++    fireEvent.click(await screen.findByTestId('vault-tmf-download'));
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(calls('GET', (u) => u === `${BASE}/inspection-package?scope=essential`)).toHaveLength(1);
++    expect(H.saved.map((s) => s.name)).toEqual(['BX-204-201_inspection-package.zip']);
++    expect(note.getAttribute('role')).toBe('status');
++    expect(note.textContent).toBe(
++      'Inspection package saved: the index of filings and the completeness record, not the documents themselves. ' +
++      `It records essential records still missing. Its SHA-256, checked on receipt: ${packageSha}.`,
++    );
++  });
++
++  it('does not save a file that does not match the SHA-256 the server stated', async () => {
++    refuseWith.package = () => packageResponse('b'.repeat(64));
++    section();
++    fireEvent.click(await screen.findByTestId('vault-tmf-download'));
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(note.getAttribute('role')).toBe('alert');
++    expect(note.textContent).toMatch(/^The inspection package was not downloaded\. The file received does not match the SHA-256/);
++    expect(H.saved).toHaveLength(0);
++  });
++
++  it.each([
++    ['the person’s role', 403, ROLE, 'The inspection package was not downloaded. Your role cannot do this.'],
++    ['not in this release', 403, NOT_RELEASED, 'The inspection package was not downloaded. Not in this release.'],
++    ['a server error', 500, FAILED, 'The inspection package was not downloaded. eTMF request failed.'],
++  ])('a failure (%s) is said with its reason, and nothing is saved', async (_name, status, payload, words) => {
++    refuseWith.package = () => { throw refusal(status, payload); };
++    section();
++    fireEvent.click(await screen.findByTestId('vault-tmf-download'));
++    const note = await screen.findByTestId('vault-tmf-note');
++    expect(note.getAttribute('role')).toBe('alert');
++    expect(note.textContent).toBe(words);
++    expect(H.saved).toHaveLength(0);
++  });
++});
++
++describe('in the Vault: a section of Required documents, and the header button that shows it', () => {
++  const scrolled: string[] = [];
++  const tab = (name: string) => screen.getByRole('tab', { name });
++  const openVault = async () => {
++    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
++    mockVaultApi(H.apiRequest, () => ok(vaultPayload({ documentCounts: { authored: 0, artifacts: 0, uploads: 1 } })));
++    const vaultApi = H.apiRequest.getMockImplementation()!;
++    H.apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => (await tmfApi(method, url, body)) ?? vaultApi(method, url, body));
++    scrolled.length = 0;
++    (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = function scrollIntoView(this: Element) { scrolled.push(this.id); };
++    const p = props();
++    render(<Vault {...p} />);
++    await screen.findByRole('tablist', { name: 'Vault views' });
++    return p;
++  };
++
++  it('is a section of the Required documents view, not a view of its own, and reads nothing until that view opens', async () => {
++    await openVault();
++    const views = within(screen.getByRole('tablist', { name: 'Vault views' })).getAllByRole('tab').map((t) => t.textContent);
++    expect(views).toEqual(['Library', 'Data catalog', 'Uploads · 1', 'Required documents', 'Governed artifacts', 'Seals & fixity']);
++    const tmf = screen.getByTestId('vault-tmf');
++    const panel = tmf.closest('[role="tabpanel"]') as HTMLElement;
++    expect(panel.getAttribute('data-view')).toBe('required');
++    // In that view only, after the coverage it sits beside.
++    expect(document.querySelectorAll('[data-testid="vault-tmf"]')).toHaveLength(1);
++    expect(panel.querySelector('[data-testid="vault-coverage"]')!.compareDocumentPosition(tmf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
++    expect(etmfCalls()).toHaveLength(0);
++
++    fireEvent.click(tab('Required documents'));
++    expect((await within(tmf).findByTestId('vault-tmf-verdict')).getAttribute('data-verdict')).toBe('incomplete');
++    expect(calls('GET', (u) => u === `/api/study-design?program_id=${PID}`)).toHaveLength(1);
++  });
++
++  it('"Inspection readiness" shows Required documents and brings the section into view; it opens no other screen', async () => {
++    const p = await openVault();
++    expect(tab('Library').getAttribute('aria-selected')).toBe('true');
++    fireEvent.click(screen.getByRole('button', { name: /Inspection readiness/ }));
++    expect(tab('Required documents').getAttribute('aria-selected')).toBe('true');
++    const tmf = screen.getByTestId('vault-tmf');
++    expect(tmf.id).toBe(VAULT_TMF_SECTION_ID);
++    await waitFor(() => expect(scrolled).toEqual([VAULT_TMF_SECTION_ID]));
++    expect(document.activeElement).toBe(tmf);
++    await within(tmf).findByTestId('vault-tmf-verdict');
++    expect(p.onNav).not.toHaveBeenCalled();
++  });
++
++  it('where the eTMF screen is locked the button is not offered, and the section is still in Required documents', async () => {
++    H.locked.add('etmf');
++    await openVault();
++    expect(screen.queryByRole('button', { name: /Inspection readiness/ })).toBeNull();
++    fireEvent.click(tab('Required documents'));
++    await within(screen.getByTestId('vault-tmf')).findByTestId('vault-tmf-verdict');
++  });
++});
