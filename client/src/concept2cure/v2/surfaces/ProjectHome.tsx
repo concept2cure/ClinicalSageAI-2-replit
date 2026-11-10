@@ -45,6 +45,7 @@ import type { ProjectTeamMember } from '@shared/project-team';
 import { useAgencyInbox, type CommRow } from './AgencyInbox';
 import { isCommitmentsPayload, type CommitmentsPayload } from './CommitmentRow';
 import { ProjectSide } from './ProjectSide';
+import { ProjectSchedule } from './ProjectSchedule';
 import { ProjectProtocol, useProjectRecords } from './ProjectRecords';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -2277,7 +2278,15 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
               onWorkChanged={() => setWorkVersion(value => value + 1)}
-              tasks={<ProjectWorkPanel pid={pid} onNav={onNav} targetId={workTarget} state={work} />} />
+              tasks={<>
+                <ProjectWorkPanel pid={pid} onNav={onNav} targetId={workTarget} state={work} />
+                {/* Section owners, deadlines and milestones, the milestone tasks and the roll-up (P-122 §3.5). */}
+                <ProjectSchedule projectId={sharingProjectId} filingType={prog?.id === pid ? prog.program_type ?? null : null}
+                  targetDate={prog?.id === pid ? prog.target_submission_date ?? null : null} canChange={prog?.canChange !== false}
+                  unverified={sharingProjectId !== null || teamState.loading ? null : teamState.error
+                    ? "This project's record could not be verified, so its schedule is not listed."
+                    : 'This project has no tracking record, so no schedule is kept on it.'} />
+              </>} />
           )}
 
           {/* Evidence, in spine order (D3.md §4.7): the data room, the protocol, then the project's files: every way a
