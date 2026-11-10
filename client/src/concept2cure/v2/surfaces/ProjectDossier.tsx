@@ -16,6 +16,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
+import { STEP_DOORS } from '../projectDoors';
 import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
@@ -327,7 +328,7 @@ export function ModuleCompletion({ read, copyFor, onOpen, onAsk, lead }: {
   }
   return (
     <section className="pj-sec" aria-labelledby="pj-modules-h">
-      <div className="pj-sec-h"><h2 id="pj-modules-h">Module completion</h2><span className="sec-sub">sections approved or locked, by module</span>
+      <div className="pj-sec-h"><h2 id="pj-modules-h" tabIndex={-1}>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span>
         {onAsk && <span className="pj-sec-acts"><button type="button" className="btn small" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button></span>}
       </div>
       {lead}
@@ -336,6 +337,25 @@ export function ModuleCompletion({ read, copyFor, onOpen, onAsk, lead }: {
       <ArtifactSectionStatus read={read} />
       <SectionTracking read={read} />
     </section>
+  );
+}
+
+/**
+ * The Author step's door to its dossier (P-122, 2026-11-10). The dossier (Dossier.tsx and DossierMap.tsx until
+ * 8b192f1e7 folded them here) is the readiness card and the module rows under the document list, below the fold on
+ * a project with documents, and nothing on the step said it was there. The door moves to Module completion and
+ * focuses its heading, so a keyboard or screen-reader user lands where the figures are read.
+ */
+export function DossierDoor() {
+  const go = () => {
+    const heading = document.getElementById('pj-modules-h');
+    heading?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    heading?.focus({ preventScroll: true });
+  };
+  return (
+    <button type="button" className="btn small" onClick={go} aria-controls="pj-modules-h">
+      {STEP_DOORS.dossier} {I.right}
+    </button>
   );
 }
 
