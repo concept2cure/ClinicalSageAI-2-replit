@@ -147,6 +147,21 @@ describe('routes/c2c/tasks — reads', () => {
     await request(app()).get('/api/concept2cure/projects/1234/tasks/summary').expect(200);
     everyWhereIsOrgScoped();
   });
+
+  /* P-122 (2026-11-10): the project page's Plan step reads this summary. A project with no tasks was reported at a
+     health score of 100 and a completion rate of 100%: a figure for work that does not exist (Rule 2). */
+  it('GET /projects/:id/tasks/summary measures nothing when there are no tasks', async () => {
+    results = [[]];
+    const res = await request(app()).get('/api/concept2cure/projects/1234/tasks/summary').expect(200);
+    expect(res.body.data).toMatchObject({ total: 0, completed: 0, overdue: 0, healthScore: null, completionRate: null });
+  });
+
+  it('GET /projects/:id/tasks/summary still measures the tasks there are', async () => {
+    const past = new Date(Date.now() - 86_400_000).toISOString();
+    results = [[{ status: 'done' }, { status: 'todo', dueDate: past }, { status: 'blocked' }, { status: 'todo' }]];
+    const res = await request(app()).get('/api/concept2cure/projects/1234/tasks/summary').expect(200);
+    expect(res.body.data).toMatchObject({ total: 4, completed: 1, overdue: 1, completionRate: 25, healthScore: 0 });
+  });
 });
 
 describe('routes/c2c/tasks — writes', () => {
@@ -203,5 +218,15 @@ describe('routes/c2c/tasks — assessment', () => {
     // Two statements: the project lookup and the task list. Both must be scoped.
     expect(wheres.length).toBeGreaterThanOrEqual(2);
     everyWhereIsOrgScoped();
+  });
+
+  /* P-122: the assessment's figures follow the summary's. No tasks is no figure, and says so as a risk. */
+  it('POST /projects/:id/tasks/assess gives no health score or completion rate when there are no tasks', async () => {
+    results = [[{ id: 1234, name: 'P' }], []];
+    const res = await request(app()).post('/api/concept2cure/projects/1234/tasks/assess').send({});
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    expect(res.body.data.healthScore).toBeNull();
+    expect(res.body.data.summary).toMatchObject({ total: 0, completionRate: null });
+    expect(res.body.data.risks).toContain('No tasks defined — generate milestones for this submission type');
   });
 });

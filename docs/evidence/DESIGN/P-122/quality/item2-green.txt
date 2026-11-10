@@ -1,0 +1,18 @@
+# Item 2 green: the inline-actions tests and Quality's suites after SopRegisterRow.tsx (inlineOf, AskAnaButton), ChangeControl.tsx and QmsRecords.tsx
+# base 46712cea6 2026-11-10T12:07:42Z
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 461ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 378ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > is a table: column headers, one body per record, its state's actions inline with Ask AnA, and no More with nothing left 507ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > shows each change the moves that fit its state inline; the rest are behind More 228ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its state's actions inline, and More reveals every other action in the row 164ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > a draft: Send for review and Open inline; Ask AnA inline; the rest under More 326ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > under review, for its approver: Approve and Review route inline 83ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > under review, for its author: no Approve the server refuses; Review route and Open inline 24ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > in force, with training: Read and acknowledge and Revise inline; Controlled copy, Record review and Retire under More 73ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > in force, with no training: Revise and Controlled copy inline 95ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > in force and overdue for periodic review: Record review leads 21ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > retired: History and Revise inline, nothing else to do 36ms
+ ✓ client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > every inline action is a ghost button, and Ask AnA is an icon with its name for assistive technology 28ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > offers no acknowledgement on a document type that carries no read-and-understood training; Open opens it 122ms
+ Test Files  31 passed (31)
+      Tests  385 passed (385)

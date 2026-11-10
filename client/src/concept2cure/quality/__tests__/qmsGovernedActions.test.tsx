@@ -267,8 +267,10 @@ describe('Change control — governed actions reach their routes', () => {
   // C9: the assessment is edited while the change is under assessment, through the existing PATCH route.
   it('edits the assessment through PATCH /changes/:id, starting from the recorded one', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    // P-122: other changes show Edit assessment inline; CC-2026-014 keeps it under its More.
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit assessment' }));
     const d = drawer(/Assess CC-2026-014/);
     expect((within(d).getByLabelText(/Impact assessment/) as HTMLTextAreaElement).value)
       .toBe('Filter qualification and an extractables study; no filing change.');
@@ -296,8 +298,10 @@ describe('Change control — governed actions reach their routes', () => {
   it('keeps a drawer open while its write is in flight', async () => {
     H.apiRequest.mockImplementation((method: string) => (method === 'PATCH' ? new Promise(() => {}) : Promise.resolve(json(200, { data: [] }))));
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    // P-122: other rows show Edit assessment inline, so the click is scoped to CC-2026-014's own row.
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit assessment' }));
     const d = drawer(/Assess CC-2026-014/);
     fill(d, /Reason for this edit/, 'Second source added after the supplier audit.');
     fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
@@ -309,8 +313,9 @@ describe('Change control — governed actions reach their routes', () => {
 
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
-    fireEvent.click(screen.getByRole('button', { name: /Link a record/ }));
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(within(row).getByRole('button', { name: /Link a record/ }));
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');
     fill(d, /Reference/, 'CAPA-91');

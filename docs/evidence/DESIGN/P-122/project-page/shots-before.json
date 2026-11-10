@@ -1,0 +1,336 @@
+{
+  "base": "http://localhost:5262",
+  "program": "d56ad63d-8530-4cd5-b81f-dc55102a6dea",
+  "label": "before",
+  "at": "2026-11-10T11:50:43.115Z",
+  "runs": [
+    {
+      "key": "1440-light",
+      "shots": [
+        "before-1440-light-plan-steps.png",
+        "before-1440-light-plan-schedule.png",
+        "before-1440-light-review.png",
+        "before-1440-light-records.png",
+        "before-1440-light-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "1440-dark",
+      "shots": [
+        "before-1440-dark-plan-steps.png",
+        "before-1440-dark-plan-schedule.png",
+        "before-1440-dark-review.png",
+        "before-1440-dark-records.png",
+        "before-1440-dark-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "390-light",
+      "shots": [
+        "before-390-light-plan-steps.png",
+        "before-390-light-plan-schedule.png",
+        "before-390-light-review.png",
+        "before-390-light-records.png",
+        "before-390-light-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "390-dark",
+      "shots": [
+        "before-390-dark-plan-steps.png",
+        "before-390-dark-plan-schedule.png",
+        "before-390-dark-review.png",
+        "before-390-dark-records.png",
+        "before-390-dark-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved",
+            "Submissions · 1",
+            "Data Room sources · 7",
+            "Authoring documents · 12",
+            "Vault documents · 6",
+            "Study designs · 1",
+            "Filing documents · 1",
+            "Activity"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    }
+  ]
+}

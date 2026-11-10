@@ -112,8 +112,11 @@ describe('Raise change request — the project a change belongs to', () => {
 });
 
 /* C14 (QP3): the summary route reads the whole organisation and takes no project, so a log scoped to the open
-   project counts its own rows, by the server's definitions. */
+   project counts its own rows, by the server's definitions. Since P-122 the log is scoped only when the person narrows
+   Quality to the project (`?quality=project`); the organisation's log is the default. */
 describe('a change log scoped to the open project', () => {
+  beforeEach(() => { window.history.replaceState(null, '', '/concept2cure/quality?quality=project'); });
+  afterEach(() => { window.history.replaceState(null, '', '/concept2cure/quality'); });
   it('counts its own rows, not the organisation summary', () => {
     H.shell = { id: PROGRAM, title: 'Current program' };
     render(

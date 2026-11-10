@@ -1,0 +1,9 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-meta`: no more than 84 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > opens with all nine tabs in one row, and no toggle in front of the registers 322ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > keeps all nine in the row whichever tab is open 114ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > prints the open tab’s sentence as one quiet line, and its next step 86ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > walks the work in order, and the last destination has no next step 192ms
+ Test Files  4 passed (4)
+      Tests  90 passed (90)

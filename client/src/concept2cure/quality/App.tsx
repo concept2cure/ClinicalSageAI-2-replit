@@ -42,6 +42,7 @@ import {
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
 import { WorkProjectTasks } from '../v2/surfaces/ProjectWorkTasks';
+import { QualityFigures } from './QualityFigures';
 
 /** Stable identity for an unread register, so memo deps do not churn. */
 const NO_CHANGES: ChangeControlRow[] = [];
@@ -392,12 +393,17 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
               </div>
               {scope.projectName && (
                 <div className="ph-acts">
-                  <button type="button" className="btn ghost small" onClick={() => setQualityWide(!scope.wide)}>
-                    {scope.wide ? `Show ${scope.projectName} only` : 'Show the whole organisation'}
+                  {/* One quiet control (P-122). It names the project by its code: the full name ("C11 · Gasket
+                      programme …") made the button wider than a phone. The full name is its title. */}
+                  <button type="button" className="btn ghost small" title={scope.wide ? `Show ${scope.projectName} only` : undefined}
+                    onClick={() => setQualityWide(!scope.wide)}>
+                    {scope.wide ? `Show ${scope.projectName.split(' · ')[0]} only` : 'Show the whole organisation'}
                   </button>
                 </div>
               )}
             </header>
+            {/* P-122: the quality system's figures, one quiet line of the server's numbers, on every tab. */}
+            <QualityFigures organisationWide={scope.programId !== null} />
             {/* P-111: opened from a Quality work project's door, its tasks under the title, above the registers. */}
             <WorkProjectTasks area="quality" />
             <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">

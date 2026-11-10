@@ -1,0 +1,30 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/db/p122-project-management-reads.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-management-reads.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary) 107ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline) 24ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue 102ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy 82ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it 41ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them 32ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers 37ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days 47ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the section list 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the milestone list (writes share its path) 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > Sentinel's status 6ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > submission-ops' workload 6ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the project cockpit read model 12ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the unified task dashboard 5ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing 16ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  12:11:03
+   Duration  10.34s (transform 6.04s, setup 72ms, import 9.41s, tests 597ms, environment 0ms)
+

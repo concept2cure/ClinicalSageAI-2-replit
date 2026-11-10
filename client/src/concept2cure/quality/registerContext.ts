@@ -42,41 +42,45 @@ export function documentLabel(ctx: RegisterContext, id: number | null | undefine
   return ctx.documentsFailed ? `document #${id} (register not read)` : '…';
 }
 
-/* ─── The scope Quality reads (C14, QP3) ──────────────────────────────────────
-   Opened with a project open, Quality shows that project's controlled documents, changes, CAPAs and nonconformances:
-   the registers whose rows name a project (`program_id`, admitted by the server as a write's project is). The
-   person may widen it to the whole organisation (`?quality=organisation`, so a reload or a copied link keeps it).
-   Deviations, suppliers, internal audits, management reviews, periodic review and training have no project; they
-   are the organisation's either way, and say so while a project is open. Until 2026-11-10 Quality read the whole
-   organisation whichever project was open, while the project page counted that project's records. */
+/* ─── The scope Quality reads (C14, QP3; P-122) ────────────────────────────────
+   Quality reads the whole organisation, with a project open or not (P-122, 2026-11-10). A person may narrow the
+   registers whose rows name a project (controlled documents, changes, CAPAs and nonconformances: `program_id`,
+   admitted by the server as a write's project is) to the open project (`?quality=project`, so a reload or a copied
+   link keeps it). Deviations, suppliers, internal audits, management reviews, periodic review and training have no
+   project; they are the organisation's either way, and say so while the registers are narrowed.
+   From C14 (`e39cc0d59`, 2026-11-10 08:42) until P-122 the project's records were the default, and a person with a
+   project open (the shell keeps one open for the session, shellProject.ts) saw that project's registers only: an
+   empty SOP register, since controlled documents are the organisation's. C14's reason stands: the header says whose
+   records it lists, and AnA is told. A link written under C14 (`?quality=organisation`) reads the organisation, as
+   the default now does. */
 export const QUALITY_SCOPE_PARAM = 'quality';
 const scopeListeners = new Set<() => void>();
-const readWide = (): boolean => {
-  try { return new URLSearchParams(window.location.search).get(QUALITY_SCOPE_PARAM) === 'organisation'; } catch { return false; }
+const readNarrowed = (): boolean => {
+  try { return new URLSearchParams(window.location.search).get(QUALITY_SCOPE_PARAM) === 'project'; } catch { return false; }
 };
-const subscribeWide = (listener: () => void) => {
+const subscribeScope = (listener: () => void) => {
   scopeListeners.add(listener);
   window.addEventListener('popstate', listener);
   return () => { scopeListeners.delete(listener); window.removeEventListener('popstate', listener); };
 };
 
-/** Widen Quality to the whole organisation, or narrow it back to the open project. */
+/** Read the whole organisation (the default), or narrow the registers to the open project. */
 export function setQualityWide(wide: boolean): void {
   try {
     const url = new URL(window.location.href);
-    if (wide) url.searchParams.set(QUALITY_SCOPE_PARAM, 'organisation');
-    else url.searchParams.delete(QUALITY_SCOPE_PARAM);
+    if (wide) url.searchParams.delete(QUALITY_SCOPE_PARAM);
+    else url.searchParams.set(QUALITY_SCOPE_PARAM, 'project');
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
   } catch { /* a URL that cannot be rewritten keeps its scope; the listeners still hear the choice */ }
   scopeListeners.forEach((listener) => listener());
 }
 
 export interface QualityScope {
-  /** The project the project-kept registers read, or null for the whole organisation. */
+  /** The project the project-kept registers read, or null for the whole organisation (the default). */
   programId: string | null;
-  /** The open project's name, whether or not the person widened the view; null with no project open. */
+  /** The open project's name, whether or not the person narrowed the view; null with no project open. */
   projectName: string | null;
-  /** True when a project is open and the person chose the whole organisation. */
+  /** True when a project is open and the registers read the whole organisation: the default, unless narrowed. */
   wide: boolean;
 }
 
@@ -85,9 +89,9 @@ const nameOf = (p: ShellProject | null): string | null =>
 
 export function useQualityScope(): QualityScope {
   const project = useShellProject();
-  const wide = useSyncExternalStore(subscribeWide, readWide, () => false);
+  const narrowed = useSyncExternalStore(subscribeScope, readNarrowed, () => false);
   const id = shellProgramId(project);
-  return { programId: id && !wide ? id : null, projectName: id ? nameOf(project) : null, wide: !!id && wide };
+  return { programId: id && narrowed ? id : null, projectName: id ? nameOf(project) : null, wide: !!id && !narrowed };
 }
 
 /** A list path read for the scope: with `program_id` when a project is in scope. */

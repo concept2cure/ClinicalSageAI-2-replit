@@ -1,0 +1,20 @@
+# Typecheck: NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json --incremental --tsBuildInfoFile node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo
+# 2026-11-10T13:32:04Z, working tree on a73fb22f3
+## First run: six errors in server/routes/mdx-postmarket.ts (7a34155c0 typed the request executor's untyped query) and five in AgencyResponses.tsx
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(666,82): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(774,59): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(868,28): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(907,50): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(927,53): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+server/routes/mdx-postmarket.ts(73,34): error TS2558: Expected 0 type arguments, but got 1.
+server/routes/mdx-postmarket.ts(91,42): error TS2769: No overload matches this call.
+server/routes/mdx-postmarket.ts(113,35): error TS2558: Expected 0 type arguments, but got 1.
+server/routes/mdx-postmarket.ts(131,39): error TS2769: No overload matches this call.
+server/routes/mdx-postmarket.ts(133,38): error TS2339: Property 'toLowerCase' does not exist on type '{}'.
+server/routes/mdx-postmarket.ts(133,87): error TS2339: Property 'toLowerCase' does not exist on type '{}'.
+## After the fix: none of P-122 Quality's files. The five left are in client/src/concept2cure/v2/surfaces/AgencyResponses.tsx, from 9e9bc42ff (the CMC lane, 2026-11-10), which this work does not touch
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(666,82): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(774,59): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(868,28): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(907,50): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
+client/src/concept2cure/v2/surfaces/AgencyResponses.tsx(927,53): error TS2339: Property 'communicationType' does not exist on type 'Pick<CommRow, "id">'.
