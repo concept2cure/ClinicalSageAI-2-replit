@@ -35,6 +35,8 @@ const columns={
  concept2cure_review_assignments:`id integer primary key, artifact_id integer, organization_id integer, reviewer_id integer, review_round integer, status text`,
  concept2cure_review_decisions:`id integer primary key, assignment_id integer, artifact_id integer, organization_id integer, reviewer_id integer, review_round integer, decision text, version_reviewed integer`,
  audit_fixture:`id integer primary key autoincrement, payload text`,action_fixture:`id integer primary key autoincrement, payload text`,
+ // The quorum asks whether the signer is the organisation's only member (P-116, isSoleMember).
+ organization_users:`id integer primary key autoincrement, organization_id integer, user_id integer`,
 };
 const schema={};for(const [name,table] of Object.entries({concept2cureArtifacts:'concept2cure_artifacts',concept2cureArtifactVersions:'concept2cure_artifact_versions',concept2cureSignatures:'concept2cure_signatures',concept2cureSubmissionSnapshots:'concept2cure_submission_snapshots'}))schema[name]=new Proxy({table},{get:(o,k)=>k==='table'?o.table:{table:o.table,column:snake(k)}});
 const qcol=c=>`"${c.column}"`;
@@ -63,6 +65,8 @@ async function runCase(tree,c){
  head.contentHash=hash(head.content);patch(head,c.initialHead);
  const ver={id:401,artifactId:101,organizationId:7,version:3,content:head.content,contentHash:hash(head.content),createdById:300,changeDescription:'Persisted draft'};patch(ver,c.initialVersion);
  insert('concept2cure_artifacts',head);if(!c.missingVersion)insert('concept2cure_artifact_versions',ver);
+ // Organisation 7 has the signer and reviewers: someone to be independent of, so P-116's sole-member path is not taken.
+ for(const user_id of [777,700,701,702])insert('organization_users',{organization_id:7,user_id});
  const input={artifact:revive(db.prepare('SELECT * FROM concept2cure_artifacts').get()),version:c.missingVersion?null:revive(db.prepare('SELECT * FROM concept2cure_artifact_versions').get()),status:c.status||'approved',previousStatus:c.status==='locked'?'approved':'review',organizationId:7,userId:777,userRole:'admin',attestationText:'I approve the reviewed document.',reason:'Reviewed',secondFactorVerified:true,ipAddress:null};
  input.updateData=review.artifactStatusUpdate(input.artifact,input.previousStatus,input.status,input.userId);
  patch(input.artifact,c.cachedHead);if(input.version)patch(input.version,c.cachedVersion);patch(input,c.input);
@@ -74,9 +78,9 @@ async function runCase(tree,c){
   insert('concept2cure_review_assignments',{id:1,artifact_id:101,organization_id:7,reviewer_id:700,review_round:2,status:c.quorum==='pending'?'pending':'completed'});
   if(c.quorum!=='missing')insert('concept2cure_review_decisions',{id:1,assignment_id:1,artifact_id:101,organization_id:7,reviewer_id:c.quorum==='wrongReviewer'?701:700,review_round:2,decision:c.quorum==='reject'?'reject':'approve',version_reviewed:c.quorum==='stale'?2:3});
   if(c.quorum==='newRound')insert('concept2cure_review_assignments',{id:2,artifact_id:101,organization_id:7,reviewer_id:701,review_round:3,status:'pending'});
-  // The head is placed in CTD 2.5, so its review needs two independent reviewers
-  // (P-95 Q2, 4eb094196f). The second, 702, approved the current version; every
-  // quorum variant above still concerns reviewer 700. 'single' omits the second.
+  // A second reviewer, 702, approved the current version; every quorum variant
+  // above still concerns reviewer 700. 'single' omits the second: one reviewer
+  // is enough for a placed document (P-116; two were required under P-95 Q2).
   if(c.quorum!=='single'){insert('concept2cure_review_assignments',{id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,status:'completed'});
    insert('concept2cure_review_decisions',{id:2,assignment_id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,decision:'approve',version_reviewed:3});}
  }

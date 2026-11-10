@@ -659,9 +659,37 @@ export function separationOfDutiesRefusal(
 }
 
 export interface SeparationOfDutiesResult {
-  /** True when independence was verified; false only for an authorship signature. */
+  /** True when independence was verified; false for an authorship signature, or a sole member's own act. */
   checked: boolean;
   reason: string;
+  /** Set when the act was admitted because the signer is the organisation's only member (P-116). */
+  soleMember?: true;
+}
+
+/** What the record says of an act a sole member signed on their own record (P-116). */
+export const SOLE_MEMBER_RECORD =
+  "No independent review: the signer is this organisation's only member, so there is nobody to be independent of (P-116).";
+
+/**
+ * Is this user the organisation's only member (founder decision P-116,
+ * 2026-11-10: "What if a client is a single consultant")? Counted over every
+ * membership row, whatever the account's status: a second person who was ever
+ * admitted and not removed still counts, so the answer cannot be reached by
+ * disabling a colleague. organization_users' SELECT is open under RLS
+ * (20260926_organization_users_own_writes.sql), so the count is the real one.
+ * Not a setting: nobody switches it on, and it ends when a second row exists.
+ */
+export async function isSoleMember(db: AuthorshipReader, orgId: number, userId: number): Promise<boolean> {
+  if (![orgId, userId].every((v) => Number.isSafeInteger(v) && v > 0)) return false;
+  const { rows } = await db.query(`SELECT user_id FROM organization_users WHERE organization_id = $1 LIMIT 2`, [orgId]);
+  return rows.length === 1 && Number(rows[0].user_id) === userId;
+}
+
+/** P-116: only a door that records SOLE_MEMBER_RECORD on the act asks, and only a sole member is admitted. */
+async function admitsSoleMember(
+  opts: { soleMember?: 'admit-and-record'; client?: AuthorshipReader }, orgId: number, signerId: number,
+): Promise<boolean> {
+  return opts.soleMember === 'admit-and-record' && isSoleMember(opts.client ?? pool, orgId, signerId);
 }
 
 /**
@@ -673,7 +701,11 @@ export async function assertSignerIsNotAuthor(
   target: string,
   orgId: number,
   signerId: number,
-  opts: { command?: 'sign' | 'lock'; meaning?: unknown; client?: AuthorshipReader } = {},
+  opts: {
+    command?: 'sign' | 'lock'; meaning?: unknown; client?: AuthorshipReader;
+    /** P-116: a door that records SOLE_MEMBER_RECORD on the act may admit a sole member's own record. */
+    soleMember?: 'admit-and-record';
+  } = {},
 ): Promise<SeparationOfDutiesResult> {
   if (!requiresIndependence(opts.command ?? 'sign', opts.meaning)) {
     return {
@@ -706,6 +738,7 @@ export async function assertSignerIsNotAuthor(
      reach this branch, so the order below is unchanged for every other
      target.) */
   if (authorship.authors.includes(signerId)) {
+    if (await admitsSoleMember(opts, orgId, signerId)) return { checked: false, soleMember: true, reason: SOLE_MEMBER_RECORD };
     throw new SeparationOfDutiesError(
       `Separation of duties: you are an author of this record (${authorship.sources.join(', ')}) and cannot review, approve ` +
         'or lock it. A different, authorized user must sign.',
