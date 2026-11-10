@@ -1,0 +1,9 @@
+# Focused typecheck (2026-11-10): the repo tsconfig, extended, files = ProjectSchedule.tsx and its new test.
+# Every error is an ambient window global in shellProject.ts (its .d.ts is not in this file list), not in a changed file.
+# Note: started while another session's DB vitest run was in progress (the brief asks for none); it completed normally.
+client/src/concept2cure/v2/shellProject.ts(96,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,54): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(209,16): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(209,40): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(218,17): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
