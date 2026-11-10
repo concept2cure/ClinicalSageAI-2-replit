@@ -1,0 +1,45 @@
+[
+ {
+  "action": "mdx.qms.change.delete",
+  "record": "28",
+  "reason": "Walk F1: raised twice in error.",
+  "details": {
+   "reason": "Walk F1: raised twice in error."
+  }
+ },
+ {
+  "action": "mdx.qms.change.update",
+  "record": "12",
+  "reason": "Second source added after the supplier audit.",
+  "details": {
+   "reason": "Second source added after the supplier audit.",
+   "edits": [
+    {
+     "field": "implementation_plan",
+     "before": "Walk F1: qualify the second source (9679).",
+     "after": "Walk F1: qualify the second source (8012)."
+    }
+   ]
+  }
+ },
+ {
+  "action": "mdx.qms.change.update",
+  "record": "12",
+  "reason": "Second source added after the supplier audit.",
+  "details": {
+   "reason": "Second source added after the supplier audit.",
+   "edits": [
+    {
+     "field": "implementation_plan",
+     "before": "Qualify the second supplier; update the fill-line batch record.",
+     "after": "Walk F1: qualify the second source (9679)."
+    },
+    {
+     "field": "assessed_by",
+     "before": 1,
+     "after": 2
+    }
+   ]
+  }
+ }
+]

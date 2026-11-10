@@ -1,0 +1,23 @@
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is approved 11ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is in_implementation 3ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is verification 3ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is closed 3ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is rejected 3ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is cancelled 3ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > returns each field the edit changed, before and after, and none it left as it was 6ms
+ × server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > edits a change under assessment, guarded in the statement itself, and records the reason and each field before and after 7ms
+ × server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 422 without a reason for the edit, reading and writing nothing 4ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > removes a proposed change, guarded in the statement itself, and records why 3ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 422 without a reason, reading and writing nothing 3ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is approved: it is kept 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is in_implementation: it is kept 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is verification: it is kept 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is closed: it is kept 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is rejected: it is kept 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is cancelled: it is kept 2ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  17 failed | 67 passed (84)
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 641ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 skipped (13)
