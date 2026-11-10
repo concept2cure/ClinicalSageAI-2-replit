@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import type { NativeRecordSnapshot } from '../record-source';
 import { seedSourceReadParents } from './source-read-fixture';
 import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
+import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
 
 const h = vi.hoisted(() => ({ query: vi.fn(), collect: vi.fn(), authorize: vi.fn() }));
 vi.mock('../../../db', () => ({
@@ -59,6 +60,8 @@ beforeAll(async () => {
     // The applier files that alter the loop tables this harness builds (authoring-migration-list-closure contract).
     'db/migrations/20260817_doc_revisions_immutable_ledger.sql', 'db/migrations/20260730_authoring_comments_router_columns.sql',
     'migrations/20260727_authoring_document_program_scope.sql']) await pg.exec(readFileSync(file, 'utf8'));
+  // The catalogue read names each source's study (S2, c15afd47ca): the study store as its creating migration defines it.
+  await pg.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['cdisc_prm_studies']));
   await pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by integer, ADD COLUMN extracted_text text,
     ADD COLUMN char_count integer, ADD COLUMN page_count integer, ADD COLUMN study_ref integer;
     CREATE TABLE quality_fixture_state(id integer PRIMARY KEY,content text,visible boolean);`);

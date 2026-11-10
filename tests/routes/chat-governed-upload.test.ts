@@ -15,14 +15,17 @@
  * recorded as its project's Data Room source. Source identity itself is
  * chat-upload-source-identity.test.ts's subject; it is stubbed here, as in
  * chat-upload-to-memory.test.ts, because this suite's pool is a query stub.
+ * Since c88d892390 (2026-11-08) the upload records that source through the one
+ * capture writer, captureClientSource, which resolves duplicate bytes and
+ * revisions in one transaction; the route no longer calls createSource.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockResolveGovernedContext, mockPoolQuery, mockCreateSource } = vi.hoisted(() => ({
+const { mockResolveGovernedContext, mockPoolQuery, mockCaptureClientSource } = vi.hoisted(() => ({
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
-  mockCreateSource: vi.fn(async () => ({ id: 4242 })),
+  mockCaptureClientSource: vi.fn(async () => ({ source: { id: 4242 }, reused: false, supersededId: null })),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
@@ -30,7 +33,7 @@ vi.mock('../../server/services/concept2cure/governedDocumentContractService.js',
 }));
 
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
-  createSource: mockCreateSource,
+  captureClientSource: mockCaptureClientSource,
   findSourceByChecksum: vi.fn(async () => null),
   findSupersededCandidate: vi.fn(async () => null),
   createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),
@@ -195,8 +198,8 @@ describe('chat upload governance', () => {
     );
     expect(res.json).not.toHaveBeenCalledWith(expect.objectContaining({ code: 'GOVERNED_CONTRACT_INVALID' }));
     // The one record is the project's Data Room source, captured but not filed.
-    expect(mockCreateSource).toHaveBeenCalledTimes(1);
-    expect(mockCreateSource).toHaveBeenCalledWith(
+    expect(mockCaptureClientSource).toHaveBeenCalledTimes(1);
+    expect(mockCaptureClientSource).toHaveBeenCalledWith(
       5,
       expect.objectContaining({
         sourceType: 'client_document',
@@ -204,6 +207,7 @@ describe('chat upload governance', () => {
         clientWorkspaceId: 12,
         title: 'source.txt',
       }),
+      { text: 'abc' },
     );
     const artifactInsertCall = mockPoolQuery.mock.calls.find(([sql]) =>
       String(sql).includes('INSERT INTO concept2cure_artifacts')
