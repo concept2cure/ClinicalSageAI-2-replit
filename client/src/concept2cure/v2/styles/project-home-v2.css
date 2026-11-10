@@ -80,6 +80,22 @@
 .c2c-v2 .pj-summary-i strong { font-weight: 600; color: var(--text-200); font-variant-numeric: tabular-nums; }
 .c2c-v2 .pj-summary-i[data-tone="warn"] strong { color: var(--warning); }
 
+/* "Which projects are at risk this week?" (P-122 §3.2; ProjectsAtRisk.tsx): the
+   server's three answers in one quiet card above the toolbar, each a plain list. */
+.c2c-v2 .pj-risk { display: flex; flex-direction: column; gap: 16px; margin: 0 0 16px; padding: 16px 20px;
+  border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--bg-000); }
+.c2c-v2 .pj-risk-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.c2c-v2 .pj-risk-title { margin: 0 0 2px; font-size: var(--fs-section); font-weight: 600; color: var(--text-100); }
+.c2c-v2 .pj-risk-sec { display: flex; flex-direction: column; gap: 6px; }
+.c2c-v2 .pj-risk-h { margin: 0; font-size: var(--fs-body); font-weight: 600; color: var(--text-100); }
+.c2c-v2 .pj-risk-note { margin: 0; font-size: var(--fs-small); line-height: 1.5; color: var(--text-300); }
+.c2c-v2 .pj-risk-note[role="alert"] { color: var(--error); }
+.c2c-v2 .pj-risk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.c2c-v2 .pj-risk-list > li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid var(--border); }
+.c2c-v2 .pj-risk-k { font-size: var(--fs-caption); font-weight: 600; color: var(--text-200); }
+.c2c-v2 .pj-risk-t { font-size: var(--fs-small); font-weight: 500; line-height: 1.45; color: var(--text-100); overflow-wrap: anywhere; }
+.c2c-v2 .pj-risk-m { font-size: var(--fs-caption); line-height: 1.5; color: var(--text-300); }
+
 /* Archived projects (P-122 §3.5; ProjectsArchived.tsx): a quiet link under the
    list, and in its place a plain list with Restore on each row. */
 .c2c-v2 .pj-archived-link { display: inline-flex; margin-top: 20px; padding: 0; border: 0; background: none;

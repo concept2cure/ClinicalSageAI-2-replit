@@ -51,6 +51,7 @@ import { PATHWAY_LABEL, REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY, pathway
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import { ArchivedProjects, ArchivedProjectsLink } from './ProjectsArchived';
+import { ProjectsAtRisk } from './ProjectsAtRisk';
 import {
   DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
   usesDeviceClassification, type DeviceFlagId,
@@ -1305,6 +1306,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [reloadNonce, setReloadNonce] = useState(0);
   /* Archived projects, in place of the list, with a way to restore one (P-122 §3.5). */
   const [archivedView, setArchivedView] = useState(false);
+  /* "Which projects are at risk this week?", answered by the server's risk engines (P-122 §3.2). */
+  const [riskOpen, setRiskOpen] = useState(false);
   const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
   const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
@@ -1584,11 +1587,15 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           <NeedsProjectNotice />
         </div>
         <div className="ph-acts">
+          <button type="button" className="btn ghost" aria-expanded={riskOpen} onClick={() => setRiskOpen(o => !o)}>
+            Which projects are at risk this week?
+          </button>
           <button type="button" className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
         </div>
       </div>
 
       <PortfolioFigures settled={settled} counts={counts} />
+      <ProjectsAtRisk open={riskOpen} onClose={() => setRiskOpen(false)} />
       {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">
