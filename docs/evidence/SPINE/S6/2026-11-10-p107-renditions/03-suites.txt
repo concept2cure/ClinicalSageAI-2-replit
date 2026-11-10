@@ -1,0 +1,99 @@
+# 03-suites: the existing suites that cover the changed files, on the changed code (2026-11-10)
+#
+# None of these files was edited by this work. Counts are tests per file.
+
+## 1. The viewer (client); the download, seals, archives and the converter (server)
+## npx vitest run --config vitest.config.ts <the 34 files below>
+
+  pass   4  client/src/concept2cure/v2/__tests__/projectHomeEvidenceFiles.test.tsx
+  pass   1  client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx
+  pass  17  client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx
+  pass   3  client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts
+  pass   4  client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx
+  pass   5  client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx
+  pass  11  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx
+  pass   1  client/src/concept2cure/v2/editor/__tests__/pdfFrameOneSite.test.ts
+  pass   4  client/src/concept2cure/v2/editor/__tests__/projectFilesRecovery.test.tsx
+  pass   9  client/src/concept2cure/v2/editor/__tests__/projectFilesSessionOwnership.test.tsx
+  pass  17  client/src/concept2cure/v2/editor/__tests__/projectFilesSourceAssembly.test.tsx
+  pass   6  client/src/concept2cure/v2/editor/__tests__/projectFilesViewer.test.tsx
+  pass  10  client/src/concept2cure/v2/editor/__tests__/projectVaultSearch.test.tsx
+  pass  14  server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts
+  pass  53  server/routes/__tests__/c2c-audit-outcomes.pglite.test.ts
+  pass  26  server/routes/__tests__/vault-download.test.ts
+  pass  11  server/routes/__tests__/vault-file-authorization.test.ts
+  pass  24  server/routes/__tests__/vault-search.test.ts
+  pass  15  server/routes/c2c/__tests__/c2c-router.parity.test.ts
+  pass   7  server/routes/c2c/__tests__/project-vault-branches.test.ts
+  pass  15  server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+  pass   4  server/routes/c2c/__tests__/vault-document-history-route.test.ts
+  pass   5  server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+  pass   6  server/routes/c2c/__tests__/vault-download-integrity.test.ts
+  pass   9  server/routes/c2c/__tests__/vault-recorded-provider.test.ts
+  pass  12  server/services/__tests__/conversion-slots.test.ts
+  pass   2  server/services/__tests__/generated-pdf-normalization.test.ts
+  pass   7  server/services/__tests__/pdf-converter.test.ts
+  pass  36  server/services/export/__tests__/recorded-downloads.contract.test.ts
+  pass   5  server/services/vault/__tests__/vault-archive-audit-projection.test.ts
+  pass   6  server/services/vault/__tests__/vault-archive-builder.test.ts
+  pass   7  server/services/vault/__tests__/vault-archive-delivery.test.ts
+  pass   2  server/services/vault/__tests__/vault-fixity.test.ts
+  pass  15  server/services/vault/__tests__/vault-seal.service.test.ts
+
+ Test Files  34 passed (34)
+      Tests  373 passed (373)
+   Duration  84.12s (transform 13.89s, setup 1.27s, import 32.89s, tests 39.07s, environment 5.27s)
+
+## 2. The archive limits the rendition calls before it opens a Word file
+## npx vitest run --config vitest.config.ts server/services/archive/__tests__/archive-limit-call-sites.test.ts server/services/archive/__tests__/safe-zip.test.ts
+
+  pass  12  server/services/archive/__tests__/archive-limit-call-sites.test.ts
+  pass  19  server/services/archive/__tests__/safe-zip.test.ts
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Duration  4.25s (transform 1.34s, setup 103ms, import 146ms, tests 3.56s, environment 0ms)
+
+## 3. Real PostgreSQL 16, runtime role, RLS on: versions, seals and their closing archive, folder export, project access
+## npx vitest run --config vitest.db.config.ts tests/db/vault-pdf-rendition.dbtest.ts tests/db/vault-versions.dbtest.ts tests/db/vault-data-room-seal.dbtest.ts tests/db/vault-folder-export.dbtest.ts tests/db/project-vault-parent-access.dbtest.ts
+## (run together with this work's own tests/db/vault-pdf-rendition.dbtest.ts, 5 tests, listed in 02-green.txt)
+
+  pass  42  tests/db/project-vault-parent-access.dbtest.ts
+  pass  21  tests/db/vault-data-room-seal.dbtest.ts
+  pass  17  tests/db/vault-folder-export.dbtest.ts
+  pass   5  tests/db/vault-pdf-rendition.dbtest.ts
+  pass  10  tests/db/vault-versions.dbtest.ts
+
+ Test Files  5 passed (5)
+      Tests  95 passed (95)
+   Duration  36.19s (transform 8.22s, setup 217ms, import 2.92s, tests 32.00s, environment 1ms)
+
+## 4. Gates
+
+npm run -s ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1048 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+
+npm run -s ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+npm run -s ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+npm run -s ci:check-client-api-calls
+✅ every client /api call has a server route behind it.
+
+npm run -s ci:vault-document-writers
+[ci:vault-document-writers] OK: every writer is a named one.
+
+npm run -s ci:check-client-reachability
+[ci:client-reachability] OK — no new unreachable client modules.
+
+npm run -s ci:db-test-isolation
+[ci:db-test-isolation] OK — 252 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+
+node scripts/ci/check-pdf-runtime-canonicality.mjs
+[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list
+
+node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] --since HEAD (d99b83ee5) -- 6 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

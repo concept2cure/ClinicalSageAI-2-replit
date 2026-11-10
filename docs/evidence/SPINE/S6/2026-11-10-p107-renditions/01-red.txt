@@ -1,0 +1,179 @@
+# 01-red: the new tests on the unchanged code (2026-11-10)
+#
+# How the code was put back for this run:
+#   - server/services/vault/vault-pdf-rendition.ts moved aside (it is new; HEAD has no such file);
+#   - client/src/concept2cure/v2/surfaces/VaultVersionViewer.tsx and editor/vaultPdfViewer.tsx restored with
+#     git show HEAD:<path>;
+#   - server/routes/c2c/project-vault.ts is shared and carried other sessions' uncommitted edits, so only this
+#     work's two hunks were taken out by exact replacement (the helper sendVaultPdfRendition and the handler's
+#     ?rendition branch), not the whole file.
+#   Afterwards the three own files were copied back and checked with cmp, the two hunks were re-applied, and the
+#   route file was diffed against the copy taken before the run: identical.
+#
+# Kept below: each test's result line, each failure's first error line, and the totals. The DOM dumps of the
+# client failures are left out.
+
+## 1. npx vitest run --config vitest.config.ts server/services/vault/__tests__/vault-pdf-rendition.test.ts server/services/vault/__tests__/vault-pdf-rendition.real.test.ts server/routes/__tests__/vault-download-rendition.test.ts client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx
+
+ × server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > makes a PDF with the words of the Word file, bound to the Word file's SHA-256 14ms
+   → Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ × server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > says a zip that is not a Word document could not be converted, and returns no PDF 4ms
+   → Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ × server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > does not convert a Word file that holds a web link, and says so 2ms
+   → Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ × server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > says the converter is not installed when its program does not exist 3ms
+   → Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > frames the rendition and says what it is: of which version, from which source, and not the filed document 5068ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > keeps the source downloadable beside the rendition, and hands nothing over until asked 5010ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > releases the rendition when the viewer is closed 5013ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > says why when the Vault cannot make one, frames nothing, and still hands over the source 5014ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame bytes that are not a PDF 5015ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame a PDF the Vault did not mark as a rendition 5009ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame a rendition that names no source 5011ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ ✓ client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > shows a PDF version as before: its own bytes, verified against the record, with no rendition asked for 94ms
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > offers no view for a workbook: the converter makes a PDF from a Word document only 5047ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > asks for the rendition only: the source is not fetched to read the version 5004ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > says what the Vault said when it refuses, frames nothing and downloads nothing 5006ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > shows the version itself when the Vault says it is already a PDF 5003ms
+   → Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ × server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is a PDF made from the verified source bytes, naming the source SHA-256 and its own 38ms
+   → expected 'application/vnd.openxmlformats-office…' to contain 'application/pdf'
+ × server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > does not carry the header that names the record: its bytes are not the version's 7ms
+   → expected 'ddea77db2043bd31198fe74fc694b69cd58fb…' to be undefined
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > leaves the source download as it was: the Word file, under its recorded hash 5ms
+ × server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is made again from the stored bytes on every request, so it cannot outlast or drift from its source 9ms
+   → expected "vi.fn()" to be called 2 times, but got 0 times
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > no organization on the request 9ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a caller who is not a current member 8ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a program that is not this organization's 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a version under another project, or withheld by a data disposition (the lookup finds no row) 13ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a program id that is not a uuid 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a version id that is not a uuid 5ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > stored bytes that do not match the recorded hash 8ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a record with no stored file 8ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a stored file that is gone 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a storage key outside the uploads root 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a provider that has no such version for this organization 6ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > looks the version up with the source's own statement: project, organization and data disposition 6ms
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a PDF source needs no rendition and gets none 4ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a workbook is said to be a file the converter does not convert 12ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a Word file that links to content outside itself is not converted, and is said as that 3ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a converter that is not installed is said as that, not as a PDF 4ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that failed is said as that, and nothing is sent in place of the rendition 4ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned no bytes is said as that, and nothing is sent in place of the rendition 3ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned bytes that are not a PDF is said as that, and nothing is sent in place of the rendition 4ms
+   → expected 200 to be 422 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a busy converter is answered as busy, with when to try again 4ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a rendition asked for in another format is refused, after the source's own checks 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > writes the download row for the version, with the source hash, before the rendition is sent 4ms
+   → expected undefined to be 'pdf' // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > refuses the rendition when the row cannot be written, and sends nothing 4ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/__tests__/vault-download-rendition.test.ts > a rendition is never kept, filed or sealed > stores nothing and writes no Vault record: the only write is the audit row 4ms
+   → expected undefined to be 'pdf' // Object.is equality
+ FAIL  server/services/vault/__tests__/vault-pdf-rendition.test.ts [ server/services/vault/__tests__/vault-pdf-rendition.test.ts ]
+Error: Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.test.ts
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is a PDF made from the verified source bytes, naming the source SHA-256 and its own
+AssertionError: expected 'application/vnd.openxmlformats-office…' to contain 'application/pdf'
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > does not carry the header that names the record: its bytes are not the version's
+AssertionError: expected 'ddea77db2043bd31198fe74fc694b69cd58fb…' to be undefined
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is made again from the stored bytes on every request, so it cannot outlast or drift from its source
+AssertionError: expected "vi.fn()" to be called 2 times, but got 0 times
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a PDF source needs no rendition and gets none
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a workbook is said to be a file the converter does not convert
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a Word file that links to content outside itself is not converted, and is said as that
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a converter that is not installed is said as that, not as a PDF
+AssertionError: expected 200 to be 503 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that failed is said as that, and nothing is sent in place of the rendition
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned no bytes is said as that, and nothing is sent in place of the rendition
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned bytes that are not a PDF is said as that, and nothing is sent in place of the rendition
+AssertionError: expected 200 to be 422 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a busy converter is answered as busy, with when to try again
+AssertionError: expected 200 to be 503 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a rendition asked for in another format is refused, after the source's own checks
+AssertionError: expected 200 to be 400 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > writes the download row for the version, with the source hash, before the rendition is sent
+AssertionError: expected undefined to be 'pdf' // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > refuses the rendition when the row cannot be written, and sends nothing
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a rendition is never kept, filed or sealed > stores nothing and writes no Vault record: the only write is the audit row
+AssertionError: expected undefined to be 'pdf' // Object.is equality
+ FAIL  server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > makes a PDF with the words of the Word file, bound to the Word file's SHA-256
+Error: Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ FAIL  server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > says a zip that is not a Word document could not be converted, and returns no PDF
+Error: Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ FAIL  server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > does not convert a Word file that holds a web link, and says so
+Error: Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ FAIL  server/services/vault/__tests__/vault-pdf-rendition.real.test.ts > a rendition through the real converter > says the converter is not installed when its program does not exist
+Error: Cannot find module '/server/services/vault/vault-pdf-rendition' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-pdf-rendition.real.test.ts
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > frames the rendition and says what it is: of which version, from which source, and not the filed document
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > keeps the source downloadable beside the rendition, and hands nothing over until asked
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > releases the rendition when the viewer is closed
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > says why when the Vault cannot make one, frames nothing, and still hands over the source
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame bytes that are not a PDF
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame a PDF the Vault did not mark as a rendition
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > does not frame a rendition that names no source
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > Vault Versions — the PDF rendition of a Word version > offers no view for a workbook: the converter makes a PDF from a Word document only
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > asks for the rendition only: the source is not fetched to read the version
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > says what the Vault said when it refuses, frames nothing and downloads nothing
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ FAIL  client/src/concept2cure/v2/__tests__/vaultPdfRendition.test.tsx > the viewer, told the version is a Word file > shows the version itself when the Vault says it is already a PDF
+TestingLibraryElementError: Unable to find role="button" and name "View a PDF rendition of version 2.0 of Clinical protocol"
+ Test Files  4 failed (4)
+      Tests  30 failed | 14 passed (44)
+   Duration  64.61s (transform 4.42s, setup 329ms, import 7.08s, tests 55.54s, environment 605ms)
+
+## 2. (real PostgreSQL 16, runtime role, RLS on) npx vitest run --config vitest.db.config.ts tests/db/vault-pdf-rendition.dbtest.ts
+
+ × tests/db/vault-pdf-rendition.dbtest.ts > the PDF rendition of a Word version (P-107 item 3) > is a PDF made from the stored Word file, bound to the SHA-256 the Vault recorded, and viewing it is recorded in the chain 37ms
+   → expected 'PK\u0003\u0004\n' to be '%PDF-' // Object.is equality
+ ✓ tests/db/vault-pdf-rendition.dbtest.ts > the PDF rendition of a Word version (P-107 item 3) > leaves the source download as it was: the Word file itself, under its recorded hash 21ms
+ × tests/db/vault-pdf-rendition.dbtest.ts > the PDF rendition of a Word version (P-107 item 3) > a PDF version needs no rendition and gets none 25ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ tests/db/vault-pdf-rendition.dbtest.ts > a rendition is refused exactly as its source is > under another organization's project 23ms
+ ✓ tests/db/vault-pdf-rendition.dbtest.ts > a rendition is refused exactly as its source is > when a data disposition withholds the version's file 67ms
+ FAIL  tests/db/vault-pdf-rendition.dbtest.ts > the PDF rendition of a Word version (P-107 item 3) > is a PDF made from the stored Word file, bound to the SHA-256 the Vault recorded, and viewing it is recorded in the chain
+AssertionError: expected 'PK\u0003\u0004\n' to be '%PDF-' // Object.is equality
+ FAIL  tests/db/vault-pdf-rendition.dbtest.ts > the PDF rendition of a Word version (P-107 item 3) > a PDF version needs no rendition and gets none
+AssertionError: expected 200 to be 409 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Duration  7.25s (transform 3.67s, setup 71ms, import 377ms, tests 6.51s, environment 0ms)
+
+## Reading it
+# 32 failed and 17 passed. vault-pdf-rendition.test.ts (41 tests) could not load, because its module did not
+# exist, so its tests are not in the counts.
+# The 17 that pass on the unchanged code are true of it too, and stay as guards:
+#   - 12 (route): each refusal of the source is the same refusal with ?rendition=pdf, and the lookup is the same
+#     statement (the parameter was ignored). 01b-mutation.txt shows five of them failing on a mistake;
+#   - 1 (route): the source download of a Word file is the Word file;
+#   - 1 (client): a PDF version is shown as before;
+#   - 3 (PostgreSQL): the source download; another organization's project; a data disposition's refusal.

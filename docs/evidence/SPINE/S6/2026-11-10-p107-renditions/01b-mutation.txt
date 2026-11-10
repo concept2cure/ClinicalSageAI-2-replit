@@ -1,0 +1,138 @@
+# 01b-mutation: guards that pass on the unchanged code, and each rule of the outside-content check, seen failing
+# (2026-11-10)
+#
+## A. The route's refusal guards
+#
+# 12 tests of vault-download-rendition.test.ts say a refused source is refused the same way with ?rendition=pdf.
+# They pass on the unchanged code, where the parameter is ignored, so they had not been seen failing.
+# This run puts a mistake into the download handler and takes it out again: the rendition is read from disk and
+# made before the verified reader runs (seven lines, marked MUTATION-P107R, inserted before the handler's
+# no-stored-file check; removed by exact replacement; the file was then diffed against the copy taken before).
+#
+# Command: npx vitest run --config vitest.config.ts server/routes/__tests__/vault-download-rendition.test.ts
+# (the file held 27 tests when this ran; it holds 28 now)
+
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is a PDF made from the verified source bytes, naming the source SHA-256 and its own 169ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > does not carry the header that names the record: its bytes are not the version's 6ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > leaves the source download as it was: the Word file, under its recorded hash 5ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > the rendition of a Word version > is made again from the stored bytes on every request, so it cannot outlast or drift from its source 28ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > no organization on the request 14ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a caller who is not a current member 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a program that is not this organization's 9ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a version under another project, or withheld by a data disposition (the lookup finds no row) 8ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a program id that is not a uuid 6ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a version id that is not a uuid 6ms
+ × server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > stored bytes that do not match the recorded hash 12ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a record with no stored file 17ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a stored file that is gone 9ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a storage key outside the uploads root 8ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a provider that has no such version for this organization 8ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > looks the version up with the source's own statement: project, organization and data disposition 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a PDF source needs no rendition and gets none 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a workbook is said to be a file the converter does not convert 6ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a converter that is not installed is said as that, not as a PDF 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that failed is said as that, and nothing is sent in place of the rendition 4ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned no bytes is said as that, and nothing is sent in place of the rendition 4ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a conversion that returned bytes that are not a PDF is said as that, and nothing is sent in place of the rendition 11ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a busy converter is answered as busy, with when to try again 4ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > what gets no rendition says why, and the source still downloads > a rendition asked for in another format is refused, after the source's own checks 6ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > writes the download row for the version, with the source hash, before the rendition is sent 7ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > viewing a rendition is recorded as the source download is > refuses the rendition when the row cannot be written, and sends nothing 4ms
+ ✓ server/routes/__tests__/vault-download-rendition.test.ts > a rendition is never kept, filed or sealed > stores nothing and writes no Vault record: the only write is the audit row 4ms
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > stored bytes that do not match the recorded hash
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a record with no stored file
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a storage key outside the uploads root
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a provider that has no such version for this organization
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/vault-download-rendition.test.ts > a refused source is refused the same way, and nothing is converted > a stored file that is gone
+AssertionError: expected 500 to be 409 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 22 passed (27)
+   Duration  7.88s (transform 4.47s, setup 149ms, import 6.98s, tests 392ms, environment 0ms)
+
+# The five guards over the stored bytes fail. The six over the caller, the project and the version's row, and the
+# test of the lookup statement, still pass under this mistake: those refusals happen before the handler reads
+# anything, and this mistake sits after them. No mistake was put in ahead of them, so those seven have not been
+# seen failing.
+
+## B. The check that keeps a Word file that names outside content away from the converter
+#
+# This check was added after the first red run, when the converter was found to request what an uploaded Word file
+# links to (04-linked-content-probe.txt). Its tests were written with it, so each rule was taken out of
+# server/services/vault/vault-pdf-rendition.ts in turn, the suite was run, and the file was put back and checked
+# with cmp. Each block names the rule taken out and the tests that then fail.
+#
+# Command, per rule: npx vitest run --config vitest.config.ts server/services/vault/__tests__/vault-pdf-rendition.test.ts
+#
+#   no-scan                the whole check
+#   no-nul-check           a relationship part holding a NUL byte is counted as naming outside content
+#   no-doctype-check       so is one with a DOCTYPE
+#   no-xml-start-check     so is one that does not begin as XML
+#   no-encoding-check      so is one declared in an encoding other than UTF-8
+#   literal-external-only  the rule matched only the text TargetMode="External"
+#   hyperlinks-exempt      a relationship typed as a hyperlink was let through
+#   no-duplicate-check     two entries of one name are refused
+#   case-sensitive-rels    relationship parts are found whatever the case of .rels
+#   no-archive-limits      the archive limits run before the file is opened
+
+=== mutation: no-scan
+   FAILS: a Word file that names content outside itself is not handed to the converter > a linked image 11ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a linked image typed as a hyperlink 2ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a hyperlink 2ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a target mode written with a character reference 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a target mode in single quotes 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a file on the server as the target 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part in UTF-16 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part declared in another encoding 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part with a DOCTYPE 2ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part that is not XML 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a header's relationship part 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part under an upper-case name 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file that is not an archive that can be opened is not converted, and is said to be unchecked 1ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file that holds two entries of one name, one that links outside and a clean one is not converted, and is
+      Tests  14 failed | 25 passed (39)
+=== mutation: no-nul-check
+      Tests  39 passed (39)
+=== mutation: no-doctype-check
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part with a DOCTYPE 24ms
+      Tests  1 failed | 38 passed (39)
+=== mutation: no-xml-start-check
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part that is not XML 8ms
+      Tests  1 failed | 38 passed (39)
+=== mutation: no-encoding-check
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part declared in another encoding 12ms
+      Tests  1 failed | 38 passed (39)
+=== mutation: literal-external-only
+   FAILS: a Word file that names content outside itself is not handed to the converter > a target mode written with a character reference 9ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a target mode in single quotes 2ms
+      Tests  2 failed | 37 passed (39)
+=== mutation: hyperlinks-exempt
+   FAILS: a Word file that names content outside itself is not handed to the converter > a linked image typed as a hyperlink 9ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a hyperlink 2ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file whose relationships are all inside it is converted, an explicit Internal included 2ms
+      Tests  3 failed | 36 passed (39)
+=== mutation: no-duplicate-check
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file that holds two entries of one name, one that links outside and a clean one is not converted, and is
+      Tests  1 failed | 38 passed (39)
+=== mutation: case-sensitive-rels
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part under an upper-case name 8ms
+      Tests  1 failed | 38 passed (39)
+
+# no-nul-check failed nothing in the run above: the only UTF-16 case then began with a byte order mark, which the
+# XML-start rule refuses first. A case with no byte order mark was added, and the rule was taken out again:
+
+=== mutation: no-nul-check (rerun with the case that has no byte order mark)
+   FAILS: a Word file that names content outside itself is not handed to the converter > a relationship part in UTF-16 with no byte order mark 10ms
+      Tests  1 failed | 39 passed (40)
+
+# no-archive-limits was run after the thousand-fold case was added (41 tests):
+
+=== mutation: no-archive-limits
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file that expands a thousand-fold is not converted, and is said to be unchecked 222ms
+   FAILS: a Word file that names content outside itself is not handed to the converter > a Word file that holds two entries of one name, one that links outside and a clean one is not converted, and is said to be unchecke
+      Tests  2 failed | 39 passed (41)
