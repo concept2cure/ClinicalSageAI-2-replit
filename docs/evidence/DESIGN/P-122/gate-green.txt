@@ -1,0 +1,46 @@
+Part 1 — the cases
+  ✓ globs: ** spans folders, * stays in one
+  ✓ refuses a commit that names no package
+  ✓ refuses a package the plan does not have
+  ✓ refuses a queued package
+  ✓ refuses files outside the package
+  ✓ accepts files inside the package, plus tests and evidence
+  ✓ refuses a new screen the plan does not approve
+  ✓ refuses a new API mount the plan does not approve
+  ✓ refuses a new table the plan does not approve
+  ✓ accepts an addition the plan approves under that package
+  ✓ refuses an approved addition under another package
+  ✓ refuses a plan change outside PLAN
+  ✓ refuses a plan change without a founder decision
+  ✓ accepts a plan change under PLAN with a founder decision
+Part 1b — RULE 6: nothing new, finish what exists
+  ✓ refuses a commit that names nothing it completes
+  ✓ refuses a Completes trailer naming nothing that existed
+  ✓ accepts a commit that names what it completes
+  ✓ a PLAN commit needs no Completes trailer
+  ✓ a commit before RULE 6 is not asked for one
+  ✓ refuses a new route file
+  ✓ refuses a new service
+  ✓ refuses a new AnA tool
+  ✓ reads every AnA tool name, in scope and held
+Part 1c — P-122: nothing a screen showed is removed without a founder decision
+  ✓ refuses a commit that deletes a screen with no founder decision
+  ✓ refuses a commit that drops a UI_SURFACES id with no founder decision
+  ✓ accepts a removal that names the founder decision
+Part 2 — real git history
+  ✓ git: commits inside the plan pass (the intro itself is not judged)
+  ✓ git: an untrailered commit is refused
+  ✓ git: a new UI_SURFACES id is read from history and refused
+  ✓ git: a new table in a new migration is refused
+  ✓ git: commits before RULE 6, and RULE 6 itself, are not asked to name what they complete
+  ✓ git: after RULE 6, a commit that names nothing it completes is refused
+  ✓ git: a Completes trailer naming a path that did not exist is refused
+  ✓ git: finishing an existing file, named, is accepted
+  ✓ git: a new file inside an existing service folder is accepted
+  ✓ git: a new route file is refused
+  ✓ git: a new service folder is refused
+  ✓ git: deleting a screen file without a founder decision is refused (P-122)
+  ✓ git: deleting a screen file with a founder decision is accepted
+  ✓ git: a new AnA tool in the inventory is refused
+
+ci:one-design-plan:selftest: every case behaves.
