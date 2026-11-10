@@ -34,6 +34,7 @@ const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   regError: null as string | null,
   reviewRows: [] as unknown[] | null,
+  reviewError: null as string | null,
   trainRows: [] as unknown[] | null,
   trainError: null as string | null,
   trainRefresh: vi.fn(),
@@ -55,7 +56,7 @@ const EFFECTIVE = {
 vi.mock('../hooks', () => ({
   useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
-  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
+  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: H.reviewError, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
   useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
   useTrainingAssignments: () => ({ ...H.assigned, error: H.assigned.failed ? 'unavailable' : null, refresh: vi.fn() }),
@@ -100,6 +101,7 @@ beforeEach(() => {
   H.docs = [DRAFT];
   H.regError = null;
   H.reviewRows = [];
+  H.reviewError = null;
   H.trainRows = [];
   H.trainError = null;
   H.trainRefresh.mockReset();
@@ -252,15 +254,18 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
    ok tone, "No documents due for review." */
 describe('SopRegister — a failed read is not an empty register', () => {
   /* D7-B (2026-11-06): the four tiles became one sentence above the register's
-     rows, and the coverage figure the training section's line; each keeps its
-     unread arm. */
+     rows, and the coverage figure the training section's line. Since C1
+     (2026-11-10) each state is said once: an unread or failed read is said by
+     the section's own line (the failure, or the loading line), so the figure
+     line is absent then, never a count. */
   const figures = () => screen.queryByTestId('qms-register-figures')?.textContent ?? null;
-  const coverage = () => screen.getByTestId('qms-coverage-figure').textContent ?? '';
+  const coverage = () => screen.queryByTestId('qms-coverage-figure')?.textContent ?? null;
 
   it('renders a failed register read as a failure, with no count and no all-clear', () => {
     H.docs = null;
     H.reviewRows = null;
     H.regError = 'Request failed (500)';
+    H.reviewError = 'Request failed (500)';
     renderRegister();
     expect(screen.getByTestId('sop-register-failed').textContent).toMatch(
       /controlled-document register could not be read/,
@@ -269,7 +274,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(screen.queryByText('All current')).toBeNull();
     expect(screen.queryByText('No documents due for review.')).toBeNull();
     expect(screen.queryByText(/No controlled documents in the register/)).toBeNull();
-    expect(figures()).toBe('The register could not be read.');
+    expect(figures(), 'the failure is said once, by the section').toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
     expect(H.refresh).toHaveBeenCalled();
   });
@@ -279,7 +284,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.reviewRows = null;
     renderRegister();
     expect(screen.getByText('Loading the register…')).toBeTruthy();
-    expect(figures()).toBe('Reading the register…');
+    expect(figures(), 'the loading line says it').toBeNull();
     expect(screen.queryByText('All current')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -300,15 +305,16 @@ describe('SopRegister — a failed read is not an empty register', () => {
     renderRegister();
     expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
     expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
-    expect(coverage()).toBe('Coverage could not be read.');
+    expect(coverage(), 'the failure says it').toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(H.trainRefresh).toHaveBeenCalled();
   });
 
   it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
     renderRegister();
-    expect(coverage()).toBe('No training-controlled documents yet.');
-    expect(coverage()).not.toMatch(/%/);
+    expect(coverage(), 'the empty line says it').toBeNull();
+    expect(screen.getAllByText('No training-controlled documents yet.')).toHaveLength(1);
+    expect(document.body.textContent).not.toMatch(/\d+%/);
   });
 });
 

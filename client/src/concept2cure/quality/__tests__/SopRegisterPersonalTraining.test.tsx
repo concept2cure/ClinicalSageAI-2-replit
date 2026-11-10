@@ -107,7 +107,9 @@ describe('the existing Quality register personal training handoff', () => {
     H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: 67 };
     const { container } = mount();
     const pct = container.querySelector('.qms-train-pct');
-    expect(pct?.textContent).toBe('2/3');
+    // C1: the figure in words, not a bar coloured by thresholds the client invented.
+    expect(pct?.textContent).toBe('2 of 3 acknowledged');
+    expect(container.querySelector('.qms-train-bar, .qms-train-fill')).toBeNull();
     expect(pct?.getAttribute('title')).toBe('2 of 3 assigned have acknowledged the version in force');
     expect(screen.getByTestId('qms-train-me').textContent).toBe('You are assigned and have not acknowledged the version in force.');
     // D7-B: the coverage tile became the training section's figure, with the same words.

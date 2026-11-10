@@ -47,7 +47,7 @@ describe('the register retires all tenant-owned reads when identity changes', ()
     const pending = stubReads('13');
     const view = render(register());
     expect(await screen.findByText('Previous tenant procedure', { selector: '.qms-title' })).toBeTruthy();
-    await waitFor(() => expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('1/1'));
+    await waitFor(() => expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('1 of 1 acknowledged'));
     adopt('8', '13');
     view.rerender(register());
     expect(screen.queryByText('Previous tenant procedure', { selector: '.qms-title' })).toBeNull();
@@ -56,7 +56,7 @@ describe('the register retires all tenant-owned reads when identity changes', ()
     await waitFor(() => expect(pending).toHaveLength(5));
     await act(async () => { for (const read of pending) read.resolve(json(payload(read.path, read.organizationId))); });
     expect(await screen.findByText('Current tenant procedure', { selector: '.qms-title' })).toBeTruthy();
-    expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0/2');
+    expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0 of 2 acknowledged');
   });
 
   it('aborts old reads and ignores their late successful bodies after the new tenant renders', async () => {
@@ -71,6 +71,6 @@ describe('the register retires all tenant-owned reads when identity changes', ()
     expect(screen.queryByText('Previous tenant procedure', { selector: '.qms-title' })).toBeNull();
     expect(screen.queryByText('Previous tenant member')).toBeNull();
     expect(screen.getByText('Current tenant member')).toBeTruthy();
-    expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0/2');
+    expect(document.querySelector('.qms-train-pct')?.textContent?.trim()).toBe('0 of 2 acknowledged');
   });
 });

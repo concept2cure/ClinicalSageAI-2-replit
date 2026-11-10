@@ -74,6 +74,9 @@ describe('SopRegister — a register read and empty', () => {
     expect(figures()).toBeNull();
     expect(register().textContent).toMatch('No controlled documents in the register yet.');
     expect(register().textContent).not.toMatch(/overdue|all current/i);
+    // C2: and nowhere else on the tab: the review and expiry sections under an empty register claim nothing either.
+    expect(document.body.textContent).not.toMatch(/\d+ overdue|none overdue|due within|No one's training has lapsed/i);
+    expect(screen.getByText('No controlled documents yet, so none is due for review.')).toBeTruthy();
   });
 
   it('says the register is empty rather than "none in review"', async () => {

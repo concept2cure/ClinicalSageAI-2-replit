@@ -63,9 +63,9 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
   return (
     <div className="qms-cell" title={title}>
       {d.nextReviewDate ? (
-        <span className={overdue ? 'qms-overdue' : undefined}>
+        <span>
           {formatDate(d.nextReviewDate)}
-          {overdue && <> {I.flag}</>}
+          {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
         </span>
       ) : (
         '—'
