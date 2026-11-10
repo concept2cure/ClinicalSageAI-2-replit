@@ -1,0 +1,250 @@
+# 01-red: the new tests against the unchanged code (2026-11-10)
+#
+# For this run: server/services/pathway-engines/estar/estar-mapper.ts and estar-content-leaves.ts were put back from HEAD
+# (git show HEAD:<path>), estar-outline-requirements.ts was absent, and this slice's six hunks were taken out of
+# server/routes/c2c/project-vault.ts by exact replacement (the lead session's edits elsewhere in that file stayed).
+# Afterwards this slice's versions were put back and checked with cmp.
+
+## 1. Real PostgreSQL, through the real Vault read: tests/db/vault-estar-required-sections.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device 3770ms
+   → expected [ …(17) ] to deeply equal []
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty 168ms
+   → expected 'Optional' to be 'Required: one of D4, D5' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management is required, as the mapper requires it of every 510(k) 175ms
+   → expected 'Optional' to be 'Required' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block 141ms
+   → E5: expected 'Required' to be 'Required: one of E5, E6, E7' // Object.is equality
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > a section no mapper slot takes keeps its pack's flag: A2 and B3 stay required 136ms
+ × tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable 126ms
+   → expected 'Optional' to be 'Not applicable' // Object.is equality
+ × tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer 117ms
+   → expected [ …(13) ] to deeply equal []
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section no mapper slot takes keeps its pack's flag: B2, C2 and C4 stay required 122ms
+ × tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question 149ms
+   → expected 'Optional' to be 'Not decided' // Object.is equality
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > pma:fda fda-pma-21cfr814-20-v1.1 144ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > mdr:ema eu-mdr-2017-745-annex-ii-v1.0 119ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > ivdr:ema eu-ivdr-2017-746-annex-ii-v1.0 111ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device
+AssertionError: expected [ …(17) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "A4 Consensus standards and declarations of conformity: the Library says \"Optional\", the mapper says when-applicable",
++   "A7 Class III summary and certification (21 CFR 807.94), where applicable: the Library says \"Optional\", the mapper says when-applicable",
++   "A8 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library says \"Optional\", the mapper says not-applicable",
++   "D3 Reprocessing and reuse: the Library says \"Optional\", the mapper says when-applicable",
++   "D4 Sterilization: the Library says \"Optional\", the mapper says required",
++   "D4 Sterilization: the Library does not block, the mapper blocks",
++   "D5 Shelf life and packaging: the Library says \"Optional\", the mapper says required",
++   "D5 Shelf life and packaging: the Library does not block, the mapper blocks",
++   "D6 Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities: the Library says \"Optional\", the mapper says required",
++   "D6 Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities: the Library does not block, the mapper blocks",
++   "E2 Software and firmware: the Library says \"Optional\", the mapper says required",
++   "E2 Software and firmware: the Library does not block, the mapper blocks",
++   "E4 Electromagnetic compatibility, electrical, mechanical and thermal safety: the Library says \"Optional\", the mapper says when-applicable",
++   "E5 Bench performance testing: the Library blocks, the mapper does not block",
++   "E6 Animal performance testing: the Library says \"Optional\", the mapper says required",
++   "E7 Clinical performance testing: the Library says \"Optional\", the mapper says required",
++   "E8 Human factors and usability: the Library says \"Optional\", the mapper says when-applicable",
++ ]
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:223:41
+    221|     const mapper = await oneRule('510k', 'device', STERILE_SOFTWARE, d…
+    222|     expect(leaves.size).toBe(doc.pack.filter((n) => !doc.pack.some((c)…
+    223|     expect(differences(leaves, mapper)).toEqual([]);
+       |                                         ^
+    224|   });
+    225|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty
+AssertionError: expected 'Optional' to be 'Required: one of D4, D5' // Object.is equality
+Expected: "Required: one of D4, D5"
+Received: "Optional"
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:228:21
+    226|   it('D4 Sterilization is required of a sterile device, and blocks whi…
+    227|     const d4 = (await libraryLeaves(t, doc.id)).get('D4')!;
+    228|     expect(d4.type).toBe('Required: one of D4, D5');
+       |                     ^
+    229|     expect(d4.blocker).toBe(true);
+    230|     expect(d4.flag).toBe('Mandatory section — no content yet in D4 or …
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management is required, as the mapper requires it of every 510(k)
+AssertionError: expected 'Optional' to be 'Required' // Object.is equality
+Expected: "Required"
+Received: "Optional"
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:236:21
+    234|   it('D6 risk management is required, as the mapper requires it of eve…
+    235|     const d6 = (await libraryLeaves(t, doc.id)).get('D6')!;
+    236|     expect(d6.type).toBe('Required');
+       |                     ^
+    237|     expect(d6.blocker).toBe(true);
+    238|     expect(d6.flag).toBe('Mandatory section — no content yet');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block
+AssertionError: E5: expected 'Required' to be 'Required: one of E5, E6, E7' // Object.is equality
+Expected: "Required: one of E5, E6, E7"
+Received: "Required"
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:244:42
+    242|     const leaves = await libraryLeaves(t, doc.id);
+    243|     for (const key of ['E5', 'E6', 'E7']) {
+    244|       expect(leaves.get(key)!.type, key).toBe('Required: one of E5, E6…
+       |                                          ^
+    245|       expect(leaves.get(key)!.blocker, key).toBeUndefined();
+    246|     }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable
+AssertionError: expected 'Optional' to be 'Not applicable' // Object.is equality
+Expected: "Not applicable"
+Received: "Optional"
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:266:38
+    264|     try {
+    265|       const leaves = await libraryLeaves(t, doc.id);
+    266|       expect(leaves.get('D4')!.type).toBe('Not applicable');
+       |                                      ^
+    267|       expect(leaves.get('D4')!.blocker).toBeUndefined();
+    268|       // Shelf life is owed by a non-sterile device too: content there…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer
+AssertionError: expected [ …(13) ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   "A5 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library says \"Optional\", the mapper says undetermined",
++   "A5 Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on: the Library does not block, the mapper blocks",
++   "A6 Consensus standards and declarations of conformity: the Library says \"Optional\", the mapper says when-applicable",
++   "D3 Sterilization, shelf life and packaging: the Library says \"Optional\", the mapper says undetermined",
++   "D3 Sterilization, shelf life and packaging: the Library does not block, the mapper blocks",
++   "D4 Software and firmware: the Library says \"Optional\", the mapper says undetermined",
++   "D4 Software and firmware: the Library does not block, the mapper blocks",
++   "D5 Cybersecurity (FD&C Act section 524B, cyber devices): the Library says \"Optional\", the mapper says undetermined",
++   "D5 Cybersecurity (FD&C Act section 524B, cyber devices): the Library does not block, the mapper blocks",
++   "D6 Electromagnetic compatibility and electrical safety: the Library says \"Optional\", the mapper says when-applicable",
++   "D9 Human factors and usability: the Library says \"Optional\", the mapper says when-applicable",
++   "E2 Package label and physician / patient labeling: the Library says \"Optional\", the mapper says required",
++   "E2 Package label and physician / patient labeling: the Library does not block, the mapper blocks",
++ ]
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:288:87
+    286|   it('every section: the Library\'s mark and blocker are the mapper\'s…
+    287|     const leaves = await libraryLeaves(t, doc.id);
+    288|     expect(differences(leaves, await oneRule('de_novo', 'device', {}, …
+       |                                                                                       ^
+    289|   });
+    290|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+ FAIL  tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question
+AssertionError: expected 'Optional' to be 'Not decided' // Object.is equality
+Expected: "Not decided"
+Received: "Optional"
+ ❯ tests/db/vault-estar-required-sections.dbtest.ts:302:21
+    300|   it('a section that turns on an unanswered question is not decided, n…
+    301|     const d3 = (await libraryLeaves(t, doc.id)).get('D3')!;
+    302|     expect(d3.type).toBe('Not decided');
+       |                     ^
+    303|     expect(d3.blocker).toBe(true);
+    304|     expect(d3.flag).toBe('Not decided — the project has not answered “…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+   Start at  07:04:16
+   Duration  7.32s (transform 3.09s, setup 75ms, import 170ms, tests 6.78s, environment 0ms)
+
+## 2. The route, mocked database: server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a sterile device: D4 is required, D6 is required, and the reasons are said 50ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a device answered not sterile: D4 is not applicable and does not block 16ms
+   → expected 'Optional' to be 'Not applicable' // Object.is equality
+ × server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > device questions never answered: D4 is not decided, not optional 20ms
+   → expected { id: 'sec-doc1-D4', …(10) } to match object { type: 'Not decided', …(2) }
+(10 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > the device answers could not be read: the Vault read fails, and no mark is shown 5ms
+   → expected 200 to be 500 // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > pma:fda keeps its pack's flags, and the device answers are not read 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > mdr:ema keeps its pack's flags, and the device answers are not read 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > k510:ema keeps its pack's flags, and the device answers are not read 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a sterile device: D4 is required, D6 is required, and the reasons are said
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts:115:23
+    113|     const res = await request(app()).get(`/api/c2c/project-vault/${PRO…
+    114|     expect(res.status).toBe(200);
+    115|     expect(loadFlags).toHaveBeenCalledTimes(1);
+       |                       ^
+    116|     expect(loadFlags).toHaveBeenCalledWith(ORG, PROJECT);
+    117|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a device answered not sterile: D4 is not applicable and does not block
+AssertionError: expected 'Optional' to be 'Not applicable' // Object.is equality
+Expected: "Not applicable"
+Received: "Optional"
+ ❯ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts:135:28
+    133|     loadFlags.mockResolvedValueOnce(NOT_STERILE);
+    134|     const leaves = leavesByNum((await request(app()).get(`/api/c2c/pro…
+    135|     expect(leaves.D4.type).toBe('Not applicable');
+       |                            ^
+    136|     expect(leaves.D4.blocker).toBeUndefined();
+    137|     expect(leaves.D4.flag).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > device questions never answered: D4 is not decided, not optional
+AssertionError: expected { id: 'sec-doc1-D4', …(10) } to match object { type: 'Not decided', …(2) }
+(10 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "blocker": true,
+-   "flag": "Not decided — the project has not answered “Sterile”",
+-   "type": "Not decided",
++   "type": "Optional",
+ ❯ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts:145:23
+    143|     loadFlags.mockResolvedValueOnce(undefined);
+    144|     const leaves = leavesByNum((await request(app()).get(`/api/c2c/pro…
+    145|     expect(leaves.D4).toMatchObject({ type: 'Not decided', blocker: tr…
+       |                       ^
+    146|   });
+    147|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > the device answers could not be read: the Vault read fails, and no mark is shown
+AssertionError: expected 200 to be 500 // Object.is equality
+- Expected
++ Received
+- 500
++ 200
+ ❯ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts:152:24
+    150|     loadFlags.mockRejectedValueOnce(new Error('connection terminated')…
+    151|     const res = await request(app()).get(`/api/c2c/project-vault/${PRO…
+    152|     expect(res.status).toBe(500);
+       |                        ^
+    153|     expect(res.body.success).toBe(false);
+    154|     expect(res.body.data).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  07:04:24
+   Duration  5.83s (transform 3.29s, setup 99ms, import 5.38s, tests 112ms, environment 0ms)
+
+## 3. The rule: server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts [ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts ]
+Error: Cannot find module '../estar-outline-requirements' imported from /home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts
+ ❯ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts:14:1
+     12| import { fileURLToPath } from 'node:url';
+     13|
+     14| import {
+       | ^
+     15|   estarDeviceAnswers,
+     16|   estarFilingType,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  07:04:31
+   Duration  629ms (transform 172ms, setup 140ms, import 0ms, tests 0ms, environment 0ms)
