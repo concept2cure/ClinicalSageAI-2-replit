@@ -1420,6 +1420,16 @@ Vault features yet … this is a multi tenant environment").
   `document_folders`), and the 18 blockers `ga-readiness-report.mjs` reports (8 of 42 ready), none of which this lane
   can close: deploy secrets and switches, licences, model qualification, and the founder's rows D1, D9, D10.
 
+**Continued 2026-11-10, third pass: the Vault decisions of P-107 item 3** (`docs/evidence/SPINE/S6/2026-11-10/`):
+
+- **A seal says when its version has been superseded**: "Superseded by version n on date", read from the version
+  chain beside the seal's signed record, never in place of it. Red first; walked.
+- **With no project open, the Vault asks which sponsor first**; nothing of any sponsor is listed or read until then,
+  and afterwards the server narrows from the verified sponsor. Red first; walked. Found walking: the list's `ws` is
+  the segment, not the sponsor.
+- **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
+- **Open, not held:** device coverage converged onto the eSTAR mapper; a PDF rendition per version.
+
 **Open, for the next session:**
 
 1. AnA over folders walked in a conversation, once a model key is present.
