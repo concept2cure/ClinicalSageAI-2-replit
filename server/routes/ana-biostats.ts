@@ -39,11 +39,14 @@ class OrganizationContextRequired extends Error {
 }
 
 function resolveOrganizationId(req: Request): number {
-  const orgId =
+  const raw =
     (req as any).organizationId ||
     (req as any).user?.organizationId ||
     (req as any).tenantContext?.organizationId;
-  if (!orgId) throw new OrganizationContextRequired();
+  // The request can carry it as text ("2"). Passed on as text, authoring's project access refused every save
+  // ("Invalid project access identity", a 503 on "Save as a working document"; 2026-11-10).
+  const orgId = typeof raw === 'string' && /^\d+$/.test(raw.trim()) ? Number(raw) : raw;
+  if (typeof orgId !== 'number' || !Number.isSafeInteger(orgId) || orgId < 1) throw new OrganizationContextRequired();
   return orgId;
 }
 
