@@ -45,27 +45,33 @@ export type ExpiryAssignment = { assigned: number; noActiveAssignees: number } |
  * nobody active, and is said so, as the coverage figure says it (review C2-2). While the coverage read is in flight
  * nothing is claimed; when it was not read, no all-clear is given.
  */
-function nothingLapsing(assignment: ExpiryAssignment | undefined): string | null {
+function nothingLapsing(assignment: ExpiryAssignment | undefined, own: boolean): string | null {
   if (assignment === 'reading') return null;
   if (assignment == null) return 'Whether anyone is assigned to train could not be read, so no all-clear is given.';
   if (assignment.assigned === 0) {
     return assignment.noActiveAssignees > 0 ? 'No one assigned to train is an active member.' : 'No document is assigned for training yet.';
   }
-  return `No one assigned has training overdue, due or lapsing in the next ${TRAINING_EXPIRY_DAYS} days.`;
+  return own ? `You have no training overdue, due or lapsing in the next ${TRAINING_EXPIRY_DAYS} days.`
+    : `No one assigned has training overdue, due or lapsing in the next ${TRAINING_EXPIRY_DAYS} days.`;
 }
 
 export function TrainingExpiry({ assignment }: { assignment?: ExpiryAssignment }) {
-  const clear = nothingLapsing(assignment);
   const st = useTrainingExpiring(TRAINING_EXPIRY_DAYS);
+  const own = st.scope === 'own';
+  /* An all-clear only over what was assessed (Quality review, 2026-11-10): not over documents whose text cannot be read,
+     nor past the document cap; and a member who sees only their own rows is told about their own. */
+  const unassessedLine = st.unassessed > 0
+    ? `${st.unassessed === 1 ? '1 assigned document was' : `${st.unassessed} assigned documents were`} not assessed: their released text cannot be read.` : null;
+  const clear = unassessedLine || st.documentsCapped ? null : nothingLapsing(assignment, own);
   return <section className="pj-sec" aria-labelledby="qms-expiry-h" data-testid="training-expiry">
     <div className="pj-sec-h">
       <h2 id="qms-expiry-h">Training overdue, due or lapsing</h2>
-      <span className="sec-sub">Overdue, or due or lapsing in the next {TRAINING_EXPIRY_DAYS} days, for the people assigned to train</span>
+      <span className="sec-sub">{own ? 'Your training: overdue' : 'Overdue'}, or due or lapsing in the next {TRAINING_EXPIRY_DAYS} days{own ? '' : ', for the people assigned to train'}</span>
     </div>
     <div className="qms-train">
       {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} read={st.failure} readWhat="the training expiry list" testId="training-expiry-failed" />}
       {!st.failed && st.rows === null && <EmptyState title="Reading training expiry…" busy />}
-      {st.rows?.length === 0 && (clear === null ? <EmptyState title="Reading who is assigned to train…" busy /> : <EmptyState title={clear} />)}
+      {st.rows?.length === 0 && !unassessedLine && !st.documentsCapped && (clear === null ? <EmptyState title="Reading who is assigned to train…" busy /> : <EmptyState title={clear} />)}
       {st.rows?.map((r) => (
         <div className="qms-train-row" key={`${r.kind}:${r.userId}:${r.documentId}`} data-testid="training-expiry-row">
           <span className="qms-train-doc" title={r.userName ? undefined : `User ${r.userId}`}>
@@ -77,6 +83,8 @@ export function TrainingExpiry({ assignment }: { assignment?: ExpiryAssignment }
           </span>
         </div>
       ))}
+      {st.rows && unassessedLine && <p className="sec-sub" data-testid="training-expiry-unassessed">{unassessedLine}</p>}
+      {st.rows && st.documentsCapped && <p className="sec-sub" data-testid="training-expiry-capped">Only the first 200 trainable documents were read.</p>}
       {st.rows && st.truncated && (
         <p className="sec-sub" data-testid="training-expiry-truncated">The first 500 rows: there are more than the list shows.</p>
       )}

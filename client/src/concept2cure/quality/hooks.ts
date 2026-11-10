@@ -155,10 +155,15 @@ export function useTrainingExpiring(withinDays: number) {
   const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<unknown>(data), [data]);
   const rows = useMemo(() => (raw && raw.every(isExpiryRow) ? raw : null), [raw]);
-  const truncated = (data as { meta?: { truncated?: unknown } } | null)?.meta?.truncated === true;
+  const meta = (data as { meta?: { truncated?: unknown; scope?: unknown; unassessed?: unknown; documentsCapped?: unknown } } | null)?.meta;
+  const truncated = meta?.truncated === true;
+  /* Whose rows these are, and what the server could not assess, so the view's all-clear says only what was read. */
+  const scope: 'everyone' | 'own' = meta?.scope === 'own' ? 'own' : 'everyone';
+  const unassessed = typeof meta?.unassessed === 'number' ? meta.unassessed : 0;
+  const documentsCapped = meta?.documentsCapped === true;
   const unreadable = data != null && rows === null ? `unexpected response shape for ${path}` : null;
   const failed = !loading && (error != null || unreadable != null);
-  return { rows: loading || failed ? null : rows, truncated, failed, error: error ?? unreadable, failure, refresh };
+  return { rows: loading || failed ? null : rows, truncated, scope, unassessed, documentsCapped, failed, error: error ?? unreadable, failure, refresh };
 }
 
 /* ── Job roles and training assignments (P-49; design §3.12) ──
