@@ -2735,3 +2735,32 @@ both, and says plainly when it has neither.
   - Which provider lane this buyer elects, and its commercial terms.
   - Any widening beyond a US IND (P-28, P-110 stand).
   - Whether a failed build is resumed from the screen; that is a repair (F1), not a decision.
+
+### P-116 — One reviewer is enough, and a one-person organisation may approve its own document, on the record
+
+The founder, 2026-11-10, on learning that a placed artifact needs two independent reviewers: **"Doesn't need two. What
+if a client is a single consultant."** Asked how a one-person organisation approves a regulated document, the founder
+chose: **self-approve, on record.**
+
+- **One reviewer is enough.** P-95's clarification of 2026-11-09 (Q2, ruled under delegation) raised the floor to two
+  for a placed artifact or a dossier section. That is overruled. `reviewFloor` (`server/services/artifact-approval-act.ts`)
+  answers one for every artifact. The editor's document door never asked for two.
+- **Review stays mandatory (P-95), and stays independent (P-18), wherever a second person exists.** A reviewer is still
+  neither the approving signer nor an author, and an approval with no completed review is still refused.
+- **A one-person organisation.** When the signer is the organisation's only active member, there is nobody to be
+  independent of. That person may then approve, lock or sign their own record without a reviewer.
+  - **On the record.** The audit trail records, on that act, that the signer was the organisation's sole member and
+    that no independent review took place. The act is never recorded as an independent review or approval.
+  - **Not a setting.** It follows from the membership alone; nobody switches it on. From the moment a second active
+    member exists, independent review is required again, for every act from then on. Nothing earlier is reopened.
+  - **Scope.** It is read at the one separation-of-duties check (`server/services/governance/separation-of-duties.ts`)
+    and at the two review-required refusals (the artifact's approval act, the editor's APPROVER e-signature), so every
+    door answers the same way.
+- **Basis.** 21 CFR Part 11 does not require the signer to differ from the author (11.50(a)(3) lists authorship among a
+  signature's meanings); the second-person rule is this platform's adopted policy from predicate rules
+  (`separation-of-duties.ts`, module note). A sole practitioner's records are theirs to sign. What a sponsor or an
+  agency requires of such a record is the sponsor's quality agreement to state, and the audit trail shows them exactly
+  what happened.
+- **Not decided here.** Whether a GMP batch-record or quality-unit act (21 CFR 211.22, 211.192) may ever be signed by
+  a sole member: those acts are outside the launch catalog today. A QMS document's approver designation (D-Q) is
+  unchanged.
