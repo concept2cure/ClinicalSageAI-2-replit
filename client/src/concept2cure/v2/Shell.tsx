@@ -70,9 +70,9 @@ export interface ShellSurfaceRef {
 }
 
 
-/** Where the account menu's "Get help" goes: AnA, which answers questions about the
- *  product in the governed conversation. The top bar's own Help button went in D1-2
- *  (D1.md §D1.B step 4); this is its one place now. */
+/** Where "Get help" goes, from the account menu and the top bar's Help alike: AnA, which
+ *  answers questions about the product in the governed conversation. The bar's Help went
+ *  in D1-2 and came back under P-122 (2026-11-10); both go here. */
 const HELP_SURFACE = 'conversation-thread';
 
 /** New conversation: Home's composer, where a question starts one (C2C_CONVO =
@@ -864,19 +864,23 @@ function openLauncher(mode: 'task' | 'collab') {
  * (`ProjectChip`, deleted in D1-2), which named the project a second time beside the
  * crumbs. A project opened by id alone has no name in the channel yet, and the crumb
  * does not invent one. The brand is the sidebar's wordmark and the place is its
- * active row, so there is no root or category crumb. The search box, the
- * organisation label and Help left the bar for the sidebar's Search and ⌘K, the
- * account's second line, and the account menu's "Get help" (D1-1).
+ * active row, so there is no root or category crumb. The organisation label is the
+ * account's second line (D1-1).
+ *
+ * Search and Help are back in the bar (P-122 §3.4, 2026-11-10). D1-2 had moved them
+ * to the sidebar's Search row, ⌘K and the account menu's "Get help", where a new
+ * client did not find them. Search opens the same palette as ⌘K and the sidebar's
+ * Search; Help goes where "Get help" goes. Both stay in those places too.
  */
 export function TopBar({
   surface,
+  onPalette,
   onNav,
   onAsk,
   onOpenRail,
 }: {
   surface: ShellSurfaceRef;
-  /** Not read since the top bar's search box went (D1.md §D1.B step 4): the
-   *  sidebar's Search and ⌘K open the palette. Kept so call sites are unchanged. */
+  /** Opens the command palette: the bar's Search, as ⌘K and the sidebar's Search do. */
   onPalette?: () => void;
   /** Not read here since the top bar stopped setting the client type
    *  (FILING_SPINE F8): it is chosen in the account menu, which the rail
@@ -916,6 +920,13 @@ export function TopBar({
         {here && <span className="here">{here}</span>}
       </div>
       <div className="tb-spacer" />
+      {/* Search: the command palette, by click as by ⌘K (P-122 §3.4). At phone width, its icon. */}
+      <button type="button" className="tb-search" aria-label="Search, jump, or run a command" title="Search, jump, or run a command (⌘K)"
+        onClick={() => onPalette?.()}>
+        <span className="ico" aria-hidden="true">{I.search}</span>
+        <span className="lbl">Search</span>
+        <kbd aria-hidden="true">⌘K</kbd>
+      </button>
       {/* Collaborate and New task open the launcher with this screen's context (at
           phone width they are in ⌘K); Your work is the live "what needs me" panel. */}
       <button type="button" className="tb-btn tb-collab" aria-label="Collaborate on this screen" title="Collaborate on this screen"
@@ -923,6 +934,9 @@ export function TopBar({
       <button type="button" className="tb-btn tb-newtask" aria-label="New task from this screen" title="New task from this screen"
         onClick={() => openLauncher('task')}>{I.checkSquare}</button>
       <TaskTray onNav={onNav} onAsk={onAsk} />
+      {/* Help: where the account menu's "Get help" goes, behind the bar's leave guard (P-122 §3.4). */}
+      <button type="button" className="tb-btn" aria-label="Get help" title="Get help"
+        onClick={() => go(HELP_SURFACE)}>{I.help}</button>
       {/* At phone width (only there, app-v2.css): the sidebar's New conversation. */}
       <button type="button" className="tb-btn tb-new" aria-label="New conversation" title="New conversation"
         onClick={() => { if (onNav && canLeave()) openNewConversation(onNav); }}>{I.plus}</button>
