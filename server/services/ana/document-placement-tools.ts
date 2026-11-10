@@ -180,7 +180,8 @@ function confirmationRefusal(documentId: unknown): string {
  * (stated-reason-input.ts reasonRequiredFor), never her rationale (vault-folders.ts).
  */
 async function folderForPlacement(
-  parsed: PlacementPlan, input: Record<string, unknown>, programId: string, orgId: number, userId: number | undefined, agent: Record<string, unknown>,
+  parsed: PlacementPlan, input: Record<string, unknown>, programId: string,
+  { orgId, userId, agent }: { orgId: number; userId: number | undefined; agent: Record<string, unknown> },
 ): Promise<{ folderId: string | null; made?: { folderId: string; name: string } } | { refusal: string }> {
   if (!parsed.newFolder) return { folderId: parsed.folderId };
   const reason = gatedReason(input);
@@ -191,6 +192,16 @@ async function folderForPlacement(
   });
   if (!created.ok) return { refusal: JSON.stringify({ ok: false, error: created.code, message: created.message }) };
   return { folderId: created.folder.folderId, made: { folderId: created.folder.folderId, name: created.folder.name } };
+}
+
+/**
+ * Making a folder is a governed write; its reason is the person's. Checked
+ * before any lookup or write: without one this throws ReasonNotStatedError,
+ * which the registration wrapper answers by asking for it. The reason is bound
+ * where it is written (folderForPlacement).
+ */
+function requireFolderReason(parsed: PlacementPlan, input: Record<string, unknown>): void {
+  if (parsed.newFolder) gatedReason(input);
 }
 
 /** A folder made for a placement that was then refused: said, so AnA does not claim the document is in it. */
@@ -213,11 +224,7 @@ async function handlePlaceProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
   }
-  // Making a folder is a governed write; its reason is the person's. Checked
-  // before any lookup or write: without one this throws ReasonNotStatedError,
-  // which the registration wrapper answers by asking for it. It is bound where
-  // it is written (folderForPlacement).
-  if (parsed.newFolder) gatedReason(input);
+  requireFolderReason(parsed, input);
 
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
@@ -234,7 +241,7 @@ async function handlePlaceProjectDocument(
   }
 
   const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
-  const folder = await folderForPlacement(parsed, input, doc.programId, orgId, scope.accessibleScope.actor.userId, agent);
+  const folder = await folderForPlacement(parsed, input, doc.programId, { orgId, userId: scope.accessibleScope.actor.userId, agent });
   if ('refusal' in folder) return folder.refusal;
   const { folderId, made } = folder;
 
