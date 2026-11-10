@@ -1431,8 +1431,9 @@ Vault features yet … this is a multi tenant environment").
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
-Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting
-with the person in control".
+Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. **Handed off on 2026-11-08.** The note for whoever
+picks this up is `docs/evidence/D2-CSR-DRAFT-CONTROL/HANDOFF.md`: what landed, the open work in order, the blockers, how
+to verify and walk, and what was handed on. Its row in COORDINATION.md holds no file.
 
 **Delivered** (2026-11-06)
 
@@ -1485,11 +1486,24 @@ All were proven by tests. Until this walk, none was opened in the running app.
 - Real drafting needs a model key, and this environment has none.
 - The account's monthly spend limit stopped this session's agents on 2026-11-06.
 
-**Next**
+**Next** (in order; details, files and the binding decisions are in the hand-off note)
 
-1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
-   alternatives.
+1. With a model key, walk the figure gate live on an imported CSR's §11.4.1, with revise and passage alternatives. No
+   cloud environment here has a key; the Codespace lane runs with the founder's.
+2. Slice 4b, adding a paragraph after an existing one: a block-boundary insert in `editor/suggestions.ts`, which is
+   D4's editor.
+3. Slices 5 (review by keyboard, after an accessibility review of the keys), 6 (progressive arrival) and 7 (citations
+   for chosen paragraphs).
+4. P-72 slices 2–7. Before slice 6, the tenant chain verdict must walk in the tenant's own scope.
+5. The purge-residue classification (design only), and the independent re-checks of P-72 slice 1a and CSR slices
+   3–4.
+
+**Handed on, open at hand-off** (re-check first):
+- the seeded C2C-101 QOS drafting hold (`authoring-draft-region-projection.ts`);
+- five workbench suites red since `53b179b99`, 46 tests at `f9631c065`;
+- D4's two layout issues and `onReviewSection`.
+
+At `f9631c065`, every suite of this lane passes.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 

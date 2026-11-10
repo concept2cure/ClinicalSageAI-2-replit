@@ -217,7 +217,12 @@ c2c_designate_qms_approver() {
 
 C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
 # The Lumen account first: it is where "Demo access" lands.
-if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_seed_lumen_org "$C2C_DEMO_VERSION"; fi
+# Its reviewer is the Lumen pack's second signer, who approves its SOPs (lumen-qms.mjs), so the reviewer is the
+# Lumen organisation's QMS approver: without one its SOPs stay draft and its training stays empty.
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+  c2c_designate_qms_approver "$(c2c_lumen_person lead)" "$(c2c_lumen_person reviewer)"
+  c2c_seed_lumen_org "$C2C_DEMO_VERSION"
+fi
 c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
