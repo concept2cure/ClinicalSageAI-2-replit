@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies/59/close-out",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "The 24-month long-term data support a 24-month shelf life at the labelled condition.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 288,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "This study records no shelf life, so there is nothing to sign for: a closed-out study states the period and the storage condition §3.2.S.7.1 / §3.2.P.8.1 will print (for example \"36 months at 25°C/60% RH\"). Record the shelf life on the study first."
+    }
+  }
+}

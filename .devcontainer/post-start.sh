@@ -40,6 +40,7 @@ if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.en
   NEED_ACCOUNTS=1
 fi
 c2c_start_postgres || c2c_blocked "PostgreSQL did not start."
+c2c_ensure_attestation_key
 c2c_ensure_database || c2c_blocked "the owner role or database could not be ensured."
 # Idempotent: over a complete database this is deploy-migrate + the readiness
 # contract, so migrations committed since the last start are applied.
@@ -358,7 +359,13 @@ case "$C2C_APP_ANA" in
   embedding_lane_down|no_embedding_lane)
     # /readyz is red for search only. Read as "AnA is down", it sent a person holding a working Anthropic key
     # looking for a fault in that key.
-    c2c_log "AnA in the running app answers and drafts with the Anthropic key (see the drafting call above)."
+    # Said only when the drafting call above was answered: with a refused key this line followed "BLOCKED
+    # ANTHROPIC_KEY_INVALID" and told the person holding that key that AnA drafts (2026-11-10).
+    if [[ "${C2C_DRAFTING_LINE:-}" == "answered by"* ]]; then
+      c2c_log "AnA in the running app answers and drafts with the Anthropic key (see the drafting call above)."
+    else
+      c2c_log "AnA in the running app cannot answer or draft yet: see the ANTHROPIC_API_KEY lines above."
+    fi
     c2c_log "Search is off ($C2C_APP_ANA): Vault search, the knowledge base and AnA's project memory need OPENAI_API_KEY for embeddings." ;;
   *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
 esac

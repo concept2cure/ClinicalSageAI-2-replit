@@ -198,3 +198,14 @@ character changes. The runner's first run failed OQ-RPT-14 on its own expectatio
   (`report_snapshots`) is a row the runtime role may update; a change is detected on read, not prevented.
 
 What stands between the package and signature is in VSR-001 §21.
+
+## Later on 2026-11-10: OQ-008 v0.13 (the steps behind an approvable Module 3)
+
+- `re-execution/OQ-CMC/`: **41 pass, 0 fail, 2 deviation, 0 not executed, of 43.** Server code `d8ab1a1922`.
+- `re-execution/v0.12/OQ-CMC/`: the record it replaces (36 / 0 / 4 / 2 of 42, server code `97a0fec5cf`).
+- The package is now 175 pass, 0 fail, 6 deviation, 0 not executed, of 181. TM-001: 124 pass, 2 partial, 4 open,
+  2 uncovered, of 132.
+- What changed and what it found: VSR-001 §21.8. The protocol: OQ-008 v0.13.
+- The run was written to a working folder and filed here unchanged. It was scanned for tokens and for every
+  credential value of the run; none is in it.
+

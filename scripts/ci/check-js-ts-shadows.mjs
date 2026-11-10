@@ -44,7 +44,6 @@ const ALLOWED_SHADOWS = new Set([
   //    because vite/vitest resolves explicit '.js' specifiers from .js
   //    importers to the literal .js file and will not fall back to .ts.
   'server/config/environment.js', // why: shim for auth.js + monitoring.js '.js' imports under vitest.
-  'server/middleware/errorHandler.js', // why: shim for routes/folder-management.js under vitest.
   'server/services/roleBasedAccess.js', // why: shim for api/enterprise/routes.js under vitest.
   'server/utils/authedOrgId.js', // why: shim for phase3-routes.js/enterprise routes '.js' imports under vitest.
   // why: shim for the '.js'-suffixed imports under vitest. Eight live importers,

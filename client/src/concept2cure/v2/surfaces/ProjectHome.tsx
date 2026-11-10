@@ -380,6 +380,13 @@ function kindLabel(mime: string | null): string {
   return 'File';
 }
 
+/** What a row is and when it arrived: a file by its kind and size, a Quality record as the record it is. */
+function sourceKindLine(s: SourceRow, size: string | null): string {
+  const when = fmtWhen(s.createdAt);
+  if (s.catalog?.nativeRecord) return `Quality record${when ? ` · recorded here ${when}` : ''}`;
+  return `${kindLabel(s.mimeType)}${size ? ` · ${size}` : ''}${when ? ` · added ${when}` : ''}`;
+}
+
 /**
  * Whether this source's text is actually available to draft from.
  *
@@ -419,6 +426,20 @@ function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; pr
     </button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
+}
+
+/** What a person does with a captured file. A Quality record is not a file: no working copy to make, no file to remove. */
+function SourceFileActions({ source: s, projectId: pid, reloadKey, onPull, onChanged }: {
+  source: SourceRow; projectId: string | null; reloadKey: number; onPull: (s: SourceRow) => void; onChanged: () => void;
+}) {
+  if (s.catalog?.nativeRecord) return null;
+  return <>
+    <SourceWorkButton source={s} projectId={pid} onPull={onPull} />
+    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
+      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
+      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={onChanged}
+    /></div>}
+  </>;
 }
 
 function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
@@ -704,9 +725,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {s.title || `Source ${s.id}`}
                       </span>
                       <span className="sec-sub" style={{ fontSize: 11.5 }}>
-                        {kindLabel(s.mimeType)}
-                        {size ? ` · ${size}` : ''}
-                        {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
+                        {sourceKindLine(s, size)}
                       </span>
                       <SourceCatalogLine catalog={s.catalog} />
                       <SourceSnippet show={searching} text={s.snippet} />
@@ -730,11 +749,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     >
                       {rs.label}
                     </span>
-                    <SourceWorkButton source={s} projectId={pid} onPull={setPullSource} />
-                    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
-                      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
-                      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
-                    /></div>}
+                    <SourceFileActions source={s} projectId={pid} reloadKey={reloadKey} onPull={setPullSource} onChanged={() => setReloadKey(k => k + 1)} />
                   </div>
                 );
               })}

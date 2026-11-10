@@ -231,11 +231,13 @@ describe('a 510(k): the Library and the eSTAR mapper give one answer', () => {
     expect(d4.preview).toContain('required: the project answered yes to “Sterile”');
   });
 
-  it('D6 risk management is required, as the mapper requires it of every 510(k)', async () => {
+  // Until 2026-11-10 this read Required, as the mapper required it of every 510(k). P-123: FDA's eSTAR asks for it in
+  // a Special 510(k) and hides it otherwise, and the platform does not record the kind, so it is for a person to confirm.
+  it('D6 risk management turns on the kind of 510(k), and does not block', async () => {
     const d6 = (await libraryLeaves(t, doc.id)).get('D6')!;
-    expect(d6.type).toBe('Required');
-    expect(d6.blocker).toBe(true);
-    expect(d6.flag).toBe('Mandatory section — no content yet');
+    expect(d6.type).toBe('When applicable');
+    expect(d6.blocker).toBeUndefined();
+    expect(d6.preview).toContain('required when the submission is a Special 510(k)');
   });
 
   it('performance testing is one requirement: animal testing on file, so bench testing does not block', async () => {

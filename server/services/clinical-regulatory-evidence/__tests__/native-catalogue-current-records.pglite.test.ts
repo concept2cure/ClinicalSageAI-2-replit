@@ -105,6 +105,17 @@ describe('native catalogue facts during a concurrent update', () => {
     expect(refreshed.sources.find(source => source.isCurrent)?.id).toBe(retained[1].id);
   });
 
+  it('lists a captured file before the Quality record snapshots, however old the file is', async () => {
+    await catalogue();
+    await pg.query(`INSERT INTO cre_evidence_sources (organization_id,client_program_id,source_type,title,checksum,is_current,
+        extraction_status,extracted_text,provenance,metadata,created_at)
+      VALUES ($1,$2,'client_document','Protocol.pdf',$3,true,'extracted','Protocol text','{}'::jsonb,'{}'::jsonb,now() - interval '30 days')`,
+    [ORG, PROGRAM, 'c'.repeat(64)]);
+    const listed = (await catalogue()).sources;
+    expect(listed.length).toBeGreaterThan(1);
+    expect(listed[0].title).toBe('Protocol.pdf');
+  });
+
   it('preserves stable source identities when no current native fact changed', async () => {
     const first = await catalogue(); const second = await catalogue();
     expect(first).toMatchObject({ total: 1, currentTotal: 1 });

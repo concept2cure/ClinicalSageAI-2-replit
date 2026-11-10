@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "ce6beb16-1f4c-4f2d-81ec-b2c2329e4a02",
+      "projectId": "1d4ad7ec-2efd-4a40-9af4-b64fa5299d5c",
       "substanceName": "Q1E-within-DS",
       "modality": "small_molecule",
       "status": "development",
@@ -18,14 +18,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 27,
+    "durationMs": 49,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 42,
+        "id": 55,
         "organizationId": 2,
-        "projectId": "ce6beb16-1f4c-4f2d-81ec-b2c2329e4a02",
+        "projectId": "1d4ad7ec-2efd-4a40-9af4-b64fa5299d5c",
         "substanceName": "Q1E-within-DS",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -47,8 +47,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": "phase1",
-        "createdAt": "2026-11-10T03:45:31.804Z",
-        "updatedAt": "2026-11-10T03:45:31.804Z"
+        "createdAt": "2026-11-10T13:26:02.003Z",
+        "updatedAt": "2026-11-10T13:26:02.003Z"
       },
       "module3Linked": true
     }

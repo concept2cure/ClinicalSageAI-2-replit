@@ -1,0 +1,627 @@
+[
+ {
+  "stop": "01-project",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 714,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-1-plan",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 1278,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-2-evidence",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: 72dee332-3be6-41fe-a18b-abf3d19669eb",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c"
+   ]
+  },
+  "sideways": false,
+  "words": 2526,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-3-author",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 714,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-4-review",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 435,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-5-submit",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 649,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "02-journey-6-respond",
+  "url": "/concept2cure/project-home?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "uuid": [
+    "CAPA action: 90012220-2fba-43b9-8865-77021f305d3c",
+    "CAPA action: ba324083-47c0-4fa9-aa29-4e447b909e5b",
+    "CAPA action: 262fdc2e-bb8d-4a85-8d04-579fc5d9ed0c",
+    "CAPA action: 084662e3-191d-464d-a8fc-0546ce988217",
+    "CAPA action: 4c4da5f8-07ba-4492-b7f3-8ba72e9624d8"
+   ]
+  },
+  "sideways": false,
+  "words": 635,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "03-area-study-protocol-design",
+  "url": "/concept2cure/protocol-dev?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": null,
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 100,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "04-area-biostatistics",
+  "url": "/concept2cure/biostatistics?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Biostatistics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "snake_case": [
+    "No sensitivity analysis across assumptions. Effect-size assumption without provenance. Fragility index 60/100 (fragile) "
+   ]
+  },
+  "sideways": false,
+  "words": 1485,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "05-area-cmc-module-3",
+  "url": "/concept2cure/cmc?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "CMC / Module 3",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 165,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "05-area-cmc-module-3--quality-by-design",
+  "url": "/concept2cure/cmc?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "CMC / Module 3",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 314,
+  "apiFailures": [
+   "409 GET /api/cmc/quality/qbd/30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2"
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+ },
+ {
+  "stop": "05-area-cmc-module-3--module-3-build",
+  "url": "/concept2cure/cmc?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "CMC / Module 3",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 189,
+  "apiFailures": [
+   "409 GET /api/cmc/module3-os/build-state/30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2"
+  ],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+ },
+ {
+  "stop": "05-area-cmc-module-3--approvals-audit",
+  "url": "/concept2cure/cmc?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "CMC / Module 3",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 245,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 456,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--risk-review-report",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 583,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--risk-assessment-ract",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 795,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--key-risk-indicators",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "iso-time": [
+    "amber 14days — red 28days — evaluated 2026-11-08T00:00:00.000Z",
+    "amber 5days — red 10days — evaluated 2026-11-08T00:00:00.000Z",
+    "amber 5% — red 10% — evaluated 2026-11-08T00:00:00.000Z",
+    "amber 7days — red 14days — evaluated 2026-11-08T00:00:00.000Z",
+    "amber 90% — red 80% — evaluated 2026-11-08T00:00:00.000Z"
+   ]
+  },
+  "sideways": false,
+  "words": 686,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--quality-tolerance-limits",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 470,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--central-monitoring",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "iso-time": [
+    "site 104 — 2026-11-10T06:45:39.873Z",
+    "site 104 — 2026-11-10T06:45:39.309Z",
+    "site 106 — 2026-11-10T06:45:40.720Z",
+    "2026-11-10T06:45:40.441Z",
+    "site 102 — 2026-11-10T06:45:41.286Z"
+   ]
+  },
+  "sideways": false,
+  "words": 420,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--patient-profiles",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 482,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--site-risk",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 338,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--site-oversight",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 348,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "06-area-risk-based-monitoring--monitoring-plan",
+  "url": "/concept2cure/rbm?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Risk-based monitoring",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 663,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-area-reports",
+  "url": "/concept2cure/insights?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 147,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-area-reports--catalog",
+  "url": "/concept2cure/insights?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 1435,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-area-reports--run-history",
+  "url": "/concept2cure/insights?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 600,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-area-reports--schedules",
+  "url": "/concept2cure/insights?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 180,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "07-area-reports--bundles",
+  "url": "/concept2cure/insights?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Reporting & analytics",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 222,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 1834,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault--data-catalog",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 128,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault--uploads-16",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 423,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault--required-documents",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 5325,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault--governed-artifacts",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 120,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "08-place-vault--seals-fixity",
+  "url": "/concept2cure/vault?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Vault",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 150,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "09-place-communication",
+  "url": "/concept2cure/communication-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Communication",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 222,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 113,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--planner",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "snake_case": [
+    "ectd_v322 · ectd_v40 · estar"
+   ]
+  },
+  "sideways": false,
+  "words": 275,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--builder",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 491,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--required-deliverables",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 125,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--sequences",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 180,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--validation",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {
+   "snake_case": [
+    "This is not a finding of consistency — nothing has been compared. Ask AnA to check a claim against its sources (check_co"
+   ],
+   "error-code": [
+    "IND_MODULE3_REQUIRED",
+    "MISSING_REQUIRED_SECTION",
+    "CLINICAL_HOLD_NOT_ASSESSED"
+   ]
+  },
+  "sideways": false,
+  "words": 1227,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--shadow-review",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 137,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "10-place-submission-center--dispatch",
+  "url": "/concept2cure/submission-center?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Submission Center",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 424,
+  "apiFailures": [],
+  "consoleErrors": []
+ },
+ {
+  "stop": "11-place-tasks",
+  "url": "/concept2cure/tasks?program=30e6bd19-4dfc-487c-ab7d-b888f3f5c5e2",
+  "title": "Tasks",
+  "errorText": [],
+  "alerts": [],
+  "rawText": {},
+  "sideways": false,
+  "words": 1931,
+  "apiFailures": [],
+  "consoleErrors": []
+ }
+]

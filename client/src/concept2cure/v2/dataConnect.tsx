@@ -567,12 +567,12 @@ export type FailedRead = { status?: number; code?: string | null } | null | unde
  * An expired session (401) is said too. Only the unavailable ownership check
  * keeps a retry: it is the one refusal a retry can change.
  */
-export function readRefusalWords(read: FailedRead, what = 'it'): { title: string; message: string; retryable: boolean } | null {
+export function readRefusalWords(read: FailedRead, what = 'it', subject?: string): { title: string; message: string; retryable: boolean } | null {
   if (!read) return null;
   if (read.status === 401) return { title: 'Your session has expired', message: `Sign in again to read ${what}.`, retryable: false };
   const kind = readFailureFor(read.status, read.code ?? undefined);
   if (kind === 'failed') return null;
-  return describeReadFailure(kind, what);
+  return describeReadFailure(kind, what, subject ? { subject } : {});
 }
 
 /** The title, message and retry a failure panel shows: the caller's, unless its read was refused. */
@@ -580,8 +580,9 @@ function shownFailure(
   given: { title: string; message?: React.ReactNode; retry?: () => void },
   read: FailedRead,
   readWhat: string | undefined,
+  readSubject?: string,
 ): { shownTitle: string; shownMessage?: React.ReactNode; recover?: () => void } {
-  const refusal = readRefusalWords(read, readWhat);
+  const refusal = readRefusalWords(read, readWhat, readSubject);
   if (!refusal) return { shownTitle: given.title, shownMessage: given.message, recover: given.retry };
   return { shownTitle: refusal.title, shownMessage: refusal.message, recover: refusal.retryable ? given.retry : undefined };
 }
@@ -599,6 +600,7 @@ export function ErrorState({
   testId,
   read,
   readWhat,
+  readSubject,
 }: {
   /** What failed, in the user's terms. Shown unless `read` was refused. */
   title: string;
@@ -620,8 +622,10 @@ export function ErrorState({
   read?: FailedRead;
   /** What was not read, as a sentence names it ("the task board"); used in a refusal's words. */
   readWhat?: string;
+  /** What a 404 did not find, when it is a record and not the open project ("this CAPA"); the default is the project. */
+  readSubject?: string;
 }) {
-  const { shownTitle, shownMessage, recover } = shownFailure({ title, message, retry }, read, readWhat);
+  const { shownTitle, shownMessage, recover } = shownFailure({ title, message, retry }, read, readWhat, readSubject);
   /* A string is only rendered if it survives the internals filter; otherwise the
      title carries the message alone, which is always safe because the caller
      wrote it. */
@@ -717,6 +721,7 @@ export function EmptyState({
   testId,
   read,
   readWhat,
+  readSubject,
 }: {
   title: string;
   hint?: React.ReactNode;
@@ -737,6 +742,7 @@ export function EmptyState({
   /** tone="error" only: the failed read, passed to ErrorState (a refusal is said as itself, no retry). */
   read?: FailedRead;
   readWhat?: string;
+  readSubject?: string;
 }) {
   /* A failure is not an empty state. It has one renderer, and this is not it —
      every `tone="error"` call site is served by ErrorState above, so all 139 of
@@ -755,6 +761,7 @@ export function EmptyState({
         testId={testId}
         read={read}
         readWhat={readWhat}
+        readSubject={readSubject}
       />
     );
   }

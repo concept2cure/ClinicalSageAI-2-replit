@@ -182,6 +182,8 @@ function ChangeControlSession({
   const allTemplates = tpl.templates ?? [];
   const changeForms = allTemplates.filter((t) => CHANGE_FORM_TEMPLATE_KEYS.includes(t.key));
   const openDrawer = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /** A drawer stays open while its write is in flight, so a refusal has somewhere to show (Quality review, 2026-11-10). */
+  const closeDrawer = () => { if (!writing.current) setDrawer(null); };
   /** Run a drawer's write: close and report on success, keep the drawer and its
       values with the server's sentence on refusal. */
   const runWrite = async (write: () => Promise<string>, after?: () => void) => {
@@ -423,7 +425,7 @@ function ChangeControlSession({
                 desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onSubmit={(v) => void runWrite(async () => {
             const row = await createQmsChange({
               changeNumber: v.changeNumber.trim(), title: v.title.trim(), reason: v.reason.trim(),
@@ -460,7 +462,7 @@ function ChangeControlSession({
                   : []),
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => {
               const reason = v.reason.trim();
               if (reason.length < GOVERNED_REASON_MIN) {
@@ -486,7 +488,7 @@ function ChangeControlSession({
               eyebrow: 'Change control',
               title: `Assess ${c.changeNumber}`,
               sub: `${c.title}. The assessment can be edited while the change is proposed or under assessment. From approval on, it is what the approval signed.`,
-              governed: 'Saving writes an audit entry under your name.',
+              governed: 'Saving writes an audit entry under your name, with your reason and each field before and after.',
               submitLabel: 'Save assessment',
               ...(refusal ? { notice: refusal } : {}),
               fields: [
@@ -494,16 +496,18 @@ function ChangeControlSession({
                 { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 5, default: c.impactAssessment ?? '', desc: 'Product, process, validation and filings.' },
                 { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 5, default: c.implementationPlan ?? '' },
                 { key: 'targetImplementationDate', label: 'Target implementation date', type: 'date', default: c.targetImplementationDate?.slice(0, 10) ?? '' },
+                { key: 'editReason', label: 'Reason for this edit', type: 'textarea', rows: 2, required: true,
+                  desc: 'Recorded on the change\'s audit trail with each field before and after. At least 8 characters.' },
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => void runWrite(async () => {
               await updateQmsChange(c.id, {
                 riskLevel: (v.riskLevel || null) as RiskLevel | null,
                 impactAssessment: v.impactAssessment.trim() || null,
                 implementationPlan: v.implementationPlan.trim() || null,
                 targetImplementationDate: v.targetImplementationDate || null,
-              });
+              }, v.editReason.trim());
               return `The assessment of ${c.changeNumber} was saved.`;
             })}
           />
@@ -513,7 +517,8 @@ function ChangeControlSession({
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
           refusal={refusal}
-          onCancel={() => setDrawer(null)}
+          reasonRequired={drawer.change.status !== 'proposed'}
+          onCancel={closeDrawer}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
@@ -526,7 +531,7 @@ function ChangeControlSession({
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
           templates={changeForms}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onNavigate={onNavigate}
           onCreated={(id) => {
             setDrawer(null);

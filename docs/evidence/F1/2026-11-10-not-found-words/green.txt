@@ -1,0 +1,1009 @@
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels q_sub preparation and applicant completion before and after export 287ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels ide preparation and applicant completion before and after export 79ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > PreSTAR administrative preparation uses the native governed field flow > labels 513g preparation and applicant completion before and after export 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > the first painted frame asserts nothing it has not checked 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders while every request is still pending — checking is a visible status, not only a title 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the user is NOT signed in (401 everywhere) — disabled with a reason, no empty table 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > renders when the network throws outright — a failed read, in plain words, with retry 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — survives first paint > with no program says so and fetches no field list 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > not ready ⇒ Generate disabled with the blockers in the title, no input claims data 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > a failed field read disables Generate with the reason — the user has not seen what will be written 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > busy ⇒ Exporting… is a visible status line and the reason on the control 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the produce-gate > generateDisabledReason (pure): lock, then program, then readiness, then busy, then not ready, then field list 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > ready ⇒ governed rows are read-only with source words; unsourced rows have labelled inputs 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > switching programs never shows the previous program’s values while the next field list loads 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a failed field read (5xx) renders ErrorState with a sentence and retry, never an empty table or the raw body 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 404 says the program was not found — and offers no retry, which could not succeed 14ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the field preview > a 422 says the field map is not populated — and offers no retry 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > posts useProgramData:true and only the typed non-empty keys, then reports filled/blank 89ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > switching programs forgets the previous program’s outcome — no stale Downloaded line under the new header 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > after a run, says how to see the values in Acrobat — the form hides those sections until then 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > says which written values the form clears when the filer follows the instruction 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > warns that the Declaration of Conformity company name is rebuilt from the applicant 60ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > names the typed keys the server dropped 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 403 NOT_ENTITLED renders Locked with the tier in the title — never a dead button 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — Generate > a 422 refusal shows the blockers on the status line 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > an enforced denial locks Generate on mount, names the tier, and never posts 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a denial in warn mode does not lock — the POST would go through 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the entitlement lock is known before the first click > a failed entitlement read locks nothing 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > officialEstarVariantFor (pure): the product type decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type cdx chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type CDx chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type CDX chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type samd chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type SaMD chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type device chooses the device template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > canonical product type ivd chooses the ivd template family 0ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > keeps the complementary diagnostic filing in its canonical IVD family 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > the header names the family, and the reads carry the variant 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which template family > a device program reads as the nIVD eSTAR 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource set ⇒ the caption, "Not set — <home>", AND the export-only input 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > value null + declaredSource null ⇒ export-only, no "Not set" line 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a registration-held key names the eSTAR registration as its home 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — a blank governed key names its durable home > a governed value never shows "Not set" even though its declaredSource is set 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > officialEstarTypeFor (pure): the regulatory path decides, never the surface 1ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the header names the pathway and the family 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the readiness and official-fields reads 12ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > the type travels in the POST body 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — which marketing pathway > switching the pathway forgets what was typed under the previous one 26ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved device profile makes the preview re-read the governed values 57ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a rejected device-profile save does NOT re-read — nothing changed to re-read 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx > OfficialEstarPanel — the preview re-reads after a sibling panel saves > a saved correspondent block makes the preview re-read 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — 403 NOT_ENTITLED (the entitlement gate) > marks the outcome blockedByEntitlement with the server-named tier 25ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — 403 NOT_ENTITLED (the entitlement gate) > does NOT conflate a role 403 with the entitlement lock 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — existing outcomes unchanged > 422 surfaces the honest blockers (not an entitlement lock) 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — existing outcomes unchanged > a successful export never carries the lock flags 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine (pure) > busy and idle states 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine (pure) > falls back honestly when the server named no tier 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > cleanRequestData (pure) — only typed keys travel > drops empty, whitespace and non-string entries and trims the rest 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > sends useProgramData:true and only the non-empty trimmed keys 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > sends the pathway type from the option — de_novo and pma reach the wire 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > without a type option sends 510k — callers that predate the option keep their behaviour 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > without opts sends useProgramData:false and an empty data map (today's behaviour) 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport.exportOfficialEstar — useProgramData + data > a malformed fieldReport is null rather than partially trusted 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — administrative fill wording > names filled of mapped and the blank count 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — administrative fill wording > omits the blank clause when nothing was left blank 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — administrative fill wording > a success without a report keeps the existing wording 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — administrative fill wording > carries an advisory on the line, so "filled" never reads as "finished" 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — the verbatim path still reports erasure > names the erased keys when there is no field report to carry them 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — the verbatim path still reports erasure > does not say it twice when the field report already carries it 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — the verbatim path still reports erasure > an ASSESSED empty list claims nothing, and an UNREPORTED one says so 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — the verbatim path still reports erasure > the DRAFT package says nothing about erasure — there is no FDA form to clear 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — the verbatim path still reports erasure > the hook carries erasedFields off the 200 body, and null when absent 6ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — reset() > forgets the last outcome, and is stable across renders 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarEntitlement — the lock known before the first click > reads the documented verdict from GET /api/510k/estar/entitlement 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarEntitlement — the lock known before the first click > a body that is not a verdict is no verdict — nothing locks on it 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarEntitlement — the lock known before the first click > entitlementBlocksExport (pure): only an ENFORCED denial locks 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarEntitlement — the lock known before the first click > entitlementRequiredLine is the one wording, after a 403 and before a click 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — a produced package is not a delivered one > says Downloaded only when the browser actually took the file 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — a produced package is not a delivered one > says the download was blocked instead of claiming it arrived 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > exportStatusLine — a produced package is not a delivered one > keeps the formatting and registry clauses on the blocked line 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — formatting is not clean unless it was checked > a build with no report reads "not checked", never 0 errors 14ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — formatting is not clean unless it was checked > a report without a verdict (an older server) cannot claim it checked everything 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts > useEstarExport — formatting is not clean unless it was checked > a conformant report adds no formatting clause 4ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the exact notification record even when the register has no matching row 403ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qmsIntent read) 226ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > preserves a refused exact notification target without opening a different register row 135ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a notification target that is not there was not found, and offers no Try again 53ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a version history that is not there was not found, naming the document 117ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > queues a new notification target while the current canonical editing copy remains open 88ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > shows the exact unbound controlled record before offering its explicit authored revision 42ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 131ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 90ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads 96ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 49ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says an editor read refused for this role as that, and offers the controlled text in the reader 73ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens a legacy entry under review to its inline controlled text, not to an editor with no copy 51ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 76ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > Send for review opens the review route form; nothing is sent until it is complete (RR4) 44ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 115ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 125ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 94ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 58ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 96ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 378ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 70ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > deviceProfileUrl (ident contract) > is null without an ident — no request for a deselected program 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > deviceProfileUrl (ident contract) > encodes the ident so a code with reserved characters cannot break the query 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile > loads the profile from the {profile} envelope 75ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile > save PUTs the patch with auth headers and refreshes the read on success 63ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — the five eSTAR device fields > exposes the five eSTAR device fields the profile carries (view mapping) 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — the five eSTAR device fields > save sends the eSTAR device fields verbatim — an empty string is the clear signal 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — rejected and failed writes > save is a no-op returning null without an ident — nothing is sent 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — rejected and failed writes > save returns null on a rejected write and does NOT refresh 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — rejected and failed writes > save returns null when the request never reaches the server 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > passes available:false + unavailableReason through untouched — no fabricated hits 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > sends the same auth headers as the read path 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > returns null when the request itself fails — never a made-up classification 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupClassification (openFDA autofill, honest by construction) > refuses an unusable query without issuing a request 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > builds and encodes multi-term queries 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > drops a sub-2-character deviceName rather than sending a query the server 400s 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > classificationQueryUrl (query contract) > is null with no usable terms 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > sends both terms so the server can prefer the typed code over the saved one 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > encodes the ident and accepts either term alone 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > recognizedStandardsUrl (query contract) > is null with no usable terms 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > keeps datasetLoaded distinct from an empty list 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > passes the unavailable envelope through untouched 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > sends the same auth headers as the read path 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > returns null when the request itself fails — never a made-up standard 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > lookupRecognizedStandards (vendored FDA list, never inferred) > refuses an unusable query without issuing a request 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > romanDeviceClass (openFDA numeric → profile Roman numerals) > maps 1/2/3 and passes Roman numerals through 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > romanDeviceClass (openFDA numeric → profile Roman numerals) > returns null — never a guess — for unclassified/unknown markers 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > reads what the governed write stores, in stored order 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > reports no predicate for nothing stored, and nothing unreadable 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > reports no predicate for an empty list, and nothing unreadable 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > reports no predicate for a non-list, and nothing unreadable 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > counts a legacy bare-string list as unreadable rather than inventing a device 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > counts an entry with no name as unreadable rather than inventing a device 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > predicateDevicesOnFile — reading the json column honestly > counts an entry with no id as unreadable rather than inventing a device 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDeviceProfile.test.ts > useDeviceProfile — saving the predicate of record > PUTs the claimed predicate, and null to withdraw it 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > is null without an ident — the fetch stays idle 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > carries ident, type and variant, encoded 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > officialFieldsUrl (pure) > carries every marketing pathway the server accepts 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.product_name → Device profile · product name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.product_code → Device profile · product code 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.predicate_devices[0].kNumber → Device profile · first predicate · K-number 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.predicate_devices[0].name → Device profile · first predicate · name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.device_name → 510(k) project · device name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.regulation_number → 510(k) project · regulation number 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > fda_510k_projects.product_code → 510(k) project · product code 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.name → Client workspace · name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.contact_email → Client workspace · contact email 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > client_workspaces.contact_phone → Client workspace · contact phone 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > organizations.name → Organization · name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.common_name → Device profile · common name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.classification_name → Device profile · classification name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.regulation_number → Device profile · regulation number 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.associated_product_codes → Device profile · associated product codes 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > regulatory_programs.indications_for_use_citation → Device profile · indications for use citation 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_company_name → eSTAR registration · correspondent company name 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_contact_email → eSTAR registration · correspondent contact email 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.correspondent_telephone → eSTAR registration · correspondent telephone 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > estar_registrations.declaration_company_address → eSTAR registration · declaration company address 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > request → Entered for this export · not stored 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > names the absence of a source 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > sourceWords (pure) — provenance in plain words > never lets a store or column name through raw — including an unknown store 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > notSetWords (pure) — where the durable home is > names the declared home in the same words as a sourced value 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > notSetWords (pure) — where the durable home is > is null when the key has no declared home — the row stays export-only 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > no message ⇒ no error 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > 404 (the route refused the ident org-scoped) ⇒ not-found 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > 422 (field map not populated) ⇒ not-producible 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > reads the code token from a body cut at 200 characters — never JSON.parse 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > anything else — a 500, a proxy page, a network throw — ⇒ failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > describeOfficialFieldsError (pure) — status-aware, human, never the raw transport line > every sentence survives ErrorState’s internals filter unchanged 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > stays idle with a null ident 19ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > the type reaches the wire for a De Novo and a PMA read 114ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > 200 maps the field list through with counts 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > 404 (not in this org) is a not-found sentence, never an empty field list 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > 422 (field map not populated) is a not-producible sentence, never an empty field list 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > a network throw is a failed read — retryable, in plain words 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts > useEstarOfficialFields > a 200 that is not a field list is an error, not an empty table 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > sends exact slot/UUID without the local hash and returns the server receipt 17ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > does not post missing recorded hash selections 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > does not post invalid version UUID selections 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > does not post no destination selections 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > does not post duplicate slot and version selections 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a absent success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a empty success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong count success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a missing row success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a duplicate row success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong version success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong slot success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong bytes success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a invalid byte length success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a blank file name success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a missing chapter success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a partial refusal success receipt 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a missing manifest success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong manifest filename success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a wrong manifest chapter success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a extra manifest token success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a missing manifest token success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a invalid chapter syntax success receipt 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds delivery on a manifest delimiter in filename success receipt 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > retains every refusal reason from the server without downloading partial results 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with unconfirmed form delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with wrong encoding delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with wrong media type delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with no filename delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with no bytes delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with invalid base64 delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with non-PDF bytes delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR attachments are confirmed before delivery > holds a receipt with invalid base64 tail delivery metadata 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > retires late downloads after reset 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > retires late downloads after unmount 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > retires late downloads after session 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > retires late downloads after session revision 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > reports a lost response as unconfirmed because the server may have retained the export 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > checks the synchronous parent visit before passive unmount cleanup runs 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > admits only one current export even when two clicks happen before a repaint 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > official eSTAR delivery belongs to the active request context > does not replace a new-context result when an older export resolves afterwards 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > preserves the typed503 OUTCOME_UNKNOWN recovery sentence without delivering a PDF 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > holds uncertain attachment HTTP500 outcomes for recovery 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > holds uncertain attachment HTTP503 outcomes for recovery 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > holds uncertain attachment HTTP502 outcomes for recovery 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > holds uncertain attachment HTTP409 outcomes for recovery 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > keeps a definite HTTP409 refusal distinct from an uncertain result 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > keeps a definite HTTP422 refusal distinct from an uncertain result 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.attachments.test.ts > attachment exports retain uncertain persistence outcomes > does not widen HTTP failure classification for an export without attachment selections 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > builds and encodes the query with optional filters 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > omits the studyType filter for "any" and skips blank years 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > literatureSearchUrl (query contract) > is null under 2 characters — the server would 400 it 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > searchCerLiterature > refuses a too-short query locally without a request 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > searchCerLiterature > sends auth headers and returns the payload on success 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > searchCerLiterature > passes the honest degradation payload through untouched 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > searchCerLiterature > returns null when the request itself fails — never fabricated results 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > articleToRecordEntry (record payload contract) > derives the year from the leading pubDate digits 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > articleToRecordEntry (record payload contract) > records no year when the pubDate has none — never an invented date 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > recordCerLiterature > POSTs the entries with auth headers and passes the outcome through 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > recordCerLiterature > omits programId when none is given 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > recordCerLiterature > surfaces the server failure text — never an optimistic success 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screening vocabulary > mirrors the two MEDDEV/PRISMA passes the server names, rather than re-inventing them 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screening vocabulary > keys a decision by pmid AND stage — one article carries one per pass 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screeningReadUrl (query contract) > reads the whole scope trail when nothing is narrowed 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screeningReadUrl (query contract) > carries the program scope and the on-screen pmids 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > fetchCerScreening > sends auth headers and returns the stored decisions 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > fetchCerScreening > passes the honest store-absent degradation through untouched 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > fetchCerScreening > reports a failed request as unavailable, NOT as an empty trail 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screenCerLiterature > POSTs the decision with auth headers and the program scope 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screenCerLiterature > sends the reason only on an exclusion — the server rejects a stale one 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screenCerLiterature > relays a 422 refusal with its code and the server text 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerLiterature.test.ts > screenCerLiterature > never reports an optimistic success when the request fails 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a project the organization does not own (404) is not-found 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an ownership check that could not run (503 VERIFICATION_UNAVAILABLE) is unchecked 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > the module gate (403 MODULE_NOT_LICENSED) is not-enabled 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > launch scope (403 LAUNCH_SCOPE) is out-of-release 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the route could not confirm (403 ORG_REQUIRED) is no-organization 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > an organization the IVD route could not confirm (403 IVD_NO_TENANT) is no-organization 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a role refusal (403, no code) is role 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a signature the act requires (428) is signature 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a server error (500) is failed 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a store that is not there (503 PENDING_STORE) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a 503 with no code is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a rejected request (400) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no response at all (0) is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > no status is failed 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > readFailureFor — one classifier for a read the server did not answer with data > a genuine failure is no refusal 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names each refusal by what it is, and none of them as a failed read 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > only a genuine failure is "could not be read", and it can be tried again 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > offers a retry only where trying again can change the answer 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names the record that was not found when it is not the project 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > describeReadFailure — each class in its own words > names the record once when it is what was not read 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 404 is not-found, with its status and code 68ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 503 VERIFICATION_UNAVAILABLE is unchecked, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 MODULE_NOT_LICENSED is not-enabled, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 LAUNCH_SCOPE is out-of-release, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 ORG_REQUIRED is no-organization, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 403 is role, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 428 is signature, with its status and code 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a 500 is failed, with its status and code 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a body that is not JSON is classified by its status alone 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > no response at all is a failure with status 0 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > an answer with data has no failure, and neither does an idle read 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > useFetchJson — exposes the classified failure and keeps its error line > a refetch clears the previous failure while it is in flight 108ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/IvdReadinessBoard.tsx classifies no refusal itself 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/Labeling.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/surfaces/HumanFactors.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/presub/PreSubManager.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/surfaces/UdiSurface.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/usePresub.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useUdi.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > v2/projectScopedRead.tsx classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useFetchJson.readFailure.test.ts > one read classifier — no screen keeps its own copy > mdx/hooks/useEngineering.ts classifies no refusal itself 0ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > announces assertively as an alert 164ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > offers a retry that runs, and reports its busy state 64ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > is dismissible only when a dismiss handler is given 24ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — announcement and recovery > shows the correlation id as the support handle 14ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a missing relation 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a Drizzle failed query 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render raw SQL 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an API route 10ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an env var 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a file path 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a source location 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a stack frame 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render an enum token 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > does not render a driver code 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — nothing internal can be rendered through it > still renders a legitimate server sentence 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > renders the shared ErrorState, filter included 16ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > EmptyState tone="error" delegates rather than rendering its own panel > leaves the idle tone a polite status, not an alert 6ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a plan without the feature': its own title and words, and no retry 13ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a part not in this release': its own title and words, and no retry 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a role': its own title and words, and no retry 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an unconfirmed organization': its own title and words, and no retry 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a record not in this organization': its own title and words, and no retry 9ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'an expired session': its own title and words, and no retry 14ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a plan without the feature' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a part not in this release' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a role' 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an unconfirmed organization' 5ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'a record not in this organization' 5ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > EmptyState tone="error" passes the read through: 'an expired session' 5ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'a server failure' keeps the caller's words and its retry 8ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no response at all' keeps the caller's words and its retry 10ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > 'no read given' keeps the caller's words and its retry 7ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > names the record that was not found when given its subject, and keeps the project as the default 13ms
+ ✓ client/src/concept2cure/v2/__tests__/errorState.test.tsx > ErrorState — a refused read is said as the refusal it is > an unavailable ownership check keeps a retry, with the classifier's words 9ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > reads the board with the project's id and draws its families 237ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > IvdSurface draws the IVDR readiness board for the open project > mounts the IVD assessment workbench for the same project 191ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for the organization is not drawn under a project 82ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a response for another project is not drawn 77ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project the organization does not own (404) says so 80ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an ownership check that could not run (503) says so 78ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a failed read (500) says so 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal by the module gate (403 MODULE_NOT_LICENSED) says the feature is not enabled, not that the organization is unconfirmed 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a refusal outside the release (403 LAUNCH_SCOPE) says so 68ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > an organization the route could not confirm (403 IVD_NO_TENANT) says so 60ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a family that could not be read is "Not read", and no overall figure is shown 244ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.readiness.test.tsx > a read it may not draw says so, and is never an empty board > a project with no records reads empty, as a read that succeeded 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > POSTs the ident + useProjectContent body with auth headers and an HONEST unreviewed attestation 66ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > sends the review confirmation as given — name, role and confirmation time, no clock of its own 16ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > turns downloadable_output_ref into a browser download and reports governed 16ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > reports the audited-unplaced delivery state distinctly from governed 12ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > surfaces the production human-review refusal verbatim, with no download 10ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > surfaces the no-authored-content 422 as the server states it 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerExport.test.ts > useCerExport > reports a network failure without fabricating a download 7ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=true) 35ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > delivers one confirmed export after actual refresh (attachments=false) 7ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > keeps an uncertain export outcome visible after a legitimate refresh 8ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > does not deliver a canonical refresh carrying foreign actor claims 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > canonical same-session refresh keeps the original export owner > does not deliver a canonical refresh carrying foreign organization claims 6ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > refuses an unadopted storage bearer even when its actor claims match 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced same-account session before a delayed reply 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced actor before a delayed reply 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires a replaced organization before a delayed reply 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires the delayed reply after parent round trip 7ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.refreshOwner.test.ts > real actor/session and context replacements still retire export delivery > retires the delayed reply after unmount 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > does not label a signature, a deletion or a modification as a read 18ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > gives an action it has no category for the third state, not a guess 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > carries the recorded action through so the surface can show it 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > never publishes the row hash-chain link as an electronic signature 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > still carries the chain link as the chain link 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > shows the recorded action verbatim when there is no category for it 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > never labels an unclassified row "Access" 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > says the action was not recorded rather than inventing one when it is absent 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > keeps the closed-enum label for a kind it really did classify 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > unclassifiedFilterCaveat — a narrow filter states what it cannot speak for > is silent when every row in the window is classified 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > unclassifiedFilterCaveat — a narrow filter states what it cannot speak for > reports the count it cannot answer for instead of implying none matched 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > the pane cannot silently answer "no e-signatures" for these rows > has a caveat to show for the window adaptAudit produces 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 934ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 119ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 647ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 412ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the template field of New controlled document sets the type, as the library card did 101ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 63ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 148ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 62ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the register carries no AnA request of its own above its rows 45ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 261ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 169ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 357ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > keeps a drawer open while its write is in flight 290ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 331ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > opens the one New controlled document door with the change-control templates to choose from 183ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a change-control document with the selected program and reason, then opens its bound editing copy 137ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the log carries no AnA request of its own above its rows 118ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 420ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve to anyone but the change's proposer 138ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 181ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > signs nothing when the row carries no digest of its content 148ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 156ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > holds until browser hash verification AND the named human invariant checkbox 252ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > refuses a one-byte hash change and never posts an approval 132ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > prepares an unsigned candidate with controlled bins and real reauthentication, then opens its existing editor 314ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > CAPAS 3ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > DEVIATIONS 1ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > NONCONFORMANCES 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > SUPPLIERS 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > AUDITS 1ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > REVIEWS 0ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > is a table: column headers, one body per record, its first action as its next step and the rest under More 341ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > lists nonconformances and dispositions one only through a signature, its reason the rationale 149ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a deviation's investigation along the server lifecycle, and closes it only by a signature (P-57) 181ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows a failed supplier read as a failure, not an empty register 5ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > names a supplier's quality agreement by its controlled document, and records a new one by id 89ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > signs a supplier's standing, and sends nothing before the signature 126ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a supplier's quality agreement is unread when the controlled documents could not be read 8ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result 118ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > refuses to raise a CAPA with no project open 65ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source 86ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a register read refused by this release as that, with no retry, and keeps a failure retryable 16ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the register on screen while a re-read is in flight 23ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > completes a CAPA action only with its evidence, along the server action lifecycle 163ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a management-review action and closes it only with its note 145ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register 19ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a capped read is the most recent rows, and its figures are theirs 164ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the facts the figures carried, in brackets, and tells AnA what the register is 12ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's 36ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > files a new nonconformance under the open project by default 67ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > tells the shell for AnA what the register read, and that a failed read is a failure 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > renders exact section text escaped, names its revision, and requires an unchecked personal declaration 291ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > reads in the one drawer, with the acknowledgement as its footer action 48ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > allows a viewer to personally acknowledge without requesting a password or signature 114ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > shows a current server receipt without offering a duplicate acknowledgement 26ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > refuses a token account swap before React rerenders without posting the checked declaration under another actor 50ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > prevents same-tick duplicate submissions and closing during a pending write 45ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when outline only has no verified released bodies 21ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when artifact only has no verified released bodies 14ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when unverified release has no verified released bodies 17ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > does not let a viewer edit an unreleased document 14ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a in-review reader read recorded text without a release claim or acknowledgement 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a read-only standing reader read recorded text without a release claim or acknowledgement 10ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > gives an authorized writer the existing controlled-text editor for a draft 24ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > keeps a controlled-text save confirmed while independently rereading after a coverage-refresh failure 48ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > requires fresh server editing availability even when the cached session has a writer permission 16ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after missing audit 55ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after unchained audit 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after foreign actor 55ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different revision 38ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different digest 36ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after malformed success 39ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > shows a stale-release refusal and requires rereading rather than retrying a stale declaration 40ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > reconciles a lost write response by explicitly reloading the authoritative current receipt 64ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > keeps a confirmed receipt when the following refresh fails 51ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > treats a refused initial read as unreadable, including a resolved session 401 14ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > rejects a foreign user receipt returned by a successful GET 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a delayed old-document read after the selected document changes 12ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-organization write result and never refreshes the replacement scope 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-user write result and never refreshes the replacement scope 51ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > does not refresh or render a confirmed old-document write after switching documents 42ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it takes effect 42ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from the day it takes effect 99ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the following refresh fails 89ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > shows why a next version may not be read, with none of its text and no declaration 25ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opened from a training notice, starts on the version approved for a later day, and on the version in force when none waits 25ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens a document whose next version is being drafted on the version in force 17ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a row that is neither the version read nor its successor as unverifiable 14ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a successor that is not the row as unverifiable 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a receipt of another person on the next version as unverifiable 11ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > saves all current sections with version, digest, reason and canonical transport 210ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > requires the stated reason on button and keyboard save paths 44ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not save under another account whose token replaces storage before the reader rerenders 41ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a effective record 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a superseded record 2ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a retired record 2ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not offer viewers a governed edit 2ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > uses the existing standard skeleton only when sections have not been provided 7ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits a supported legacy section with its canonical label 21ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > preserves an untouched sibling body exactly instead of reserializing it 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits bodies without submitting server-owned provenance attributes 18ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body 7 without replacing its structure 7ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body null without replacing its structure 7ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body {} without replacing its structure 5ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body undefined without replacing its structure 6ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps edits on cancel and explicitly discards the scoped device drafts 48ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps focus inside the nested discard dialog and Escape cancels the pending close 34ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > clears cached sibling drafts only after their whole snapshot is confirmed 26ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not save when a dirty editor unmounts 6ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm missing audit in a successful transport response 33ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign document in a successful transport response 37ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign tenant in a successful transport response 31ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm wrong saved body in a successful transport response 27ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm stale digest in a successful transport response 26ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a stale-write refusal distinct from confirmation and preserves the draft 22ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 0 as an unconfirmed outcome 24ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 408 as an unconfirmed outcome 30ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 503 as an unconfirmed outcome 35ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats a returned timeout as unconfirmed too 26ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a confirmed save distinct from a failed subsequent refresh 19ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not let repeated clicks or a late old-scope response refresh another record 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > the actual canonical editor has no implicit save in Quality > mounts the canonical text editor and leaves a dirty unmount unwritten 648ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > no longer hands approval to AnA 74ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > opens the e-signature dialog, offering the approval meaning only 297ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > posts the signature to the signed route and shows the server’s time 129ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > shows a refused password as not signed 137ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead 20ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > Send for review opens the review route form, which names the QMS approver before anything is sent (RR4) 87ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a refused controlled copy is said as a refusal > shows the server refusal as an alert, not as a line in the register 111ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > opens the e-signature dialog for Retire, offering the retirement meaning only (P-51) 109ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > posts the signature to the signed retire route and shows the server’s time 166ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > shows a refused password as not retired 142ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear 45ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > says a register read refused for this role as that, with no Try again 9ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a failed review schedule as that failure, with no derived rows and no overdue figure 25ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading 9ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a register that answered empty as empty, not as a failure 8ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents" 49ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0% 12ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > shows who approved the version in force, when in UTC, and with what meaning 33ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > never shows a changed, withdrawn or unread approval as standing 19ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > shows who retired a retired document, and says when no retirement signature is on record 10ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says effective today leaves the people assigned no training period 34ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says a later day lets them read it ahead, until the day it takes effect 52ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody is assigned, with no count 44ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody assigned is an active member, with no count 34ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when the read failed, with no count 43ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project 514ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history 332ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 301ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 266ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 268ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 294ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 273ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact 522ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 500ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 465ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 413ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault’s project and organization views > the Vault exports the branch’s rows as CSV, with their governance 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the exact artifact source intake while retaining its original 494ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance 261ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions 58ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > names the open project, and widens to the whole organisation and back 379ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > lists no periodic review for a project whose documents are not read yet 59ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > lists for periodic review only the project's documents, and says training is the organisation's 65ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 84ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > has one title, the rail label, and no second topbar or eyebrow 51ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > puts the registers as tabs below the header, with no icons, and keeps arrow keys 119ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > asks AnA through at most three starters, one of them the pre-inspection check 98ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > shows no stat tiles and no per-document-type cards (RULE 4) 27ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps the document types in "New controlled document", each with its number prefix and description 155ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open 133ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out 166ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its next step and More, and More reveals every other action in the row 112ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > does not offer its author an approval the server refuses: the author's next step is the review route 42ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box 82ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 86ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 18ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed, in UTC 216ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says what is wrong with the date, on the field, and keeps the dialog open 128ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "remains current" with meaning review, posts the decision, and names what was attested once signed 123ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says so when the approval set no review date, rather than claiming one is kept 66ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date, saying the document keeps the date its approval set 135ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a refused password signed nothing, said once, and nothing is refreshed as if it had 126ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a review the server refuses as the document now stands reads the register again 131ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a dropped connection is not "nothing was signed": it says to check before signing again 137ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the register row shows and takes a review beyond the panel > names the last review on the Next review cell and offers Record review there 96ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > focus returns where the review started > to the Record review control on Cancel, and to the panel heading once a review from the panel is recorded 174ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a failed read says so, never "No job roles yet" 66ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a verified empty list says there are none; while loading it says so 194ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 47ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > an administrator creates a role with its reason, through the governed route, and the list is read again 145ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a refused change shows the server's sentence and keeps the form 102ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a role assigned to a document cannot be deleted, and says why; removing a holder sends a DELETE with its reason 51ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 6ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a verified empty list says nobody is assigned, and that training opens with the version in force 5ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > an assigner sees every person and how each is covered 6ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 10ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when whether you may change them could not be checked, it says so and offers nothing 13ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a version approved for a later day is named 5ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > assigns a job role not yet assigned, with its reason; the role already assigned is not offered 65ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > withdraws an assignment with its reason; a refusal is shown in the server's words 79ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when the roles and people cannot be read, nothing can be assigned, and it says so 35ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > cannot be dismissed while its act is saving 124ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > moves focus into an act when it opens, and back to the button that opened it when it closes 50ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > gives focus back to the footer button that opened the act, under StrictMode 65ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > the drawer and its act > says beside a disabled Delete why it is unavailable 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 208ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 81ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 172ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a Quality work project on the organisation's Quality area wherever the person may, whatever the track (P-111 item 5) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5) 120ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 263ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a role refusal (403) is said as itself 40ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a record not in this organization (404) is said as itself 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an expired session (401) is said as itself 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > an ownership check that could not run (503) is said as itself 16ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the Module 3 board says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 17ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 202ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 208ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a role refusal (403) is said as itself 166ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a record not in this organization (404) is said as itself 126ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an expired session (401) is said as itself 152ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > an ownership check that could not run (503) is said as itself 87ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the specifications register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 93ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 126ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 112ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a role refusal (403) is said as itself 154ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a record not in this organization (404) is said as itself 148ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an expired session (401) is said as itself 145ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > an ownership check that could not run (503) is said as itself 101ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the stability register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 105ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 138ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 135ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a role refusal (403) is said as itself 131ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a record not in this organization (404) is said as itself 114ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an expired session (401) is said as itself 91ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > an ownership check that could not run (503) is said as itself 83ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the batch register says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 79ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 101ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 97ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a role refusal (403) is said as itself 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a record not in this organization (404) is said as itself 91ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > an expired session (401) is said as itself 84ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > an ownership check that could not run (503) is said as itself 71ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the process-capability assessment says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 70ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a plan without the feature (403 MODULE_NOT_LICENSED) is said as itself 86ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a part not in this release (403 LAUNCH_SCOPE) is said as itself 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a role refusal (403) is said as itself 61ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a record not in this organization (404) is said as itself 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > an expired session (401) is said as itself 56ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > an ownership check that could not run (503) is said as itself 37ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the contradiction history says why it was not read > a failure to answer (500) is still a failed read, in the caller’s words 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the register-link panel, a CMC surface of its own > a plan without the feature is said as itself 36ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the register-link panel, a CMC surface of its own > a failure to answer keeps the words that matter — saves recorded, linkage unknown 43ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a plan without the feature is said as itself, not as a failed verdict 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > the export-readiness chip, which is not a panel > a failure to answer still says the verdict could not be read 18ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > what a 200 board reports about its own sub-reads is not a refusal > an unreadable section store is still a failed read, in the board’s own words 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide 630ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it 336ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change 287ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none 232ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > counts its own rows, not the organisation summary 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > says the project has no change, not that the log is empty 5ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 122ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters by lifecycle stage with one segmented control whose items carry the stage and its count 392ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 204ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > is a table with column headers, one body per change, and the shared chips 77ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > shows each change its one next step and More; the rest are behind More 181ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 67ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn 176ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > keeps how a change is raised in a closed disclosure under the log, with no AnA button of its own 129ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 30ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 9ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > waits for a QMS approver, the approval date and a reason; reviewers are optional; then PATCHes the route 389ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > says the server’s refusal and keeps the form open 105ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > shows the round under the status, every member in the sheet, and the sender’s acts; Approve is not the sender’s 133ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > reassigns through the shared sheet, which reads who may take it over again after a failed read 158ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the reviewer whose turn it is signs the review with meaning REVIEWED; they may hand back, not approve 46ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the approver at their turn approves through the existing signed approval 58ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > a document in review with no route keeps today’s Approve and offers Name reviewers; an unread route says so 78ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > a review route's notice opens the route, not the editor (C5) > opens the route sheet for the reviewer whose turn it is 35ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > a review route's notice opens the route, not the editor (C5) > opens the document, not the route, for someone whose turn it is not 65ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > lets an active viewer read the actual release instead of delegating a team acknowledgement to AnA 480ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > opens the same personal reader from a real training row 99ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > qualifies unavailable releases instead of presenting them as assessed roster coverage 25ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > distinguishes a document whose assigned people are none active from an empty controlled-document list 16ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a document assigned to nobody says so, with no bar and no fraction; the KPI says nothing is assigned 20ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > an assigned document shows how many of the people assigned are current, and the reader's own line; the KPI is the server's average 16ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a reader who is not assigned has no line of their own; one who is current is told so 29ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > rows without a summary from the server show no figure, and say so 16ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > offers no acknowledgement on a document type that carries no read-and-understood training; Open opens it 93ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > closes the selected reader immediately when the authenticated organization changes 86ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > orders the reviewers, dates each step, names two QMS approvers, and PATCHes the sequential route 458ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > the sender adds a reviewer to the open route 137ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > an approver whose approval is not the last is told so before signing 64ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > marks satisfied prerequisites and leaves the rest missing 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > handles null/undefined as nothing satisfied 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > prerequisiteRows (eSTAR registration → prerequisite chips) > preserves the canonical prerequisite order and set 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > flips the toggled prerequisite and preserves the rest as booleans 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > toggles a held prerequisite off 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > emits all four camelCase boolean fields 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > registrationPatchToggling (PUT /registration body builder) > carries the stored correspondent/declaration values so a toggle cannot blank them 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > reads the five fields and nothing else 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > is all-null for a missing row or a row without the columns — never a placeholder 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentValues (registration row → the five text fields) > keeps the field list in display order, the declaration name before its address 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > correspondentPatch (PUT /registration body for the text block) > sends every text field trimmed, an emptied one as null, and preserves the booleans 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > returns the bare endpoint when no filters are set 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > scopes to a project (the PM-spine view) 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > combines status and project filters 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFiling.test.ts > submissionsQueryUrl (project/status filter contract) > ignores a non-positive or non-integer projectId rather than widening the query 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening outcomes retain uncertainty > preserves a server commit uncertainty and bounds its error 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening outcomes retain uncertainty > does not accept a missing or wrong receipt null 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening outcomes retain uncertainty > does not accept a missing or wrong receipt {"screened":true} 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening outcomes retain uncertainty > does not accept a missing or wrong receipt {"screened":true,"decision":{"id":"synthetic-decision","pmid":"999","stage":"title_abstract","decision":"included","title":"Synthetic article","literatureEntryId":"synthetic-entry","exclusionReason":null,"programId":null,"decidedBy":42,"decidedAt":"2026-10-14T12:00:00.000Z"}} 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening outcomes retain uncertainty > keeps a network failure unconfirmed instead of claiming the decision was not written 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening hook recovery is scoped to a fresh authoritative read > blocks repeat POSTs until a successful explicit PMID read, preserves failure, then allows a reviewed new attempt 82ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening hook recovery is scoped to a fresh authoritative read > does not clear an uncertain attempt merely because a capped full trail was reread 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening hook recovery is scoped to a fresh authoritative read > prevents an immediate duplicate POST while the first write is pending 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/screeningRecovery.test.tsx > screening hook recovery is scoped to a fresh authoritative read > does not adopt a late old-program write after switching away and back 162ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > sends the password to the server rather than discarding it 21ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > reports success only with a server-issued signature record 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > refuses a 200 that carries no signature record 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > surfaces a failed password verification verbatim 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > distinguishes a missing signing authority from a bad password 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > omits the MFA field entirely when no code was entered 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > forwards an MFA code when one was entered 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > leaves no signature behind when the network fails 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useElectronicSignature.test.ts > useElectronicSignature > clears a prior rejection on reset 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > holds numbering metadata until every page has been confirmed 78ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses overlapping or changed page contents 56ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > retries the full read after a later-page failure without retaining incomplete authority 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses a nonprogressing empty page instead of looping or claiming completion 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"textAvailable":"true"}) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"completed","retryable":false,"reasonCode":null,"leaseExpiresAt":"not-a-date","nextRetryAt":null}}) 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > refuses malformed supplied processing/availability fields without citation authority ({"processing":{"state":"future_state","retryable":false,"reasonCode":null,"leaseExpiresAt":null,"nextRetryAt":null}}) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a plan without the feature': its own words, and no retry offered 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a part not in this release': its own words, and no retry offered 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a role that cannot read it': its own words, and no retry offered 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a project not in this organization': its own words, and no retry offered 54ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'a server failure' stays a failed read that a retry can fix 55ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > a refused catalogue read is said as the refusal it is > 'no response at all' stays a failed read that a retry can fix 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > requests the open queue for the whole portfolio by default 22ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > narrows to a program when given one 6ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > asks for closed items only when explicitly requested 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > reports the server overdue flag rather than recomputing it 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > buckets due-soon items without double-counting the overdue ones 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > honours a caller-supplied due-soon window 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > excludes items with no due date from due-soon 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > excludes a negative daysToDue the server did not call overdue 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > surfaces an empty queue as empty, never as an all-clear fixture 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useTriageQueue.test.ts > useTriageQueue > surfaces a failed fetch as an error, not as zero overdue items 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCdxPairings > requests the whole portfolio by default 19ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCdxPairings > scopes to the device programme when given 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCdxPairings > adapts snake_case server rows into the display shape 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCdxPairings > surfaces an empty programme as empty, not a fixture 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCdxPairings > surfaces a failed fetch as an error, not zero pairings 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCliaCategorizations > scopes to the programme when given 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCliaCategorizations > reports a granted waiver as granted 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCliaCategorizations > reports a revoked waiver as revoked even when granted is still true 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCliaCategorizations > reports an applied-but-undecided waiver as applied 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCdxClia.test.ts > useCliaCategorizations > reports no waiver activity as none 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > keeps EU evaluation filings distinct from a separately recorded US route 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server product_type onto the kit Program, alongside the k510 pathway 72ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > useMdxPrograms — productType > carries the server regulatory_path onto the kit Program — De Novo is classified and kept as De Novo 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > does not read creation progress or stale progress as readiness 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useMdxPrograms.productType.test.ts > device portfolio retains each device filing and states no invented readiness > keeps IDE, regional and unknown device rows, but excludes medicinal filings 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > reports a failed panel as error, not as empty 73ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > leaves the panels that DID read as honest empties 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > does not invent an error when every panel read cleanly 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > tolerates a route that sends no unavailable list at all 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > does not carry a stale failure into the next program 113ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEngineering.unavailable.test.ts > useEngineering — an unreadable panel > marks the derived summary as error when the route says so 54ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > joins catalog and mappings; missing or invalid applicability is honestly unmapped 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > keeps null-vs-empty distinct: null catalog → null, empty catalog → [] 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > mergeGsprRows (pure) > groups by chapter preserving catalog order 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > useCerGspr (fetch contract) > fans out to catalog + mappings + coverage and merges 74ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerGspr.test.ts > useCerGspr (fetch contract) > with no program only the catalog loads — no per-program requests are issued 58ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a project the organization does not own (404) is said as itself, not as a failed read 261ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > an ownership check that could not run (503) is said as itself, not as a failed read 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a role refusal (403) is said as itself, not as a failed read 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > the check that could not run is tried again, and its answer is drawn 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/UdiSurface.refusalNotFailedRead.test.tsx > UdiSurface — a refused read says why, once, and draws no figure > a genuine failure (500) is still a failed read on the panels 13ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > keeps an absent secondary report empty without fetching the primary filing outline 76ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > hydrates exact project CER content and retains its canonical section key 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > does not replace a failed content read with an apparently empty section 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > reports an unreadable list as unavailable rather than claiming no report exists 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > withholds cached sections until the current session revalidates the read 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > isAuthoredRow > counts complete/review/draft rows, never blockers or empty/na 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > matches by keyword, exact title, and normalized id 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > never counts unauthored rows — a blocker row is a gap even with a perfect title 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > never over-credits: an unrelated label matches nothing 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > matchPresentSectionIds (pure, deterministic) > returns [] for an empty section list 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > assessCerStructure (server contract) > POSTs presentSectionIds + equivalenceClaimed with auth headers 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerStructure.test.ts > assessCerStructure (server contract) > returns null on failure — never a fabricated pass 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links the CAPA chosen from the register, with its own number and title 295ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links a deviation chosen from the deviation register (P-57) 68ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > says so when the register could not be read, and keeps the typed reference 52ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > asks why the record is linked when the change is past proposal 71ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > names the person, the document and when their training lapses 48ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says a failed read failed, and never that no one lapses 11ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says each assignment state as it is, and an all-clear only where training is assigned 16ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > lists overdue, then due training, before the lapses, each with its day 164ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says when the list stopped at its cap, and treats a row of an unknown kind as a failed read 13ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > speaks for the reader alone when the read was their own rows 3ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > gives no all-clear over documents it could not assess, and says so 3ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 74ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 132ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 10ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 7ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > an organization the route could not confirm (403 ORG_REQUIRED) is said as itself, to the reader and to AnA 8ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 7ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 7ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > the check that could not run is tried again, and its answer is drawn 43ms
+ ✓ client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx > HumanFactors — the HFE/UE file says why it was not read > a genuine failure (500) is still a failed read 7ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > clears previously loaded procedure and roster rows before the replacement tenant reads settle 134ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > aborts old reads and ignores their late successful bodies after the new tenant renders 41ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > adaptStudy > maps snake_case columns to the camelCase row shape 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > adaptStudy > keeps an unrecorded count null rather than coercing it to zero 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > adaptStudy > coerces boolean flags strictly — only true is true 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > adaptStudy > defaults a missing status to planning 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > deriveStudyKpis > is all zeros for an empty portfolio and does not divide by zero 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > deriveStudyKpis > sums recorded sizes and computes portfolio enrollment percent 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > deriveStudyKpis > counts enrolling and follow_up studies as active enrollment 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > deriveStudyKpis > counts a study with a null planned size in total but not in the sums 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useClinicalStudies.test.ts > deriveStudyKpis > tallies BIMO-ready and IRB-approved counts 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptSite > marks a site activated only when it has an activation date 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptSite > defaults a missing enrolled count to zero and maps the PI 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptDeviation > derives resolved from the resolution date, not a flag 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptDeviation > coerces capa_required strictly and defaults category 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > coerces safety flags strictly — only true is true 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > marks FDA-reported only when a report date is present 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptAe > prefers the MedDRA term but keeps the ae_id available 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptEndpoint > keeps met as a tri-state (true / false / null) 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyDetail.test.ts > adaptEndpoint > stringifies a numeric p-value and leaves an absent one null 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > is null with no terms — the hook stays idle while the primary source is healthy 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > drops a sub-2-character deviceName rather than sending a query the server 400s 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > predicateFallbackUrl (query contract) > encodes both terms 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > useK510PredicateFallback > issues no request while both terms are null 20ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > useK510PredicateFallback > surfaces openFDA clearance rows when available 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.fallback.test.ts > useK510PredicateFallback > passes available:false through honestly — null rows, reason kept 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > registration succeeds with its real result while a lost audit is visible 72ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > tracking succeeds with its real result while a lost audit is visible 15ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > advance succeeds with its real result while a lost audit is visible 13ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > a 403 business refusal remains a failed save and does not announce a completed mutation 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > a 503 business refusal remains a failed save and does not announce a completed mutation 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarFilingAudit.test.tsx > actual eSTAR mutation hooks carry the audit outcome into the shared notice > a persisted chained audit does not create a warning or consume the response 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > a 200 that is not { sections: [...] } is reported, not thrown, and never an empty list 75ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > the documented shape adapts to rows, blockers counted 58ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useK510.sections.test.ts > useK510EstarSections — body shape > requests exact CER sections and preserves hierarchical section keys for editor handoff 57ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > narrows to the resolved specialization 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > falls back to the full registry when no specialization is on file 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > falls back to the full registry when the context resolve fails 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > archetypeQueryForContext > holds the fetch while the context is unresolved 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > groupArchetypesByDomain > splits device and ivd archetypes preserving registry order 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useStudyArchetypes.test.ts > groupArchetypesByDomain > returns empty groups for an empty list 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the draft package sends the project name, and the project id to resolve it by 21ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the official eSTAR does the same 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > with no name it falls back to the code, then the id 4ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > passes the initial exact record and a later same-surface request through QualityRoute 157ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > carries a training notice’s reading intent, and only that intent (MR-12 Stage 4 slice 4b) 7ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > takes integer session identities without a fallback organization 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":""} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":" 42 "} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"07","organizationId":"42"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":true,"organizationId":"42"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"1.5"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"2147483648"} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 0 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id -1 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 1.5 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id NaN 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id Infinity 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 2147483648 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > uses canonical authenticated GET and retains exact released text 6ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > accepts this person’s unexpired receipt for the exact released revision 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision being drafted 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision under review 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force and its successor when the row is the version approved for a later day 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a draft row beside a version not said to be in force 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a later effective row with no successor read 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor that is not the row 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor of another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects another person’s receipt on the successor 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > treats the canonical transport’s resolved 401 as a failed read 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":[]} 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":{"id":31,"organization_id":42,"version":"2.0","status":"effective"},"meta":{}} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an unreadable JSON response 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign tenant 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different version 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different release status 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unreleased state 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unverified content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with no readable bodies 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with outline only 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with blank body 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unavailable release 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > returns unavailable controlled content honestly without making it eligible 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another revision 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to other content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expired receipt 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expiry at the present instant 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to unverified legacy method 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > posts only the exact released version, digest and personal declaration through canonical transport 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unavailable content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for foreign document 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unverified content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing audit confirmation unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unpersisted audit unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unchained audit unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps malformed data unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing envelope unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a successful status with lost JSON unconfirmed 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another revision 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for other content 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for an expired receipt 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > accepts an already-current receipt without claiming another audited insertion 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not accept the already-current flag for another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 400 refusal distinct from an unknown commit 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 403 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 404 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 409 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 422 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > recognizes the canonical transport’s resolved 401 as a refusal 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a confirmed audit rollback as a refusal even at HTTP 500 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a network failure 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a request timeout 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an upstream failure 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 500 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 409 0ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 221ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 36ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 25ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 21ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 21ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 19ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the check that could not run is tried again, and its answer is drawn 52ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a genuine failure (500) is still a failed read 10ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a document not in this organization (404) is said as itself on both panels 34ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > the module gate (403 MODULE_NOT_LICENSED) on the translations is said as itself 27ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a genuine failure (500) of the translations is still a failed read 26ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a project the organization does not own (404) is said as itself, not as a failed read 275ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > an ownership check that could not run (503) is said as itself, not as a failed read 120ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, not as a failed read 66ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, not as a failed read 59ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a role refusal (403) is said as itself, not as a failed read 56ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a signature the act requires (428) is said as itself, not as a failed read 49ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > the check that could not run is tried again, and its answer is drawn 73ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — the Q-Submission list says why it was not read > a genuine failure (500) is still a failed read, with a retry 52ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > a Q-Sub not in this organization (404) is said as itself 19ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself 19ms
+ ✓ client/src/concept2cure/mdx/presub/__tests__/PreSubManager.refusalNotFailedRead.test.tsx > PreSubManager — a Q-Sub detail says why it was not read > a genuine failure (500) is still a failed read 26ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts > useAcceptAnaDraft > sends the Bearer token the accept route requires 21ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts > useAcceptAnaDraft > does not put the raw error envelope on screen 7ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts > useProgramExtras > sends the Bearer token on every one of its reads 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts > useProgramExtras > reports a failed read instead of reporting emptiness 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts > useProgramExtras > stays quiet when the reads genuinely return nothing 55ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterInForce.test.tsx > a controlled document under revision > shows the version in force beside its draft, dated by that version 115ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > retains the canonical binding and program rather than losing them between the service and Open control 19ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > keeps legacy absence explicit so an unbound draft opens binding setup 3ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the date due after the last signed review, not the date the approval signed 6ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the row date when the server sends no review 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the open project, and the whole organisation when the person widens it 29ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > never shows the previous scope's rows as the new scope's while the new read loads 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > uses fresh bearer and organization headers with cookies for reads and the strict personal write 22ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > rejects the actual transport’s resolved session refusal before displaying controlled content 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not equate an actual successful HTTP response with a confirmed audit record 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another account in the same organization before dispatch even when React still holds the old checked declaration 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another organization before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses missing identity claims before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses malformed bearer before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not dispatch a personal write after the canonical token is removed 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > flags a proposed change the server says is past its target 2ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > claims nothing for a row that carries no verdict 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > useChangeRegister > carries the server verdict and the linked records onto each row 20ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > names the rows and counts read 3ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says whose rows these are while a project is open 1ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says a capped read is the most recent rows, never the whole register 1ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > never reads a failed register as empty, and never borrows another tab's rows 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > reads the canonical shape-2 row the mdx list returns 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > falls back to the deprecated shape-1 spellings for a not-yet-reconciled database 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR classification adapter (canonical columns, D11d consolidation) > drops rows without a device name rather than rendering a nameless record 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > derives display metrics from counts rather than trusting inconsistent stored percentages 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (-1) 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (1.5) 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > excludes corrupt source counts (not-a-count) 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useIvd.metrics.test.ts > IVDR clinical evidence adapter > keeps undefined zero-denominator metrics explicit 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > attentionRank > ranks critical vocabulary above high above low 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > attentionRank > treats the err/warn vocabulary as equivalent to critical/high 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > attentionRank > is case-insensitive 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > attentionRank > sends an unknown severity to the middle, not the top 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > orderAttention > orders most-urgent first 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > orderAttention > is stable for equal severities — original order preserved 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useRbqm.test.ts > orderAttention > does not mutate the input array 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > adaptItem > maps the raw columns to the camelCase item shape 3ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > adaptItem > keeps absent optional fields null and defaults status to draft 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > kindLabel > gives a regulatory label for known deliverable kinds 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useSoftware.test.ts > kindLabel > degrades an unknown kind to a readable fallback, not a raw token 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > sends the regulation, and only the regulation 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > never sends deviceClass — the record states it, not the caller 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > never sends implantable — the record states it, not the caller 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useCerPostMarket.query.test.ts > postMarketStatusQuery > never sends customMade — the record states it, not the caller 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > resolves legacy aliases only at the compatibility boundary 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVDR/null as IVDR 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVD/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivdr as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivd as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > does not coerce unknown or 510(k) programs into IVDR 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > does not relabel the primary filing as an absent secondary CER or IVDR document 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > uses exact pathway classes rather than partial name matches 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > rejects an unrelated or missing project identity even when the document type matches 1ms
+ ✓ client/src/concept2cure/quality/__tests__/reviewOverdueToday.test.ts > review overdue is judged against today > marks a review due 2026-07-01 overdue on 2026-10-29, in the register and in the Record review row 5ms
+ Test Files  72 passed (72)
+      Tests  1007 passed (1007)

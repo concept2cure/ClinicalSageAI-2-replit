@@ -618,7 +618,9 @@
    can keep that row. Nothing new lifts on hover; the older card lifts are counted and
    only fall (design-system/README.md, "Animation & motion"; foundationsReadmeClaims). */
 .c2c-v2 .de-btn.primary:hover{background:color-mix(in srgb,var(--accent-strong) 88%,var(--text-100));}
-.c2c-v2 .de-btn.primary:disabled{opacity:.5;pointer-events:none;}
+/* Every disabled drawer button reads as disabled, not only the primary: a ghost one (New job role while an act is
+   open, Cancel while a write saves) looked as live as any other (walked, 2026-11-10). */
+.c2c-v2 .de-btn:disabled{opacity:.5;pointer-events:none;}
 .c2c-v2 .de-btn.ghost{border-color:var(--border);color:var(--text-200);}
 .c2c-v2 .de-btn.ghost:hover{background:var(--bg-100);color:var(--text-100);}
 .c2c-v2 .de-btn svg{width:15px;height:15px;}

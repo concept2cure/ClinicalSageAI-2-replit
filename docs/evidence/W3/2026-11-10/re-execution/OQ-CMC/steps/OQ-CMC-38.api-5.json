@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971/history",
+    "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e/history",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,17 +9,17 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 16,
+    "durationMs": 31,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
         "register": "specification",
-        "recordId": "87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+        "recordId": "ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
         "store": "specification_revision_log",
         "entries": [
           {
-            "at": "2026-11-10T03:39:25.353Z",
+            "at": "2026-11-10T13:06:31.094Z",
             "act": "created",
             "label": "Specification recorded",
             "actorId": 1,
@@ -35,7 +35,7 @@
             "sealed": false
           },
           {
-            "at": "2026-11-10T03:42:30.623Z",
+            "at": "2026-11-10T13:22:00.679Z",
             "act": "approved",
             "label": "Specification approved",
             "actorId": 2,
@@ -58,7 +58,7 @@
             "sealed": false
           },
           {
-            "at": "2026-11-10T03:42:31.183Z",
+            "at": "2026-11-10T13:22:01.257Z",
             "act": "approval_withdrawn",
             "label": "Approval withdrawn",
             "actorId": 1,

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-11-10T03:55:09.642Z |
+| Version | generated 2026-11-10T13:29:13.810Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-00* requirement tables · RA-001 rows · docs/evidence/W3/2026-11-10/OQ-*/result.json · IQ/iq-results.json |
@@ -12,8 +12,8 @@
 
 ## Summary
 
-- Requirements: **132** — pass 120 · partial 4 · fail 0 · open 6 · uncovered 2
-- OQ steps executed: **180** — pass 170 · fail 0 · deviation 8 · not-executed 2
+- Requirements: **132** — pass 124 · partial 2 · fail 0 · open 4 · uncovered 2
+- OQ steps executed: **181** — pass 175 · fail 0 · deviation 6 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-11-10T02:41:53.540Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
@@ -24,7 +24,7 @@
 | Submission Center | 15 | 13 | 0 | 0 | 1 | 1 |
 | Submission Readiness | 8 | 7 | 1 | 0 | 0 | 0 |
 | QMS controlled documents | 13 | 13 | 0 | 0 | 0 | 0 |
-| CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12) | 30 | 24 | 2 | 0 | 4 | 0 |
+| CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12) | 30 | 28 | 0 | 0 | 2 | 0 |
 | Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`. | 15 | 14 | 0 | 0 | 1 | 0 |
 
 ## Protocol executions included
@@ -32,7 +32,7 @@
 | Protocol | App | Executed | Pass | Fail | Deviation | Not executed | Evidence |
 |---|---|---|---|---|---|---|---|
 | OQ-003 | Authoring | 2026-11-10T02:48:17.937Z | 25 | 0 | 1 | 0 | `docs/evidence/W3/2026-11-10/OQ-AUTHORING/` |
-| OQ-008 | CMC / Module 3 | 2026-11-10T03:39:23.120Z | 36 | 0 | 4 | 2 | `docs/evidence/W3/2026-11-10/OQ-CMC/` |
+| OQ-008 | CMC / Module 3 | 2026-11-10T13:06:27.451Z | 41 | 0 | 2 | 0 | `docs/evidence/W3/2026-11-10/OQ-CMC/` |
 | OQ-001 | Projects | 2026-11-10T03:05:59.119Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-11-10/OQ-PROJECTS/` |
 | OQ-006 | QMS controlled documents | 2026-11-10T03:11:18.613Z | 22 | 0 | 0 | 0 | `docs/evidence/W3/2026-11-10/OQ-QMS/` |
 | OQ-007 | Reporting & analytics | 2026-11-10T03:35:45.244Z | 17 | 0 | 1 | 0 | `docs/evidence/W3/2026-11-10/OQ-REPORTING/` |
@@ -132,23 +132,23 @@
 | URS-QMS-012 | The Quality surface renders the SOP register with the organisation's documents and the Change control tab; the QMP surface renders the organisation's plans. | none | medium | unscripted | OQ-QMS-14 (pass)<br>OQ-QMS-15 (pass) | **pass** |
 | URS-QMS-013 | The server-curated quality-system template family is served. | none | low | ad-hoc | OQ-QMS-13 (pass) | **pass** |
 | URS-CMC-001 | Every `/api/cmc` endpoint requires an authenticated member of the organisation; a read-only (viewer) session is refused on every write and still served every read and every computation that saves nothing. | §11.10(d) | high | scripted | OQ-CMC-01 (pass)<br>OQ-CMC-02 (pass)<br>OQ-CMC-31 (pass) | **pass** |
-| URS-CMC-002 | A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found. | §11.10(d) | high | scripted | OQ-CMC-03 (pass)<br>OQ-CMC-04 (pass) | **pass** |
+| URS-CMC-002 | A register write files under the open programme, is scoped to the caller's organisation, and a programme of another organisation is not found. | §11.10(d) | high | scripted | OQ-CMC-03 (pass)<br>OQ-CMC-04 (pass)<br>OQ-CMC-03b (pass) | **pass** |
 | URS-CMC-003 | Each register write reaches Module 3 only as a canonical source object; no screen or request body writes a Module 3 section record. | none | high | scripted | OQ-CMC-05 (pass) | **pass** |
 | URS-CMC-004 | Module 3 is composed by one deterministic engine from the programme's own canonical sources — core §3.2.S / §3.2.P / 3.1 / 3.3, the emittable 3.2.A appendices, and 3.2.R for the region the linked submission records. A compile of a programme with no sources is refused and says what to record. | none | high | scripted | OQ-CMC-06 (pass)<br>OQ-CMC-07 (pass) | **pass** |
 | URS-CMC-005 | Composition is refused, 409, for a biologic or ATMP substance, a programme recorded as anything but a drug, an application that is not a US IND, and a substance whose modality the record does not establish. Each refusal names the guidelines not modelled and the path that does author it. | none | high | scripted | OQ-CMC-08 (pass)<br>OQ-CMC-09 (pass) | **pass** |
 | URS-CMC-006 | A section's stored record is the compiler's own output and its completeness is the compiler's verdict; a request body cannot supply either. | §11.10(a) | high | scripted | OQ-CMC-10 (pass) | **pass** |
 | URS-CMC-007 | A section approval is an electronic signature: it requires a role with signing authority, a stated reason of at least the governed minimum, and re-authentication of the signer; it records the signature, the version snapshot and a chained audit row, or nothing. | §11.10(e) §11.50 §11.70 | high | scripted | OQ-CMC-11 (pass)<br>OQ-CMC-12 (pass)<br>OQ-CMC-13 (pass)<br>OQ-CMC-14 (pass) | **pass** |
 | URS-CMC-008 | What the signer read is what is signed: a section recompiled since the read is refused 409, and the state change is guarded on the content hash the transaction itself read. | §11.70 | high | scripted | OQ-CMC-15 (pass) | **pass** |
-| URS-CMC-009 | The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason. | §11.10(e) | high | scripted | OQ-CMC-16 (pass)<br>OQ-CMC-17 (deviation) | **partial** |
+| URS-CMC-009 | The contradiction sweep reports what it examined, keeps a recorded resolution across sweeps, treats changed data as a new finding, and clears a finding the data no longer shows. Resolving a critical finding requires signing authority and a reason. | §11.10(e) | high | scripted | OQ-CMC-16 (pass)<br>OQ-CMC-17 (pass) | **pass** |
 | URS-CMC-010 | The final-export gate refuses unless every composed section is approved, no critical contradiction is open, no approved section is stale, the provenance chain is complete, each approved section matches what the compiler established, and no critical finding in the current records is unrecorded. Each blocker is named. | none | high | scripted | OQ-CMC-18 (pass) | **pass** |
-| URS-CMC-011 | Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's. | §11.10(e) | high | scripted | OQ-CMC-19 (deviation)<br>OQ-CMC-20 (pass) | **partial** |
+| URS-CMC-011 | Placement writes the approved sections into the programme's own US IND sequence as leaves, in one transaction, requires the regulatory-author role and a reason, is idempotent on retry, and refuses a sequence or submission that is not the programme's. | §11.10(e) | high | scripted | OQ-CMC-19 (pass)<br>OQ-CMC-20 (pass) | **pass** |
 | URS-CMC-012 | The Module 3 version history and the provenance events are append-only in the database: the runtime role cannot update, delete or truncate them. | §11.10(c) §11.10(e) | high | scripted | OQ-CMC-21 (pass) | **pass** |
 | URS-CMC-013 | A signed or released record is closed to an ordinary edit (409); a batch cannot be created already released, nor dispositioned twice; a release is refused over QC results that are not recorded and reviewed. | §11.10(e) | high | scripted | OQ-CMC-22 (pass)<br>OQ-CMC-23 (pass) | **pass** |
 | URS-CMC-014 | The quality engines — ICH compliance judged at the programme's stage against current revisions, QbD, control strategy, process capability, shelf-life estimation, stability trending, poolability, dissolution comparison — are deterministic, cite what they judged, and answer 404 for a programme of another organisation. | none | medium | scripted | OQ-CMC-24 (pass) | **pass** |
 | URS-CMC-015 | The Overview board states section approvals, the portfolio, the build state and a readiness lead taken from the gate's own verdict; a figure it cannot compute is reported as not computed, never as zero. | none | medium | unscripted | OQ-CMC-25 (pass) | **pass** |
 | URS-CMC-016 | Only the CMC specification interview commits to a record; an interview of any other kind is refused where the launch boundary is enforced, because its answers reach no record. | none | medium | scripted | OQ-CMC-26 (deviation) | **open** |
-| URS-CMC-017 | A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence. | §11.70 | high | scripted | OQ-CMC-27 (not-executed) | **open** |
-| URS-CMC-018 | An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it. | none | high | scripted | OQ-CMC-28 (not-executed) | **open** |
+| URS-CMC-017 | A release signature clears a dispatch only when its signed leaf manifest is the sequence's current manifest; a signature over different content reads as no release signature for that sequence. | §11.70 | high | scripted | OQ-CMC-27 (pass) | **pass** |
+| URS-CMC-018 | An original US IND sequence that carries no 3.2.S and no 3.2.P, and no cross-reference with a Letter of Authorization covering them, is not dispatch-ready; the finding cites 21 CFR 312.23(a)(7) and (b) and names both ways to clear it. | none | high | scripted | OQ-CMC-28 (pass) | **pass** |
 | URS-CMC-019 | The CMC surface claims only the API paths its screens call; every other path under `/api/cmc` is unattributed and refused in production. | none | high | scripted | OQ-CMC-29 (pass) | **pass** |
 | URS-CMC-020 | A submission package carries a programme's Module 3 only when that programme's export gate is open; the orchestrator composes none from unapproved records, and inline CMC data in a request is refused outside development. | none | high | scripted | OQ-CMC-30 (deviation) | **open** |
 | URS-CMC-021 | Every register create records the person who recorded it, on the tenant's audit chain, in the same transaction as the row: a create that names no operator writes nothing, and no register row is created by any other path. | §11.10(e) | high | scripted | OQ-CMC-32 (pass) | **pass** |

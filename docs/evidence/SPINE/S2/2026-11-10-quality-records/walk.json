@@ -1,0 +1,359 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "at": "2026-11-10T12:07:11.349Z",
+  "project": {
+    "id": "f0bc9243-3d00-484e-ad5b-55cd87fa8d35",
+    "name": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+  },
+  "rows": [
+    {
+      "title": "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt",
+      "line": "Text · 1.3 KB · added Nov 10",
+      "buttons": [
+        "Work…",
+        "Review…"
+      ]
+    },
+    {
+      "title": "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt",
+      "line": "Text · 3.5 KB · added Nov 10",
+      "buttons": [
+        "Work…",
+        "Review…"
+      ]
+    },
+    {
+      "title": "Retained LMN-SOP-202 [Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions v1.0",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Retained LMN-SOP-201 [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management v1.0",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: triggered by [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: addresses [Demo · Lumen] Visit-window control at investigator sites (from LMN-DEV-2026-014)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: references [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: LMN-SOP-202 [Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions (assignment 4)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: LMN-SOP-202 [Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions (assignment 3)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: LMN-SOP-201 [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management (assignment 2)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: LMN-SOP-201 [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management (assignment 1)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 1. Reconcile the RePreve TMF index against the Vault and file the 23 documents found missing or late.",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 2. Add an EDC alert that warns each RePreve site 5 days before the week-12 window closes.",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 1. Central lab sends a monthly kit-expiry report for every site; sites replace kits 30 days before expiry.",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 1. Quarantine the 48 affected kits of lot LMN201-DP-2406 at the depot pending disposition.",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 3. Revise LMN-SOP-201 so every monitoring visit checks upcoming visit windows (change control LMN-CC-2026-021).",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 1. Retrain the Site 104 coordinators on the RePreve visit schedule and the ±3-day week-12 window; file the training reco…",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Supplier: [Demo · Lumen] Corvane Biologics",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Nonconformance: LMN-NC-2026-008",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Nonconformance: LMN-NC-2026-007",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Nonconformance: LMN-NC-2026-009",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Management review: Lumen 2026-Q2",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Management review: Lumen 2026-Q3",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Internal audit: LMN-IA-2027-01",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Internal audit: LMN-IA-2026-05",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Internal audit: LMN-IA-2026-04",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Internal audit: LMN-IA-2026-03",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "LMN-SOP-203 [Demo · Lumen] SOP-203 Trial Master File Management in the Vault — working record",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "LMN-SOP-202 [Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions — working record",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "LMN-SOP-202 [Demo · Lumen] SOP-202 Investigational Product Cold-Chain Shipment and Excursions — release in force",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "LMN-SOP-201 [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management — working record",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "LMN-SOP-201 [Demo · Lumen] SOP-201 Clinical Protocol Deviation Management — release in force",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Change control: [Demo · Lumen] Revise SOP-201 and add an EDC visit-window check for RePreve sites",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA: [Demo · Lumen] TMF filing timeliness and Vault metadata completeness (from LMN-IA-2026-03)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA: [Demo · Lumen] Central-lab sample kit expiry tracking at sites",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA: [Demo · Lumen] Visit-window control at investigator sites (from LMN-DEV-2026-014)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA: [Demo · Lumen] Cold-chain shipper qualification for 2–8 °C lanes (from LMN-NC-2026-009)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: triggered_by [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: record 3",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: record 2",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: record 1",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: 4",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: 3",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: 2",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Training assignment: 1",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Retained Quality document 2 v1.0",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Retained Quality document 1 v1.0",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: 3",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: 2",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "Quality record relationship: 1",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 778ea828-6c9a-4584-969f-578a2fd32109",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 5864b6d9-f7fc-46a7-b9a7-670f964de916",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 55d83549-2018-4c70-9214-d153beb46c45",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 3d8ce32b-8365-478a-bf94-46492809105d",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 2ae60690-6fe3-4c30-8603-e53d5379a2ec",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    },
+    {
+      "title": "CAPA action: 2162ef27-abc1-4f61-b126-c78482e0ed1c",
+      "line": "Quality record · recorded here Nov 10",
+      "buttons": []
+    }
+  ],
+  "summary": {
+    "rows": 64,
+    "files": 2,
+    "qualityRecords": 62,
+    "firstQualityAt": 2,
+    "fileAfterQuality": false,
+    "qualityWithFileButtons": 0,
+    "titledByBareId": [
+      "Training assignment: 4",
+      "Training assignment: 3",
+      "Training assignment: 2",
+      "Training assignment: 1",
+      "Quality record relationship: 3",
+      "Quality record relationship: 2",
+      "Quality record relationship: 1",
+      "CAPA action: 778ea828-6c9a-4584-969f-578a2fd32109",
+      "CAPA action: 5864b6d9-f7fc-46a7-b9a7-670f964de916",
+      "CAPA action: 55d83549-2018-4c70-9214-d153beb46c45",
+      "CAPA action: 3d8ce32b-8365-478a-bf94-46492809105d",
+      "CAPA action: 2ae60690-6fe3-4c30-8603-e53d5379a2ec",
+      "CAPA action: 2162ef27-abc1-4f61-b126-c78482e0ed1c"
+    ]
+  }
+}

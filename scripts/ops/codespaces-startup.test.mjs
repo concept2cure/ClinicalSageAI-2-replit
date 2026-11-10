@@ -267,3 +267,37 @@ test('the Codespace installs what the document exports need, and a failed instal
   assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the long demo seed');
   assert.doesNotMatch(code, /c2c_install_export_tools \|\|/, 'never a blocking step');
 });
+
+// Showcase walk, 2026-11-10: with a key the provider refuses and no embeddings key, /readyz names only the search
+// lane, and the start printed "ANTHROPIC_API_KEY: BLOCKED ANTHROPIC_KEY_INVALID" followed by "AnA in the running app
+// answers and drafts with the Anthropic key". The second line is said only when the drafting call was answered.
+test('the start says AnA answers and drafts only when the drafting call with this key was answered', () => {
+  const post = readFileSync(postStart, 'utf8');
+  const lane = post.slice(post.indexOf('embedding_lane_down|no_embedding_lane)'), post.indexOf('*) c2c_log "AnA in the running app: $C2C_APP_ANA.'));
+  assert.match(lane, /if \[\[ "\$\{C2C_DRAFTING_LINE:-\}" == "answered by"\* \]\]; then\n\s+c2c_log "AnA in the running app answers and drafts with the Anthropic key/);
+  assert.match(lane, /else\n\s+c2c_log "AnA in the running app cannot answer or draft yet: see the ANTHROPIC_API_KEY lines above\."/);
+  assert.match(lane, /Search is off \(\$C2C_APP_ANA\)/);
+  assert.equal((post.match(/answers and drafts with the Anthropic key/g) ?? []).length, 1);
+});
+
+// 2026-11-10: Compliance reports' "Run attestation" answered 503 in every Codespace, because nothing gave the app an
+// attestation signing key. The Codespace mints its own, like its JWT secrets: in app.env when the state is first
+// written, and added by a start to an app.env made before this (so an existing Codespace gets one too).
+test('the Codespace app has an attestation signing key of its own, on a new and on an existing state', () => {
+  const code = readFileSync(postStart, 'utf8').split('\n').filter(line => !line.trimStart().startsWith('#')).join('\n');
+  const ensured = code.indexOf('c2c_ensure_attestation_key');
+  assert.ok(ensured >= 0 && ensured < code.indexOf('c2c_start_app() {'), 'every start ensures the key before the app starts');
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-attest-'));
+  try {
+    const env = `${dir}/state/app.env`;
+    const script = `set -e; export C2C_CODESPACE_STATE=${dir}/state; source ${postCreate}; c2c_write_state; ` +
+      `grep -c '^AUDIT_ATTESTATION_KEY=' ${env}; first=$(grep '^AUDIT_ATTESTATION_KEY=' ${env}); ` +
+      `c2c_ensure_attestation_key; [ "$first" = "$(grep '^AUDIT_ATTESTATION_KEY=' ${env})" ] && echo kept; ` +
+      `sed -i '/^AUDIT_ATTESTATION_KEY/d' ${env}; c2c_ensure_attestation_key; ` +
+      `grep -c '^AUDIT_ATTESTATION_KEY=' ${env}; grep -c '^AUDIT_ATTESTATION_KEY_ID=' ${env}; stat -c %a ${env}`;
+    const run = spawnSync('bash', ['-c', script], { encoding: 'utf8' });
+    assert.equal(run.status, 0, run.stderr);
+    assert.deepEqual(run.stdout.trim().split('\n'), ['1', 'kept', '1', '1', '600'],
+      'minted with the state, kept on a later start, restored to an app.env that lacks it, and still private');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

@@ -3081,3 +3081,42 @@ and what is at risk.
 
 **4. Not decided here.** Mission Control, the CRO portfolio and the project journey stay outside the launch catalog
 until the founder admits them. Their engines may serve the screens above (Rule 3: reach, not rebuild).
+
+### P-123 — Decided under the founder's delegation: the Vault lane's open calls, made for the customer who pays
+
+The founder, 2026-11-10, to the Vault session (`…01QoxbLZMS`), on its list of open items: **"Yes to all but I want
+you to make the most educated 'right calls' on behalf of our potential customers and what they will want to pay
+for."** Decided by that session. Each is reversible by the founder. The test applied to each: a regulatory affairs
+lead pays for a Vault that tells them correctly what their filing owes and that an inspector cannot fault. They do
+not pay for a feature that is nearly right.
+
+1. **A device section's requirement is the eSTAR registry's, per device.** (P-107's "D4 and D6 disagreement".) This
+   was landed on trunk by another session (`…01KnUGoX3g`, `server/services/pathway-engines/estar/estar-outline-requirements.ts`)
+   while this session was building the same thing. This session withdrew its copy unpushed (zero duplication) and
+   kept only the decision that slice left open, item 2.
+2. **Risk management in a 510(k) follows FDA's template, not habit.** The registry required it of every 510(k). FDA's
+   eSTAR shows "Benefits, Risks, and Mitigation Measures" for a Special 510(k), a De Novo and a PMA and hides it for a
+   Traditional or Abbreviated 510(k) (the finding recorded in `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`).
+   The product does not record which kind of 510(k) a project is, so the section reads "When applicable" (required
+   when the submission is a Special 510(k)) and is reported for a person to confirm. It is no longer scored as missing on a Traditional 510(k),
+   where demanding it told a customer their complete filing was incomplete. A De Novo still owes it. **Owed, as a
+   later slice by the device lane:** record the kind of 510(k) at intake, so this becomes a yes or a no.
+3. **The organisation-wide folder route (`/api/folders`) is retired.** It had no screen, no caller, no audit row, no
+   reason for change, and a hard delete. In a Part 11 product that is a finding waiting for an auditor, and nobody
+   could reach it to get value from it. Folders are a project's, through its Vault
+   (`server/routes/c2c/project-vault.ts`, `server/services/vault/vault-folders.ts`). `public.document_folders` stays.
+   If a customer asks for folders shared across projects, that is built on the governed writer, as its own decision.
+4. **Renditions stay Word to PDF.** Word is what regulated documents are written in and PDF is what is filed. A
+   spreadsheet or a slide deck flattened to PDF is not what anyone files, and a poor rendition next to a "verified"
+   label costs trust. Other formats download as their source, verified. Revisit on a customer's request.
+5. **Search filters stay one value each.** Several values already arrive through a saved view. A multi-select on
+   every filter is weight on a screen that should stay calm (RULE 4), and no customer has asked.
+6. **Recommended to the filing lane, not decided here:** accept what the agencies accept for a leaf (PDF 1.4 to 1.7,
+   and PDF/A-1 or PDF/A-2 where the agency lists them) and do not require PDF/A of every leaf. Requiring more than
+   the agency does refuses files a customer may lawfully file. This sentence is from the session's knowledge of FDA's
+   PDF specifications, not from a fresh reading: the filing lane confirms it against the current specification.
+7. **Not this session's to decide, and still owed by people:** legal sign-off on each agency DTD before it is
+   fetched (`assets/ectd-dtd/README.md`); licences; production secrets and hosting; the model key and the
+   qualification approval that lets AnA be walked over folders in a conversation.
+
+Evidence: `docs/evidence/SPINE/S6/2026-11-10/README.md`.
