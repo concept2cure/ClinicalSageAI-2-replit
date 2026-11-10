@@ -63,3 +63,41 @@ export function newFolderParentOf(treeId: string | null | undefined): string {
   if (!treeId || !treeId.startsWith('cab-') || QUEUES.has(treeId)) return '';
   return treeId.slice(4);
 }
+
+/** A plan task (the project's pyramid, GET /api/v1/pyramids/by-project/:id) as a Vault folder lists it. */
+export interface FolderPlanTask {
+  id: string;
+  name: string;
+  status: string;
+  /** The task's CTD bindings that fall in the folder. */
+  codes: string[];
+}
+
+/**
+ * The plan tasks that feed a binder folder: those whose document bindings fall at or below its
+ * CTD heading ('cab-bn:3.2.S' takes 3.2.S and 3.2.S.4). A module root ('cab-bn:M3') takes every
+ * binding of module 3. A folder that is not a binder heading has none.
+ */
+export function planTasksForFolder(
+  treeId: string | null | undefined,
+  tasks: ReadonlyArray<{ id: string; name: string; ctd?: string[] }>,
+  statuses: Readonly<Record<string, string>> = {},
+): FolderPlanTask[] {
+  const m = /^cab-bn:(.+)$/.exec(treeId ?? '');
+  if (!m) return [];
+  const key = m[1];
+  const root = /^M([1-5])$/.exec(key);
+  const within = (c: string) => (root ? c === root[1] || c.startsWith(`${root[1]}.`) : c === key || c.startsWith(`${key}.`));
+  return tasks
+    .map((t) => ({ id: t.id, name: t.name, status: statuses[t.id] ?? 'todo', codes: (t.ctd ?? []).filter(within) }))
+    .filter((t) => t.codes.length > 0);
+}
+
+/** The nearest binder heading a CTD code opens: itself, else its closest ancestor the tree holds. */
+export function binderFolderFor(code: string, has: (treeId: string) => boolean): string | null {
+  for (let c = code.trim(); c; c = c.includes('.') ? c.slice(0, c.lastIndexOf('.')) : '') {
+    if (has(`cab-bn:${c}`)) return `cab-bn:${c}`;
+  }
+  const mod = /^([1-5])/.exec(code.trim());
+  return mod && has(`cab-bn:M${mod[1]}`) ? `cab-bn:M${mod[1]}` : null;
+}
