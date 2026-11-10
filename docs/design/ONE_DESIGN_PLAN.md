@@ -1047,6 +1047,18 @@ RBM, QMS and more; Vault … and tasking too")
   - The Codespace supplies the list from its two rosters (`VITE_DEMO_ACCOUNTS`).
   - Signed in through it in the running app as two people, one in each account.
 - **The Vault seed no longer re-files on each run** (2026-11-10): it reads each document's own filing record.
+- **The showcase pass on the Lumen account** (2026-11-10, the founder: "get everything ready for a sales showcase of
+  the entire platform"). Record: `docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`.
+  - Swept as the lead, the reviewer and the approver: every step, rail destination and tab. No failed request except
+    the Module 3 refusals for a biologic.
+  - Completed through the screens' own routes: the protocol workspace and the sequence's 5 leaves (`7d9112e60`); the
+    project teams, a report bundle and two in-platform schedules (`80f5b7c41`).
+  - Its own defect, found by reading the screen: the Lumen protocol carried the psoriasis study's eligibility
+    criteria. Fixed, with a repair for a copy already seeded (`34ecd2981`).
+  - L1: the Codespace installs the fonts report PDFs embed (`4a473cffe`). Before, every PDF export in Reporting
+    answered 503 there.
+  - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
+    veraPDF, `xmllint`, python-docx). Not exercised.
 
 **Finding shared with the design lead**
 
