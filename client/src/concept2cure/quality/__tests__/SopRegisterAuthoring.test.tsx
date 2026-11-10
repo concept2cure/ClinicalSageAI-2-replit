@@ -3,6 +3,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({ docs: [] as unknown[], request: vi.fn(), refresh: vi.fn(), ask: vi.fn(), nav: vi.fn(), workbench: null as unknown }));
 const PROGRAM = '40000000-0000-4000-8000-000000000001';
 const DOCUMENT = '40000000-0000-4000-8000-000000000002';
@@ -168,7 +175,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('creates and opens a controlled revision through the real revision route', async () => {
     H.docs = [{ ...DRAFT, status: 'effective' }];
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'Update the procedure after periodic review.' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create revision' }));
@@ -178,7 +185,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content', async () => {
     H.docs = [{...DRAFT,status:'effective',authoringDocumentId:null}];
-    renderRegister(); fireEvent.click(screen.getByRole('button',{name:/Revise/}));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button',{name:/Revise/}));
     expect(screen.getByRole('dialog',{name:'Start authored revision'}).textContent).toMatch(/no authored content is claimed/);
     fireEvent.change(screen.getByLabelText('Template'),{target:{value:'sop'}});
     await completeForm('Create revision and open');
@@ -221,7 +228,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   it('opens retained signed sections through the versions service as read-only content', async () => {
     H.request.mockResolvedValue(response([{ version: '1.0', approved_at: '2026-10-10T12:00:00Z',
       sections: [{ id: 'section-1', code: '1', title: 'Purpose', content: '<p>Signed purpose.</p>', orderIndex: 1 }] }]));
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
     expect(await screen.findByTestId('saved-snapshot-content')).toHaveProperty('textContent', '<p>Signed purpose.</p>');
     expect(H.request).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/4/versions');
     const dialog = screen.getByRole('dialog', { name: 'Version history of SOP-004' });
@@ -232,7 +239,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('does not present an unreadable history as no signed versions', async () => {
     H.request.mockRejectedValue(new Error('You do not have permission to view this authored document.'));
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/permission to view/));
     expect(screen.queryByText('No document versions recorded yet.')).toBeNull();
     expect(screen.queryByTestId('saved-snapshot-content')).toBeNull();

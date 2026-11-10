@@ -21,7 +21,14 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
+
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
 
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
@@ -195,6 +202,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
 
   it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
     expect(dialog.getAttribute('data-meanings')).toBe('retirement');
@@ -210,6 +218,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
       }),
     });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
 
@@ -228,6 +237,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
   it('shows a refused password as not retired', async () => {
     H.apiRequest.mockResolvedValue({ status: 401, ok: false, json: async () => ({ error: 'Password did not verify.' }) });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
     await waitFor(() => expect(H.signError).toBeTruthy());

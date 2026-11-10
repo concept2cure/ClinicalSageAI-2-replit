@@ -23,6 +23,13 @@ import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(),
   refresh: vi.fn(),
@@ -183,6 +190,7 @@ describe('SOP register — governed actions reach their routes', () => {
 
   it('Revise opens a reason-for-change dialog and posts the reason to /revise', async () => {
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
     const d = screen.getByRole('dialog', { name: 'Create controlled revision' });
     fill(d, /^Reason$/, 'Periodic review found the supplier tiers out of date.');

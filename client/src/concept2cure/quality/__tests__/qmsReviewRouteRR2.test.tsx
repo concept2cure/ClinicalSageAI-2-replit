@@ -14,6 +14,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   apiRequest: vi.fn(),
@@ -131,6 +138,7 @@ describe('QMS: reviewers one after another and two QMS approvers (RR2)', () => {
     H.docs = [{ ...DOC, status: 'in_review', reviewRoute: ROUTED }];
     answers['POST /api/mdx/qms/documents/21/review-route/members'] = () => ok({ ok: true, taskId: 'ROUTE-abcd1234-6', step: 1 });
     renderRegister();
+    openMore(rowOf('SOP-021'));
     fireEvent.click(within(rowOf('SOP-021')).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     fireEvent.click(within(panel).getByRole('button', { name: 'Add a reviewer' }));
@@ -152,6 +160,7 @@ describe('QMS: reviewers one after another and two QMS approvers (RR2)', () => {
       member({ userId: 10, printedName: 'Ava QA', role: 'approver', step: 2 }),
     ]) }];
     renderRegister();
+    openMore(rowOf('SOP-021'));
     fireEvent.click(within(rowOf('SOP-021')).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).queryByRole('button', { name: 'Add a reviewer' }), 'an approver does not add reviewers').toBeNull();

@@ -333,3 +333,13 @@
   /* The shared drawer's close is 30 px (journey-v2.css .de-x); in the register's route sheets it is a 44 px target on a phone. */
   .c2c-v2 .qms-shell .de-x { width: 44px; height: 44px; }
 }
+
+/* ─── A register row's next step and "More" (D7-B item 6, SopRegisterRow.tsx) ───
+   The row shows one next step and "More"; the rest open in the row, on its own
+   line under the facts, never as a menu. */
+.qms-rowacts { flex-wrap: nowrap; }
+.qms-row-more {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
+  padding: 2px 0 4px; border-top: 1px dashed var(--border-subtle);
+}
+.qms-row[data-more] { background: var(--bg-050); }
