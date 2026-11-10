@@ -50,11 +50,17 @@ This lane built nothing. It runs the repository's own CI definition and repairs 
 | Blank DB provisioning and deploy migration | Green, all 12 steps, on a new blank database |
 | Security: SBOM, dependency-risk ledger, PPTX reachability, Trivy hygiene | Green. The first SBOM red came from a `node_modules` older than `10b8e3fd68`'s image-size override, and `npm ci` cleared it. The Trivy scans themselves are GitHub actions and were not run |
 | Build | The build is green. `ci:component-class-coverage` was red on 5 classes. The 2 CMC classes are fixed here; 3 Quality classes are handed over |
+| Production boot smoke | Green, all 9 steps, on a Docker daemon started in this container. It ran pgvector/pgvector:pg15 with TLS, provisioned from scratch, and checked that `app_service` is NOSUPERUSER and NOBYPASSRLS. It built the bundle, checked its production imports, and ran the pinned clamd. The bundle reached `/readyz=200` with `RLS_ENFORCE=on`. The job ran as written; the local Postgres on 5432 was stopped for the run |
 
 **Not reproduced here:**
 - Coverage and nightly governance run only on the schedule.
-- Production boot smoke, production image boot and Codespace need a Docker daemon. This container has the client
-  but no daemon.
+- **Production image boot and Codespace are blocked by this container's network.**
+  - Inside a container, npm reaches no registry. The sandbox's only way out is its agent proxy, and a container has
+    neither the proxy nor its CA. `npm view` timed out with and without `--network host`.
+  - So `docker build -f Dockerfile.optimized` stops at `npm ci` ("Exit handler never called!", after an earlier
+    Docker Hub 429).
+  - Giving the build the proxy and CA would change the build CI runs, so it was not done.
+  - Both jobs need CI or a machine with ordinary egress.
 - The release-evidence jobs run on GitHub only.
 
 **Found by the newer jobs:**
