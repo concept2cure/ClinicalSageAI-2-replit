@@ -516,6 +516,7 @@ function ChangeControlSession({
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
           refusal={refusal}
+          reasonRequired={drawer.change.status !== 'proposed'}
           onCancel={closeDrawer}
           onSubmit={(v) => {
             const c = drawer.change;

@@ -314,10 +314,12 @@ describe('Change control — governed actions reach their routes', () => {
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');
     fill(d, /Reference/, 'CAPA-91');
+    // CC-2026-014 is under assessment, so the link says why (Quality review, 2026-11-10).
+    fill(d, /Why it is linked/, 'The CAPA this change implements.');
     fireEvent.click(within(d).getByRole('button', { name: /Link record/ }));
     await waitFor(() =>
       expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/changes/1/links', expect.objectContaining({
-        linkType: 'capa', linkedRef: 'CAPA-91',
+        linkType: 'capa', linkedRef: 'CAPA-91', note: 'The CAPA this change implements.',
       })),
     );
     expect(asked).toEqual([]);

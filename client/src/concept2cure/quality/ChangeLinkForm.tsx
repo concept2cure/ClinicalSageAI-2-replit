@@ -52,11 +52,13 @@ function useRegisterPicks(type: string): { picks: LinkPick[] | null; failed: boo
 
 const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 
-export function ChangeLinkForm({ changeNumber, refusal, onCancel, onSubmit }: {
+export function ChangeLinkForm({ changeNumber, refusal, reasonRequired, onCancel, onSubmit }: {
   changeNumber: string;
   refusal: string | null;
+  /** Past proposal a link changes the record of an assessed or approved change, so it states why (the server's 422). */
+  reasonRequired: boolean;
   onCancel: () => void;
-  onSubmit: (v: { linkType: LinkType; linkedRef: string; linkedLabel?: string; relationship?: string }) => void;
+  onSubmit: (v: { linkType: LinkType; linkedRef: string; linkedLabel?: string; relationship?: string; note?: string }) => void;
 }) {
   const [type, setType] = React.useState('');
   const register = useRegisterPicks(type);
@@ -93,6 +95,10 @@ export function ChangeLinkForm({ changeNumber, refusal, onCancel, onSubmit }: {
             key: 'linkedLabel', label: 'Short description', type: 'text',
             derive: (v) => (isRegistered(v.linkType) && v.record ? byValue.get(v.record)?.label ?? null : null),
           },
+          {
+            key: 'note', label: 'Why it is linked', type: 'textarea', rows: 2, required: reasonRequired,
+            desc: `Recorded on the change's audit trail with the link.${reasonRequired ? ' Required once a change is past proposal. At least 8 characters.' : ''}`,
+          },
         ],
       }}
       onFieldChange={(key, value) => { if (key === 'linkType') setType(value); }}
@@ -102,6 +108,7 @@ export function ChangeLinkForm({ changeNumber, refusal, onCancel, onSubmit }: {
         linkedRef: v.linkedRef.trim(),
         linkedLabel: v.linkedLabel?.trim() || undefined,
         relationship: v.relationship || undefined,
+        note: v.note?.trim() || undefined,
       })}
     />
   );
