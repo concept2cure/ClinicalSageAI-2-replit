@@ -15,7 +15,10 @@
  *   - it is a section of Required documents, never a view of its own, and it
  *     reads nothing until that view is opened;
  *   - the header's "Trial master file" shows Required documents and brings the
- *     section into view, and opens no other screen.
+ *     section into view, and opens no other screen;
+ *   - the section asks AnA in the Vault's own conversation;
+ *   - a file the section's filing form adds to the Vault is read back into the
+ *     Vault's own lists.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,11 +39,12 @@ vi.mock('../navEntitlements', async (original) => ({
 import { Vault } from '../surfaces/Vault';
 import { VAULT_TMF_SECTION_ID } from '../surfaces/VaultTrialMasterFile';
 import { PID, mockVaultApi, ok, props, vaultPayload } from './_vault-surface-fixtures';
-import { resetTmf, tmfApi } from './_vault-tmf-fixtures';
+import { resetTmf, stubVaultIngest, tmfApi } from './_vault-tmf-fixtures';
 
 const scrolled: string[] = [];
 const tab = (name: string) => screen.getByRole('tab', { name });
 const tmfCalls = () => H.apiRequest.mock.calls.filter(([, u]) => String(u).startsWith('/api/etmf') || String(u).startsWith('/api/study-design'));
+const vaultReads = () => H.apiRequest.mock.calls.filter(([m, u]) => m === 'GET' && u === `/api/c2c/project-vault/${PID}`).length;
 
 async function openVault() {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
@@ -62,6 +66,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
   delete (Element.prototype as unknown as { scrollIntoView?: unknown }).scrollIntoView;
 });
@@ -104,5 +109,32 @@ describe('in the Vault: a section of Required documents, and the header button t
     expect(screen.queryByRole('button', { name: /Trial master file/ })).toBeNull();
     fireEvent.click(tab('Required documents'));
     await within(screen.getByTestId('vault-tmf')).findByTestId('vault-tmf-verdict');
+  });
+
+  it('the section asks AnA in the Vault’s own conversation', async () => {
+    const p = await openVault();
+    fireEvent.click(tab('Required documents'));
+    const tmf = screen.getByTestId('vault-tmf');
+    await within(tmf).findByTestId('vault-tmf-verdict');
+    fireEvent.click(within(tmf).getByTestId('vault-tmf-ask'));
+    expect(p.onAsk).toHaveBeenCalledWith('Which trial master file gaps would an inspector raise for BX-204 in plaque psoriasis, and how do I close them?');
+  });
+
+  it('a file the section’s filing form adds to the Vault is read back into the Vault’s own lists', async () => {
+    stubVaultIngest();
+    await openVault();
+    fireEvent.click(tab('Required documents'));
+    const tmf = screen.getByTestId('vault-tmf');
+    await within(tmf).findByTestId('vault-tmf-verdict');
+    const open = await within(tmf).findByRole('button', { name: 'File a document as Monitoring Plan' });
+    await waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(open);
+    const form = within(tmf).getByTestId('vault-tmf-file-monitoring_plan');
+    fireEvent.change(within(form).getByTestId('vault-tmf-upload-monitoring_plan'), { target: { files: [new File(['%PDF'], 'monitoring-plan-v2.pdf', { type: 'application/pdf' })] } });
+    fireEvent.change(within(form).getByLabelText(/^Reason for filing it\./), { target: { value: 'Signed monitoring plan, version 2' } });
+    const before = vaultReads();
+    fireEvent.click(within(form).getByRole('button', { name: 'Add to the Vault and file as Monitoring Plan' }));
+    expect((await within(tmf).findByTestId('vault-tmf-note')).textContent).toMatch(/^“monitoring-plan-v2\.pdf” was added to this project’s Vault/);
+    await waitFor(() => expect(vaultReads()).toBeGreaterThan(before));
   });
 });

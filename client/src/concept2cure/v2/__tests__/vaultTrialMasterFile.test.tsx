@@ -9,6 +9,10 @@
  * with the hook-in (docs/evidence/D2-ETMF/2026-11-10-vault-section/).
  *
  * The transport is mocked by a small in-memory server (_vault-tmf-fixtures.ts).
+ * What the retired screen showed and the section carries (the scope, the
+ * figures, each record's code and zone, the package as a document, the question
+ * to AnA) is vaultTmfRestored.test.tsx; upload-and-file is
+ * vaultTmfUploadAndFile.test.tsx.
  *
  * What is pinned:
  *   - nothing is read until the view that holds the section is first opened;
@@ -22,7 +26,8 @@
  *   - filing: a version picked from this project's Vault, a reason of at least
  *     8 characters, and the reference the Vault returned; removing with a reason;
  *   - no write control for a role that may not write the Vault;
- *   - the inspection package: saved, or the failure with its reason.
+ *   - the inspection package: saved, or the failure with its reason; offered
+ *     under the verdict and in the package document's bar, as one download.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -164,8 +169,8 @@ describe('whether the essential records are all filed', () => {
       expect(screen.getByTestId(`vault-tmf-zone-${z.number}`).textContent).toContain(`Zone ${z.number}${z.name}`);
     }
     expect(screen.getByTestId('vault-tmf-zone-2').textContent).toContain('1 of 4 filed');
-    // Every essential record, by its catalog name, never by its code.
-    for (const code of ESSENTIAL) expect(record(code).textContent).toContain(tmfArtifactName(code));
+    // Every essential record, named by its catalog name.
+    for (const code of ESSENTIAL) expect(within(record(code)).getByTitle(tmfArtifactName(code)).textContent).toBe(tmfArtifactName(code));
     expect(record('protocol').getAttribute('data-state')).toBe('filed');
     await waitFor(() => expect(record('protocol').textContent).toContain('Filed against “Protocol BX-204-201”, version 1.0 on 2026-11-02.'));
     expect(record('monitoring_plan').getAttribute('data-state')).toBe('missing');
@@ -175,9 +180,10 @@ describe('whether the essential records are all filed', () => {
     expect(record('tmf_plan').textContent).toContain('Filed with no document, so it does not count as filed.');
     // Records that are not essential are not in this list.
     expect(screen.queryByTestId('vault-tmf-record-recruitment_plan')).toBeNull();
-    // What "filed" rests on is stated.
-    expect(screen.getByText('What counts as filed').closest('details')!.textContent)
-      .toMatch(/A record counts as filed only when its filing names a Vault document that existed when this was read\./);
+    // What "filed" rests on is stated, in the open: not behind a closed disclosure (P-122).
+    const basis = screen.getByTestId('vault-tmf-basis');
+    expect(basis.textContent).toMatch(/A record counts as filed only when its filing names a Vault document that existed when this was read\./);
+    expect(basis.closest('details')).toBeNull();
   });
 
   it('names the document a record is filed against as the server names it', async () => {
@@ -438,18 +444,49 @@ describe('the inspection package', () => {
   const download = async () => {
     section();
     fireEvent.click(await screen.findByTestId('vault-tmf-download'));
-    return screen.findByTestId('vault-tmf-note');
+    // Said beside the button, in the package's own part of the section.
+    return within(screen.getByTestId('vault-tmf-package')).findByTestId('vault-tmf-package-note');
   };
 
   it('downloads it for the study and says what it is, and its SHA-256 checked on receipt', async () => {
     const note = await download();
     expect(calls('GET', (u) => u === `${BASE}/inspection-package?scope=essential`)).toHaveLength(1);
-    expect(H.saved.map((s) => s.name)).toEqual(['BX-204-201_inspection-package.zip']);
+    expect(H.saved.map((s) => s.name)).toEqual(['tmf-inspection-BX-204-201.zip']);
     expect(note.getAttribute('role')).toBe('status');
-    expect(note.textContent).toBe(
-      'Inspection package saved: the index of filings and the completeness record, not the documents themselves. ' +
-      `It records essential records still missing. Its SHA-256, checked on receipt: ${packageSha}.`,
+    expect(note.textContent?.trim()).toBe(
+      'Inspection package saved (essential records): the index of filings and the completeness record, not the documents themselves. ' +
+      `It says essential records are still missing. Its SHA-256, checked on receipt: ${packageSha}.`,
     );
+  });
+
+  /* The retired screen offered the package from its lead and from the document's bar. The section has had it under
+     the verdict since it was built; it stays there, above the records, and is one download with the bar's. */
+  it('is also offered under the verdict, above the records, and its outcome is said where it was asked for', async () => {
+    let answer!: (r: Response) => void;
+    tmf.refuseWith.package = () => new Promise<Response>((resolve) => { answer = resolve; });
+    section();
+    const top = await screen.findByTestId('vault-tmf-download-top') as HTMLButtonElement;
+    const inBar = screen.getByTestId('vault-tmf-download') as HTMLButtonElement;
+    expect(top.compareDocumentPosition(screen.getByTestId('vault-tmf-zone-1')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(top.closest('details')).toBeNull();
+    fireEvent.click(top);
+    // One download: both buttons wait on it, and it is asked for once.
+    await waitFor(() => expect(top.textContent).toContain('Building the package…'));
+    expect([top.disabled, inBar.disabled, inBar.textContent?.includes('Building the package…')]).toEqual([true, true, true]);
+    await act(async () => { answer(packageResponse(packageSha)); });
+    const note = await screen.findByTestId('vault-tmf-download-note');
+    expect(note.getAttribute('role')).toBe('status');
+    expect(note.textContent).toContain(`Its SHA-256, checked on receipt: ${packageSha}.`);
+    expect(note.compareDocumentPosition(screen.getByTestId('vault-tmf-zone-1')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Said once, beside the button that asked: not again in the document below.
+    expect(screen.queryByTestId('vault-tmf-package-note')).toBeNull();
+    expect(calls('GET', (u) => u.includes('/inspection-package'))).toHaveLength(1);
+    expect(H.saved).toHaveLength(1);
+    // And asked for from the bar, it is said in the document, and no longer above.
+    tmf.refuseWith = {};
+    fireEvent.click(inBar);
+    await screen.findByTestId('vault-tmf-package-note');
+    expect(screen.queryByTestId('vault-tmf-download-note')).toBeNull();
   });
 
   /* The retired screen toasted `X-TMF-Ready: undetermined` as "gaps remain" until 2026-10-15
@@ -457,8 +494,8 @@ describe('the inspection package', () => {
   it('says a package the server marked not determined as not determined, never as missing records', async () => {
     tmf.refuseWith.package = () => packageResponse(packageSha, 'undetermined');
     const note = await download();
-    expect(note.textContent).toContain('It records the verdict as not determined.');
-    expect(note.textContent).not.toMatch(/still missing|every essential record as filed/);
+    expect(note.textContent).toContain('It says the verdict is not determined.');
+    expect(note.textContent).not.toMatch(/still missing|every essential record is filed/);
   });
 
   it('does not save a file that does not match the SHA-256 the server stated', async () => {
@@ -469,15 +506,26 @@ describe('the inspection package', () => {
     expect(H.saved).toHaveLength(0);
   });
 
+  /* The retired screen built a report in the browser when the ZIP failed: an export with no record. The server's
+     download is recorded, and refused when its record cannot be written. The failure is said; nothing is saved. */
+  const UNRECORDED = ROUTE('UNAUDITED_EXPORT_REFUSED', 'The inspection package was not delivered because its record could not be written. Nothing was sent. Try again.');
   it.each([
-    ['the person’s role', 403, ROLE, 'The inspection package was not downloaded. Your role cannot do this.'],
-    ['not in this release', 403, NOT_RELEASED, 'The inspection package was not downloaded. Not in this release.'],
-    ['a server error', 500, FAILED, 'The inspection package was not downloaded. eTMF request failed.'],
-  ])('a failure (%s) is said with its reason, and nothing is saved', async (_name, status, payload, words) => {
+    ['the person’s role', 403, ROLE, 'The inspection package was not downloaded. Your role cannot do this.', false],
+    ['not in this release', 403, NOT_RELEASED, 'The inspection package was not downloaded. Not in this release.', false],
+    ['a server error', 500, FAILED, 'The inspection package was not downloaded. eTMF request failed.', true],
+    ['a download the server could not record', 503, UNRECORDED, `The inspection package was not downloaded. ${UNRECORDED.message}`, true],
+  ])('a failure (%s) is said with its reason, and nothing is saved', async (_name, status, payload, words, retry) => {
     tmf.refuseWith.package = () => { throw refusal(status, payload); };
     const note = await download();
     expect(note.getAttribute('role')).toBe('alert');
-    expect(note.textContent).toBe(words);
+    expect(note.textContent?.trim()).toBe(retry ? `${words} Try again` : words);
+    // Another try where one can change the outcome; a refusal is an answer, so none is offered after it.
+    expect(within(note).queryAllByRole('button', { name: 'Try again' })).toHaveLength(retry ? 1 : 0);
     expect(H.saved).toHaveLength(0);
+    if (!retry) return;
+    tmf.refuseWith = {};
+    fireEvent.click(within(note).getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(H.saved).toHaveLength(1));
+    expect(screen.getByTestId('vault-tmf-package-note').getAttribute('role')).toBe('status');
   });
 });

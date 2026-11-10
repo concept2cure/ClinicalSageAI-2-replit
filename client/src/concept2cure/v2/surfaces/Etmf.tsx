@@ -12,14 +12,17 @@
  * and bound to no study, an upload-and-file with no reason, a preview of the
  * inspection package. The server now files against a study of the project and
  * requires a reason, so that screen could no longer file. It is retired here
- * rather than kept beside the section (one client, not two). What it did that
- * the section does not yet is recorded in
- * docs/evidence/D2-ETMF/2026-11-10-vault-section/README.md.
+ * rather than kept beside the section (one client, not two). What it showed is
+ * carried in the section (P-122): the scope, the figures, each record's code
+ * and zone, upload-and-file, the package as a document and the question to
+ * AnA. docs/evidence/D2-ETMF/2026-11-10-vault-section/README.md maps each to
+ * where it is now and the test that holds it.
  *
  * The page adds only what a page needs: the way back to the project, the
- * title, an honest empty state when no project is open, and what AnA can see
- * of the screen. That is what the section read, told to this page as it reads
- * it; the page makes no read of its own.
+ * title, an honest empty state when no project is open, the conversation the
+ * section asks AnA in, and what AnA can see of the screen. That is what the
+ * section read, told to this page as it reads it; the page makes no read of
+ * its own.
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { tmfArtifactName } from '@shared/constants/domain/tmf-reference-model';
@@ -28,7 +31,8 @@ import { EmptyState, ProjectBack, readRefusalWords } from '../dataConnect';
 import { shellProgramId, useShellProject } from '../shellProject';
 import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { VaultTrialMasterFile, tmfVerdict, tmfVerdictSentence, type TmfSectionState } from './VaultTrialMasterFile';
+import { VaultTrialMasterFile, type TmfSectionState } from './VaultTrialMasterFile';
+import { NOT_ASSESSED, SCOPE_LABEL, tmfFigures, tmfFiguresSentence, tmfVerdict, tmfVerdictSentence } from './vaultTmf';
 import '../styles/project-home-v2.css';
 
 type AnaContext = Omit<SurfaceContext, 'surfaceId'>;
@@ -58,20 +62,26 @@ function studiesContext({ studies }: StudiesShown): AnaContext {
   };
 }
 
-/** One study's trial master file: being read, not read, or the verdict as the server gave it with its counts. */
-function studyContext({ study, completeness }: StudyShown): AnaContext {
+/**
+ * One study's trial master file in the scope on screen: being read, not read,
+ * or the verdict as the server gave it, with the figures the screen shows.
+ */
+function studyContext({ study, scope, completeness }: StudyShown): AnaContext {
   const name = study.title?.trim() || study.studyId;
-  const facts = { studyId: study.studyId, study: name };
-  if (completeness.loading) return { summary: `The trial master file of ${name} is being read; nothing on screen is final yet.`, facts };
+  const checked = SCOPE_LABEL[scope].toLowerCase();
+  const facts = { studyId: study.studyId, study: name, scope };
+  if (completeness.loading) return { summary: `The trial master file of ${name} (${checked}) is being read; nothing on screen is final yet.`, facts };
   const result = completeness.data;
   if (!result) {
     const refusal = readRefusalWords(completeness, 'the trial master file');
-    return { summary: `${refusal ? refusal.message : `The trial master file of ${name} could not be read.`} ${NOT_EMPTY}`, facts };
+    return { summary: `${refusal ? refusal.message : `The trial master file of ${name} (${checked}) could not be read.`} ${NOT_EMPTY}`, facts };
   }
   const verdict = tmfVerdict(result);
-  const missing = result.zones.flatMap((z) => z.missing.map((code) => ({ zone: z.number, name: tmfArtifactName(code) })));
+  // The screen shows no figures where the answer states none (nothing assessed, or no count given), so none is told.
+  const figures = tmfFiguresSentence(result);
+  const missing = result.zones.flatMap((z) => z.missing.map((code) => ({ zone: z.number, code, name: tmfArtifactName(code) })));
   return {
-    summary: `Trial master file of ${name}, essential records. ${tmfVerdictSentence(verdict, result)}`,
+    summary: `Trial master file of ${name}, ${checked}. ${tmfVerdictSentence(verdict, result)}${figures ? ` ${figures}` : ''} ${NOT_ASSESSED}`,
     facts: {
       ...facts,
       verdict,
@@ -79,14 +89,17 @@ function studyContext({ study, completeness }: StudyShown): AnaContext {
       ready: result.ready,
       basis: result.basis ?? null,
       counts: result.summary,
+      figures: tmfFigures(result),
       zones: result.zones.map((z) => ({ number: z.number, name: z.name, required: z.required.length, filed: z.present.length })),
-      // Capped: enough to name a record back to the person.
+      // Capped: enough to name a record back to the person. `counts.totalMissing` is how many there are.
       missing: missing.slice(0, 20),
     },
     availableActions: [
+      'Switch between the essential records and all records of the reference model',
       'File a document from this project’s Vault against a record that is not filed, with a reason (a role that may write the Vault)',
+      'Upload a file from the person’s computer into this project’s Vault and file it against a record in one step, with a reason (a role that may write the Vault)',
       'Remove a filing, with a reason (a role that may write the Vault)',
-      'Download the inspection package',
+      'Download the inspection package for the scope on screen',
     ],
   };
 }
@@ -103,7 +116,7 @@ export function etmfAnaContext(projectOpen: boolean, shown: TmfSectionState | nu
   return shown.study === null ? studiesContext(shown) : studyContext(shown);
 }
 
-export function Etmf({ onNav }: SurfaceViewProps) {
+export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const projectId = shellProgramId(useShellProject());
   /* What the section is showing, with the project it read it for: a project opened next never inherits it. */
   const [told, setTold] = useState<{ projectId: string | null; state: TmfSectionState } | null>(null);
@@ -118,11 +131,11 @@ export function Etmf({ onNav }: SurfaceViewProps) {
       <header className="ph">
         <div>
           <h1 className="ph-title">Trial master file</h1>
-          <p className="ph-sub">The essential records of a study: what is filed, against which document, and what is missing.</p>
+          <p className="ph-sub">The records of a study: what is filed, against which document, and what is missing.</p>
         </div>
       </header>
       {projectId ? (
-        <VaultTrialMasterFile key={projectId} projectId={projectId} active heading="Essential records" onState={tell} />
+        <VaultTrialMasterFile key={projectId} projectId={projectId} active heading="Records" onState={tell} onAsk={onAsk} />
       ) : (
         <EmptyState
           icon={I.folder}

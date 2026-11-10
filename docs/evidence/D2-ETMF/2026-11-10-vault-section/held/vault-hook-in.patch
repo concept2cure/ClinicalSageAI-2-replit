@@ -9,7 +9,7 @@ diff --git a/client/src/concept2cure/v2/surfaces/Vault.tsx b/client/src/concept2
  import {
    ARTIFACTS_BRANCH,
    ArtifactAuditReport,
-@@ -3097,17 +3098,21 @@
+@@ -3097,17 +3098,29 @@
    );
  
    const requiredView = (
@@ -36,13 +36,21 @@ diff --git a/client/src/concept2cure/v2/surfaces/Vault.tsx b/client/src/concept2
 +        defaultOpen
 +        onShowOutline={() => setView('library')}
 +      />
-+      {/* The study's trial master file (P-75: the eTMF lives inside the Vault): a section of this view, read once it is opened. */}
-+      <VaultTrialMasterFile projectId={projectId} active={view === 'required'} documents={coverageDocuments} />
++      {/* The study's trial master file (P-75: the eTMF lives inside the Vault): a section of this view, read once it is
++          opened. It asks AnA in the Vault's own conversation, and a file its filing form adds to the Vault is
++          read back into the Vault's own lists. */}
++      <VaultTrialMasterFile
++        projectId={projectId}
++        active={view === 'required'}
++        documents={coverageDocuments}
++        onAsk={onAsk}
++        onVaultChanged={() => setVaultEpoch((n) => n + 1)}
++      />
 +    </>
    );
  
    const artifactsView = (
-@@ -3170,14 +3175,14 @@
+@@ -3170,14 +3183,14 @@
            ) : null}
          </div>
          <div className="ph-acts">

@@ -6,14 +6,17 @@
  * Until the eTMF is admitted to the Vault app the Vault may not call /api/etmf
  * (ci:launch-scope-api), so the section's one host is this page: the way back
  * to the project, the title, the section for the open project, an honest empty
- * state when none is open, and what AnA can see of it. The screen this file
+ * state when none is open, the conversation the section asks AnA in, and what
+ * AnA can see of it (the scope and the figures among it). The screen this file
  * used to be (a trial id typed by hand) is retired; what its three suites
- * pinned is pinned here and in vaultTrialMasterFile.test.tsx
- * (docs/evidence/D2-ETMF/2026-11-10-vault-section/README.md).
+ * pinned is pinned here and in vaultTrialMasterFile.test.tsx, and what it
+ * showed is carried in the section (vaultTmfRestored.test.tsx,
+ * vaultTmfUploadAndFile.test.tsx;
+ * docs/evidence/D2-ETMF/2026-11-10-vault-section/README.md).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const H = vi.hoisted(() => ({ apiRequest: vi.fn(), locked: new Set<string>() }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: H.apiRequest }));
@@ -42,15 +45,17 @@ function Probe() {
 }
 const facts = () => (published?.facts ?? {}) as Record<string, unknown>;
 const openProject = () => { (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' }; };
+const onAsk = vi.fn();
 function page() {
   const onNav = vi.fn();
-  render(<><Etmf surface={{ id: 'etmf', label: 'Inspection readiness' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" /><Probe /></>);
+  render(<><Etmf surface={{ id: 'etmf', label: 'Trial master file' } as never} onAsk={onAsk} onNav={onNav} segment="biotech" /><Probe /></>);
   return onNav;
 }
 const tmfCalls = () => H.apiRequest.mock.calls.filter(([, u]) => String(u).startsWith('/api/etmf') || String(u).startsWith('/api/study-design'));
 
 beforeEach(() => {
   H.locked.clear();
+  onAsk.mockReset();
   published = null;
   resetTmf();
   H.apiRequest.mockReset();
@@ -68,16 +73,25 @@ describe('the page that hosts the trial master file', () => {
     expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Trial master file']);
     // The page is titled once: the section's own heading names what it lists.
     const section = screen.getByTestId('vault-tmf');
-    expect(within(section).getByRole('heading', { level: 2 }).textContent).toBe('Essential records');
+    expect(within(section).getByRole('heading', { level: 2 }).textContent).toBe('Records');
     expect((await within(section).findByTestId('vault-tmf-verdict')).getAttribute('data-verdict')).toBe('incomplete');
     expect(section.textContent).toContain('Of BX-204 in plaque psoriasis · Phase 2');
     expect(H.apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === `/api/study-design?program_id=${PID}`)).toBe(true);
     // Back to the project, by its name.
     fireEvent.click(screen.getByRole('button', { name: /BX-204/ }));
     expect(onNav).toHaveBeenCalledWith('project-home');
-    // The retired screen's controls are gone: no trial id is typed, and there is no scope switch.
+    // No trial id is typed: the study is the project's. The scope is the section's own two-option control.
     expect(screen.queryByLabelText('Trial identifier')).toBeNull();
     expect(screen.queryByRole('tablist')).toBeNull();
+    expect(within(section).getByRole('group', { name: 'Records checked' })).toBeTruthy();
+  });
+
+  it('the section asks AnA in the page’s conversation', async () => {
+    openProject();
+    page();
+    await screen.findByTestId('vault-tmf-verdict');
+    fireEvent.click(screen.getByRole('button', { name: /Ask AnA which gaps an inspector would raise/ }));
+    expect(onAsk.mock.calls).toEqual([['Which trial master file gaps would an inspector raise for BX-204 in plaque psoriasis, and how do I close them?']]);
   });
 
   it('with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing', async () => {
@@ -101,16 +115,25 @@ describe('what AnA can see of the page is what the section read', () => {
     page();
     await screen.findByTestId('vault-tmf-verdict');
     await waitFor(() => expect(facts().verdict).toBe('incomplete'));
+    // The verdict line's sentence, then the figures as the screen shows them, then what is not assessed.
     expect(published?.summary).toBe(
-      `Trial master file of BX-204 in plaque psoriasis, essential records. 1 of ${ESSENTIAL.length} essential records are filed. ${ESSENTIAL.length - 1} are missing.`,
+      `Trial master file of BX-204 in plaque psoriasis, essential records. 1 of ${ESSENTIAL.length} essential records are filed. ${ESSENTIAL.length - 1} are missing. ` +
+      `0 of 11 zones are complete; 1 of ${ESSENTIAL.length} essential records are filed; ${ESSENTIAL.length - 1} are open, 0 filed with no verified document. ` +
+      'Timeliness and quality control are not assessed: no filing lag and no QC state is recorded for trial master file records.',
     );
+    expect(screen.getByTestId('vault-tmf-figures').textContent?.replace(/\s+/g, ' '))
+      .toBe(`Zones complete 0 of 11 · Essential records filed 1 of ${ESSENTIAL.length} · Open records ${ESSENTIAL.length - 1}, 0 filed with no verified document`);
     expect(facts()).toMatchObject({
-      studyId: STUDY.studyId, study: 'BX-204 in plaque psoriasis', ready: false, basis: 'verified_documents',
+      studyId: STUDY.studyId, study: 'BX-204 in plaque psoriasis', scope: 'essential', ready: false, basis: 'verified_documents',
       counts: { zoneCount: 11, totalRequired: ESSENTIAL.length, totalMissing: ESSENTIAL.length - 1 },
+      figures: { zonesComplete: 0, zoneCount: 11, filed: 1, required: ESSENTIAL.length, open: ESSENTIAL.length - 1, unverified: 0 },
     });
+    // What can be done here, the restored acts among it.
+    expect(published?.availableActions?.join(' | ')).toMatch(/Switch between the essential records and all records/);
+    expect(published?.availableActions?.join(' | ')).toMatch(/Upload a file from the person’s computer into this project’s Vault and file it/);
     expect(facts().zones).toHaveLength(11);
     // Missing records are named as the screen names them, capped.
-    expect((facts().missing as Array<{ name: string }>).map((m) => m.name)).toContain('Monitoring Plan');
+    expect(facts().missing).toContainEqual({ zone: 1, code: 'monitoring_plan', name: 'Monitoring Plan' });
     expect(facts().missing).toHaveLength(20);
     // One read each: the page tells AnA from what the section read, and reads nothing itself.
     expect(tmfCalls().map(([, u]) => u).sort()).toEqual(
@@ -132,6 +155,33 @@ describe('what AnA can see of the page is what the section read', () => {
     expect(published?.summary).not.toMatch(/are missing|not ready|Every essential record is filed/i);
   });
 
+  it('the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s', async () => {
+    openProject();
+    let answer!: (r: Response) => void;
+    const pending = new Promise<Response>((resolve) => { answer = resolve; });
+    tmf.refuseWith.completeness = (studyId, scope) => (scope === 'all' ? pending : json(completenessOf(studyId, scope)));
+    page();
+    await waitFor(() => expect(facts().verdict).toBe('incomplete'));
+    fireEvent.click(within(screen.getByTestId('vault-tmf-scope')).getByRole('button', { name: 'All records' }));
+    // While all records are being read, AnA is told that, with no figure of the essential scope.
+    await waitFor(() => expect(published?.summary).toBe('The trial master file of BX-204 in plaque psoriasis (all records) is being read; nothing on screen is final yet.'));
+    expect(facts()).toEqual({ studyId: STUDY.studyId, study: 'BX-204 in plaque psoriasis', scope: 'all' });
+    await act(async () => { answer(json(completenessOf(STUDY.studyId, 'all'))); });
+    await waitFor(() => expect(facts().figures).toEqual({ zonesComplete: 0, zoneCount: 11, filed: 1, required: 41, open: 40, unverified: 0 }));
+    expect(facts().scope).toBe('all');
+    expect(published?.summary).toMatch(/^Trial master file of BX-204 in plaque psoriasis, all records\. 1 of 41 records are filed\. 40 are missing\. 0 of 11 zones are complete; 1 of 41 records are filed; 40 are open/);
+    expect(published?.summary).not.toMatch(/essential/);
+  });
+
+  it('a read that checked nothing is published with no verdict and no figures', async () => {
+    openProject();
+    tmf.refuseWith.completeness = () => json({ ...completenessOf(), ready: true, zones: [], summary: { zoneCount: 0, zonesComplete: 0, totalRequired: 0, totalMissing: 0, totalUnverified: 0 } });
+    page();
+    await waitFor(() => expect(facts().verdict).toBe('not-assessed'));
+    expect(facts().figures).toBeNull();
+    expect(published?.summary).not.toMatch(/zones are complete/);
+  });
+
   it('a refused read is published as that refusal, not as an empty or unready trial master file', async () => {
     openProject();
     tmf.refuseWith.completeness = () => { throw refusal(403, NOT_RELEASED); };
@@ -141,6 +191,7 @@ describe('what AnA can see of the page is what the section read', () => {
     expect(published?.summary).toMatch(/not because the trial master file is empty\.$/);
     expect(facts().verdict).toBeUndefined();
     expect(facts().ready).toBeUndefined();
+    expect(facts().figures).toBeUndefined();
   });
 
   it('a project with no study, or with several and none chosen, is published as that', async () => {

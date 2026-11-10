@@ -542,11 +542,24 @@
   .vd-confirm-form textarea{ flex:0 0 auto; height:auto; padding:6px 9px; resize:vertical; }
   /* The trial master file's records (VaultTrialMasterFile.tsx): a record's name is read whole. It wraps and is
      never cut to an ellipsis; on a narrow screen what is filed and its action wrap under the name. */
-  .vd-tmf-rows .vd-dr-name{ max-width:45%; overflow:visible; white-space:normal; }
+  .vd-tmf-rows .vd-dr-name{ flex:0 0 auto; max-width:45%; overflow:visible; white-space:normal; }
   @media (max-width:640px){
     .vd-tmf-rows .vd-dr-row{ flex-wrap:wrap; row-gap:4px; }
     .vd-tmf-rows .vd-dr-name{ max-width:100%; }
   }
+  /* A record's zone and artifact code, after its name: read whole, on one line. */
+  .vd-tmf-rows .vd-dr-row > .mono{ flex:0 0 auto; white-space:nowrap; }
+  /* What the trial master file's read says (the verdict, the figures, what "filed" rests on, what is not
+     assessed, the question to AnA): one column, each line on its own. */
+  .vd-tmf-read{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+  /* The inspection package shown as a document (VaultTmfPackage.tsx), beneath the records. It sits under the
+     section's h2, so its title is an h3 and its parts are h4. A record code in its tables wraps inside its cell. */
+  .vd-tmf-pkg{ margin-top:20px; }
+  /* Its bar holds its name and its download: on a narrow screen the download goes under the name. */
+  .vd-tmf-pkg .cm-doc-bar{ flex-wrap:wrap; gap:8px; }
+  .vd-tmf-pkg h3{ margin:4px 0 8px; font-size:var(--fs-prose); line-height:1.3; font-weight:600; color:var(--text-100); }
+  .vd-tmf-pkg h4{ margin:20px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border); font-size:var(--fs-section); font-weight:600; color:var(--text-100); }
+  .vd-tmf-pkg td{ overflow-wrap:anywhere; }
   /* Library search: hits from every project the reader can open, each with its project. */
   .vd-lib{ display:flex; flex-direction:column; border-top:1px solid var(--border); }
   .vd-lib > .vd-dr-meta{ padding:8px 0; }
