@@ -106,15 +106,22 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect((within(dialog).getByLabelText('Document type') as HTMLSelectElement).value).toBe('policy');
   });
 
-  it("keeps each tab's own AnA request as a starter: Change control's health check, a record register's read-out", () => {
+  it("keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out", () => {
     mount();
     fireEvent.click(screen.getByRole('tab', { name: 'Change control' }));
     const starters = () => within(screen.getByRole('group', { name: 'Ask AnA' })).getAllByRole('button');
-    expect(starters().map((b) => b.textContent)).toEqual(['Give me a read-out on change control', 'Run a pre-inspection check', 'Run a change-control health check']);
+    expect(starters().map((b) => b.textContent)).toEqual(['Give me a read-out on change control', 'Run a pre-inspection check', 'Explain the change procedure']);
+    // The read-out carries what the health check asked (awaiting approval, overdue, open links), ranked by risk.
+    fireEvent.click(starters()[0]);
+    expect(H.asked[0]).toMatch(/awaiting approval.*overdue for implementation.*deviations or CAPAs.*ranked by risk/);
+    // The procedure's explanation, which was a button in a guidance box under the log; AnA explains, it never attests.
     fireEvent.click(starters()[2]);
-    expect(H.asked[0]).toMatch(/change-control health check/);
+    expect(H.asked[1]).toMatch(/how to raise a change request/i);
+    expect(H.asked[1]).not.toMatch(/quiz me|record read-and-understood training/i);
     // An empty log claims nothing: no "none overdue" of nothing.
     expect(screen.getByTestId('change-figures').textContent).toBe('No changes in the log yet.');
+    // ...and an empty log has no stage filter of zeroes to offer.
+    expect(screen.queryByRole('group', { name: 'Lifecycle stage' })).toBeNull();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     fireEvent.click(screen.getByRole('tab', { name: 'CAPA' }));
     expect(starters()[0].textContent).toBe('Give me a read-out on CAPA');
@@ -145,6 +152,17 @@ describe('Quality is one work area with one header (D7-B)', () => {
     const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
     expect(within(row).queryByRole('button', { name: 'Approve' })).toBeNull();
     expect(within(row).getByTestId('qms-route-open').textContent).toBe('Review route');
+  });
+
+  // C1: the SOP tab is one column of quiet sections; every section head is the work area's, no box or two-up grid.
+  it('lays the SOP tab out as one column of sections, each with its own head and no box', () => {
+    const { container } = mount();
+    expect(container.querySelector('.qms-grid2, .qms-sec-head, .qms-train-fill')).toBeNull();
+    const heads = [...container.querySelectorAll('[data-work-area] h2')];
+    expect(heads.map((h) => h.textContent)).toEqual(['Controlled documents', 'Periodic review', 'Read-and-understood training', 'Training lapsed or lapsing soon']);
+    for (const h of heads) expect(h.parentElement?.classList.contains('pj-sec-h'), h.textContent ?? '').toBe(true);
+    expect(screen.getByRole('button', { name: 'Job roles' }).querySelector('svg')).toBeNull();
+    expect((screen.getByText('How coverage is counted').closest('details') as HTMLDetailsElement).open).toBe(false);
   });
 
   it('states the register in one sentence above its rows', () => {

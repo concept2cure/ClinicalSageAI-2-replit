@@ -520,6 +520,9 @@ export async function draftCSRSectionWithProvenance(
       organizationId: aiContext?.organizationId ?? request.organizationId,
       projectId: aiContext?.projectId ?? request.projectId,
       userId: aiContext?.userId ?? request.userId,
+      // Streamed, and the chunks ignored: the gateway ends a non-streamed call at 120 s, while a stream is watched
+      // for silence (30 s while writing, 5 min while the model reasons). The saved text is the complete reply.
+      onStream: () => undefined,
     }));
     if ('reply' in outcome) {
       const accepted = acceptSectionReply(section.number, outcome.reply, info, lineage, evidence);

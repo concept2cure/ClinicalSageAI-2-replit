@@ -74,7 +74,7 @@ route file or table.
   fingerprint changed, so a grade follows a fact (a filing, a confirmation, a fixity run, a supersession) the next
   time anyone reads it.
 
-### Walked (`walk.cjs`, `walk-before.json`, `walk-catalog.json`, `walk-reach.json`, `walk-use.json`, `screenshots/`)
+### Walked (`walk.cjs`, `walk-before.json`, `walk-catalog.json`, `walk-reach.json`, `walk-use.json`, `walk-csr.json`, `screenshots/`)
 
 Codespace-shaped: `post-create.sh`'s `c2c_write_state`, `c2c_ensure_database`, `c2c_provision`,
 `c2c_seed_accounts` into a scratch state, database `c2c_cs`; a copy of `post-start.sh` (demo packs seeding). Sign-in
@@ -122,21 +122,54 @@ records B (76, "not yet approved by a person"), the one effective record A. `dat
 - Walked (`walk-use.json`, `use-*.png`): the NeuroPanel-Dx capture used in C2C-101, listed first with
   *Grade C · 71 · From [Demo · MDX] NeuroPanel-Dx 510(k)*, recorded on the project, then removed.
 
+## Step 3, continued: the CSR's study-data chooser lists used data first (2026-11-10)
+
+**Completes** `editor/StudyDataSource.tsx` (S3's chooser). It lists the project's Vault clinical sources. A source
+whose SHA-256 is that of a current capture the project uses is listed first and labelled "used in this project".
+Walked on the founder's example (`walk-csr.json`, `csr-*.png`): the CDISC pilot study's ADaM bundle manifest,
+captured into the Xanomeline CSR project's data room and used there, is offered in the CSR document's chooser as
+"cdiscpilot01-adam-bundle.json · v1.0 · approved · used in this project". That Vault holds one clinical source, so
+the ordering itself is pinned by `studyDataSource.test.tsx` (red without it). If the read of what the project uses
+fails, the chooser keeps the server's order; it never claims a use.
+
+## Step 4: AnA over the catalog (2026-11-10)
+
+**Completes** `server/services/ana/document-catalog-tools.ts`; split into `document-catalog-data-room.ts` in the same
+folder. No new tool name (RULE 6).
+
+- **`list_project_documents` with `catalog: true`.** This is the Data catalog's own read: the person's projects of the
+  open project's sponsor (`catalogProgramIds`, never projects the model names), their readable sources, each
+  capture's engine grade with its basis, whether this project uses it, and whether it can be filed from here. The
+  narrowings are query, kind, CTD section, folder, project and study. The tool says that grades are computed and are
+  never set by AnA.
+- **"Use in this project".** AnA proposes the use and tells the person where to confirm it. No tool records a use, and
+  a new one would be a new AnA tool.
+- **`file_chat_upload_to_vault` with `source_id`.** It files a data-room capture through the Vault's own data-room
+  filing (`fileDataRoomSources`): the same access and role checks, and the bytes checked against the capture. The
+  file lands suggested or unfiled for a person to confirm, and AnA says so.
+- **Checks.** `document-catalog-data-room.test.ts` has 8 cases: projects resolved by the server, the engine's grade
+  passed through, used and fileable marked, a narrowing outside the catalog refused, filing through the data room's
+  filing, a refusal said as itself, and both tools unchanged without the new inputs. It is red when another
+  project's capture is offered as fileable here. The AnA suites around these tools fail the same 21 cases on trunk
+  without this change (`stream-read-delivery`, `stream-read-unicode-windows`, `read-delivery-executor`,
+  `governed-reason-not-invented`, the last naming `place_project_document`); none is added.
+- **Not run in a live conversation.** This container has no model key, so AnA cannot hold a turn. Calling the
+  handlers directly against the live database needs the full request context, which RLS enforces, and a hand-built
+  one was refused. The tools call the same three services as the walked Data catalog view (`catalogProgramIds`,
+  `searchDataRoom`, `gradeSources`) and the Vault's walked "File into Vault" (`fileDataRoomSources`). A session with a
+  model key should ask AnA "what data do we have for this study, and how good is it?" and "file the protocol
+  synopsis into the Vault", and record both.
+
 ## Not done yet (for the next session)
 
-- **The CSR's study-data chooser lists subscribed items first** (`editor/StudyDataSource.tsx`, S3's paths). It
-  lists this project's Vault documents by `sha256`; a used capture whose checksum matches one should be ordered
-  first and marked "used in this project". Not started.
+- **AnA, live.** Walk step 4 in a conversation with a model key (above).
 - **Assembly of a used capture from another project.** "Build in editor" is offered only for used captures of this
-  project: the assembly route scopes data-room sources to the document's project
+  project, because the assembly route scopes data-room sources to the document's project
   (`server/services/authoring/authoring-assembly-sources.ts`). Admitting another project's used capture there is a
-  governance change to decide, not a UI one.
-- **Step 4, AnA.** No AnA tool reads the catalog or its grades, proposes "use in this project", or files a data-room
-  capture into Vault. Extend the existing tools (`search_clinical_regulatory_evidence`, `search_project_documents`,
-  `place_project_document`, `file_chat_upload_to_vault`, all in `server/services/ana/*tool-defs.ts`; RULE 6: no new
-  tool names) over the same routes: `GET /api/c2c/projects/:id/sources?scope=catalog`,
-  `POST /api/c2c/projects/:id/evidence` with `evidenceKind: 'data_room'`, and
-  `POST /api/c2c/project-vault/:id/data-room/file`. A person confirms the use and the filing.
+  governance decision for the founder, not a UI change.
+- **A used capture from another project in the CSR chooser.** The chooser lists this project's Vault. Another
+  project's capture appears there once it is filed into this project's Vault, and no route does that filing yet. Same
+  decision as above.
 - **Vault with no project open** shows "open a project first" in the Data catalog view: the catalog is scoped by the
   open project's sponsor (a CRO's sponsors never mix). A sponsor chooser there is S6's open item (1) in
   `COORDINATION.md`.

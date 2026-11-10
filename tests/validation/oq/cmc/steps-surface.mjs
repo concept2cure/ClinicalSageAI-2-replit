@@ -7,7 +7,8 @@
  */
 import { step, state, BROWSERLESS } from './context.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
-import { dataOf, errCode, errDetail, postAsSigner } from './signed-acts.mjs';
+import { serverIsDevelopment } from '../../lib/harness.mjs';
+import { dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
 
 await step(
@@ -195,11 +196,13 @@ await step(
        control. A run outside the W3 posture therefore cannot observe it, and
        says so rather than reporting the development behaviour as a pass — the
        first smoke run of this protocol read `invalid_request` here and called
-       it a failure of the control, which it was not. */
-    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED') {
+       it a failure of the control, which it was not. Since v0.11 the deviation
+       is recorded only on a server that says it is a development build
+       (serverIsDevelopment); anywhere else a missing refusal is a failure. */
+    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED' && (await serverIsDevelopment(ctx.baseUrl))) {
       ctx.deviation(
-        `not executed — this server allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), which is the documented development behaviour. ` +
-          'The refusal is a production control; observe it under the W3 posture.',
+        `not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), the documented development behaviour. ` +
+          'The refusal is a production control; observe it on a production build.',
         inline.json,
       );
     }
@@ -302,7 +305,7 @@ await step(
     /* The run identity recorded every register row in OQ-CMC-03, so its own
        approval is exactly the self-approval the control refuses. */
     const self = await api('POST', path, {
-      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: { password: authorPassword },
+      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: await runReauth(),
     });
     expect(self.status === 403, `a self-approval expected 403, got ${self.status}`, self.json);
     expect(errCode(self) === 'SEPARATION_OF_DUTIES', `expected SEPARATION_OF_DUTIES, got ${errCode(self)}`, self.json);

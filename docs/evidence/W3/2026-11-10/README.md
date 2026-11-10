@@ -43,25 +43,50 @@ The first IQ attempt (`first-attempt/iq-first-attempt.txt`) was 7 / 3 / 5. Each 
 
 Most of the not-executed steps follow one failed prerequisite: OQ-PROJ-04, OQ-AUTH-13, OQ-QMS-04b and OQ-CMC-13.
 
-## Triage (in progress)
+## Triage
 
 Each failure is one of three things:
 - **(A)** a protocol step overtaken by a recorded product decision: the protocol is revised, with a change-impact
   row naming the decision;
-- **(B)** a runner defect: fixed in the runner;
+- **(B)** a runner or set-up defect: fixed in the runner or the set-up;
 - **(C)** a product regression: fixed under F1 by the file's holder, or here if the file is unheld.
 
-Classified so far, each from the step's own record:
+**Every failure is A or B. No product regression was found.** Each was read from the step's own record (its
+request, its answer, its screenshot) and traced to the commit that changed the behaviour.
 
-| Step | Class | Cause |
-|---|---|---|
-| OQ-PROJ-04 | A | Intake has refused an IND with no product class since `4f53d90f3b` (2026-10-08): "State whether the product is a drug or a biologic". The step does not state one |
-| OQ-PROJ-11 | A | `/api/program-journey` left the launch scope on 2026-10-08 (`bcc457edb8`, "Launch scope keeps only what is real", as a fixture demo): 403 `LAUNCH_SCOPE` is the designed answer |
-| OQ-PROJ-13, -14 | A | The steps use Risk-based monitoring as their example of a surface outside the release. RBM entered the launch scope by P-76 (2026-10-30), so another out-of-scope surface is the example |
-| OQ-PROJ-18 | A | Since P0-4b (`f8d4047454`, 2026-10-01, IAM-04 b) a session ends durably at suspension. The step still expects the suspended session to work again after the restore (it reads 401 0.3 s after the restore). The restored account must sign in again |
-| OQ-VAULT-09 | A (to confirm in the browser) | The Vault opens on the filing's binder (the 72 required documents in their CTD folders, S6's Veeva-style binder), and the uploaded document is under the "Uploads · 1" tab |
-| OQ-CMC-12 | B | The step acts with the run identity's session. OQ-008 §1 assumes a run identity that is an ordinary member, but OQ-001 needs an admin. It must act as `OQ_MEMBER` |
-| OQ-CMC-33, -35, -40 | B | The signing calls send no authenticator code (401 `REAUTH_TOTP_REQUIRED`). OQ-008 was written on 2026-10-18 and never run with enrolled authenticators |
+| Step | Class | Cause | Revision |
+|---|---|---|---|
+| OQ-PROJ-04 | A | Intake has refused an IND with no product class since `4f53d90f3b` (2026-10-08): "State whether the product is a drug or a biologic" | OQ-001 v0.11: `productType:"drug"` |
+| OQ-PROJ-11 | A | `/api/program-journey` left the launch scope on 2026-10-08 (`bcc457edb8`, CPO decision): 403 `LAUNCH_SCOPE` is the designed answer | OQ-001 v0.11: expects 403 `LAUNCH_SCOPE`; URS-PROJ-007 withdrawn from the release |
+| OQ-PROJ-13, -14 | A | The steps use Risk-based monitoring as their example of a surface outside the release. RBM entered the launch scope by P-76 (`b602ecad97`, 2026-10-30) | OQ-001 v0.11: the program journey is the example; CMC, RBM and Biostatistics added to the launch surfaces checked |
+| OQ-PROJ-18 | A | Since P0-4b (`f8d4047454`, 2026-10-01) a session ends durably at suspension; the step expected the old session to work again after the restore | OQ-001 v0.11: the old session reads 401 `SESSION_ENDED`; a new sign-in reads 200 |
+| OQ-VAULT-09 | A | Since `2e4a9fe677` (2026-11-01) the Vault opens on its library, the filing's binder; the upload is on the "Uploads · 1" tab (screenshot) | OQ-002 v0.16: opens the Uploads tab |
+| OQ-AUTH-13 (d) | B | (d) is refused at the object gate only for a reviewer who is not an organisation admin: an admin passes it (`allowed-global-admin`). This run added the signer as an admin, as OQ-001 §1 v0.9 said; OQ-003 v0.5 was executed with a reviewer | Signer changed to approver through user administration (transcript); OQ-001 v0.11 §1, OQ-003 v0.6 §2; the runner names the cause if the signer is an admin |
+| OQ-AUTH-15, -16 | A | Since `8013c94575` (2026-10-30) a draft of a section with no recorded jurisdiction is refused 409 `DRAFT_REGION_REQUIRED` before the provider is asked | OQ-003 v0.6: the request names `region:"US"` |
+| OQ-AUTH-18 | A | The template library left the launch scope on 2026-10-08 (`bcc457edb8`) | OQ-003 v0.6: the library 403 `LAUNCH_SCOPE`, the global reference 200 |
+| OQ-SUBC-10 | B | The runner was written against the dossier at `8b192f1e75`; `117a3591ac` and `01dbd4eb38` (the same day, before it ever ran) moved `artifactReadiness` to the top and named its outcomes. A failed read is still `unavailable` with a code and a reason | OQ-004 v0.8: reads the dossier as answered |
+| OQ-SUBC-13 | A | Since `b1d7d85ec8` (2026-10-08) Submission Center lists the open project's submissions; the step opened a project other than the submission's | OQ-004 v0.8: opens the submission's own project |
+| OQ-SUBC-16 | B | The inline-input refusal is closed only when `config.isDevelopment` is false. The runner inferred development from dev-login, which this posture refuses on a development server | OQ-004 v0.8: `serverIsDevelopment` reads the server's report-only CSP, set by the same flag; a deviation on development, a failure elsewhere |
+| OQ-SRDY-04, -05b | A | `/api/orchestration/templates` and `/execute` were claimed by the AnA command surface (left 2026-10-08, `bcc457edb8`) and the Orchestration board (kept out by P-33, 2026-10-17) | OQ-005 v0.8: both 403 `LAUNCH_SCOPE`; URS-SRDY-004/005 withdrawn from the release |
+| OQ-QMS-04b | B | OQ-006 v0.8 §1 needs the signer to hold the Approver role (no QMS approver designated); it was an admin: 409 `MEMBER_NOT_QMS_APPROVER` | The signer is an approver (as OQ-AUTH-13) |
+| OQ-QMS-12 | A | Quality-management plans left the launch scope on 2026-10-08 (`bcc457edb8`) | OQ-006 v0.9: create and list 403 `LAUNCH_SCOPE`; OQ-QMS-15 the gate; URS-QMS-011 withdrawn from the release |
+| OQ-CMC-02 | B | It read `GET /api/cmc/specifications`, which is no route (the list is `/:projectId`); and it read with the run session, never as the viewer, and made no write | OQ-008 v0.11: the viewer's reads at the right paths, and the viewer's write |
+| OQ-CMC-12 (and -20) | B | Acted with the run session (an admin) instead of `OQ_MEMBER` | OQ-008 v0.11: `requireIdentity('OQ_MEMBER')` |
+| OQ-CMC-13 | B | Matched binding basis `cmc-module3-section-version`; the product writes `…-sha256` (since 2026-08-14). It also required a digest the by-target read does not return | OQ-008 v0.11: the real basis; OQ-CMC-14 recomputes the digest as the runtime role |
+| OQ-CMC-22 | B | The release route requires `decision` (approved / rejected / conditional), as it has since before OQ-008 | OQ-008 v0.11: sends `decision` |
+| OQ-CMC-23 | A | Since `d9060a85e2` (2026-11-08) and P-110 item 1, a specification is approved only on a method in the register, matched by name, validated or shown suitable under signature | OQ-008 v0.11: the specification names the method's title; the step validates it under signature first |
+| OQ-CMC-33, -35, -40 | B | The run identity's own signatures sent no authenticator code: 401 `REAUTH_TOTP_REQUIRED` before the control under test | OQ-008 v0.11: `runReauth`, a fresh code per attempt |
+| OQ-CMC-36 | A | Since `ef71545c8e` (2026-10-22) the composition boundary holds at every CMC entry point: a project with no drug substance is 409 `CMC_MODALITY_NOT_ESTABLISHED` | OQ-008 v0.11: each Q1E programme records its drug substance first |
 
-The rest (OQ-AUTH-13/15/16/18, OQ-SUBC-10/13/16, OQ-SRDY-04/05b, OQ-QMS-04b/12, OQ-CMC-02/13/22/23/36) are being read
-the same way. VSR-001 §21 carries the dispositions as they are reached.
+**Deviations.**
+- **OQ-CMC-17:** the fixture raises no critical contradiction, so the resolve has nothing to act on. Only `batch_rejected` is critical. A fixture for it is owed.
+- **OQ-CMC-26:** no AI provider.
+- **OQ-CMC-29:** the posture set no `LAUNCH_SCOPE_API_UNATTRIBUTED`, which is `report` in development. The re-execution sets `enforce`, production's default.
+- **OQ-CMC-30:** a development build; see OQ-SUBC-16.
+- **OQ-CMC-42:** `DATABASE_URL_RUNTIME` was not supplied; the re-execution supplies it.
+- **OQ-SRDY-06b:** the contradiction scan is the Inconsistency board's, which is outside the release (VSR-001 §16.5), as on 2026-09-27.
+
+**For the Part 11 owner (not changed here):** `GET /api/part11/signatures/by-target` does not return
+`bound_payload_digest`. A reviewer can see that a row binds something, but not what, without the database.
+
+The revised package is re-executed at head in `re-execution/` (VSR-001 §21).

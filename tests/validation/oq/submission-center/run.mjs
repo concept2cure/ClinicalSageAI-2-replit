@@ -2,7 +2,7 @@
  * OQ-004 — Operational Qualification: Submission Center.
  * Protocol: docs/validation/OQ-004-SUBMISSION-CENTER.md. Requirements: docs/validation/URS-004-SUBMISSION-CENTER.md.
  */
-import { createRun, helpers } from '../../lib/harness.mjs';
+import { createRun, helpers, serverIsDevelopment } from '../../lib/harness.mjs';
 import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { createProgram, ingestPdf, createSubmissionWithSequence } from '../../lib/fixtures.mjs';
 
@@ -273,19 +273,27 @@ await step(
     action: 'GET /api/c2c/projects/<program UUID>/dossier',
     expected: 'HTTP 200 with governed readiness and independent artifact/tracking states',
     dependsOn: ['OQ-SUBC-00'],
+    note: 'v0.8: the step reads the dossier as it is answered. The protocol was written at 8b192f1e75 (2026-10-26) and, before it was ever executed, ' +
+      '117a3591ac and 01dbd4eb38 (the same day) moved artifactReadiness to the top of the response and named each read outcome: measured, ' +
+      'no_artifacts / no_sections (read, nothing to count), unanchored (no project to read), unavailable (with a code and a reason). ' +
+      'The step still requires every outcome to be stated and a failed read never to be a zero.',
   },
   async ({ api, expect }) => {
     const r = await api('GET', `/api/c2c/projects/${encodeURIComponent(state.programId)}/dossier`);
     expect(r.status === 200, `expected accepted project dossier HTTP 200, got ${r.status}`, r.json);
     expect(r.json?.projectId === state.programId, 'dossier does not name the accepted program', r.json);
     expect(['measured', 'no_sections', 'unavailable'].includes(r.json?.home?.state), 'governed readiness state missing', r.json);
-    for (const key of ['artifactReadiness', 'sectionTracking']) {
-      const detail = r.json?.supportingReadiness?.[key];
-      expect(['read', 'unavailable'].includes(detail?.state), `${key} must state its own read outcome`, detail);
-      if (detail?.state === 'unavailable') expect(typeof detail.reason === 'string' && detail.reason.length > 0, `${key} lacks its refusal reason`, detail);
-      else expect(Array.isArray(detail[key === 'artifactReadiness' ? 'sections' : 'modules']), `${key} lacks its recorded rows`, detail);
+    const details = {
+      artifactReadiness: { detail: r.json?.artifactReadiness, rows: 'sections', empty: 'no_artifacts' },
+      sectionTracking: { detail: r.json?.supportingReadiness?.sectionTracking, rows: 'modules', empty: 'no_sections' },
+    };
+    for (const [key, { detail, rows, empty }] of Object.entries(details)) {
+      expect(['measured', empty, 'unanchored', 'unavailable'].includes(detail?.state), `${key} must state its own read outcome`, detail);
+      if (detail.state === 'unavailable') expect(typeof detail.reason === 'string' && detail.reason.length > 0 && typeof detail.code === 'string', `${key} lacks its refusal code and reason`, detail);
+      else if (detail.state !== 'unanchored') expect(Array.isArray(detail[rows]), `${key} lacks its recorded rows`, detail);
+      if (detail.state !== 'measured') expect(detail.summary == null || detail.state === empty, `${key} reports a summary for an outcome that read nothing`, detail);
     }
-    return `HTTP 200: program ${state.programId}; governed ${r.json.home.state}; artifacts ${r.json.supportingReadiness.artifactReadiness.state}; tracking ${r.json.supportingReadiness.sectionTracking.state}`;
+    return `HTTP 200: program ${state.programId}; governed ${r.json.home.state}; artifacts ${details.artifactReadiness.detail.state}; tracking ${details.sectionTracking.detail.state}`;
   },
 );
 
@@ -329,12 +337,13 @@ await step(
     kind: 'unscripted',
     urs: ['URS-SUBC-011'],
     title: 'Submission Center surface renders the submission',
-    action: 'Open /concept2cure/submission-center with the program selected',
+    action: 'Open /concept2cure/submission-center with the submission\'s own project selected (OQ-SUBC-03\'s program)',
     expected: 'The submission title is visible',
     dependsOn: ['OQ-SUBC-03'],
+    note: 'v0.8: since b1d7d85ec8 (2026-10-08, D2 ana-24) Submission Center lists the open project\'s submissions. OQ-SUBC-03 creates its submission on a project of its own (LX-22), and the step opened OQ-SUBC-00\'s, so the list was that project\'s.',
   },
   async (ctx) => {
-    await ctx.newPage({ id: state.programId, name: state.programName });
+    await ctx.newPage({ id: state.submissionProgramId, name: `OQ-004 Submission-create program ${stamp}` });
     await ctx.goto('/concept2cure/submission-center');
     await ctx.expectText(state.submission.title);
     await ctx.screenshot();
@@ -456,13 +465,17 @@ await step(
       csrInputs: [{ studyId: 'OQ-301', protocolNumber: 'OQ-301', phase: '3', studyDesign: 'randomized', primaryEndpoint: 'ORR', primaryResult: 'ORR 42% (OQ figure)', sampleSize: 312 }],
     });
     const program = await api('POST', '/api/submission-orchestrator/runs', { projectId: 1, ctdProgramId: 77 });
-    /* A deviation only on a development server, which this run knows from its
-       own sign-in (dev-login is answered only there). Anywhere else a missing
-       refusal is a failure of the control, never a deviation (S1 review). */
-    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' && ctx.auth.method === 'dev-login') {
+    /* A deviation only on a development server, which the server itself says
+       (serverIsDevelopment: its CSP is report-only exactly when the fixture door
+       is open). Anywhere else a missing refusal is a failure of the control,
+       never a deviation (S1 review). v0.8: until then the run inferred the
+       server from its own sign-in (dev-login answered only on development),
+       and the W3 posture refuses dev-login on a development server, so the
+       development behaviour was recorded as a failure (VSR-001 §21). */
+    if (code(inline) !== 'INLINE_RUN_INPUTS_REFUSED' && (ctx.auth.method === 'dev-login' || (await serverIsDevelopment(ctx.baseUrl)))) {
       ctx.deviation(
-        `not executed — this is a development server (dev-login), which allows inline run inputs by design (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}). ` +
-          'The refusal is a production control; observe it under the W3 posture.',
+        `not executed — this is a development server (its CSP is report-only), which allows inline run inputs by design (it answered ${inline.status} ${code(inline)} and ${program.status} ${code(program)}). ` +
+          'The refusal is a production control; observe it on a production build.',
         { inline: inline.json, program: program.json },
       );
     }

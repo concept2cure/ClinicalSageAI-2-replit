@@ -1,7 +1,8 @@
 /**
  * launch-demo/packs/lumen-vault.mjs — a faux client Data Room in each Lumen
  * demonstration project's Vault: 14 documents in LMN-201, 3 or 4 in each
- * other project, three governed artifacts in LMN-201, and a seal on each.
+ * other project, governed artifacts (three in LMN-201, one in each other
+ * project), and a seal on each.
  *
  * 2026-11-06: before a founder demo every Lumen project's Vault held one or two
  * uploads. Required documents read "0 of 9", Governed artifacts 0, and Seals &
@@ -37,7 +38,7 @@
 import { createApiClient, devLogin } from '../../../../tests/validation/lib/harness.mjs';
 import { makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { T } from './lumen-content.mjs';
-import { LMN201_ARTIFACTS, VAULT_DOCUMENTS, vaultPdf } from './lumen-vault-content.mjs';
+import { VAULT_ARTIFACTS, VAULT_DOCUMENTS, vaultPdf } from './lumen-vault-content.mjs';
 
 const DOCS = '/api/regulatory/documents';
 const vaultPath = (programId) => `/api/c2c/project-vault/${encodeURIComponent(programId)}`;
@@ -243,18 +244,18 @@ async function ensureDocument(ctx, program, doc, cabinet, people, out) {
   });
 }
 
-/* ───────────────────────── Governed artifacts (LMN-201) ───────────────────────── */
+/* ───────────────────────── Governed artifacts ───────────────────────── */
 
 /**
  * The project's governed artifacts: created by the signed-in account, moved to
  * review by it, and approved by the approver with an e-signature (approval is
  * refused to an author).
  */
-async function ensureArtifacts({ api, run, tally }, program, people) {
+async function ensureArtifacts({ api, run, tally }, program, label, artifacts, people) {
   const base = `/api/concept2cure/projects/${encodeURIComponent(program.id)}/artifacts`;
-  for (const a of LMN201_ARTIFACTS) {
+  for (const a of artifacts) {
     const title = T(a.name);
-    await run.step(`Governed artifact: ${a.type} on LMN-201`, async () => {
+    await run.step(`Governed artifact: ${a.type} on ${label}`, async () => {
       const rows = must(await api('GET', base), 200, 'list the project\'s governed artifacts').data ?? [];
       const same = rows.filter((r) => r.title === title);
       if (same.length > 1) throw new Error(`Two governed artifacts are titled "${title}"; reconcile them before seeding.`);
@@ -356,7 +357,7 @@ export async function ensureLumenVault(ctx, programs) {
     const cabinet = await readCabinet(ctx.api, program.id);
     documents[label] = [];
     for (const doc of docs) await ensureDocument(ctx, program, { ...doc, project: label }, cabinet, people, documents[label]);
-    if (label === 'LMN-201') await ensureArtifacts(ctx, program, people);
+    await ensureArtifacts(ctx, program, label, VAULT_ARTIFACTS[label] ?? [], people);
     await ensureSeal(ctx, program, label, people);
     await readBack(ctx, program, label);
   }

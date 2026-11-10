@@ -4,7 +4,7 @@
  * engines.
  */
 import { step, state, stamp, FOREIGN_PROJECT_ID } from './context.mjs';
-import { requireSigner } from '../../lib/credentials.mjs';
+import { requireIdentity, requireSigner } from '../../lib/credentials.mjs';
 import { dataOf, errCode, postAsSigner } from './signed-acts.mjs';
 import { APPROVAL_STEPS } from './steps-approval.mjs';
 
@@ -63,12 +63,11 @@ await step(
     action: 'as a member without that role: place',
     expected: '403; no leaf written',
     dependsOn: ['OQ-CMC-19'],
+    note: 'v0.11: the placement is the member\'s (OQ_MEMBER). Until v0.10 it was sent with the run session.',
   },
-  async ({ api, expect, deviation }) => {
-    if (!process.env.OQ_MEMBER_EMAIL) {
-      deviation('not executed — OQ_MEMBER_EMAIL / _PASSWORD not supplied; an identity without the regulatory-author role is needed to observe the refusal.');
-    }
-    const r = await api('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
+  async ({ apiAs, expect, deviation, baseUrl }) => {
+    const member = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_MEMBER', 'an identity without the regulatory-author role is needed to observe the refusal.');
+    const r = await apiAs(member.session)('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
       sequenceId: state.sequenceId, reason: 'Attempting a placement without the role.',
     });
     expect([401, 403].includes(r.status), `expected 403, got ${r.status}`, r.json);
@@ -136,8 +135,10 @@ await step(
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const batchId = state.records?.batchRecord;
     expect(Boolean(batchId), 'the prerequisite recorded no batch', state.records);
+    /* v0.11: the release states its decision, which the route has required since before this protocol
+       (batchRecordRoutes.ts, approved | rejected | conditional); v0.10 sent none and was answered 400. */
     const noResults = await postAsSigner(ctx, signer, `/api/cmc/batch-records/${batchId}/release`, {
-      reason: 'Releasing before any QC result is recorded.', meaning: 'approval',
+      reason: 'Releasing before any QC result is recorded.', meaning: 'approval', decision: 'approved',
     });
     expect(noResults.status === 409, `a release with no QC result expected 409, got ${noResults.status}`, noResults.json);
     const already = await api('POST', '/api/cmc/batch-records', {
@@ -153,15 +154,21 @@ await step(
     id: 'OQ-CMC-23',
     urs: ['URS-CMC-013'],
     title: 'Editing an approved specification withdraws the approval, with the reason recorded',
-    action: 'approve a specification, then widen its limits without a reason, then with one',
-    expected: '422 without a reason; with one, the edit lands and the approval is withdrawn',
+    action: 'as the signer, validate the specification\'s analytical method on its register; approve the specification; then widen its limits without a reason, then with one',
+    expected: 'the method validated 200; the approval 200; 422 without a reason; with one, the edit lands and the approval is withdrawn',
     dependsOn: ['OQ-CMC-03'],
+    note: 'v0.11: since d9060a85e2 (2026-11-08, F1) and P-110 item 1 (2026-11-09) a specification is approved only when the method it names is in the project\'s register and validated, or shown suitable, under signature; the step validates OQ-CMC-03\'s method through the register\'s signed Validate act first. Until v0.10 the approval was the first act.',
   },
   async (ctx) => {
     const { api, expect } = ctx;
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const specId = state.records?.specification;
-    expect(Boolean(specId), 'the prerequisite recorded no specification', state.records);
+    const methodId = state.records?.analyticalMethod;
+    expect(Boolean(specId && methodId), 'the prerequisite recorded no specification or method', state.records);
+    const validated = await postAsSigner(ctx, signer, `/api/cmc/analytical-methods/${methodId}/validate`, {
+      reason: 'ICH Q2(R2) validation package reviewed and accepted.', meaning: 'approval',
+    });
+    expect(validated.status === 200, `the method validation expected 200, got ${validated.status}`, validated.json);
     const approve = await postAsSigner(ctx, signer, `/api/cmc/specifications/${specId}/approve`, {
       reason: 'Limits justified by the batch history in the development report.', meaning: 'approval',
     });
@@ -176,7 +183,7 @@ await step(
     const read = await api('GET', `/api/cmc/specifications/${specId}`);
     const status = dataOf(read).approvalStatus ?? dataOf(read).approval_status;
     expect(status !== 'approved', `the edit kept the approval (${status})`, read.json);
-    return `approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (${status})`;
+    return `method validated 200; approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (${status})`;
   },
 );
 

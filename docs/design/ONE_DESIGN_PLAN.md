@@ -686,12 +686,13 @@ deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/202
 | 1. The catalog across projects | `7a2cfe34` (S2: `data-room-search.ts` reads the person's accessible projects of the open project's sponsor, with facets by project, study, kind, CTD section, Vault folder), `1b4d3c12` (R1: `GET /api/c2c/projects/:id/sources?scope=catalog`) | Vault → **Data catalog** (`cef3d557`, S6); the project page's Data room → **Open the data catalog** (`08927463`, R1); Project files → Data room → All my projects |
 | 2. The grade | `7a2cfe34` (`data-room-grade.ts`: provenance, integrity with the Vault copy's fixity, currency, processing, verification by a person, CDISC conformance for datasets; stored on the capture, `migrations/20261106_data_room_grade.sql`), `c04ba737` (a native record graded by its snapshot and its register) | each item's *Grade A–D · score*, its basis criterion by criterion |
 | 3. Use in this project | `1b4d3c12` (the pinned-evidence routes take `data_room`, checked against the person's catalog, audited), `c04ba737` (the panel) | **Use in this project** / **Remove**; the project's Data room lists **Used in this project** first |
-| 4. AnA over it | not started | — |
+| 3b. Used data feeds the CSR | "S3: the CSR's study-data chooser lists first the data this project uses" (S3: the CSR document's study-data chooser lists the Vault source of a used capture first, "used in this project"; walked on the CDISC pilot CSR) | the CSR editor's "Build from the study's data" chooser |
+| 4. AnA over it | "S4: AnA reads the data catalog with its grades, and files a data-room capture into the Vault" (S4: `list_project_documents` with `catalog: true` reads the catalog, its grades and what the project uses; `file_chat_upload_to_vault` with `source_id` files a capture through the data room's filing; AnA proposes "Use in this project", the person confirms). Not run in a live conversation: no model key where it was built | in AnA's answers |
 
-**Next** (the README's "Not done yet"): the CSR study-data chooser ordering used captures first (`StudyDataSource.tsx`,
-S3); whether a used capture of another project may be assembled into this project's document (a governance
-decision); step 4, AnA, by extending existing tools over the same routes (no new tool names); a sponsor chooser for
-the Data catalog with no project open (S6's open item).
+**Next** (the README's "Not done yet"): AnA's step 4 walked in a conversation with a model key; whether a used
+capture of another project may be assembled into, or filed for, this project's documents (a governance decision for
+the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
+"S2: the walk of the CSR example and AnA's tools, recorded".
 
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
@@ -998,6 +999,41 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
   - It gained a verified way to show §11.1 and §11.4 live without freezing.
 - **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
   this environment does not have.
+
+- **Demo-day UI sweep** (2026-11-06), `f05919e54`, `docs/evidence/D2-CSR/2026-11-06-demo-day-ui-sweep/`.
+  - Every screen was walked as author, reviewer and approver, with no page error.
+  - The AI paths reach the provider.
+  - The founder's "model not approved" in the Codespace was a key that never reached the app. The Codespace
+    session fixed its start script (`11b191038`).
+  - The docked composer's overflow was fixed by the design lead.
+
+**DATA: the Lumen demonstration data** (2026-11-06 to 11-10, at the founder's request: "faux seeded demo examples …
+RBM, QMS and more; Vault … and tasking too")
+
+- **Tasks, review, information request, sequence and reports**, `4fad016a5`:
+  - LMN-201's board has 16 tasks across every column, with a critical path;
+  - the Investigator's Brochure is out for review;
+  - a FICTIONAL FDA information request sits in Communication and Respond;
+  - LMN-201 has sequence 0000;
+  - four computed reports have run.
+- **Quality** `dff867c6f`, **risk-based monitoring** `91d6a97da`, **Vault** `893451f02`:
+  - every Quality register;
+  - RBM: RACT, KRIs, QTLs, signals, the plan and site actions;
+  - 25 synthetic documents filed, reviewed, approved and sealed.
+
+  All through the screens' own routes, and idempotent.
+- **Task owners by role and a third person**, `893451f02`; **a named demonstration organisation** in
+  `seed-admin.mjs`, `98e664c40`.
+- **Not finished, handed over:**
+  - the founder's Lumen account in the Codespace (design agreed with the Codespace session: identities only from
+    secrets);
+  - the Vault re-filing on each run;
+  - the QMS approver designation;
+  - the biotech/mdx QMS signer 409;
+  - two RBM product defects;
+  - the CSR study's package identity.
+
+  Each is in `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md`.
 
 **Finding shared with the design lead**
 
@@ -2175,6 +2211,51 @@ session's brief). Each records its own progress here; as reported to this sessio
 - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
 - the PQ decision for production drafting (every model is `pending`);
 - whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
+
+#### L1 (row D1) — ready to run on AWS: re-measured at head, the WAF, cheaper readiness (session `session_01QoxbLaF89iYd7wC96owa7t`, 2026-11-10)
+
+**What already exists.**
+- Work order: `docs/work-orders/MR-03-first-deploy-staging-to-production.md`. Stages 1–4 had landed.
+- Infrastructure: `terraform/` (one stack, two roots, tested modules), `deploy-aws.yml` (staging, promote, rollback) and
+  `provision-database.yml`.
+- CI's image jobs.
+- P-11, the WAF, decided but never built.
+
+**Delivered**
+- **Re-measured at head.** Evidence: `docs/evidence/D1/2026-11-10-aws-readiness/`.
+  - Terraform: 121/121 offline tests pass, every root validates, and the deploy preflight proof holds.
+  - The deploy contracts pass.
+  - On GitHub: the production image boot, blank-DB provisioning, boot smoke, Security Scan and Codespace jobs pass.
+- **P-11, the WAF**, `4e697a5381`: an `aws_wafv2_web_acl` on the distribution.
+  - The IP-reputation and known-bad-inputs groups block, and a per-IP rate rule blocks.
+  - The common rule set counts for two weeks; its 8 KB body rule counts on every path.
+  - The region precondition is in, and the Trivy exception is deleted.
+  - Red 11/1 failed, then green 15/15.
+- **OPS-22**, `5e8a7317ce` and `37d030e109`'s chain: `/readyz` runs its database query and Vault-store probe at most once
+  per 5 s, and in production the public body is `{ ready }` alone. Green 81/81.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+- **MR-03**, `999efec84a`: re-confirmed at head, with the founder's first-apply checklist in order.
+
+**What blocks a deploy, in order**
+1. **Trunk CI is red**, and `deploy-aws.yml` runs only a SHA whose whole `ci.yml` run passed. The MR-02 lanes own it:
+   - Secret scan: 8 findings, 3 credentials live;
+   - Lint;
+   - Integration;
+   - Test: 447 of 79,560 failing.
+2. **The founder's inputs**, listed in MR-03's 2026-11-10 checklist:
+   - accounts, region, domain and certificates;
+   - SMTP;
+   - the Anthropic key, and its placement entry (B4);
+   - error reporting (NEW-3);
+   - Vault retention;
+   - revoking the live credentials;
+   - the apply.
+
+**Next, engineering, no founder input**
+- Wire `READYZ_TOKEN` into the task definition and the smoke test.
+- MR-03 Stage 6 (OPS-17).
+- Stage 7 steps 2–4 and 8.
+- Switch the common rule set to block two weeks after the first apply.
 
 ## 4. How everyone works
 

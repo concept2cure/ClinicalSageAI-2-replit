@@ -10,7 +10,7 @@
  * steps are the create door and the ceremony behind it.
  */
 import { step, state, stamp } from './context.mjs';
-import { dataOf, errCode, errDetail, signatureRowsFor } from './signed-acts.mjs';
+import { dataOf, errCode, errDetail, runReauth, signatureRowsFor } from './signed-acts.mjs';
 import { SURFACE_STEPS } from './steps-surface.mjs';
 
 /**
@@ -177,7 +177,6 @@ await step(
         { ungoverned: observed },
       );
     }
-    const signer = { session: null, password: ownPassword };
     const signed = [];
     for (const r of SIGNED_REGISTERS) {
       const rec = records.find((x) => x.register === r.path);
@@ -187,14 +186,14 @@ await step(
 
       /* The precondition, before the basis is recorded: a signature over
          nothing accepts nothing. */
-      const bare = await api('POST', base, { reason, meaning: 'approval', reauth: { password: signer.password } });
+      const bare = await api('POST', base, { reason, meaning: 'approval', reauth: await runReauth() });
       expect(bare.status === 409, `${r.noun}: signing with no basis expected 409, got ${bare.status}`, bare.json);
       expect(r.missing.test(errDetail(bare)), `${r.noun}: the refusal does not name what is missing`, errDetail(bare).slice(0, 250));
 
       const basis = await api('PUT', `/api/cmc/${r.path}/${rec.id}`, r.basis);
       expect(basis.status === 200, `${r.noun}: recording the basis expected 200, got ${basis.status}`, basis.json);
 
-      const act = await api('POST', base, { reason, meaning: 'approval', reauth: { password: signer.password } });
+      const act = await api('POST', base, { reason, meaning: 'approval', reauth: await runReauth() });
       expect(act.status === 200, `${r.noun}: the signature expected 200, got ${act.status}`, act.json);
       const row = dataOf(act);
       expect(String(row.status ?? '').toLowerCase() === r.signed, `${r.noun} is not ${r.signed} after the signature`, row);
@@ -279,6 +278,7 @@ await step(
     title: 'A shelf-life claim is judged against the data the studies cover',
     action: 'record four programmes: a shelf-life claim within the long-term coverage, one beyond it, one beyond it with no accelerated study, and one whose claim is free text that states no period; read the ICH compliance verdict for each',
     expected: 'Q1E pass, then a finding naming the months claimed and the months covered, then a second finding that Q1E admits extrapolation only on accelerated data, then not_evaluated quoting the text it could not read — never a pass',
+    note: 'v0.11: each programme records its small-molecule drug substance before its studies. Since ef71545c8e (2026-10-22) the composition boundary holds at every CMC entry point, the ICH compliance check included: a project that records no drug substance is answered 409 CMC_MODALITY_NOT_ESTABLISHED, because whether its Module 3 is composable here is not established.',
   },
   async ({ api, expect, attach }) => {
     const observed = [];
@@ -295,6 +295,11 @@ await step(
       });
       expect(project.status === 201 || project.status === 200, `the ${c.label} programme expected 201, got ${project.status}`, project.json);
       const projectId = dataOf(project).id;
+      const substance = await api('POST', '/api/cmc/drug-substances', {
+        projectId, substanceName: `Q1E-${c.label}-DS`, modality: 'small_molecule', status: 'development', developmentPhase: 'phase1',
+        manufacturingProcess: { route: 'Three-step chemical synthesis; final crystallisation from ethanol' },
+      });
+      expect(substance.status === 200 || substance.status === 201, `the ${c.label} drug substance expected 201, got ${substance.status}`, substance.json);
       const lt = await api('POST', '/api/cmc/stability-studies', stabilityBody(projectId, c, 'long_term'));
       expect(lt.status === 200 || lt.status === 201, `the ${c.label} long-term study expected 200, got ${lt.status}`, lt.json);
       if (c.accelerated) await api('POST', '/api/cmc/stability-studies', stabilityBody(projectId, c, 'accelerated'));

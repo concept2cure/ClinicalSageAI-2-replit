@@ -104,14 +104,16 @@ await step(
     id: 'OQ-PROJ-04',
     urs: ['URS-PROJ-002', 'URS-PROJ-003'],
     title: 'Create an IND program',
-    action: 'POST /api/c2c/projects {name, programType:"ind", primaryAgency:"FDA", indication}',
+    action: 'POST /api/c2c/projects {name, programType:"ind", productType:"drug", primaryAgency:"FDA", indication}',
     expected: 'HTTP 201; data.id is a UUID; the row carries the given name; meta reports what else the intake created (scaffolded document, canonical submission)',
+    note: 'v0.11: the request states the product class. Since 4f53d90f3b (2026-10-08) intake refuses an IND that does not say whether the product is a drug or a biologic.',
   },
   async ({ api, expect }) => {
     const name = `OQ-001 IND program ${stamp}`;
     const r = await api('POST', '/api/c2c/projects', {
       name,
       programType: 'ind',
+      productType: 'drug',
       primaryAgency: 'FDA',
       indication: 'Validation exercise — OQ-001',
       priority: 'medium',
@@ -300,19 +302,16 @@ await step(
     id: 'OQ-PROJ-11',
     kind: 'ad-hoc',
     urs: ['URS-PROJ-007'],
-    title: 'Program journey read model answers',
+    title: 'The program journey is outside this release',
     action: 'GET /api/program-journey',
-    expected: 'HTTP 200 with data[] (empty is honest for a new program)',
+    expected: 'HTTP 403 LAUNCH_SCOPE: the journey is not served in this release',
+    note: 'v0.11: the program journey left the launch scope by the CPO decision of 2026-10-08 (bcc457edb8, docs/SURFACE_DECISIONS_2026-10-08.md): it is empty for every program a client creates. Until v0.10 the step expected HTTP 200 with data[]. URS-PROJ-007 is withdrawn from this release; its revision is owed through change control.',
   },
-  async ({ api, expect, deviation, deniedTables }) => {
+  async ({ api, expect }) => {
     const r = await api('GET', '/api/program-journey');
-    if (r.status === 500 && deniedTables().includes('public.program_journeys')) {
-      // The route swallows the database error (server/routes/program-journey.routes.ts:59-63),
-      // so the attribution comes from IQ-07's recorded grant inventory, not from a guess.
-      deviation('IQ-DEV-001: public.program_journeys is listed as unreadable by the runtime role in IQ-07 (IQ/db-role-denied-tables.json); the route answers 500 and hides the cause. Re-execute after the grant is applied.', r.json);
-    }
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    return `HTTP 200, ${r.json?.meta?.count ?? 0} journeys`;
+    const code = r.json?.error?.code ?? r.json?.code;
+    expect(r.status === 403 && code === 'LAUNCH_SCOPE', `expected 403 LAUNCH_SCOPE, got ${r.status} ${code}`, r.json);
+    return `HTTP 403 ${code}: not in this release`;
   },
 );
 
@@ -336,7 +335,8 @@ await step(
     urs: ['URS-PROJ-008'],
     title: 'Launch scope is enforced in the navigation verdicts',
     action: 'GET /api/module-subscriptions/navigation',
-    expected: 'launchScope.enforced=true; the out-of-scope surface "rbm" is not entitled with source "launch-scope"; all seven launch apps\' primary surfaces are entitled',
+    expected: 'launchScope.enforced=true; the out-of-scope surface "program-journey" is not entitled with source "launch-scope"; every launch app\'s primary surface is entitled (Projects, Vault, Authoring, Submission Center and its readiness, QMS, Reporting & analytics, CMC / Module 3, Risk-based monitoring, Biostatistics)',
+    note: 'v0.11: Risk-based monitoring entered the launch scope by P-76 (b602ecad97, 2026-10-30), so it is no longer the example of a surface outside the release; the program journey is (bcc457edb8). CMC / Module 3 (P-28), Risk-based monitoring and Biostatistics (P-76) are added to the launch surfaces checked.',
   },
   async ({ api, expect }) => {
     const r = await api('GET', '/api/module-subscriptions/navigation');
@@ -345,11 +345,12 @@ await step(
     expect(j.launchScope?.enforced === true, 'launchScope.enforced is not true', j.launchScope);
     const arr = Object.values(j).find((v) => Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'entitled' in x)) ?? [];
     const byId = Object.fromEntries(arr.map((v) => [v.id, v]));
-    expect(byId.rbm && byId.rbm.entitled === false && byId.rbm.source === 'launch-scope', 'rbm not launch-scope locked', byId.rbm);
-    const launch = ['projects', 'vault', 'document-authoring', 'submission-center', 'dispatch-readiness', 'quality', 'insights'];
+    const out = byId['program-journey'];
+    expect(out && out.entitled === false && out.source === 'launch-scope', 'program-journey not launch-scope locked', out);
+    const launch = ['projects', 'vault', 'document-authoring', 'submission-center', 'dispatch-readiness', 'quality', 'insights', 'cmc', 'rbm', 'biostatistics'];
     const missing = launch.filter((id) => !(byId[id] && byId[id].entitled === true));
     expect(missing.length === 0, `launch surfaces not entitled: ${missing.join(', ')}`, launch.map((id) => byId[id]));
-    return `${arr.length} verdicts; rbm locked by launch-scope; launch surfaces entitled`;
+    return `${arr.length} verdicts; program-journey locked by launch-scope; ${launch.length} launch surfaces entitled`;
   },
 );
 
@@ -358,12 +359,13 @@ await step(
     id: 'OQ-PROJ-14',
     urs: ['URS-PROJ-008'],
     title: 'Deep link to an out-of-scope surface shows the launch-scope gate',
-    action: 'Open /concept2cure/rbm',
-    expected: 'The page explains the surface is not in this release (no RBM content, no upsell)',
+    action: 'Open /concept2cure/program-journey',
+    expected: 'The page explains the surface is not in this release (no journey content, no upsell)',
+    note: 'v0.11: the program journey replaces Risk-based monitoring as the out-of-scope example (P-76 brought RBM into the release).',
   },
   async (ctx) => {
     await ctx.newPage(null);
-    await ctx.goto('/concept2cure/rbm');
+    await ctx.goto('/concept2cure/program-journey');
     await ctx.expectText(/not in this release/i);
     await ctx.screenshot();
     return 'launch-scope gate rendered';

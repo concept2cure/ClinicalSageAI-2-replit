@@ -26,7 +26,7 @@ describe('Training lapsing soon', () => {
       userId: 11, userName: 'Member 2', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
       documentVersion: '1.0', expiresAt: '2026-10-09T12:00:00.000Z', daysLeft: -5, lapsed: true,
     }] }, loading: false, error: null };
-    render(<TrainingExpiry />);
+    render(<TrainingExpiry assigned={1} />);
     expect(screen.getByText('Member 1')).toBeTruthy();
     expect(screen.getByText(/SOP-001 Controlled procedure · v1\.0 · lapses .* \(in 10 days\)/)).toBeTruthy();
     expect(screen.getByText('Member 2')).toBeTruthy();
@@ -35,8 +35,22 @@ describe('Training lapsing soon', () => {
 
   it('says a failed read failed, and never that no one lapses', () => {
     H.reads[PATH] = { data: null, loading: false, error: 'HTTP 500' };
-    render(<TrainingExpiry />);
+    render(<TrainingExpiry assigned={1} />);
     expect(screen.getByText('Training expiry could not be read')).toBeTruthy();
     expect(screen.queryByText(/No one's training has lapsed/)).toBeNull();
+  });
+
+  // C2 (finding 112): "no one's training lapses" is said only where training is assigned.
+  it('gives an all-clear only where training is assigned, and none where nothing is or that is unknown', () => {
+    H.reads[PATH] = { data: { data: [] }, loading: false, error: null };
+    const first = render(<TrainingExpiry assigned={2} />);
+    expect(screen.getByText(/No one's training has lapsed, and none lapses in the next 60 days/)).toBeTruthy();
+    first.unmount();
+    const { unmount } = render(<TrainingExpiry assigned={0} />);
+    expect(screen.getByText('No document is assigned for training yet.')).toBeTruthy();
+    expect(screen.queryByText(/No one's training has lapsed/)).toBeNull();
+    unmount();
+    render(<TrainingExpiry assigned={null} />);
+    expect(screen.getByText(/could not be read, so no all-clear is given/)).toBeTruthy();
   });
 });

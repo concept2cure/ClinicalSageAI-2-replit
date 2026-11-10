@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "launchScope": {
+    "enforced": true
+  },
+  "verdicts": 89,
+  "launchScopeLocked": 59,
+  "entitled": [
+    "cmc",
+    "device-510k",
+    "device-cer",
+    "device-diagnostics",
+    "device-pma",
+    "device-presub",
+    "document-authoring",
+    "ectd-compile",
+    "labeling",
+    "protocol-dev",
+    "device-clinical-studies",
+    "device-engineering",
+    "device-software",
+    "human-factors",
+    "insights",
+    "vault",
+    "gateway-transmittals",
+    "submission-center",
+    "dispatch-readiness",
+    "identity-console",
+    "quality",
+    "review",
+    "tasks",
+    "device-postmarket",
+    "device-udi",
+    "communication-center",
+    "ind-checklist",
+    "biostatistics",
+    "rbm",
+    "projects"
+  ]
+}
