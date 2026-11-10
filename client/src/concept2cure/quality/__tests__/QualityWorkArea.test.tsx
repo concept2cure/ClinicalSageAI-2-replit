@@ -229,11 +229,17 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(table.classList.contains('reg-tbl')).toBe(true);
     expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Number', 'Title', 'Type', 'Version', 'Status', 'Effective', 'Next review', 'Actions']);
     expect(container.querySelectorAll('tbody.qms-doc')).toHaveLength(1);
+    // C18a: a date is kept on one line; it broke at its hyphen ("2026-" over "11-10") in the narrow column at 1440.
+    expect([...container.querySelectorAll('tbody.qms-doc .qms-when')].map((e) => e.textContent)).toEqual(['—']);
     expect(container.querySelector('.qms-table, .qms-thead, .qms-pill, .qms-tag')).toBeNull();
   });
 
   it('states the register in one sentence above its rows', () => {
     mount();
     expect(screen.getByTestId('qms-register-figures').textContent).toBe('1 controlled document: 1 in review; none overdue for review.');
+    // C18a: a sentence is the line under the head (D0's standalone `p.sec-sub`), not crowded into it beside the actions.
+    const line = screen.getByTestId('qms-register-figures');
+    expect(line.tagName, 'the sentence is its own line').toBe('P');
+    expect(line.previousElementSibling?.classList.contains('pj-sec-h'), 'directly under the section head').toBe(true);
   });
 });

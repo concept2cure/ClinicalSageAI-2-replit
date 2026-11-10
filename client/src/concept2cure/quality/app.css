@@ -239,6 +239,8 @@
 /* A record's prose wraps at a readable width; its facts (numbers, dates, states) stay on one line, so at 390 a date no
    longer broke at its hyphen across two lines (walked, C11). */
 .c2c-v2 .reg-tbl.qms-reg tbody.qms-rec td:not(.qms-title) { white-space: nowrap; }
+/* C18a: a controlled document's date stays on one line (it broke at its hyphen at 1440); the lines under it wrap. */
+.c2c-v2 .reg-tbl.qms-reg .qms-when { white-space: nowrap; }
 .c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
 .c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }

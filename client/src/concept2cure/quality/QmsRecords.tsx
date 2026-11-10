@@ -130,19 +130,19 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       <section className="pj-sec qms-sec" aria-labelledby={headId}>
         <div className="pj-sec-h">
           <h2 id={headId}>{config.title}</h2>
-          {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
-          {loaded && !failed && rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
-                {scopeOf && 'organisationWide' in scopeOf && <span data-testid="qms-record-org-wide">Organisation-wide · </span>}
-                {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
-                {config.readCap && rows.length >= config.readCap.rows && (
-                  <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
-                )}
-                {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span>{k.detail ? ` (${k.detail})` : ''}</React.Fragment>)}
-              </span>}
           <div className="pj-sec-acts">
             <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
           </div>
         </div>
+        {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
+        {loaded && !failed && rows.length > 0 && <p className="sec-sub" data-testid="qms-record-figures">
+              {scopeOf && 'organisationWide' in scopeOf && <span data-testid="qms-record-org-wide">Organisation-wide · </span>}
+              {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
+              {config.readCap && rows.length >= config.readCap.rows && (
+                <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
+              )}
+              {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span>{k.detail ? ` (${k.detail})` : ''}</React.Fragment>)}
+        </p>}
         {failed && (
           <ErrorState
             title={`The ${inSentence(config.title)} register could not be read`}

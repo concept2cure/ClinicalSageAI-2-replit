@@ -448,6 +448,9 @@ describe('Quality records', () => {
     render(<QmsRecords tab="capa" onAsk={vi.fn()} onContext={onContext} />);
     const line = screen.getByTestId('qms-record-figures').textContent;
     expect(line).toMatch(/^Open CAPAs: 1 \(1 closed\)/);
+    // C18a: the sentence is the line under the head.
+    expect(screen.getByTestId('qms-record-figures').tagName).toBe('P');
+    expect(screen.getByTestId('qms-record-figures').previousElementSibling?.classList.contains('pj-sec-h')).toBe(true);
     expect(line).toContain('High or critical risk, open: 1');
     expect(screen.queryByTestId('qms-record-partial')).toBeNull();
     await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ partial: false, about: expect.stringMatching(/^Corrective and preventive actions/) })));

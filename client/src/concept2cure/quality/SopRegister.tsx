@@ -298,7 +298,6 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       <section className="pj-sec" aria-labelledby="qms-register-h">
         <div className="pj-sec-h">
           <h2 id="qms-register-h">Controlled documents</h2>
-          {figures && <span className="sec-sub" data-testid="qms-register-figures">{figures}</span>}
           <div className="pj-sec-acts">
             <div className="seg" role="group" aria-label="Status">
               {STATUS_FILTERS.map((f) => (
@@ -318,6 +317,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
             </button>
           </div>
         </div>
+        {/* The register's sentence is the line under its head (C18a): inside it, it crowded the title and the actions. */}
+        {figures && <p className="sec-sub" data-testid="qms-register-figures">{figures}</p>}
 
         {regFailed && (
           <ErrorState

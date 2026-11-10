@@ -121,6 +121,10 @@ describe('a change log scoped to the open project', () => {
         changes={CHANGE_ROWS.slice(0, 2)} loading={false} onRetry={() => {}} />,
     );
     expect(screen.getByTestId('change-figures').textContent).toMatch(/^2 open of 2 in the log; 1 awaiting approval; 1 in implementation/);
+    // C18a: the sentence is the line under the head.
+    const line = screen.getByTestId('change-figures');
+    expect(line.tagName, 'the sentence is its own line').toBe('P');
+    expect(line.previousElementSibling?.classList.contains('pj-sec-h'), 'directly under the section head').toBe(true);
     H.shell = null;
   });
 

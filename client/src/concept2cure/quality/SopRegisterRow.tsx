@@ -64,7 +64,7 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
   return (
     <td title={title}>
       {d.nextReviewDate ? (
-        <span>
+        <span className="qms-when">
           {formatDate(d.nextReviewDate)}
           {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
         </span>
@@ -260,7 +260,7 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
           <RouteLine doc={d} meId={act.meId} />
         </td>
         <td>
-          {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
+          <span className="qms-when">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</span>
           {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
             <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
           )}
