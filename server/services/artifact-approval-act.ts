@@ -51,7 +51,13 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
-import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
+import {
+  assertSignerIsNotAuthor, isSoleMember, resolveTargetAuthors, separationOfDutiesRefusal, SOLE_MEMBER_RECORD,
+  type SeparationOfDutiesResult,
+} from './governance/separation-of-duties';
+
+/** Re-exported for the signed act, which records it (services/artifact-signed-act.ts). */
+export { SOLE_MEMBER_RECORD };
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -72,7 +78,9 @@ export interface ApprovalActQueryable {
  * reviewer was named, or every one was withdrawn. The doors answer it 409, as
  * the editor's door answers its own (authoring.router.ts, 2026-11-09).
  */
-export type ReviewQuorumVerdict = { met: true } | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
+export type ReviewQuorumVerdict =
+  | { met: true; /** P-116: admitted with no independent review, because the signer is the only member. */ soleMember?: true }
+  | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
 
 /** Where a reviewer is named: the Review step of the artifact's card (ConversationArtifactReview.tsx). */
 const NAME_A_REVIEWER = "Name a reviewer in the artifact's Review section; once every named reviewer has approved this version, it can be approved.";
@@ -105,6 +113,22 @@ export async function reviewQuorumVerdict(
   organizationId: number,
   currentVersion: number,
   /** Who would sign the approval. Both approval doors pass it (P-95 Q1). */
+  signerId?: number
+): Promise<ReviewQuorumVerdict> {
+  // P-116: the signer is the organisation's only member, so no independent
+  // review can exist. The approval is admitted and recorded as unreviewed.
+  if (signerId !== undefined && (await isSoleMember(q, organizationId, signerId))) {
+    return { met: true, soleMember: true };
+  }
+  return recordedReviewQuorum(q, artifactPk, organizationId, currentVersion, signerId);
+}
+
+/** The quorum as the review records show it, for an organisation with someone to review. */
+async function recordedReviewQuorum(
+  q: ApprovalActQueryable,
+  artifactPk: number,
+  organizationId: number,
+  currentVersion: number,
   signerId?: number
 ): Promise<ReviewQuorumVerdict> {
   // Invalid scope/version must not become an empty query and a clearance.
@@ -464,11 +488,14 @@ export interface ArtifactActSubject {
 export async function assertArtifactSignerIndependent(
   q: ApprovalActQueryable,
   act: { organizationId: number; signerId: number; artifactId: string; status: 'approved' | 'locked' },
-): Promise<void> {
-  await assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
+): Promise<SeparationOfDutiesResult> {
+  // P-116: a sole member may sign their own artifact; the signed act records
+  // that no independent review took place (services/artifact-signed-act.ts).
+  return assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
     command: act.status === 'locked' ? 'lock' : 'sign',
     meaning: ARTIFACT_ACT_MEANING[act.status],
     client: q,
+    soleMember: 'admit-and-record',
   });
 }
 

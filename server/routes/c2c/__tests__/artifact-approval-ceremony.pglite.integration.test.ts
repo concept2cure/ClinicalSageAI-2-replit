@@ -30,7 +30,7 @@
  * assignment's row lock is proved on a real server
  * (tests/db/artifact-review-round-lock.dbtest.ts): PGlite is one connection.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -1281,6 +1281,67 @@ describe('P-116: one independent reviewer is enough, placed or not', () => {
     expect(one.body.data.notReadyReason).toBeUndefined();
   });
 
+});
+
+/**
+ * P-116 (founder, 2026-11-10: "What if a client is a single consultant", then
+ * "self-approve, on record"): when the signer is the organisation's only
+ * member there is nobody to be independent of, so they may approve and lock
+ * what they wrote with no reviewer, and the signed act says no independent
+ * review took place. It follows from the membership alone: with a second
+ * member, P-18 and P-95 refuse as before.
+ */
+describe('P-116: a one-person organisation approves its own artifact, on the record', () => {
+  const soleMember = () => run(`DELETE FROM organization_users WHERE organization_id = $1 AND user_id <> $2`, [ORG, USER]);
+  const ledgerPayloads = async () =>
+    (await run(`SELECT command, payload FROM c2c_ana_actions ORDER BY proposed_at`)).rows
+      .map((r) => ({ command: r.command, payload: typeof r.payload === 'string' ? JSON.parse(r.payload) : r.payload }));
+  afterEach(addReviewers);
+
+  it('the only member approves what they wrote, with no reviewer: approved, and the act records no independent review', async () => {
+    await soleMember();
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+    const [act] = await ledgerPayloads();
+    expect(act.command).toBe('approve');
+    expect(act.payload).toMatchObject({ independentReview: 'none' });
+    expect(act.payload.independentReviewNote).toMatch(/only member/);
+  });
+
+  it('the same act with a second member in the organisation: refused 403 SEPARATION_OF_DUTIES, nothing written', async () => {
+    await soleMember();
+    await run(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'viewer')`, [ORG, ADA]);
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await ledgerPayloads()).toEqual([]);
+  });
+
+  it('the only member is not the author (a former colleague wrote it): approved without a reviewer, and still recorded as unreviewed', async () => {
+    await soleMember();
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [act] = await ledgerPayloads();
+    expect(act.payload).toMatchObject({ independentReview: 'none' });
+  });
+
+  it('an independently reviewed approval carries no such note', async () => {
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const [act] = await ledgerPayloads();
+    expect(act.payload.independentReview).toBeUndefined();
+  });
 });
 
 /** P-95 Q2, the second half of the ruling: a ctd_section change on an artifact with review decisions voids them, as an edit does. */
