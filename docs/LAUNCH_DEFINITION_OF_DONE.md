@@ -2998,3 +2998,86 @@ Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of
 to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
 through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
 against the primary texts before the first real filing by a one-person client.
+
+### P-121 — Decided under the founder's delegation: Vault questions the Vault parity lane met on 2026-11-10
+
+The founder, 2026-11-10: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane). Each is reversible by the founder.
+
+1. **In a pharma or biotech Vault, a "Risk management plan" is the dossier's.** The name means two documents: in a
+   device file, part of the ISO 14971 risk management file; in a medicinal product's dossier, the Risk Management Plan
+   (the EU RMP at Module 1.8.2, Japan's at 1.11; FDA's Module 1 has no single heading for it, as the Module 1 record
+   states). The Vault's view decides. In a drug project the device rule no longer claims the name and the CTD
+   detector proposes it for Module 1 at its region's heading, as it already did for "RMP". A name that also says it
+   is the device's (ISO 14971, RMF, DHF, "device", FMEA) stays the device rule's. A device or IVD Vault is unchanged.
+   Built: `8e5f7cd0b`, `docs/evidence/SPINE/S6/2026-11-10-rmp-classifier/`.
+2. **The server refuses a read that would span clients; "no client" is its own choice.** P-107 item 3 says search
+   never spans sponsors. The Vault page asks first, in the browser (`47a306700`). The server now holds the same
+   line for every caller: a governed-artifacts listing or a library search with no project is one client's, or it is
+   refused with the clients named. Projects that record no client are listed apart from every named client, never
+   with one. Built: `6dac0b836`, `cc1af9221`, `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`.
+3. **A 510(k)'s or De Novo's section the eSTAR mapper has no slot for keeps the rule pack's flag.** P-107 item 3 has
+   device coverage follow the mapper. Read to the letter that drops "Required" from 510(k) A2 and B3 and De Novo B2,
+   C2 and C4, which the mapper says nothing about and the FDA form shows. Asking too much is the safer error for a
+   filing, so those keep the pack's mark, and each answer says which of the two decided it. The mapper gaining slots
+   for them is the device lane's. Built: `9cff33fe4`,
+   `docs/evidence/SPINE/S6/2026-11-10-p107-device-coverage-estar/`.
+4. **Open, and not decided here: a second layer for PDF renditions of uploaded Word files.** The converter no longer
+   requests what a Word file links to (`4cc352ccf`), which is now the only protection between an upload and a request
+   from the server. Refusing every file that names outside content would also refuse ordinary web links. Whether to
+   add a second layer, and which, is a security decision for the coordinator and the rendition's owner
+   (`docs/evidence/SPINE/S6/2026-11-10-p107-renditions/README.md`).
+
+### P-122 — The UI shows the work: zero capability loss is enforced, and what was hidden comes back
+
+The founder, 2026-11-10, after a demonstration: **"The user interface represents what, 10% of the code base that we
+built? … There wasn't one screen that was satisfactory. … You fucked my project management screen up. … My CMC
+module is missing 1,000 features and functions that we had. … Rendering a shell or 10% of what we built. Nothing
+works."** And: **"Yes to all but I want you to make the most educated 'right calls' on behalf of our potential
+customers and what they will want to pay for."** Decided under that delegation by session `…01DiJJAk`. Each call is
+reversible by the founder.
+
+**What happened.** P-78 asked for two things: the product looks and works like Claude, and the whole codebase lives in
+that UI (`ONE_DESIGN_PLAN.md` §1). The sessions delivered the first by removing, hiding and folding, and did not
+deliver the second. §2's "zero capability loss" was asserted in ledgers and not enforced. The inventory is
+`docs/evidence/DESIGN/P-122/` (filed with the first restoration). For the shell, Home, Projects and the project page:
+- little was deleted, but much was hidden: below a chat box, in closed disclosures, or only in a non-default view;
+- project-management engines that exist on the server have no screen, and most are refused in production.
+
+**1. The Claude look stays; it frames the work and never replaces it.** Where §2's minimalism and a customer seeing
+their own work conflict, the work wins. A paying regulatory team opens the product to see its projects, its due work
+and what is at risk.
+
+**2. Zero capability loss is enforced, not asserted.**
+- No session removes, hides, moves below the fold, or puts behind a closed disclosure a metric, workflow, verdict,
+  action or record a screen showed, without a founder decision.
+- A "fold" of one screen into another is admitted only when a test opens the target and shows it delivers the same
+  outcome. The commit names that test.
+- `ci:one-design-plan` refuses a commit that deletes a surface file, or removes a `UI_SURFACES` id or `SURFACE_VIEWS`
+  entry, unless it carries `Founder-Decision:`.
+
+**3. Restored now, in this order** (each red first, with before-and-after screenshots at 1440 px and 390 px):
+1. **Home.** The person's projects and due tasks are visible at 1440×900 without scrolling, beneath a compact
+   greeting and the composer.
+2. **Projects.** The portfolio figures (active projects, average readiness, filings due within 60 days) and each
+   card's readiness, stage, lead and status are shown by default, in grid and list. "Which projects are at risk this
+   week?" is one click and is answered by the server's risk engines (Sentinel, submission-ops), never by the browser.
+3. **The project page.**
+   - The open step says what to do next.
+   - Records and Activity are open sections.
+   - The Review step lists the approvals and the readiness the server computes.
+4. **The top bar.** Search and Help are visible.
+5. **Project management that was built and never shown** is reached on Projects and the project page:
+   - section owners, deadlines and milestones (`/api/project-sections`);
+   - due soon, workload, blockers and approval bottlenecks (`/api/submission-ops`);
+   - cross-project deadline risk (Sentinel);
+   - the project task list tied to submission milestones;
+   - the project hierarchy and its roll-up;
+   - restoring an archived project.
+
+   Their routes are admitted to production for those screens, behind the same tenant and access checks as the rest
+   of Projects (`Plan: R1`).
+6. **CMC / Module 3** next, from its own inventory, then Vault, Submission Center, Quality and Reporting, from theirs.
+
+**4. Not decided here.** Mission Control, the CRO portfolio and the project journey stay outside the launch catalog
+until the founder admits them. Their engines may serve the screens above (Rule 3: reach, not rebuild).

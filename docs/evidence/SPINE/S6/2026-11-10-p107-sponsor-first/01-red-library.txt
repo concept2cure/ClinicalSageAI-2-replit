@@ -1,0 +1,21 @@
+# Red: the library search on trunk (7c2124865), against the one-sponsor cases (tests/db/vault-library-search.dbtest.ts), real PostgreSQL, RLS on
+ × tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with projects of more than one sponsor and none named, searches nothing and says which to choose from 46m
+ × tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with a sponsor named, finds matches in each of its projects, each named with its project, and never anoth
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > one project named is inside its own sponsor, so nothing is asked 28ms
+ × tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > a sponsor that is not the caller's is not found; a malformed one, or one given with a project, is refused
+ × tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > lists an earlier version only when asked 31ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > an empty query answers no results and says why 12ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > from inside a project, lists only its sponsor's projects, and names the sponsor 31ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > refuses a project that is not the caller's to scope by, and never widens to it 17ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > the project search still searches its project only 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with projects of more than one sponsor and none named, searches nothing and says which to choose from
+AssertionError: q=zirconoxide {"success":true,"data":{"query":"zirconoxide","mode":"search","filters":{},"total":3,"limit":25,"offset":0,"includeSuperseded":false,"scope":"verified-accessible-programs","results":[{"originalFileAva: expected
+ FAIL  tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with a sponsor named, finds matches in each of its projects, each named with its project, and never an
+AssertionError: expected 3 to be 2 // Object.is equality
+ FAIL  tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > a sponsor that is not the caller's is not found; a malformed one, or one given with a project, is refu
+AssertionError: 5: expected [ 200, undefined ] to deeply equal [ 404, 'CLIENT_NOT_FOUND' ]
+ FAIL  tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > lists an earlier version only when asked
+AssertionError: expected 4 to be 3 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)

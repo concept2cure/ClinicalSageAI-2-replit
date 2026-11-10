@@ -43,6 +43,7 @@ import { cerv2510kSections } from '../../../../shared/schema';
 import { sectionPlainText } from '../../c2c/section-content';
 import { filingAgreesWithBoundDocuments, type FilingAgreementForFiling } from '../../c2c/filing-section-target';
 import type { FilingLeaf } from './estar-filing-readiness';
+import { leafDocumentType } from './estar-mapper';
 
 /** The subset of a cerv2_510k_sections row the adapter needs. */
 export interface DeviceSectionInput {
@@ -120,13 +121,6 @@ export function isSubstantive(s: DeviceSectionInput): boolean {
   return hasRealLength;
 }
 
-/** Normalize a category/key into a canonical documentType token (device_description, labeling, …). */
-function normalizeDocType(raw?: string | null): string | undefined {
-  if (!raw) return undefined;
-  const t = raw.trim().toLowerCase().replace(/[\s\-/]+/g, '_');
-  return t.length > 0 ? t : undefined;
-}
-
 /**
  * Pure: project authored device sections onto canonical readiness leaves. Only
  * content-bearing sections become leaves (a gap is never invented). Both the
@@ -137,7 +131,8 @@ export function sectionsToLeaves(sections: DeviceSectionInput[]): FilingLeaf[] {
   return (Array.isArray(sections) ? sections : []).filter(isAuthored).map((s) => ({
     sectionCode: String(s.sectionNumber || s.sectionKey || ''),
     title: String(s.sectionTitle || s.sectionKey || 'Untitled section'),
-    documentType: normalizeDocType(s.category || s.sectionKey),
+    // The token the mapper's matchers compare; the mapper owns its spelling (leafDocumentType).
+    documentType: leafDocumentType(s.category || s.sectionKey),
     substantive: isSubstantive(s),
   }));
 }

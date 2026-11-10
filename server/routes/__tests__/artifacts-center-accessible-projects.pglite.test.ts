@@ -87,8 +87,9 @@ beforeAll(async () => {
     INSERT INTO projects VALUES
       (10, 1, 'OPEN-1', 'A project the caller can open', '${P_OPEN}', 100),
       (11, 1, 'SHUT-1', 'A project the caller cannot open', '${P_SHUT}', 100),
-      (12, 1, 'LEGACY-1', 'An open project with no program record', NULL, NULL),
+      (12, 1, 'LEGACY-1', 'An open project with no program record', NULL, 100),
       (13, 1, 'OTHER-1', 'Another sponsor''s open project', '${P_OTHER}', 101),
+      (14, 1, 'INTERNAL-1', 'An open project with no client', NULL, NULL),
       (20, 2, 'THEIRS-9', 'Their secret program', '${P_THEIRS}', 200);
     INSERT INTO concept2cure_artifacts (artifact_id, title, metadata, type, category, version, project_id, content, organization_id, status, updated_at, created_by_id) VALUES
       ('a-open',     'Clinical overview',         '{}', 'document', 'document', 2, 10, 'x', 1, 'review',   now() - interval '1 hour', 7),
@@ -97,7 +98,8 @@ beforeAll(async () => {
       ('a-archived', 'Withdrawn cover letter',    '{}', 'document', 'document', 1, 10, 'x', 1, 'archived', now(), 7),
       ('a-foreign',  'Filed under their id',      '{}', 'document', 'document', 1, 20, 'x', 1, 'draft',    now(), 7),
       ('a-theirs',   'Their own artifact',        '{}', 'document', 'document', 1, 20, 'x', 2, 'draft',    now(), 7),
-      ('a-other',    'Another sponsor''s memo',    '{}', 'document', 'document', 1, 13, 'x', 1, 'draft',    now() - interval '3 hours', 7);
+      ('a-other',    'Another sponsor''s memo',    '{}', 'document', 'document', 1, 13, 'x', 1, 'draft',    now() - interval '3 hours', 7),
+      ('a-internal', 'An internal memo',          '{}', 'document', 'document', 1, 14, 'x', 1, 'draft',    now() - interval '4 hours', 7);
   `);
 });
 afterAll(async () => {
@@ -105,7 +107,7 @@ afterAll(async () => {
 });
 beforeEach(() => {
   h.sql = [];
-  h.accessible = [10, 12, 13];
+  h.accessible = [10, 12];
   h.actorError = null;
   h.listError = null;
   h.actorCalls = [];
@@ -131,8 +133,8 @@ describe('GET /api/artifacts-center — the projects the caller can open, and on
   it('lists every non-archived artifact of each open project, the legacy project with no program record included', async () => {
     const res = await request(app()).get('/api/artifacts-center');
     expect(res.status).toBe(200);
-    expect(ids(res.body)).toEqual(['a-legacy', 'a-open', 'a-other']);
-    expect(res.body.meta).toMatchObject({ scope: 'accessible-projects', total: 3, listed: 3, truncated: false });
+    expect(ids(res.body)).toEqual(['a-legacy', 'a-open']);
+    expect(res.body.meta).toMatchObject({ scope: 'accessible-projects', total: 2, listed: 2, truncated: false });
   });
 
   it('never lists a project the caller cannot open, an archived row, or a row under another organization’s project', async () => {
@@ -189,7 +191,7 @@ describe('GET /api/artifacts-center — the projects the caller can open, and on
     try {
       const res = await request(app()).get('/api/artifacts-center');
       expect(res.body.data).toHaveLength(200);
-      expect(res.body.meta).toMatchObject({ total: 208, listed: 200, truncated: true });
+      expect(res.body.meta).toMatchObject({ total: 207, listed: 200, truncated: true });
     } finally {
       await h.pg.exec(`DELETE FROM concept2cure_artifacts WHERE artifact_id LIKE 'bulk-%'`);
     }
@@ -200,20 +202,67 @@ describe('GET /api/artifacts-center — the projects the caller can open, and on
    artifacts are that project's sponsor's projects' artifacts; across every project, each row names its sponsor. */
 describe("GET /api/artifacts-center — a CRO's sponsors never mix in one list", () => {
   type Sponsored = Row & { client: { id: number; name: string } | null };
-  it('names each row’s sponsor, or none when its project has none', async () => {
+  /** A CRO member: projects of two sponsors, and one with no client. */
+  beforeEach(() => { h.accessible = [10, 12, 13, 14]; });
+
+  /* P-107 item 3 (2026-11-08): "No cross-sponsor library view for a CRO. With no project open, the Vault first asks
+     which sponsor; every view is inside one sponsor." The listing named each row's sponsor and listed them together. */
+  it('with projects of more than one sponsor and none named, lists nothing and says which to choose from', async () => {
     const res = await request(app()).get('/api/artifacts-center');
-    const byId = new Map((res.body.data as Sponsored[]).map((r) => [r.id, r.client]));
-    expect(byId.get('a-open')).toEqual({ id: 100, name: 'Northwind Bio' });
-    expect(byId.get('a-other')).toEqual({ id: 101, name: 'Contoso Pharma' });
-    expect(byId.get('a-legacy')).toBeNull();
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body).toMatchObject({ success: false, error: 'CLIENT_REQUIRED' });
+    expect(res.body.data).toBeUndefined();
+    expect(res.body.meta.clients).toEqual([{ id: 101, name: 'Contoso Pharma' }, { id: 100, name: 'Northwind Bio' }, null]);
+    expect(registryReads()).toEqual([]);
+  });
+
+  it("with a sponsor named, lists that sponsor's projects only, and says whose", async () => {
+    const contoso = await request(app()).get('/api/artifacts-center?client=101');
+    expect(contoso.status, JSON.stringify(contoso.body)).toBe(200);
+    expect(ids(contoso.body)).toEqual(['a-other']);
+    expect(contoso.body.meta).toMatchObject({ total: 1, client: { id: 101, name: 'Contoso Pharma' } });
+    expect(JSON.stringify(contoso.body)).not.toContain('Northwind');
+    const northwind = await request(app()).get('/api/artifacts-center?client=100');
+    expect(ids(northwind.body)).toEqual(['a-legacy', 'a-open']);
+    expect((northwind.body.data as Sponsored[]).every((r) => r.client?.id === 100)).toBe(true);
+  });
+
+  it('the projects with no client are their own choice, never mixed into a sponsor', async () => {
+    const res = await request(app()).get('/api/artifacts-center?client=none');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(ids(res.body)).toEqual(['a-internal']);
+    expect(res.body.meta.client).toBeNull();
+    expect((res.body.data as Sponsored[])[0].client).toBeNull();
+  });
+
+  it("a sponsor none of whose projects the caller can open, or another organisation's, is not found; a malformed one is refused", async () => {
+    h.accessible = [10, 13];
+    for (const client of ['200', '999', 'none']) {
+      const res = await request(app()).get(`/api/artifacts-center?client=${client}`);
+      expect([res.status, res.body.error], client).toEqual([404, 'CLIENT_NOT_FOUND']);
+      expect(res.body.data).toBeUndefined();
+    }
+    for (const client of ['abc', '0', '-3', '1.5']) {
+      expect((await request(app()).get(`/api/artifacts-center?client=${client}`)).status, client).toBe(400);
+    }
+    const both = await request(app()).get(`/api/artifacts-center?client=100&sameClientAs=${P_OPEN}`);
+    expect(both.status).toBe(400);
+  });
+
+  it('a person whose projects are all one sponsor is asked nothing', async () => {
+    h.accessible = [13];
+    const res = await request(app()).get('/api/artifacts-center');
+    expect(res.status).toBe(200);
+    expect(ids(res.body)).toEqual(['a-other']);
+    expect((res.body.data as Sponsored[])[0].client).toEqual({ id: 101, name: 'Contoso Pharma' });
     expect(res.body.meta.client).toBeUndefined();
   });
 
   it("from inside a project, lists only its sponsor's projects, and says whose", async () => {
     const res = await request(app()).get(`/api/artifacts-center?sameClientAs=${P_OPEN}`);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(ids(res.body)).toEqual(['a-open']);
-    expect(res.body.meta).toMatchObject({ total: 1, client: { id: 100, name: 'Northwind Bio' } });
+    expect(ids(res.body)).toEqual(['a-legacy', 'a-open']);
+    expect(res.body.meta).toMatchObject({ total: 2, client: { id: 100, name: 'Northwind Bio' } });
     expect(JSON.stringify(res.body)).not.toContain('Contoso');
   });
 

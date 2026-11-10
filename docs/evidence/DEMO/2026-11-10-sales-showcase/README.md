@@ -117,7 +117,13 @@ the builder binds figures to is an open question the CSR-path session is answeri
   error. The only failed requests were the two Module 3 refusals for a biologic.
 - **A content read** of each stop as the lead, of the reviewer's and approver's home, Review step, Tasks and
   Quality, of C2C-101 and C2C-201 as the development organisation's people, and of NeuroPanel-Dx.
-- **The seed, run twice** in the Lumen account: the second run "created 0, found 324".
+- **The seed from zero, as a fresh Codespace runs it:** a new database, provisioned, the three Lumen people created
+  by `seed-admin.mjs`, the reviewer designated QMS approver by the Codespace's own function, then `--pack lumen` at
+  trunk `52d1c629c`. Run 1: exit 0, "created 419, found 2", about seven minutes. Run 2: "created 0, found 328". On
+  that database: one protocol with its own 10 criteria, Compile "completed", a document's PDF and Word working
+  copies and the bundle PDF all delivered.
+- **The exports with the production image's tools hidden** (a PATH without LibreOffice, `xmllint`, poppler and
+  pandoc), which is how the PDF refusal and "xmllint not available" were found.
 
 ### Found and fixed during this pass (commits on `concept2cure-v2`)
 

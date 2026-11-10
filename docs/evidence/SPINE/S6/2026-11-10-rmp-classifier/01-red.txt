@@ -1,0 +1,12 @@
+# Red: the filing classifier on trunk against the Risk management plan cases (server/services/vault/__tests__/vault-filing.service.test.ts)
+ × server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > is proposed for Module 1 at its region's heading, the same answer the name RMP already gets 9ms
+ × server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > is never told it is a device risk file, or a quality-system record 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > in a device or IVD Vault the same name is still part of the risk management file 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > a Risk management plan belongs to the dossier in a pharma or biotech Vault > a device risk file's own names are not claimed for the dossier 1ms
+ × server/services/vault/__tests__/vault-filing.service.test.ts > a kind with no folder in this Vault says only what is true of it > says quality-system records live in the Quality module for a quality-system record only 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: pharma Risk management plan.pdf: expected { evidenceKind: 'report', …(5) } to match object { folderId: 'module-1', …(2) }
+AssertionError: Risk management plan.pdf: expected 'Matched engineering / DHF / risk file…' not to match /engineering|DHF|risk file|Quality mo…/i
+AssertionError: expected 'Matched quality-system record, but th…' to be 'Matched quality-system record, but th…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  3 failed | 38 passed (41)
