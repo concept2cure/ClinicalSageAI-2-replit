@@ -1582,6 +1582,31 @@ session took them under F1.
   `projectCreationDoors.contract`: 32 of 32 pass).
 - **Left with its owner:** the demo seed's Lumen pack recorded on other projects' data rooms (DATA).
 
+#### L1 (row D4) — the validation package re-executed at head for GA (session session_01QoxbLcnW5jPvJSjjKQtvTA, 2026-11-10)
+
+Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/VSR-001-VALIDATION-SUMMARY-REPORT.md`
+§21. Nothing was added to the product and no product file was changed.
+- **Executed on a fresh installation** (`c2c_oq_w3_20261110`), RLS enforced as `app_service`, launch scope enforced,
+  unattributed API paths refused as in production, no AI provider, a development build. IQ-001: 12 pass, 0 fail,
+  3 deviation.
+- **First execution**, at `83e61866d3` (`673987be66`): OQ 99 pass, 26 fail, 6 deviation, 31 not executed of 162.
+  Every failure classified (`cea8c9976f`).
+- **Whole-package re-execution**, server at `97a0fec5cf` (`1907e5c241`): 143 / 8 / 8 / 3. The eight classified, four
+  protocols revised and re-run (`cf2706d5cf`).
+- **Final: 170 pass, 0 fail, 8 deviation, 2 not executed, of 180 steps**, over eight protocols. All 34 failures of the
+  two executions were a step overtaken by a recorded decision or a runner defect. No product regression was found.
+- **OQ-007, Reporting & analytics**, the seventh launch app, which had no URS or protocol (`445c79bf90`):
+  `docs/validation/URS-008-REPORTING-ANALYTICS.md`, `docs/validation/OQ-007-REPORTING-ANALYTICS.md`,
+  `tests/validation/oq/reporting/`. 17 pass, 0 fail, 1 deviation.
+- **TM-001** regenerated: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered. RA-001 v0.25 assesses
+  Reporting (`4c7ded950c`).
+- **D4 stays red.** The package is unsigned and is not ready for signature. It still needs: execution on a production
+  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; three fixtures (a
+  critical CMC contradiction, a Module 3 whose every section can be approved, an organisation on a lower plan); the
+  URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
+  URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
+  owner's signature.
+
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
 - **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
