@@ -13,6 +13,7 @@
  * stops the build on that heading with a typed reason. The headings already saved are kept, and building again
  * resumes at the heading that stopped.
  */
+import { setImmediate as nextTurn } from 'node:timers';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const { chat } = vi.hoisted(() => ({ chat: vi.fn() }));
@@ -43,7 +44,7 @@ async function settled<T>(work: Promise<T>): Promise<{ value?: T; error?: { code
   const outcome = work.then(value => ({ value }), error => ({ error })).finally(() => { done = true; });
   while (!done) {
     await vi.advanceTimersByTimeAsync(120_000);
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise(resolve => nextTurn(resolve));
   }
   return outcome;
 }

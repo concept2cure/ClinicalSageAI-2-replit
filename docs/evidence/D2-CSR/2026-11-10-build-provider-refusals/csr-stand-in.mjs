@@ -145,43 +145,41 @@ let seq = 0;
 const stamps = [];
 const counts = { messages: 0, refused: 0, models: 0, limited: 0 };
 
-async function handle(req, res) {
-  const url = new URL(req.url, 'http://x');
-  if (req.method === 'GET' && url.pathname === '/__counts') return sendJson(res, 200, counts);
-  const key = req.headers['x-api-key'];
-  if (!key) return sendJson(res, 401, { type: 'error', error: { type: 'authentication_error', message: 'x-api-key header is required' } });
+const apiError = (type, message) => ({ type: 'error', error: { type, message } });
+
+/** GET routes and the key check; true when the request was answered here. */
+function answeredWithoutModel(req, res, url) {
+  if (req.method === 'GET' && url.pathname === '/__counts') { sendJson(res, 200, counts); return true; }
+  if (!req.headers['x-api-key']) { sendJson(res, 401, apiError('authentication_error', 'x-api-key header is required')); return true; }
   if (req.method === 'GET' && url.pathname === '/v1/models') {
     counts.models += 1;
-    return sendJson(res, 200, { data: MODEL_IDS.map(id => ({ type: 'model', id, display_name: id, created_at: '2026-01-01T00:00:00Z' })), has_more: false, first_id: MODEL_IDS[0], last_id: MODEL_IDS[MODEL_IDS.length - 1] });
+    sendJson(res, 200, { data: MODEL_IDS.map(id => ({ type: 'model', id, display_name: id, created_at: '2026-01-01T00:00:00Z' })), has_more: false, first_id: MODEL_IDS[0], last_id: MODEL_IDS[MODEL_IDS.length - 1] });
+    return true;
   }
-  if (req.method !== 'POST' || url.pathname !== '/v1/messages') return sendJson(res, 404, { type: 'error', error: { type: 'not_found_error', message: 'not found' } });
-  let body;
-  try { body = JSON.parse(await readBody(req)); } catch { return sendJson(res, 400, { type: 'error', error: { type: 'invalid_request_error', message: 'bad json' } }); }
-  const n = ++seq;
-  counts.messages += 1;
-  const bad = validate(body, req.headers);
-  if (REQ_DIR) fs.writeFileSync(path.join(REQ_DIR, `${String(n).padStart(4, '0')}.json`), JSON.stringify({ refused: bad, version: req.headers['anthropic-version'], beta: req.headers['anthropic-beta'] ?? null, body }, null, 1));
-  if (bad) {
-    counts.refused += 1;
-    log(`#${n} ${bad.status} REFUSED model=${body.model}: ${bad.message}`);
-    return sendJson(res, bad.status, { type: 'error', error: { type: bad.type, message: bad.message } });
-  }
+  if (req.method !== 'POST' || url.pathname !== '/v1/messages') { sendJson(res, 404, apiError('not_found_error', 'not found')); return true; }
+  return false;
+}
+
+/** The configured API error (FAKE_FAIL) or the per-minute limit (FAKE_RPM); true when the request was refused. */
+function refusedByAccount(res, body, n) {
   if (FAILURES[FAIL]) {
     const [status, type, message] = FAILURES[FAIL];
     log(`#${n} ${status} ${type} (FAKE_FAIL=${FAIL}) model=${body.model}`);
-    return sendJson(res, status, { type: 'error', error: { type, message } }, status === 429 ? { 'retry-after': '20' } : {});
+    sendJson(res, status, apiError(type, message), status === 429 ? { 'retry-after': '20' } : {});
+    return true;
   }
-  if (RPM > 0) {
-    const now = Date.now();
-    while (stamps.length && now - stamps[0] > 60_000) stamps.shift();
-    if (stamps.length >= RPM) {
-      counts.limited += 1;
-      const wait = Math.ceil((60_000 - (now - stamps[0])) / 1000);
-      log(`#${n} 429 rate limit (${RPM}/min) model=${body.model} retry-after=${wait}`);
-      return sendJson(res, 429, { type: 'error', error: { type: 'rate_limit_error', message: `This request would exceed the rate limit of ${RPM} requests per minute.` } }, { 'retry-after': String(wait) });
-    }
-    stamps.push(now);
-  }
+  if (RPM <= 0) return false;
+  const now = Date.now();
+  while (stamps.length && now - stamps[0] > 60_000) stamps.shift();
+  if (stamps.length < RPM) { stamps.push(now); return false; }
+  counts.limited += 1;
+  const wait = Math.ceil((60_000 - (now - stamps[0])) / 1000);
+  log(`#${n} 429 rate limit (${RPM}/min) model=${body.model} retry-after=${wait}`);
+  sendJson(res, 429, apiError('rate_limit_error', `This request would exceed the rate limit of ${RPM} requests per minute.`), { 'retry-after': String(wait) });
+  return true;
+}
+
+async function answer(res, body, n) {
   const p = plan(body);
   log(`#${n} 200 model=${body.model} stream=${!!body.stream} ${p.kind} effort=${body.output_config?.effort ?? '-'} thinking=${body.thinking?.type ?? '-'}`);
   await new Promise(r => setTimeout(r, Number(process.env.FAKE_DELAY_MS || 150)));
@@ -190,6 +188,23 @@ async function handle(req, res) {
   if (thinks(body)) content.push({ type: 'thinking', thinking: '', signature: `sig_fake_${n}` });
   content.push({ type: 'text', text: p.text });
   return sendJson(res, 200, { id: `msg_fake_${n}`, type: 'message', role: 'assistant', model: body.model, content, stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 400, output_tokens: Math.ceil(p.text.length / 4) } });
+}
+
+async function handle(req, res) {
+  if (answeredWithoutModel(req, res, new URL(req.url, 'http://x'))) return undefined;
+  let body;
+  try { body = JSON.parse(await readBody(req)); } catch { return sendJson(res, 400, apiError('invalid_request_error', 'bad json')); }
+  const n = ++seq;
+  counts.messages += 1;
+  const bad = validate(body, req.headers);
+  if (REQ_DIR) fs.writeFileSync(path.join(REQ_DIR, `${String(n).padStart(4, '0')}.json`), JSON.stringify({ refused: bad, version: req.headers['anthropic-version'], beta: req.headers['anthropic-beta'] ?? null, body }, null, 1));
+  if (bad) {
+    counts.refused += 1;
+    log(`#${n} ${bad.status} REFUSED model=${body.model}: ${bad.message}`);
+    return sendJson(res, bad.status, apiError(bad.type, bad.message));
+  }
+  if (refusedByAccount(res, body, n)) return undefined;
+  return answer(res, body, n);
 }
 
 http.createServer((req, res) => {
