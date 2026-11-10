@@ -1,0 +1,12 @@
+# S6 step 4, live: npx tsx docs/evidence/SPINE/S6/2026-11-06/ana-folder-live.mts <org> <user> (RLS_ENFORCE=on; app_service role), 2026-11-10
+made {"ok":true,"folder":{"folderId":"uf:7","name":"AnA study folder 86342","parentFolderId":"bn:5.3","label":"AnA study folder 86342"}}
+binder {"label":"IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5","version":"ich-m4-v2.2"} folders 100 [{"id":"uf:3","label":"Pivotal study CDISCPILOT01 184120 (in 5.3 Clinical study reports)","kind":"person"},{"id":"uf:4","label":"Pivotal study CDISCPILOT01 184247 (in 5.3 Clinical study reports)","kind":"person"},{"id":"uf:5","label":"Pivotal study CDISCPILOT01 184713 (in 5.3 Clinical study reports)","kind":"person"},{"id":"uf:6","label":"AnA study folder 75460 (in 5.3 Clinical study reports)","kind":"person"},{"id":"uf:7","label":"AnA study folder 86342 (in 5.3 Clinical study reports)","kind":"person"}]
+other org {"ok":false,"status":404,"code":"PROJECT_NOT_FOUND","message":"Project not found."}
+
+# The audit rows (owner read)
+         created_at         |       action        | record_id | user_id |   actor   |                        why                        | made_in 
+----------------------------+---------------------+-----------+---------+-----------+---------------------------------------------------+---------
+ 2026-11-10 01:46:26.397621 | vault.folder.create | uf:7      |       1 | agent:ana | The pivotal study needs its own folder under 5.3. | bn:5.3
+ 2026-11-10 01:46:15.514023 | vault.folder.create | uf:6      |       1 | agent:ana | The pivotal study needs its own folder under 5.3. | bn:5.3
+(2 rows)
+
