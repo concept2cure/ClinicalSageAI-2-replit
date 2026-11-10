@@ -150,7 +150,8 @@ describe('data room — the window', () => {
     expect(room.sources).toHaveLength(200);
     expect(room.captured).toBe(250);
     const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
-    expect(counted?.[1]).toEqual([PROGRAM, 7]);
+    // The third value keeps the project's captured Quality records (no original file) out of the counts.
+    expect(counted?.[1]).toEqual([PROGRAM, 7, 'native_record_snapshot']);
   });
 
   it('a window with room to spare is not truncated', async () => {

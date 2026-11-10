@@ -21,6 +21,11 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+// The Vault refreshes the project's captured Quality records before its data room (2026-11-10); this suite's
+// database is mocked, so the refresh is too, as its source list is.
+vi.mock('../../../services/clinical-regulatory-evidence/record-source.js', async (importOriginal) => ({
+  ...(await importOriginal<object>()), syncQualityProjectSources: vi.fn(async () => ({ created: 0, unchanged: 0, superseded: 0 })),
+}));
 
 const queryMock = vi.fn();
 vi.mock('../../../db', () => ({
