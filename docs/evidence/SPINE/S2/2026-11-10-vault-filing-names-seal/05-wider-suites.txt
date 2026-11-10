@@ -1,0 +1,43 @@
+The suites that file to the Vault, read the filing receipt, use the seal check or assemble a package, and the founder-path walk, on the final code.
+
+Files run:
+server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+server/routes/__tests__/coauthorSnapshotCurrentAccess.pglite.integration.test.ts
+server/routes/__tests__/coauthorSnapshotFromSource.test.ts
+server/routes/__tests__/coauthorSnapshotPinnedByLeaf.pglite.test.ts
+server/routes/__tests__/coauthorSnapshotSeal.test.ts
+server/routes/__tests__/coauthorSnapshotSeeds.test.ts
+server/routes/__tests__/coauthorSnapshotStatus.test.ts
+server/routes/c2c/__tests__/filing-section-respects-authoring-seal.test.ts
+server/services/ana/__tests__/save-document-to-vault-tool.pglite.integration.test.ts
+server/services/authoring/__tests__/authoring-doc-hash-total-order.pglite.test.ts
+server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts
+server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts
+server/services/authoring/__tests__/authoring-vault-version-plan.pglite.test.ts
+server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts
+server/services/ectd/__tests__/assemble-from-core.audit-outcome.pglite.test.ts
+server/services/ectd/__tests__/assemble-from-core.bundle-root.pglite.test.ts
+server/services/ectd/__tests__/assemble-from-core.multisource.test.ts
+server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts
+server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts
+server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts
+server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts
+server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts
+server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts
+server/services/ectd/__tests__/leaf-source-resolver.test.ts
+server/services/ectd/__tests__/placement-vault-leaf-parity.pglite.test.ts
+server/services/ectd/__tests__/submission-leaf-source-evidence.pglite.test.ts
+server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts
+tests/lineage/founder-path-lineage.pglite.test.ts
+
+ Test Files  32 passed (32)
+      Tests  440 passed (440)
+
+An earlier run of the same list, on a first version of the change, was 424 of 425. The one failure was
+authoring-file-to-vault-snapshot.pglite.integration.test.ts 'files a stable working snapshot ...', which pins the
+text of the filing's final section read. That version had added order_index to that read. The seal check now
+makes its own read through the canonical assembler's reader, and the pinned statement is unchanged.

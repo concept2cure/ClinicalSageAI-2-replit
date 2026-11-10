@@ -44,6 +44,14 @@ export const STATUS_TONE: Record<string, string> = {
   expired: 'err', disapproved: 'err', missing: 'err', blocked: 'err', capa: 'warn',
 };
 
+/** A stored value as words a person reads, sentence case: "data_integrity" → "Data integrity", "not_started" →
+ * "Not started". For a category or a state shown, or spoken, beside a record (showcase walk, 2026-11-10: the
+ * protocol workspace printed "in_development", "vital_signs" and "data_integrity"). */
+export function inWords(s: unknown): string {
+  const text = String(s == null ? '' : s).replace(/_/g, ' ').trim();
+  return text ? text[0].toUpperCase() + text.slice(1) : '';
+}
+
 export function labelize(s: unknown): string {
   return String(s == null ? '' : s).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }

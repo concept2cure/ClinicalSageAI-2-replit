@@ -59,7 +59,7 @@ function validate(records: NativeRecordSnapshot[]) {
  * admission/freshness excludes withdrawn or inaccessible records at read time. */
 export async function reconcileRecordSources(q: RequestSqlClient, scope: NativeRecordScope, records: NativeRecordSnapshot[]) {
   validate(records);
-  const current = await q.query(`SELECT id,checksum,provenance FROM cre_evidence_sources
+  const current = await q.query(`SELECT id,checksum,provenance,title FROM cre_evidence_sources
     WHERE organization_id=$1 AND client_program_id=$2 AND source_type='client_document'
       AND provenance->>'origin'=$3 AND provenance->'recordSnapshot'->>'workArea'=$4
       AND is_current IS NOT FALSE AND deleted_at IS NULL FOR UPDATE`,
@@ -76,7 +76,8 @@ export async function reconcileRecordSources(q: RequestSqlClient, scope: NativeR
     const prior = byKey.get(record.key);
     const checksum = nativeRecordHash(record.text);
     const snapshot = receipt(scope, record);
-    if (prior?.checksum === checksum && stableStringify(prior.provenance.recordSnapshot) === stableStringify(snapshot)) { result.unchanged++; continue; }
+    // A renamed record is a new capture: the name a person reads is part of what was captured.
+    if (prior?.checksum === checksum && prior.title === record.title && stableStringify(prior.provenance.recordSnapshot) === stableStringify(snapshot)) { result.unchanged++; continue; }
     if (prior) await q.query('UPDATE cre_evidence_sources SET is_current=FALSE WHERE id=$1 AND organization_id=$2 AND is_current IS NOT FALSE', [prior.id, scope.organizationId]);
     const source = await createSource(scope.organizationId, {
       sourceType: 'client_document', clientProgramId: scope.programId,

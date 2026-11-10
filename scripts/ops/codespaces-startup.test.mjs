@@ -267,3 +267,15 @@ test('the Codespace installs what the document exports need, and a failed instal
   assert.ok(call < code.indexOf('npm run --silent demo:seed -- --pack all'), 'before the long demo seed');
   assert.doesNotMatch(code, /c2c_install_export_tools \|\|/, 'never a blocking step');
 });
+
+// Showcase walk, 2026-11-10: with a key the provider refuses and no embeddings key, /readyz names only the search
+// lane, and the start printed "ANTHROPIC_API_KEY: BLOCKED ANTHROPIC_KEY_INVALID" followed by "AnA in the running app
+// answers and drafts with the Anthropic key". The second line is said only when the drafting call was answered.
+test('the start says AnA answers and drafts only when the drafting call with this key was answered', () => {
+  const post = readFileSync(postStart, 'utf8');
+  const lane = post.slice(post.indexOf('embedding_lane_down|no_embedding_lane)'), post.indexOf('*) c2c_log "AnA in the running app: $C2C_APP_ANA.'));
+  assert.match(lane, /if \[\[ "\$\{C2C_DRAFTING_LINE:-\}" == "answered by"\* \]\]; then\n\s+c2c_log "AnA in the running app answers and drafts with the Anthropic key/);
+  assert.match(lane, /else\n\s+c2c_log "AnA in the running app cannot answer or draft yet: see the ANTHROPIC_API_KEY lines above\."/);
+  assert.match(lane, /Search is off \(\$C2C_APP_ANA\)/);
+  assert.equal((post.match(/answers and drafts with the Anthropic key/g) ?? []).length, 1);
+});

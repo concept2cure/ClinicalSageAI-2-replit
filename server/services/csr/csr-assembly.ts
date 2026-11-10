@@ -137,7 +137,10 @@ export interface CsrAssemblyResult {
   pdfa: string;
 }
 
-const PDFA_STATEMENT = 'Leaves are PDF 1.7. PDF/A conversion is the packager’s finalizePdfA (Ghostscript) at packaging, where installed; ECTD_REQUIRE_PDFA=true refuses an unconverted leaf.';
+/** Read by the person assembling the report: in words, with no function, tool or setting name (2026-11-10). The
+ * conversion is the packager's finalizePdfA (pdfa-pipeline.ts); the requirement is pdfa-requirement.ts. */
+export const CSR_ASSEMBLY_PDFA_STATEMENT = 'These files are PDF 1.7. They are converted to PDF/A when the sequence is packaged, where this deployment has the converter installed. A deployment that requires PDF/A refuses a file that was not converted.';
+const PDFA_STATEMENT = CSR_ASSEMBLY_PDFA_STATEMENT;
 const ALL_APPENDICES = [...Object.keys(CSR_SUPPLIED_APPENDICES), ...Object.keys(CSR_LISTING_APPENDICES)].sort(compareDotted) as CsrAppendixNumber[];
 
 function validate(input: CsrAssemblyInput): CsrCtdSection {

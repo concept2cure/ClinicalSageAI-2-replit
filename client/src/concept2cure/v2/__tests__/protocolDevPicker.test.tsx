@@ -9,6 +9,7 @@
  * the choice in component state, and carries it in `?protocol=` so a reload
  * or a shared link opens the same protocol.
  */
+import * as PG from '../surfaces/ProtocolGov';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -80,6 +81,25 @@ describe('protocol development — choosing the protocol', () => {
     expect(await screen.findAllByText(/A Phase II Study of X/)).not.toHaveLength(0);
     expect(screen.queryByRole('heading', { name: 'A Phase III Study of Y' })).toBeNull();
     expect(new URLSearchParams(window.location.search).get('protocol')).toBe('41');
+  });
+
+  /* Showcase walk, 2026-11-10 (Lumen LMN-201): the picker read "… · in_development", the schedule of assessments
+     "vital_signs", the risk register "data_integrity", and a section's state was spoken as "not_started". A stored
+     value is shown in words (ProtocolGov.tsx inWords). */
+  it('shows each protocol\'s state in words, never as a stored value', async () => {
+    await mount();
+    const texts = Array.from(picker().options).map((o) => o.textContent ?? '');
+    expect(texts.join(' | ')).not.toMatch(/[a-z]_[a-z]/);
+    expect(texts.every((t) => / · (Draft|In development|In review|Finalized|Superseded)( ·|$)/.test(t)), texts.join(' | ')).toBe(true);
+  });
+
+  it('puts a stored value into words, sentence case', () => {
+    expect(PG.inWords('in_development')).toBe('In development');
+    expect(PG.inWords('data_integrity')).toBe('Data integrity');
+    expect(PG.inWords('not_started')).toBe('Not started');
+    expect(PG.inWords('draft')).toBe('Draft');
+    expect(PG.inWords('')).toBe('');
+    expect(PG.inWords(null)).toBe('');
   });
 
   it('opens the protocol a ?protocol= link names', async () => {
