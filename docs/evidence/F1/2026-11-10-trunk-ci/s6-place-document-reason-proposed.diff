@@ -1,0 +1,114 @@
+diff --git a/server/services/ana/__tests__/document-placement-tools.test.ts b/server/services/ana/__tests__/document-placement-tools.test.ts
+index c5bf026f07..df10fe3dca 100644
+--- a/server/services/ana/__tests__/document-placement-tools.test.ts
++++ b/server/services/ana/__tests__/document-placement-tools.test.ts
+@@ -350,11 +350,13 @@ describe('folders AnA names or makes', () => {
+ 
+   it('makes the folder under her provenance, then suggests the document into it', async () => {
+     loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+-    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study', parent_folder_id: 'bn:5.3' }, rationale: 'The pivotal study needs its own folder.' });
++    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study', parent_folder_id: 'bn:5.3' }, rationale: 'The pivotal study needs its own folder.', reason: '  Requested by the study lead.  ' });
+     expect(createProgramFolder).toHaveBeenCalledTimes(1);
++    // The folder's reason for change is the person's (D5); her rationale is recorded as hers.
+     expect(createProgramFolder.mock.calls[0][0]).toMatchObject({
+       name: 'Pivotal study', parentFolderId: 'bn:5.3', organizationId: 42, userId: 7,
+-      reason: 'The pivotal study needs its own folder.', agent: expect.objectContaining({ actorKind: 'agent:ana' }),
++      reason: 'Requested by the study lead.',
++      agent: expect.objectContaining({ actorKind: 'agent:ana', agentReason: 'The pivotal study needs its own folder.' }),
+     });
+     expect(placeVaultDocument.mock.calls[0][0]).toMatchObject({ folderId: 'uf:9', agent: expect.objectContaining({ actorKind: 'agent:ana' }) });
+     expect(out.madeFolder).toEqual({ folderId: 'uf:9', name: 'Pivotal study' });
+@@ -371,7 +373,7 @@ describe('folders AnA names or makes', () => {
+   it('says the Vault\'s refusal, and places nothing, when the folder cannot be made', async () => {
+     loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+     createProgramFolder.mockResolvedValue({ ok: false, status: 409, code: 'FOLDER_EXISTS', message: 'A folder of that name is already there.' });
+-    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'r' });
++    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'r', reason: 'Requested by the study lead.' });
+     expect(out).toMatchObject({ ok: false, error: 'FOLDER_EXISTS' });
+     expect(placeVaultDocument).not.toHaveBeenCalled();
+   });
+diff --git a/server/services/ana/document-catalog-tool-defs.ts b/server/services/ana/document-catalog-tool-defs.ts
+index d3a50b4f73..4177092f41 100644
+--- a/server/services/ana/document-catalog-tool-defs.ts
++++ b/server/services/ana/document-catalog-tool-defs.ts
+@@ -15,6 +15,7 @@ import {
+   VAULT_DOC_KINDS,
+   VAULT_INGEST_DOCUMENT_TYPES,
+ } from '../../../shared/constants/domain/vault-taxonomy.js';
++import { STATED_REASON_INPUT } from './stated-reason-input.js';
+ 
+ // ─────────────────────────────────────────────────────────────────────────────
+ 
+@@ -295,8 +296,9 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
+         type: 'object',
+         description:
+           'Make a folder first and suggest the document into it, when no existing folder fits (e.g. a study\u0027s own ' +
+-          'folder under "bn:5.3"). The folder is made under your name in the audit trail, with your rationale as its ' +
+-          'reason; the document placed in it is still a suggestion a person confirms. Omit folder_id when you pass this.',
++          'folder under "bn:5.3"). Making a folder is a change, not a suggestion: it is recorded with the person\u0027s ' +
++          'reason (reason) as its reason for change, and your rationale as yours. The document placed in it is still a ' +
++          'suggestion a person confirms. Omit folder_id when you pass this.',
+         properties: {
+           name: { type: 'string', description: 'The folder\u0027s name, at most 120 characters, no / or \\.' },
+           parent_folder_id: { type: 'string', description: 'The folder to make it in (a vaultFolders id); omit for the top of the cabinet.' },
+@@ -329,6 +331,7 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
+         description:
+           'Why this is the right folder, in one sentence, grounded in what the document says. Recorded on the row and in the audit trail.',
+       },
++      reason: STATED_REASON_INPUT,
+     },
+     required: ['document_id', 'rationale'],
+   },
+diff --git a/server/services/ana/document-placement-tools.ts b/server/services/ana/document-placement-tools.ts
+index 426b378b5b..0c85c0a104 100644
+--- a/server/services/ana/document-placement-tools.ts
++++ b/server/services/ana/document-placement-tools.ts
+@@ -44,6 +44,7 @@ import {
+   type RegisterFn,
+ } from './document-tools-shared.js';
+ import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
++import { gatedReason } from './stated-reason-input.js';
+ import { catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
+ 
+ /**
+@@ -178,13 +179,17 @@ function confirmationRefusal(documentId: unknown): string {
+  * the reason (vault-folders.ts).
+  */
+ async function folderForPlacement(
+-  parsed: PlacementPlan, programId: string, orgId: number, userId: number | undefined, agent: Record<string, unknown>,
++  input: Record<string, unknown>, parsed: PlacementPlan, programId: string, orgId: number, userId: number | undefined,
++  agent: Record<string, unknown>,
+ ): Promise<{ folderId: string | null; made?: { folderId: string; name: string } } | { refusal: string }> {
+   if (!parsed.newFolder) return { folderId: parsed.folderId };
++  // A folder made is a change, not a suggestion: its reason for change is the person's (D5), and her rationale is
++  // recorded as hers (agentReason, in `agent`), never as theirs.
++  const reason = gatedReason(input);
+   const { createProgramFolder } = await import('../vault/vault-folders.js');
+   const created = await createProgramFolder({
+     programId, organizationId: orgId, userId: userId ?? null,
+-    reason: parsed.rationale, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
++    reason, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
+   });
+   if (!created.ok) return { refusal: JSON.stringify({ ok: false, error: created.code, message: created.message }) };
+   return { folderId: created.folder.folderId, made: { folderId: created.folder.folderId, name: created.folder.name } };
+@@ -226,7 +231,7 @@ async function handlePlaceProjectDocument(
+   }
+ 
+   const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
+-  const folder = await folderForPlacement(parsed, doc.programId, orgId, scope.accessibleScope.actor.userId, agent);
++  const folder = await folderForPlacement(input, parsed, doc.programId, orgId, scope.accessibleScope.actor.userId, agent);
+   if ('refusal' in folder) return folder.refusal;
+   const { folderId, made } = folder;
+ 
+diff --git a/server/services/ana/stated-reason-input.ts b/server/services/ana/stated-reason-input.ts
+index 3aa6d2f85e..41dbb37b1b 100644
+--- a/server/services/ana/stated-reason-input.ts
++++ b/server/services/ana/stated-reason-input.ts
+@@ -164,6 +164,7 @@ export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
+   'log_cs_transaction',
+   'log_inspection_finding',
+   'open_grant_closeout',
++  'place_project_document',
+   'qms_change_create',
+   'qms_change_transition',
+   'record_cost_share_contribution',
