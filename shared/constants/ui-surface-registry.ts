@@ -509,7 +509,13 @@ export const UI_SURFACES: UiSurface[] = [
       // the vocabulary listing and its lists, and the spec-version register. Exactly these two,
       // not ectd-publishing's whole /api/ectd: /api/ectd/v4 and the rest of /api/ectd/qualification
       // stay refused at launch (launch-reproof-narrowing.test.ts).
-      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions'],
+      '/api/ectd/controlled-vocab', '/api/ectd/qualification/spec-versions',
+      // P-122 (2026-11-10): the sequence QC (EctdSequenceQc.tsx): what changed against the previous sequence and the
+      // package manifest, with their PDFs. Built and never called (CLAUDE.md Rule 3 names them). Exactly these two,
+      // by a `:param` segment (api-prefix-map.ts): the segment above the id would admit the uncalled dispatch gate
+      // and its persisted snapshot too. The routes admit the sequence's project first
+      // (tests/db/p122-sequence-qc.dbtest.ts).
+      '/api/ind-lifecycle/sequence/:id/diff', '/api/ind-lifecycle/sequence/:id/manifest'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
