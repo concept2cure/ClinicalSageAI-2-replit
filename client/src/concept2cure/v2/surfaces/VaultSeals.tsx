@@ -42,6 +42,8 @@ export interface SealedDocumentShape {
   indexNumber: string | null;
   shortHash: string | null;
   lifecycleStage: string | null;
+  /** The later version that replaced the sealed one (P-107); null when it is still current; absent when the chain was not read. */
+  supersededBy?: { version: string | null; at: string | null } | null;
 }
 
 export interface VaultSealShape {
@@ -87,6 +89,17 @@ function isSealedDocument(v: unknown): v is SealedDocumentShape {
   const d = v as Record<string, unknown> | null;
   return !!d && typeof d.id === 'string' && d.id !== '' &&
     ['title', 'version', 'indexNumber', 'shortHash', 'lifecycleStage'].every((k) => d[k] === null || typeof d[k] === 'string');
+}
+
+/**
+ * "Superseded by version 2.0 on 2026-11-03", from the version chain as it is now (P-107). Nothing for a sealed
+ * version that is still current, or when the chain was not read. The seal's own record is not changed by it.
+ */
+export function supersededLine(by: { version: string | null; at: string | null } | null | undefined): string | null {
+  if (!by) return null;
+  const version = by.version ? `version ${by.version}` : 'a later version';
+  return by.at ? `Superseded by ${version} on ${by.at.slice(0, 10)}. The seal still holds the version above.`
+    : `Superseded by ${version}. The seal still holds the version above.`;
 }
 
 /** What a seal holds as the server read it from the seal's record; null when it was not read. */
@@ -220,6 +233,9 @@ function SealHoldings({ projectId, documents }: { projectId: string; documents: 
             <span className="vd-ver-m">
               {stageLabel(d.lifecycleStage)} · {d.shortHash ? <>SHA-256 <span className="mono">{d.shortHash}</span></> : 'content hash not recorded'}
             </span>
+            {supersededLine(d.supersededBy) ? (
+              <span className="vd-ver-m" data-testid="vault-seal-superseded">{supersededLine(d.supersededBy)}</span>
+            ) : null}
             <button type="button" className="btn ghost small" disabled={viewer.viewing === d.id}
               onClick={() => void viewer.view(d.id, sealedLabel(d), null)} aria-label={`Open ${sealedLabel(d)}`}>
               {viewer.viewing === d.id ? 'Opening…' : 'Open'}

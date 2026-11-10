@@ -1,0 +1,10 @@
+ × P-116, P-117: the organisation's review rules on the APPROVER e-signature > the only member approves a document that was never reviewed, and the audit trail records no independent review 18ms
+ ✓ P-116, P-117: the organisation's review rules on the APPROVER e-signature > the only member still gives the password: a wrong one signs nothing 14ms
+ ✓ P-116, P-117: the organisation's review rules on the APPROVER e-signature > with self-approval switched off, the only member is refused REVIEW_REQUIRED as anyone is 7ms
+ ✓ P-116, P-117: the organisation's review rules on the APPROVER e-signature > an independently reviewed approval writes no such record 6ms
+ × P-116, P-117: the organisation's review rules on the APPROVER e-signature > two reviewers required, one named and signed: refused, saying how many more 6ms
+ ✓ P-116, P-117: the organisation's review rules on the APPROVER e-signature > two reviewers required, two signed: approved 6ms
+ × P-116, P-117: the organisation's review rules on the APPROVER e-signature > the workflow /sign as APPROVER follows the same rule for the only member 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)

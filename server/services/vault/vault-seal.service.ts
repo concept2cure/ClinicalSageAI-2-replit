@@ -19,7 +19,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
-import { supersededSql } from './vault-version-family.js';
+import { readSuccessors, supersededSql, type VersionSuccessor } from './vault-version-family.js';
 import { vaultLifecycleStageSql } from './vault-document-filter.js';
 import { programInOrganization } from '../c2c/program-access.js';
 
@@ -186,6 +186,12 @@ export interface SealedDocumentSummary {
   /** The first 12 hex characters of the content hash the seal recorded. */
   shortHash: string | null;
   lifecycleStage: string | null;
+  /**
+   * The later version that has since replaced the sealed one, and when (P-107): read from the version chain as it is
+   * now, beside the seal's record and never in place of it. Null: the sealed version is still the current one.
+   * Absent: the chain could not be read, which is not "current".
+   */
+  supersededBy?: VersionSuccessor | null;
 }
 
 /** A seal as the list shows it, with what it holds. */
@@ -229,10 +235,21 @@ export async function listSeals(q: Queryable, organizationId: number, programId:
       ORDER BY s.sealed_at DESC, s.id`,
     [organizationId, programId],
   );
-  return rows.map((r) => {
+  const seals = rows.map((r) => {
     const seal = sealOf(r);
     return { ...seal, documents: sealHoldings(r.manifest, seal.manifestSha256) };
   });
+  /* One read of the version chain for every sealed version listed. What each seal recorded is untouched; a chain
+     that cannot be read leaves the field off, so the list never says "current" for a version it did not check. */
+  const ids = [...new Set(seals.flatMap((s) => (s.documents ?? []).map((d) => d.id)))];
+  if (!ids.length) return seals;
+  let successors: Map<string, VersionSuccessor>;
+  try {
+    successors = await readSuccessors(q, organizationId, programId, ids);
+  } catch {
+    return seals;
+  }
+  return seals.map((s) => ({ ...s, documents: s.documents?.map((d) => ({ ...d, supersededBy: successors.get(d.id) ?? null })) ?? null }));
 }
 
 /** The bytes check's reader: the one verified reader, or a refusal in its words. */
