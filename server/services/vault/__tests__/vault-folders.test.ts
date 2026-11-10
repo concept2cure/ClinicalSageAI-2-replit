@@ -1,6 +1,6 @@
 /** The project's folder index (S6, 2026-11-06): binder from the rule pack, presets it replaces, folders people made. */
 import { describe, expect, it } from 'vitest';
-import { binderNodes, buildFolderIndex, folderNameRefusal } from '../vault-folders';
+import { binderNodes, buildFolderIndex, folderAuditEntry, folderNameRefusal, folderReasonRefusal } from '../vault-folders';
 
 const pack = [
   { key: 'M3', label: 'Module 3 · Quality', path_order: 1 },
@@ -53,5 +53,29 @@ describe('a folder name', () => {
     expect(folderNameRefusal('')).toHaveProperty('refusal');
     expect(folderNameRefusal('a/b')).toHaveProperty('refusal');
     expect(folderNameRefusal('x'.repeat(121))).toHaveProperty('refusal');
+  });
+});
+
+describe('a folder change\'s reason', () => {
+  it('is held to the governed floor by the server, not only by the form', () => {
+    expect(folderReasonRefusal('  Keeping the pivotal study apart.  ')).toEqual({ reason: 'Keeping the pivotal study apart.' });
+    // A direct API call could record "x" as the reason for change: the form's 8-character floor was the only one.
+    for (const short of ['', '   ', 'x', 'because', undefined, null, 42]) {
+      const verdict = folderReasonRefusal(short);
+      expect(verdict).toHaveProperty('refusal');
+      expect((verdict as { refusal: { status: number; code: string; message: string } }).refusal).toMatchObject({ status: 400, code: 'REASON_REQUIRED' });
+      expect((verdict as { refusal: { message: string } }).refusal.message).toMatch(/Nothing was saved\.$/);
+    }
+    expect(folderReasonRefusal('x'.repeat(2001))).toHaveProperty('refusal');
+  });
+
+  it('is written to the audit row\'s own reason column, where the history reads it, and into the chained details', () => {
+    const entry = folderAuditEntry(
+      { programId: 'p', organizationId: 42, userId: 7, reason: 'Keeping the pivotal study apart.', agent: { actorKind: 'agent:ana', reason: 'her rationale' } },
+      'vault.folder.create', 'uf:9', { name: 'Pivotal study' },
+    );
+    expect(entry).toMatchObject({ tenantId: 42, userId: 7, action: 'vault.folder.create', resourceType: 'vault_folder', resourceId: 'uf:9', reason: 'Keeping the pivotal study apart.' });
+    // The person's reason, never an agent's: her provenance is spread first and cannot overwrite it.
+    expect(entry.details).toMatchObject({ actorKind: 'agent:ana', programId: 'p', name: 'Pivotal study', reason: 'Keeping the pivotal study apart.' });
   });
 });

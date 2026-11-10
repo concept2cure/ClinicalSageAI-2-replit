@@ -16,7 +16,7 @@
 
 import { describe, it, expect } from 'vitest';
 // Importing the executor registers every handler as an import side effect.
-import { getRegisteredToolNames } from '../AnaToolExecutor';
+import { getRegisteredToolNames, getToolHandler } from '../AnaToolExecutor';
 import { CONDITIONAL_RULES, TOOL_REGISTER, toolAuthorizationOf } from '../tool-authorization';
 
 const registered = new Set(getRegisteredToolNames());
@@ -124,7 +124,32 @@ describe('a conditional tool is judged on what it was asked to do', () => {
     ['generate_document', { output_format: 'xml' }, 'confirm'],
     ['place_project_document', { document_id: 3 }, 'confirm'],
     ['place_project_document', { document_id: 3, confirm_suggested: true }, 'refuse'],
+    ['update_invention_disclosure', { disclosure_id: 3, inventors: 'A. Rao; M. Chen' }, 'confirm'],
+    ['update_invention_disclosure', { disclosure_id: 3, status: 'under_review' }, 'confirm'],
+    ['update_invention_disclosure', { disclosure_id: 3, status: 'elected' }, 'refuse'],
+    ['update_invention_disclosure', { disclosure_id: 3, election_date: '2026-11-02' }, 'refuse'],
+    // 2026-11-10: the rationale is the office's decision column too, and with
+    // status under_review the service stamps reviewed_by with the person who
+    // said yes. Any string reaches the column (the handler passes every string,
+    // and COALESCE keeps only a null), so an empty one would blank it.
+    ['update_invention_disclosure', { disclosure_id: 3, decision_rationale: 'Elect title: strong claims, licensee identified.' }, 'refuse'],
+    ['update_invention_disclosure', { disclosure_id: 3, status: 'under_review', decision_rationale: 'Elect title.' }, 'refuse'],
+    ['update_invention_disclosure', { disclosure_id: 3, decision_rationale: '' }, 'refuse'],
+    ['update_invention_disclosure', { disclosure_id: 3, decision_rationale: null }, 'confirm'],
   ])('%s %j is %s', (tool, input, cls) => {
     expect(toolAuthorizationOf(tool, input).class).toBe(cls);
+  });
+
+  it('a decision rationale is refused by the registry wrapper, with a yes or without, before the handler runs', async () => {
+    const input = { disclosure_id: 3, status: 'under_review', decision_rationale: 'Elect title.', reason: 'Recording the office review outcome' };
+    for (const humanConfirmed of [true, false]) {
+      const out = JSON.parse(await getToolHandler('update_invention_disclosure')!(input, { organizationId: 7, userId: 3, humanConfirmed } as never));
+      expect(out.error).toBe('NOT_AN_ANA_ACTION');
+      expect(out.message).toMatch(/decision rationale/);
+    }
+  });
+
+  it('the register states the same rule the code applies', () => {
+    expect((TOOL_REGISTER.update_invention_disclosure as { rule?: string }).rule).toMatch(/input\.decision_rationale/);
   });
 });
