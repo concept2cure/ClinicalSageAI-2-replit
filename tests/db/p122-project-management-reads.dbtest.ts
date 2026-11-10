@@ -100,9 +100,8 @@ beforeAll(async () => {
   await owner.query(`INSERT INTO project_sections(organization_id,project_id,section_code,module,title,status,assigned_to,deadline)
     VALUES($1,$2,'m2.5','m2','Clinical overview','drafting',$3,now() + interval '10 days'),
           ($1,$2,'m2.7','m2','Clinical summary','not_started',NULL,NULL)`, [org.A, project.open, user.ownerA]);
-  /* No project_milestones row: on a deployed database its project_id references cer_projects, not projects
-     (migrations/0000_sweet_joseph.sql, shared/schema.ts projectMilestones), so no milestone can be recorded on a
-     project. The timeline reads the table and lists none; the finding is in the evidence README. */
+  /* No project_milestones row here: recording one, and the timeline listing it, is
+     tests/db/p122-project-milestones.dbtest.ts (its key named cer_projects until the P-122 defects fix). */
   await owner.query(`INSERT INTO project_tasks(organization_id,project_id,name,status,priority,due_date)
     VALUES($1,$2,'Module 2 Summaries','todo','medium',now() + interval '20 days')`, [org.A, project.open]);
 

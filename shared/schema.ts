@@ -3524,9 +3524,11 @@ export const projectMilestones = pgTable(
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
+    /* A milestone is a project's (2026-11-10, P-122 defects): this named cerProjects, so no milestone could be recorded
+       on any project. Deployed databases are repaired by db/migrations/20260220_ind_section_tracking.sql, its creator. */
     projectId: integer('project_id')
       .notNull()
-      .references(() => cerProjects.id),
+      .references(() => projects.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     description: text('description'),
     dueDate: timestamp('due_date').notNull(),
@@ -3626,7 +3628,6 @@ export const cerProjectsRelations = relations(cerProjects, ({ one, many }) => ({
   }),
   documents: many(projectDocuments),
   activities: many(projectActivities),
-  milestones: many(projectMilestones),
   approvals: many(cerApprovals),
 }));
 
