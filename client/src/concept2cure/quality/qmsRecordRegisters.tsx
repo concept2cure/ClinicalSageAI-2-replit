@@ -16,6 +16,7 @@ import { type PillTone, type RegisterConfig, optionsOf, pill, num, Refused } fro
 import { raiseCapaFrom } from './qmsCapaRegister';
 import { signNcDisposition, signSupplierApproval } from './qmsApproval';
 import { documentLabel, type RegisterContext } from './registerContext';
+import { STATUS_LABEL } from './data';
 import type { C2CFormField } from '../v2/C2CForm';
 
 const DISPOSITION_TONE: Record<string, PillTone> = {
@@ -33,6 +34,8 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   noun: ['nonconformance', 'nonconformances'],
   listPath: '/api/mdx/qms/nonconforming',
   name: (r) => r.nc_number,
+  /* GET /api/mdx/qms/nonconforming: the 500 most recently detected (mdx-qms-records.ts). */
+  readCap: { rows: 500, order: 'most recently detected' },
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.nc_number}</span> },
     { label: 'What was found', text: true, cell: (r) => <span title={r.description}>{r.description}</span> },
@@ -49,9 +52,9 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   kpis: (rows) => {
     const open = rows.filter(isUndispositioned).length;
     return [
-      { label: 'Recorded', val: String(rows.length), sub: 'In the register' },
-      { label: 'Awaiting disposition', val: String(open), sub: open ? 'No decision recorded' : 'Every one decided', tone: open ? 'warn' : 'ok' },
-      { label: 'Dispositioned', val: String(rows.length - open), sub: 'Decision and rationale on record' },
+      { label: 'Recorded', val: String(rows.length) },
+      { label: 'Awaiting disposition', val: String(open), tone: open ? 'warn' : 'ok' },
+      { label: 'Dispositioned', val: String(rows.length - open) },
     ];
   },
   createLabel: 'Record nonconformance',
@@ -121,12 +124,22 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   }),
 };
 
+/** A supplier's quality agreement in its register cell (C12): the document's number, or in a word what is missing,
+ *  with the document's id on hover. "document #31 (not in the register)" was cut short in a narrow column. */
+function documentCell(ctx: RegisterContext, id: number | null | undefined): React.ReactNode {
+  if (id == null) return '—';
+  const doc = ctx.documents?.find((d) => d.id === id);
+  if (doc) return <span className="mono">{doc.docNumber}</span>;
+  if (ctx.documents) return <span title={`Controlled document ${id}`}>Not in the register</span>;
+  return ctx.documentsFailed ? <span title={`Controlled document ${id}`}>Not read</span> : '…';
+}
+
 /* A supplier's quality agreement is one of this organisation's controlled
    documents (the server refuses any other: mdx-qms.ts qualityAgreementRefusal).
    Effective documents are listed first; an unread or failed read says so. */
 export function qualityAgreementField(ctx: RegisterContext, current: number | null): C2CFormField {
   const docs = [...(ctx.documents ?? [])].sort((a, b) => Number(b.status === 'effective') - Number(a.status === 'effective'));
-  const options = docs.map((d) => ({ value: String(d.id), label: `${d.docNumber} · ${d.title}${d.status === 'effective' ? '' : ` (${d.status.replace('_', ' ')})`}` }));
+  const options = docs.map((d) => ({ value: String(d.id), label: `${d.docNumber} · ${d.title}${d.status === 'effective' ? '' : ` (${((STATUS_LABEL as Record<string, string>)[d.status] ?? d.status).toLowerCase()})`}` }));
   if (current != null && !docs.some((d) => d.id === current)) options.unshift({ value: String(current), label: documentLabel(ctx, current) });
   let descStatus = '';
   if (ctx.documentsFailed) descStatus = 'The controlled documents could not be read, so none can be chosen now.';
@@ -161,15 +174,15 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     { label: 'Approval', cell: (r) => pill(SUPPLIER_TONE[r.approval_status] ?? 'muted', SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status) },
     { label: 'Next audit', cell: (r) => formatDate(r.next_audit_date) },
     { label: 'Re-approval', cell: (r) => formatDate(r.reapproval_date) },
-    { label: 'Quality agreement', cell: (r, ctx) => <span className="mono">{documentLabel(ctx, r.quality_agreement_id)}</span> },
+    { label: 'Quality agreement', cell: (r, ctx) => documentCell(ctx, r.quality_agreement_id) },
   ],
   kpis: (rows, today) => {
     const unapprovedCritical = rows.filter((r) => r.criticality === 'critical' && r.approval_status !== 'approved').length;
     const auditDue = rows.filter((r) => isPast(r.next_audit_date, today)).length;
     return [
-      { label: 'Suppliers', val: String(rows.length), sub: `${rows.filter((r) => r.approval_status === 'approved').length} approved` },
-      { label: 'Critical, not approved', val: String(unapprovedCritical), sub: unapprovedCritical ? 'Pending, conditional or revoked' : 'None', tone: unapprovedCritical ? 'err' : 'ok' },
-      { label: 'Audit past due', val: String(auditDue), sub: auditDue ? 'Next audit date has passed' : 'None past due', tone: auditDue ? 'warn' : 'ok' },
+      { label: 'Suppliers', val: String(rows.length), detail: `${rows.filter((r) => r.approval_status === 'approved').length} approved` },
+      { label: 'Critical, not approved', val: String(unapprovedCritical), tone: unapprovedCritical ? 'err' : 'ok' },
+      { label: 'Audit past due', val: String(auditDue), tone: auditDue ? 'warn' : 'ok' },
     ];
   },
   createLabel: 'Add supplier',
@@ -301,9 +314,9 @@ export const AUDITS: RegisterConfig<InternalAuditRow> = {
     const overdue = rows.filter((r) => r.status === 'planned' && isPast(r.planned_date, today)).length;
     const major = rows.reduce((n, r) => n + (r.major_findings ?? 0), 0);
     return [
-      { label: 'Audits', val: String(rows.length), sub: `${rows.filter((r) => r.status === 'closed').length} closed` },
-      { label: 'Planned, date passed', val: String(overdue), sub: overdue ? 'Not started by the planned date' : 'None', tone: overdue ? 'warn' : 'ok' },
-      { label: 'Major findings', val: String(major), sub: 'Across every audit', tone: major ? 'err' : 'ok' },
+      { label: 'Audits', val: String(rows.length), detail: `${rows.filter((r) => r.status === 'closed').length} closed` },
+      { label: 'Planned, date passed', val: String(overdue), tone: overdue ? 'warn' : 'ok' },
+      { label: 'Major findings', val: String(major), tone: major ? 'err' : 'ok' },
     ];
   },
   createLabel: 'Plan audit',
@@ -392,12 +405,12 @@ export const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     },
   ],
   kpis: (rows) => [
-    { label: 'Reviews', val: String(rows.length), sub: 'On record' },
+    { label: 'Reviews', val: String(rows.length) },
     (() => {
       const open = rows.flatMap(reviewActions).filter((a) => a.state === 'open').length;
-      return { label: 'Open actions', val: String(open), sub: open ? 'Decided, not yet closed' : 'None open', tone: open ? 'warn' as const : 'ok' as const };
+      return { label: 'Open actions', val: String(open), tone: open ? 'warn' as const : 'ok' as const };
     })(),
-    { label: 'Most recent', val: rows[0] ? formatDate(rows[0].review_date) : '—', sub: rows[0] ? rows[0].period : 'No review recorded', tone: rows[0] ? undefined : 'warn' },
+    { label: 'Most recent', val: rows[0] ? formatDate(rows[0].review_date) : '—', ...(rows[0] ? { detail: rows[0].period } : {}), tone: rows[0] ? undefined : 'warn' },
   ],
   createLabel: 'Record review',
   createForm: {

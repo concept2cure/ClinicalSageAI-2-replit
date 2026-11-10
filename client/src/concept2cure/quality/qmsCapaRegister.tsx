@@ -14,6 +14,7 @@ import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL, addCapaAction, capaMoves, createCapa, isCapaClosed, transitionCapa, type CapaRow, type CapaSourceRef, isPast,
 } from './qmsRecordData';
 import { type PillTone, type RowAction, type RegisterConfig, optionsOf, pill, Refused } from './qmsRegisterKit';
+import { CAPA_READ_CAP } from './capaSources';
 
 const CAPA_TONE: Partial<Record<CapaRow['state'], PillTone>> = {
   open: 'draft', closed_effective: 'effective', closed_not_effective: 'err', escalated: 'err',
@@ -83,6 +84,8 @@ export const CAPAS: RegisterConfig<CapaRow> = {
   noun: ['CAPA', 'CAPAs'],
   listPath: '/api/capa-mdr/capa',
   name: (r) => r.capaCode,
+  /* GET /api/capa-mdr/capa: the 100 most recently updated (capaMdr.service.ts listCapas). */
+  readCap: { rows: CAPA_READ_CAP, order: 'most recently updated' },
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.capaCode}</span> },
     { label: 'Title', text: true, cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
@@ -105,12 +108,11 @@ export const CAPAS: RegisterConfig<CapaRow> = {
     const late = open.filter((r) => isPast(r.targetCloseDate, today)).length;
     const highRisk = open.filter((r) => r.riskLevel === 'high' || r.riskLevel === 'critical').length;
     return [
-      { label: 'Open CAPAs', val: String(open.length), sub: `${rows.length} in the register` },
-      { label: 'Past target close', val: String(late), sub: late ? 'Open after the target date' : 'None late', tone: late ? 'err' : 'ok' },
-      { label: 'High or critical risk', val: String(highRisk), sub: 'Open', tone: highRisk ? 'warn' : 'ok' },
+      { label: 'Open CAPAs', val: String(open.length), detail: `${rows.length - open.length} closed` },
+      { label: 'Past target close', val: String(late), tone: late ? 'err' : 'ok' },
+      { label: 'High or critical risk, open', val: String(highRisk), tone: highRisk ? 'warn' : 'ok' },
       {
         label: 'Closed, not effective', val: String(rows.filter((r) => r.state === 'closed_not_effective').length),
-        sub: 'The effectiveness check failed',
       },
     ];
   },

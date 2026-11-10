@@ -62,7 +62,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       label: 'CAPA',
       cell: (r) => {
         const codes = capas.codesFor(String(r.id));
-        if (codes === null) return capas.failed ? 'not read' : '…';
+        if (codes === null) return capas.failed ? 'not read' : capas.partial ? 'not all read' : '…';
         return codes.length ? <span className="mono">{codes.join(', ')}</span> : '—';
       },
     }]
@@ -107,12 +107,12 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
      failed read is never passed on as an empty register. */
   React.useEffect(() => {
     if (!onContext) return;
-    const base = { title: config.title, noun: config.noun };
-    if (failed) onContext({ ...base, state: 'failed', count: null, counts: [], records: [], truncated: false });
-    else if (!loaded || !rows) onContext({ ...base, state: 'loading', count: null, counts: [], records: [], truncated: false });
+    const base = { title: config.title, noun: config.noun, about: config.sub };
+    if (failed) onContext({ ...base, state: 'failed', count: null, counts: [], records: [], truncated: false, partial: false });
+    else if (!loaded || !rows) onContext({ ...base, state: 'loading', count: null, counts: [], records: [], truncated: false, partial: false });
     else onContext({
-      ...base, state: 'ready', count: rows.length,
-      counts: config.kpis(rows, today).map((k) => ({ label: k.label, val: k.val })),
+      ...base, state: 'ready', count: rows.length, partial: !!config.readCap && rows.length >= config.readCap.rows,
+      counts: config.kpis(rows, today).map((k) => ({ label: k.label, val: k.val, ...(k.detail ? { detail: k.detail } : {}) })),
       records: rows.slice(0, MAX_FACT_ROWS).map((r) => config.facts(r, ctx)), truncated: rows.length > MAX_FACT_ROWS,
     });
   }, [onContext, config, failed, loaded, rows, today, ctx]);
@@ -127,7 +127,11 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
           <h2 id={headId}>{config.title}</h2>
           {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
           {loaded && !failed && rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
-                {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span></React.Fragment>)}
+                {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
+                {config.readCap && rows.length >= config.readCap.rows && (
+                  <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
+                )}
+                {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span>{k.detail ? ` (${k.detail})` : ''}</React.Fragment>)}
               </span>}
           <div className="pj-sec-acts">
             <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>

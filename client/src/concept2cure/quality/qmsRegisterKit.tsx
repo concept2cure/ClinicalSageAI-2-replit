@@ -24,7 +24,11 @@ export interface RecordRegisterContext {
   state: 'loading' | 'failed' | 'ready';
   /** The rows read, or null while loading or after a failed read. */
   count: number | null;
-  counts: Array<{ label: string; val: string }>;
+  counts: Array<{ label: string; val: string; detail?: string }>;
+  /** True when the read stopped at the server's cap: the register shows the most recent rows, and there may be more. */
+  partial: boolean;
+  /** What the register is, in a sentence (the configuration's `sub`). */
+  about: string;
   records: RecordFacts[];
   /** True when more rows were read than are passed on. */
   truncated: boolean;
@@ -33,7 +37,10 @@ export interface RecordRegisterContext {
 /** A cell, form or fact may read what the register read beside its rows (registerContext.ts). `text` marks a column of
  *  prose: it wraps at a readable width, while the facts beside it (numbers, dates, states) stay on one line (C11). */
 export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode; text?: true }
-export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
+/** A register figure: its label and value, and `detail`, a fact beside it that the value does not already say (C12).
+ *  The line shows it in brackets and AnA is told it: "Open: 3 (5 closed, 1 cancelled)". Until 2026-11-10 each figure
+ *  carried a tile caption ("None", "On record") and the line dropped all of them, the facts among them. */
+export interface KpiSpec { label: string; val: string; detail?: string; tone?: Tone }
 
 /**
  * A decision the form collected, to be signed in the shared EsignModal. Nothing
@@ -69,6 +76,9 @@ export interface RegisterConfig<R extends { id: number | string }> {
   /** Singular and plural, lower case. */
   noun: [string, string];
   listPath: string;
+  /** The server's cap on the list read, and the order it keeps (C12): at the cap the register says it shows "the 100
+   *  most recently updated CAPAs", not all of them. Absent, the read is the whole register. */
+  readCap?: { rows: number; order: string };
   /** The record's number or name: its row's "More actions for …" and the group it opens say it. */
   name: (r: R) => string;
   columns: Column<R>[];
