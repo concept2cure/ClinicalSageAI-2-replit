@@ -21,7 +21,7 @@ import type { C2CFormField } from '../v2/C2CForm';
 const DISPOSITION_TONE: Record<string, PillTone> = {
   use_as_is: 'effective', rework: 'review', regrade: 'review', scrap: 'muted', return_to_supplier: 'muted',
 };
-const SUPPLIER_TONE: Record<string, PillTone> = { approved: 'effective', conditional: 'review', pending: 'draft', revoked: 'err' };
+const SUPPLIER_TONE: Record<string, PillTone> = { approved: 'effective', conditional: 'warn', pending: 'draft', revoked: 'err' };
 const AUDIT_TONE: Record<string, PillTone> = { planned: 'draft', in_progress: 'review', closed: 'effective', cancelled: 'muted' };
 
 export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
@@ -32,12 +32,12 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
     'against it under your name. Link a nonconformance to the change or CAPA it raises from change control.',
   noun: ['nonconformance', 'nonconformances'],
   listPath: '/api/mdx/qms/nonconforming',
-  grid: '120px minmax(0, 1fr) 160px 120px 140px 104px 120px',
+  name: (r) => r.nc_number,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.nc_number}</span> },
-    { label: 'What was found', cell: (r) => <span title={r.description}>{r.description}</span> },
+    { label: 'What was found', text: true, cell: (r) => <span title={r.description}>{r.description}</span> },
     { label: 'Product · lot', cell: (r) => [r.device_name, r.lot_or_serial].filter(Boolean).join(' · ') || '—' },
-    { label: 'Source', cell: (r) => (r.source ? <span className="qms-tag">{NC_SOURCE_LABEL[r.source] ?? r.source}</span> : '—') },
+    { label: 'Source', cell: (r) => (r.source ? <span className="rd-chip">{NC_SOURCE_LABEL[r.source] ?? r.source}</span> : '—') },
     {
       label: 'Disposition',
       cell: (r) => (isUndispositioned(r)
@@ -149,15 +149,15 @@ export const SUPPLIERS: RegisterConfig<SupplierRow> = {
     'when it is next due for audit and re-approval. A supplier is approved, conditionally approved or revoked by your signature.',
   noun: ['supplier', 'suppliers'],
   listPath: '/api/mdx/qms/suppliers',
-  grid: 'minmax(0, 1fr) minmax(0, 1fr) 96px 120px 110px 110px 130px',
+  name: (r) => r.supplier_code || r.supplier_name,
   needs: { documents: true },
   columns: [
     {
       label: 'Supplier',
       cell: (r) => <span title={r.supplier_name}>{r.supplier_name}{r.supplier_code ? <span className="mono"> · {r.supplier_code}</span> : null}</span>,
     },
-    { label: 'Supplies', cell: (r) => <span title={r.scope ?? ''}>{r.scope || '—'}</span> },
-    { label: 'Criticality', cell: (r) => <span className="qms-tag">{CRITICALITY_LABEL[r.criticality] ?? r.criticality}</span> },
+    { label: 'Supplies', text: true, cell: (r) => <span title={r.scope ?? ''}>{r.scope || '—'}</span> },
+    { label: 'Criticality', cell: (r) => <span className="rd-chip">{CRITICALITY_LABEL[r.criticality] ?? r.criticality}</span> },
     { label: 'Approval', cell: (r) => pill(SUPPLIER_TONE[r.approval_status] ?? 'muted', SUPPLIER_STATUS_LABEL[r.approval_status] ?? r.approval_status) },
     { label: 'Next audit', cell: (r) => formatDate(r.next_audit_date) },
     { label: 'Re-approval', cell: (r) => formatDate(r.reapproval_date) },
@@ -285,10 +285,10 @@ export const AUDITS: RegisterConfig<InternalAuditRow> = {
     'what it found. Progress and findings are recorded against the audit under your name.',
   noun: ['audit', 'audits'],
   listPath: '/api/mdx/qms/internal-audits',
-  grid: '120px minmax(0, 1fr) 140px 104px 110px 160px',
+  name: (r) => r.audit_number,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.audit_number}</span> },
-    { label: 'Scope', cell: (r) => <span title={r.scope}>{r.scope}</span> },
+    { label: 'Scope', text: true, cell: (r) => <span title={r.scope}>{r.scope}</span> },
     { label: 'Standard', cell: (r) => r.audit_standard || '—' },
     { label: 'Planned', cell: (r) => formatDate(r.planned_date) },
     { label: 'Status', cell: (r) => pill(AUDIT_TONE[r.status] ?? 'muted', AUDIT_STATUS_LABEL[r.status] ?? r.status) },
@@ -376,14 +376,14 @@ export const REVIEWS: RegisterConfig<ManagementReviewRow> = {
     'was reviewed, and the decisions and actions that came out of it. Each review is recorded under your name.',
   noun: ['review', 'reviews'],
   listPath: '/api/mdx/qms/management-reviews',
-  grid: '120px 104px minmax(0, 1fr) minmax(0, 1fr) 110px',
+  name: (r) => r.period,
   columns: [
     { label: 'Period', cell: (r) => <span className="mono">{r.period}</span> },
     { label: 'Held', cell: (r) => formatDate(r.review_date) },
-    { label: 'Reviewed', cell: (r) => <span title={reviewText(r.inputs, 'summary')}>{reviewText(r.inputs, 'summary') || '—'}</span> },
-    { label: 'Decisions', cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
+    { label: 'Reviewed', text: true, cell: (r) => <span title={reviewText(r.inputs, 'summary')}>{reviewText(r.inputs, 'summary') || '—'}</span> },
+    { label: 'Decisions', text: true, cell: (r) => <span title={reviewText(r.outputs, 'decisions')}>{reviewText(r.outputs, 'decisions') || '—'}</span> },
     {
-      label: 'Actions',
+      label: 'Action items',
       cell: (r) => {
         const a = reviewActions(r);
         const open = a.filter((x) => x.state === 'open').length;

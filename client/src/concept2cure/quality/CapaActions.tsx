@@ -16,12 +16,13 @@ import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import type { ActionState } from '@shared/schema/capa-mdr';
 import { formatDate } from './data';
+import { pill, type PillTone } from './qmsRegisterKit';
 import {
   ACTION_STATE_LABEL, CAPA_ACTION_TYPE_LABEL, actionMoves, transitionCapaAction,
   type CapaActionRow, type CapaRow,
 } from './qmsRecordData';
 
-const TONE: Record<ActionState, string> = { planned: 'draft', in_progress: 'review', done: 'effective', blocked: 'err', cancelled: 'muted' };
+const TONE: Record<ActionState, PillTone> = { planned: 'draft', in_progress: 'review', done: 'effective', blocked: 'err', cancelled: 'muted' };
 
 export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (confirmation?: string) => void }) {
   const read = useFetchJson<{ actions?: unknown }>(`/api/capa-mdr/capa/${encodeURIComponent(capa.id)}`);
@@ -72,12 +73,12 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (co
           {actions.map((a) => (
             <li key={a.id} className="qcc-action">
               <span className="mono">#{a.n}</span>
-              <span className="qms-tag">{CAPA_ACTION_TYPE_LABEL[a.type] ?? a.type}</span>
+              <span className="rd-chip">{CAPA_ACTION_TYPE_LABEL[a.type] ?? a.type}</span>
               <span className="qcc-action-desc">{a.description}</span>
               <span className="qcc-action-meta">
                 {[a.owner, a.dueDate ? `due ${formatDate(a.dueDate)}` : null, a.completedAt ? `done ${formatDate(a.completedAt)}` : null].filter(Boolean).join(' · ') || '—'}
               </span>
-              <span className="qms-pill" data-tone={TONE[a.state]}>{ACTION_STATE_LABEL[a.state] ?? a.state}</span>
+              {pill(TONE[a.state], ACTION_STATE_LABEL[a.state] ?? a.state)}
               <span className="qms-rowacts">
                 {actionMoves(a).map((to) => (
                   <button key={to} className="qms-chip" onClick={() => { setRefusal(null); setMoving({ action: a, to }); }}>

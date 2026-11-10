@@ -25,7 +25,7 @@ import { signDeviationCancel, signDeviationClose } from './qmsApproval';
 const STATUS_TONE: Record<string, PillTone> = {
   open: 'draft', under_investigation: 'review', pending_approval: 'review', closed: 'effective', cancelled: 'muted',
 };
-const CLASS_TONE: Record<string, PillTone> = { minor: 'muted', major: 'review', critical: 'err' };
+const CLASS_TONE: Record<string, PillTone> = { minor: 'draft', major: 'warn', critical: 'err' };
 const isOpen = (r: DeviationRow) => !DEVIATION_ENDED.includes(r.status as DeviationStatus);
 const clip = (s: string | null, n: number) => (!s ? '—' : s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
@@ -129,11 +129,12 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
     'affected; a nonconforming product itself goes in Nonconformances.',
   noun: ['deviation', 'deviations'],
   listPath: '/api/mdx/qms/deviations',
-  grid: '120px minmax(0, 1fr) 96px 140px 110px 110px',
+  name: (r) => r.deviation_number,
   columns: [
     { label: 'Deviation', cell: (r) => <span className="mono">{r.deviation_number}</span> },
     {
       label: 'What happened',
+      text: true,
       cell: (r) => (
         <span title={r.description}>
           {r.title}

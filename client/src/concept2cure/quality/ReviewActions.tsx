@@ -13,6 +13,7 @@ import { C2CForm } from '../v2/C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { EmptyState } from '../v2/dataConnect';
 import { formatDate } from './data';
+import { pill } from './qmsRegisterKit';
 import { closeReviewAction, reviewActions, type ManagementReviewRow, type ReviewAction } from './qmsRecordData';
 
 export function ReviewActions({ review, onChanged }: { review: ManagementReviewRow; onChanged: (confirmation?: string) => void }) {
@@ -59,7 +60,7 @@ export function ReviewActions({ review, onChanged }: { review: ManagementReviewR
               <span className="qcc-action-meta">
                 {[a.owner, a.dueDate ? `due ${formatDate(a.dueDate)}` : null, a.closedAt ? `closed ${formatDate(a.closedAt)}` : null].filter(Boolean).join(' · ') || '—'}
               </span>
-              <span className="qms-pill" data-tone={a.state === 'closed' ? 'effective' : 'review'}>{a.state === 'closed' ? 'Closed' : 'Open'}</span>
+              {pill(a.state === 'closed' ? 'effective' : 'review', a.state === 'closed' ? 'Closed' : 'Open')}
               <span className="qms-rowacts">
                 {a.state === 'open' && (
                   <button className="qms-chip" onClick={() => { setRefusal(null); setClosing(a); }}>Close</button>
