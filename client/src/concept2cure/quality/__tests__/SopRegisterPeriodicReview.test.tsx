@@ -126,7 +126,8 @@ describe('the Periodic review panel records a signed review of the version in fo
     // The last review describes the row's controls, so it is heard with them.
     const open = within(rows[1]).getByRole('button', { name: /Open SOP-016 Training records for its periodic review/ });
     expect(document.getElementById(open.getAttribute('aria-describedby')!)?.textContent).toContain('remains current');
-    // C5: it opens the document in the one editor, like every other way of opening it, not the training reader.
+    // C5: its tooltip names the document, not reading for training. The door itself (it reaches the editor) is
+    // pinned in qmsGovernedActions.test.tsx, "a periodic-review row opens the document".
     expect(open.getAttribute('title')).toBe('Open the controlled document');
     expect(screen.getByRole('list', { name: 'Periodic review' })).toBeTruthy();
   });

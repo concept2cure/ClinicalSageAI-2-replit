@@ -86,14 +86,15 @@ export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'draft', label: 'Draft' },
 ];
 /** "8 controlled documents: 1 in force, 7 draft; none overdue for review." */
-function registerSentence(total: number, inForce: number, inReview: number, draft: number, overdue: number): string {
+function registerSentence(total: number, inForce: number, inReview: number, draft: number, overdue: number | null): string {
   const parts = [
     inForce ? `${inForce} in force` : '',
     inReview ? `${inReview} in review` : '',
     draft ? `${draft} draft` : '',
   ].filter(Boolean);
-  const review = overdue ? `${overdue} overdue for review` : 'none overdue for review';
-  return `${total} controlled document${total === 1 ? '' : 's'}: ${parts.length ? parts.join(', ') : 'none in force'}; ${review}.`;
+  const head = `${total} controlled document${total === 1 ? '' : 's'}: ${parts.length ? parts.join(', ') : 'none in force'}`;
+  if (overdue === null) return `${head}.`;
+  return `${head}; ${overdue ? `${overdue} overdue for review` : 'none overdue for review'}.`;
 }
 /* Stable identities for an unread read, so memo deps do not churn. */
 const NO_DOCS: QmsDoc[] = [];
@@ -128,7 +129,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   /* The review schedule as read, or none: a failed schedule read is not replaced by a derivation (C2). The
      register's own overdue count may still derive from the register when the schedule is unread. */
   const reviewDue = rev.rows ?? NO_REVIEW;
-  const overdueFrom = rev.rows ?? deriveReviewDue(docs);
+  /* The overdue count is the review schedule's; while that read is unread or failed the register says nothing about
+     overdue (a derivation from the register left out a version in force under revision, review C2-1). */
   /* Live read-and-understood compliance (numerator = distinct current
      acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
@@ -181,17 +183,24 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
     // A training notice opens the reader, on the version approved for a later day when one waits (slice 4b).
     if(qmsIntent==='read'){target.clear();setReading({documentId:d.id,scope:readerScope,successor:true});return;}
-    // A reviewer's or approver's notice opens the review route, where their turn is taken; the editor cannot sign (C5).
-    if(d.status==='in_review'&&myTurn(qmsRouteView(d),meId)){target.clear();setRoutePanel(d);return;}
-    if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
-    else if(d.status==='draft'){target.clear();setSetup({document:d});}
-  },[target.document,target.clear,editingId,qmsIntent,readerScope,meId]);
+    // A reviewer's or approver's notice opens the review route at their turn; the editor cannot sign. The route is
+    // the register row's: the single-document read the notice resolves never carries it, so wait for the register.
+    if(d.status==='in_review'){
+      if(reg.docs==null&&!reg.error)return;
+      const row=reg.docs?.find(x=>x.id===d.id);
+      if(row&&myTurn(qmsRouteView(row),meId)){target.clear();setRoutePanel(row);return;}
+    }
+    // Anything else opens where its text lives, as every row's Open does.
+    target.clear();openDocument(d);
+  },[target.document,target.clear,editingId,qmsIntent,readerScope,meId,reg.docs,reg.error]);
   const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
   React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
   /* Open a controlled document where its text lives. A document with an editing copy opens in the one editor. A
      legacy register entry has its text inline and no editing copy: a draft is set up (bound) first; past draft, its
-     controlled text is read where it lives, read-only, because the editor has nothing to open and answered "no
-     editing copy" with a Try again that could not help (C5, walked 2026-11-10). */
+     controlled text opens in the personal training reader, where that inline text is read. The editor has nothing to
+     open for it and answered "no editing copy" with a Try again that could not help (C5, walked 2026-11-10). The
+     reader keeps its own "Edit controlled text" for a governed writer of a document under review: that second edit
+     path waits on a decision (the sweep's dialogs-3), and the reader's own drawer and title are C16. */
   const openDocument = (d: QmsDoc) => {
     if (d.authoringDocumentId) setEditingId(d.id);
     else if (d.status === 'draft') setSetup({ document: d });
@@ -228,7 +237,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const effectiveCount = docs.filter((d) => d.status === 'effective' || d.inForce).length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
-  const overdueCount = overdueFrom.filter((r) => r.overdue).length;
+  const overdueCount = rev.rows ? rev.rows.filter((r) => r.overdue).length : null;
   // The server's summary (P-49): the client computes no percentage.
   const coverage = coverageKpiOf(training, trainComp.summary ?? null);
   /* A read that has not answered is not an empty register. An unread register
@@ -268,7 +277,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
 
   if (editingId !== null) return <>{targetStatus}<ControlledDocumentWorkbench documentId={editingId}
     onBack={() => { setEditingId(null); reg.refresh?.(); rev.refresh?.(); trainComp.refresh?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} /></>;
+    onNavigate={onNavigate ?? (() => undefined)}
+    onReadText={() => { const id = editingId; if (id === null) return; setEditingId(null); openReader(id); }} /></>;
 
   return (
     <>
@@ -341,13 +351,14 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
       <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error} read={rev.failure}
         retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
-        canOpen={(id) => docs.some((x) => x.id === id)}
-        onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); }} onRecord={recordReview.start} />
+        canOpen={(id) => docs.some((x) => x.id === id) || (regUnread && canOpen(id))}
+        onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); else openReader(id); }} onRecord={recordReview.start} />
 
       <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error} read={trainComp.failure}
         refresh={trainComp.refresh} figure={coverageFigure}
         canOpen={canOpen} onOpen={openReader} />
-      <TrainingExpiry assigned={trainComp.summary ? trainComp.summary.assigned : null} />
+      <TrainingExpiry assignment={trainComp.summary ? { assigned: trainComp.summary.assigned, noActiveAssignees: trainComp.summary.noActiveAssignees }
+        : trainUnread && !trainFailed ? 'reading' : null} />
       <C2CToast msg={toast} />
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
       {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
