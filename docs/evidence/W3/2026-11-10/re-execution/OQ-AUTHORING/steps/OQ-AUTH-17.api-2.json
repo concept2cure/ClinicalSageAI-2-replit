@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/documents/fdc9cecb-3058-4434-9d8c-1ee8ab1d635e/request-review",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reviewers": [
+        {
+          "id": 2,
+          "name": "OQ Signer",
+          "email": "oq-signer@validation.local"
+        }
+      ],
+      "route": {
+        "reviewDueDate": "2026-11-17"
+      }
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "REASON_REQUIRED",
+        "message": "A reason for change of at least 8 characters is required. Nothing was requested."
+      },
+      "field": "reason"
+    }
+  }
+}

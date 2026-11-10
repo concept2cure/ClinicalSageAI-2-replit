@@ -1,0 +1,74 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/sequences/5/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 64,
+    "rateLimitRetries": 0,
+    "body": [
+      {
+        "id": 5,
+        "sequenceId": 5,
+        "sectionCode": "m1.2",
+        "title": "Cover letter",
+        "granularity": null,
+        "lifecycleOp": "new",
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "badcf964-6e6e-4ce5-a700-b7e6222ccde8",
+        "documentType": null,
+        "studyId": null,
+        "stfFileTag": null,
+        "leafGuid": null,
+        "parentLeafId": null,
+        "checksum": null,
+        "documentContentSha256": "13840e90c0b48e04ec03071802bb6f71f5a79f91e0afd0f0c62ecaf5dc763bf0",
+        "documentPinnedAt": "2026-11-10T02:49:22.491Z",
+        "organizationId": 2,
+        "createdBy": 1,
+        "createdAt": "2026-11-10T02:49:22.490Z",
+        "updatedAt": "2026-11-10T02:49:22.490Z",
+        "deletedAt": null,
+        "sourceDocument": {
+          "status": "undetermined",
+          "keyKind": "uuid",
+          "documentTable": "vault_documents",
+          "documentId": null,
+          "documentUuid": "badcf964-6e6e-4ce5-a700-b7e6222ccde8",
+          "pinnedSha256": "13840e90c0b48e04ec03071802bb6f71f5a79f91e0afd0f0c62ecaf5dc763bf0",
+          "storedSha256": "13840e90c0b48e04ec03071802bb6f71f5a79f91e0afd0f0c62ecaf5dc763bf0",
+          "pin": "[REDACTED]",
+          "reason": "The retained bytes were verified; substantive source text is not established.",
+          "notTransmittable": "The retained bytes were verified; substantive source text is not established."
+        },
+        "sourceRef": {
+          "leafId": 5,
+          "sequenceId": 5,
+          "submissionId": 25,
+          "programId": "2a5550d5-b980-49a5-afff-24da3eac8b5e",
+          "projectId": 22,
+          "document": {
+            "table": "vault_documents",
+            "keyKind": "uuid",
+            "id": "badcf964-6e6e-4ce5-a700-b7e6222ccde8"
+          },
+          "section": null,
+          "editor": null,
+          "evidence": {
+            "content": "undetermined",
+            "pin": "[REDACTED]",
+            "lifecycle": "unverified",
+            "reasonCode": "SOURCE_BINARY_CONTENT_UNVERIFIED"
+          },
+          "label": "OQ-004 Sequence cover letter 20261110024919"
+        }
+      }
+    ]
+  }
+}

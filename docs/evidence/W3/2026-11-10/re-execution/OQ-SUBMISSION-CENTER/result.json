@@ -1,0 +1,639 @@
+{
+  "protocolId": "OQ-004",
+  "protocolTitle": "Operational Qualification — Submission Center",
+  "app": "SUBMISSION-CENTER",
+  "appLabel": "Submission Center",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/submission-center/run.mjs",
+  "executedAt": "2026-11-10T02:49:18.668Z",
+  "finishedAt": "2026-11-10T02:50:26.296Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.23.4",
+    "chromium": "/opt/pw-browsers/chromium",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "3088335238a12d9e89df8fc5025ae22d0730766f"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "virusScan": "skipped",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+      }
+    }
+  },
+  "counts": {
+    "pass": 16,
+    "fail": 0,
+    "deviation": 1,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-SUBC-00",
+      "title": "Prerequisite: a program with one vault document",
+      "urs": [],
+      "kind": "prerequisite",
+      "action": "POST /api/c2c/projects; POST /api/vault/ingest",
+      "expected": "Program and document created",
+      "status": "pass",
+      "observed": "program fb517312-5af8-49de-9d04-2a5dafe99192; document ec40c184-87a0-4a1a-a251-14859a807616",
+      "startedAt": "2026-11-10T02:49:19.173Z",
+      "finishedAt": "2026-11-10T02:49:20.010Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SUBC-00.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/vault/ingest",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-SUBC-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-11-10T02:49:20.010Z",
+      "finishedAt": "2026-11-10T02:49:20.265Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-02",
+      "title": "Submission creation validates its inputs",
+      "urs": [
+        "URS-SUBC-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions with primaryRegion \"mars\"",
+      "expected": "HTTP 400 VALIDATION with field details",
+      "status": "pass",
+      "observed": "HTTP 400: {\"primaryRegion\":[\"Invalid option: expected one of \\\"fda\\\"|\\\"ema\\\"|\\\"eu\\\"|\\\"pmda\\\"|\\\"jp\\\"|\\\"ca\\\"|\\\"uk\\\"|\\\"cn\\\"|\\\"au\\\"|\\\"ch\\\"|\\\"br\\\"|\\\"in\\\"|\\\"kr\\\"|\\\"sg\\\"\"]}",
+      "startedAt": "2026-11-10T02:49:20.265Z",
+      "finishedAt": "2026-11-10T02:49:20.547Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-02.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-03",
+      "title": "Create a submission and its first sequence",
+      "urs": [
+        "URS-SUBC-002",
+        "URS-SUBC-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/projects; POST /api/submissions {programId, IND, biotech, fda}; POST /api/submissions/:id/sequences {fda, \"0000\", original}; GET sequences",
+      "expected": "HTTP 201 for both; the audit outcome is reported on the submission; the sequence is listed with status draft",
+      "status": "pass",
+      "observed": "submission 25 (auditTrail: {\"persisted\":true,\"chained\":true}); sequence 5 \"0000\" status draft",
+      "startedAt": "2026-11-10T02:49:20.547Z",
+      "finishedAt": "2026-11-10T02:49:21.884Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SUBC-03.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SUBC-03.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/25/sequences",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SUBC-03.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/25/sequences",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-04",
+      "title": "Place a vault document as an eCTD leaf",
+      "urs": [
+        "URS-SUBC-004"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/vault/ingest a cover letter into the submission's own program; PUT /api/submissions/sequences/:seq/leaves {sectionCode:\"m1.2\", title, documentTable:\"vault_documents\", documentUuid}; the same with OQ-SUBC-00's document, which belongs to another program; GET leaves",
+      "expected": "HTTP 200; the leaf is listed with its section code; a document of another project is refused 409 CROSS_PROJECT; an unplaceable documentTable is refused with 400",
+      "status": "pass",
+      "observed": "leaf placed ({\"id\":5,\"sequenceId\":5,\"sectionCode\":\"m1.2\",\"title\":\"Cover letter\",\"granularity\":null,\"lifecycleOp\":\"new\",\"documentTable\":\"vault_documents\",\"documentId\":null,\"d); another project's document → 409 CROSS_PROJECT; bad table → 400",
+      "startedAt": "2026-11-10T02:49:21.884Z",
+      "finishedAt": "2026-11-10T02:49:23.377Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-04.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/vault/ingest",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SUBC-04.api-2.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/submissions/sequences/5/leaves",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-04.api-3.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/submissions/sequences/5/leaves",
+          "status": 409
+        },
+        {
+          "file": "steps/OQ-SUBC-04.api-4.json",
+          "method": "PUT",
+          "url": "http://localhost:5200/api/submissions/sequences/5/leaves",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-SUBC-04.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/5/leaves",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "A filing holds only its own project's documents (PF-11, 2026-09-26). Since OQ-SUBC-03 gives the submission a program of its own (LX-22), the document placed is ingested into that program; OQ-SUBC-00's document, in another program, is the refused case.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-05",
+      "title": "Sequence lifecycle follows the state machine",
+      "urs": [
+        "URS-SUBC-005"
+      ],
+      "kind": "scripted",
+      "action": "POST transition draft→assembling; then assembling→dispatched (skips validated)",
+      "expected": "First transition 200 (status assembling); second refused (INVALID_STATE or GOVERNED_REQUIRED), status unchanged",
+      "status": "pass",
+      "observed": "assembling ok; dispatched refused (GOVERNED_REQUIRED); status=assembling",
+      "startedAt": "2026-11-10T02:49:23.377Z",
+      "finishedAt": "2026-11-10T02:49:24.212Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-05.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/transition",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-05.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/transition",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SUBC-05.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/25/sequences",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-06",
+      "title": "Freeze and dispatch are governed transitions only",
+      "urs": [
+        "URS-SUBC-006"
+      ],
+      "kind": "scripted",
+      "action": "POST transition {status:\"frozen\"} on the generic endpoint; POST /sequences/:id/freeze without signatureActionId",
+      "expected": "Generic transition refused with GOVERNED_REQUIRED; freeze without a signature refused with 400 VALIDATION",
+      "status": "pass",
+      "observed": "generic frozen → 403 GOVERNED_REQUIRED; freeze w/o signatureActionId → 400",
+      "startedAt": "2026-11-10T02:49:24.212Z",
+      "finishedAt": "2026-11-10T02:49:24.771Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-06.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/transition",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SUBC-06.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/freeze",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-07",
+      "title": "Governed e-signature demands re-authentication",
+      "urs": [
+        "URS-SUBC-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/actions/sign {target:\"ectd-sequence:<id>\", reason} with no reauth block",
+      "expected": "Refused (4xx) with a re-authentication error; no signature or ledger action created",
+      "status": "pass",
+      "observed": "HTTP 400: {\"error\":\"SIGNATURE_MEANING_REQUIRED\",\"detail\":\"One of: APPROVED, REVIEWED, RESPONSIBILITY, AUTHORSHIP, authorship, review, approval, responsibility, release, retirement.\"}",
+      "startedAt": "2026-11-10T02:49:24.771Z",
+      "finishedAt": "2026-11-10T02:49:25.037Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-07.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/actions/sign",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-08",
+      "title": "CREDENTIALED: sign the sequence under a Part 11 e-signature; freeze is then decided by the composed gate, not by the signature alone",
+      "urs": [
+        "URS-SUBC-007"
+      ],
+      "kind": "scripted",
+      "action": "sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first POST /api/c2c/actions/sign with reauth:{password} only; then POST /api/c2c/actions/sign {target:\"ectd-sequence:<id>\", reason, payload:{intent:\"freeze\", meaning:\"approval\"}, reauth:{password, totp}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer",
+      "expected": "A signer with a second factor enrolled: the password-only signature is refused 401 REAUTH_TOTP_REQUIRED and writes no signature row (§11.200). Sign: HTTP 200 with actionId; exactly one electronic_signatures row on ectd-sequence:<id> by the signer, second_factor_verified true when a code was presented. Freeze on this never-validated sequence (status assembling after OQ-SUBC-04): refused 409 INVALID_STATE by the sequence state machine (a valid e-signature is necessary, not sufficient); the sequence status is unchanged. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded \"not executed — credential not supplied\".",
+      "status": "pass",
+      "observed": "password-only signature refused 401 REAUTH_TOTP_REQUIRED with no row written; signed with password + TOTP; sign → actionId act_814512e78f14418d97f4caf943f73c60 (executed); 1 electronic_signatures row (id 13, approval, second_factor_verified true); freeze → 409 INVALID_STATE (Cannot transition sequence from assembling to frozen. The signature given for this freeze is now void; sign again for a new attempt.); sequence status assembling unchanged",
+      "startedAt": "2026-11-10T02:49:25.037Z",
+      "finishedAt": "2026-11-10T02:50:01.811Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-08.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/actions/sign",
+          "status": 401,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=ectd-sequence%3A5",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/actions/sign",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=ectd-sequence%3A5",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/25/sequences",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-6.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/freeze",
+          "status": 409,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-SUBC-08.api-7.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/25/sequences",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "The sign action re-authenticates with the account password (verifyReauth) and applies separation of duties (the signer must not be the sequence's creator — the run identity). freezeSequence checks the state machine, then the signature, then the deterministic gate; a frozen outcome needs a validated, shadow-reviewed sequence, which this protocol's fixture is not. What is qualified here is the signature persistence and that a signature alone does not freeze.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-09",
+      "title": "Gateway capabilities are reported honestly",
+      "urs": [
+        "URS-SUBC-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/capabilities",
+      "expected": "Every gateway reports configured:false in this environment (no ESG/CESP credentials); no gateway is claimed as configured",
+      "status": "pass",
+      "observed": "13 gateways, all configured:false; environment=production",
+      "startedAt": "2026-11-10T02:50:01.811Z",
+      "finishedAt": "2026-11-10T02:50:02.107Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-09.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/capabilities",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-10",
+      "title": "Canonical dossier for the accepted project",
+      "urs": [
+        "URS-SUBC-009a"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/projects/<program UUID>/dossier",
+      "expected": "HTTP 200 with governed readiness and independent artifact/tracking states",
+      "status": "pass",
+      "observed": "HTTP 200: program fb517312-5af8-49de-9d04-2a5dafe99192; governed measured; artifacts no_artifacts; tracking no_sections",
+      "startedAt": "2026-11-10T02:50:02.107Z",
+      "finishedAt": "2026-11-10T02:50:02.394Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-10.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/c2c/projects/fb517312-5af8-49de-9d04-2a5dafe99192/dossier",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "v0.8: the step reads the dossier as it is answered. The protocol was written at 8b192f1e75 (2026-10-26) and, before it was ever executed, 117a3591ac and 01dbd4eb38 (the same day) moved artifactReadiness to the top of the response and named each read outcome: measured, no_artifacts / no_sections (read, nothing to count), unanchored (no project to read), unavailable (with a code and a reason). The step still requires every outcome to be stated and a failed read never to be a zero.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-11",
+      "title": "eCTD compile answers for the program",
+      "urs": [
+        "URS-SUBC-010"
+      ],
+      "kind": "unscripted",
+      "action": "POST /api/ectd-compile/:programId/compile {region:\"FDA\", submissionType:\"initial\"}; GET /status",
+      "expected": "Compile answers 2xx with a spine/status, or an explained 4xx refusal — never a 500",
+      "status": "pass",
+      "observed": "compile → 200 {\"id\":\"comp_1794279002670_fb517312-5af8-49de-9d04-2a5dafe99192\",\"projectId\":null,\"projectIdent\":\"fb517312-5af8-49de-9d04-2a5dafe99192\",\"programId\":\"fb517312-5af8-49de-9d04-2a5dafe99192\",\"status\":\"fail; status → 200 {\"projectId\":null,\"projectIdent\":\"fb517312-5af8-49de-9d04-2a5dafe99192\",\"programId\":\"fb517312-5af8-49de-9d04-2a5dafe99192\",\"overallReadiness\":null,\"contentCompl",
+      "startedAt": "2026-11-10T02:50:02.394Z",
+      "finishedAt": "2026-11-10T02:50:02.946Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-11.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/ectd-compile/fb517312-5af8-49de-9d04-2a5dafe99192/compile",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-11.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/ectd-compile/fb517312-5af8-49de-9d04-2a5dafe99192/status",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-12",
+      "title": "Transmit cannot run without a signature and a configured gateway",
+      "urs": [
+        "URS-SUBC-012"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions/sequences/:id/transmit {} ",
+      "expected": "HTTP 400 VALIDATION (signatureActionId required); nothing transmitted",
+      "status": "pass",
+      "observed": "HTTP 400 VALIDATION",
+      "startedAt": "2026-11-10T02:50:02.946Z",
+      "finishedAt": "2026-11-10T02:50:03.223Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-12.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/transmit",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-13",
+      "title": "Submission Center surface renders the submission",
+      "urs": [
+        "URS-SUBC-011"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/submission-center with the submission's own project selected (OQ-SUBC-03's program)",
+      "expected": "The submission title is visible",
+      "status": "pass",
+      "observed": "submission visible",
+      "startedAt": "2026-11-10T02:50:03.223Z",
+      "finishedAt": "2026-11-10T02:50:10.539Z",
+      "evidence": [
+        "steps/OQ-SUBC-13.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": "v0.8: since b1d7d85ec8 (2026-10-08, D2 ana-24) Submission Center lists the open project's submissions. OQ-SUBC-03 creates its submission on a project of its own (LX-22), and the step opened OQ-SUBC-00's, so the list was that project's.",
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-14",
+      "title": "eCTD compile and publishing surfaces render",
+      "urs": [
+        "URS-SUBC-011"
+      ],
+      "kind": "ad-hoc",
+      "action": "Open /concept2cure/ectd-compile and /concept2cure/ectd-publishing",
+      "expected": "Both render (screenshots) without a runtime page error",
+      "status": "pass",
+      "observed": "rendered",
+      "startedAt": "2026-11-10T02:50:10.539Z",
+      "finishedAt": "2026-11-10T02:50:23.720Z",
+      "evidence": [
+        "steps/OQ-SUBC-14.ectd-compile.png",
+        "steps/OQ-SUBC-14.ectd-publishing.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-15",
+      "title": "A Shadow Review waiver is offered only after a provider outage, and only by signature (P-34)",
+      "urs": [
+        "URS-SUBC-006",
+        "URS-SUBC-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions/sequences/:id/shadow-review; GET …/shadow-review; GET …/dispatch-readiness; POST …/shadow-review/waive {signatureActionId:\"oq-not-a-signature\", failedRunId:<the newest run>}; GET …/shadow-review",
+      "expected": "dispatch-readiness reports shadowReviewWaiver.state \"none\". With no completed review: shadowReviewWaivable is present, and eligible only when the newest run failed as provider_unavailable or provider_overloaded (on this installation, with no provider configured, the run fails as no_provider_configured, which is not an outage: eligible false, with the reason), and the shadowPresence gate blocks. With a completed review: no waiver is offered and the gate clears with no note. Either way the waive without a signature is refused 4xx (403 GOVERNED_REQUIRED or 409 SHADOW_WAIVER_NOT_ELIGIBLE) and no run reads \"waived\". The positive path, an outage waived by a credentialed signer, is proven over the real act in server/services/ectd/__tests__/shadow-review-waiver.pglite.integration.test.ts; an installation cannot be made to suffer one on demand.",
+      "status": "pass",
+      "observed": "review POST 503; newest run #2 failed/no_provider_configured; waiver none; eligible=false (Run #2 failed because no AI provider is configured on this deployment, which is not an AI provider outage, so Shadow Review cannot be waived for it. Run Shadow Review again.); waive refused 403 GOVERNED_REQUIRED; no waived run",
+      "startedAt": "2026-11-10T02:50:23.720Z",
+      "finishedAt": "2026-11-10T02:50:25.573Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-15.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/shadow-review",
+          "status": 503
+        },
+        {
+          "file": "steps/OQ-SUBC-15.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/5/shadow-review",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-15.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/5/dispatch-readiness",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SUBC-15.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submissions/sequences/5/shadow-review/waive",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-SUBC-15.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/submissions/sequences/5/shadow-review",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SUBC-16",
+      "title": "A submission run takes no clinical or nonclinical figures from the request",
+      "urs": [
+        "URS-SUBC-014"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submission-orchestrator/runs with a non-empty csrInputs; then with a projectId and a ctdProgramId",
+      "expected": "inline csrInputs 400 INLINE_RUN_INPUTS_REFUSED naming the field and /runs/for-program, without the refused figure; ctdProgramId 400 CTD_PROGRAM_INPUTS_REFUSED",
+      "status": "deviation",
+      "observed": {
+        "inline": {
+          "error": "invalid_request"
+        },
+        "program": {
+          "error": "invalid_request"
+        }
+      },
+      "startedAt": "2026-11-10T02:50:25.573Z",
+      "finishedAt": "2026-11-10T02:50:26.169Z",
+      "evidence": [
+        "steps/OQ-SUBC-16.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-SUBC-16.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submission-orchestrator/runs",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-SUBC-16.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/submission-orchestrator/runs",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "deviationReason": "not executed — this is a development server (its CSP is report-only), which allows inline run inputs by design (it answered 400 invalid_request and 400 invalid_request). The refusal is a production control; observe it on a production build.",
+      "rateLimitRetries": 0
+    }
+  ]
+}

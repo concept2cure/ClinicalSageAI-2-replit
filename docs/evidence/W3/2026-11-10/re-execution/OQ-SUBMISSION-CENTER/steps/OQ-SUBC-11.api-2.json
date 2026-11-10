@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/ectd-compile/fb517312-5af8-49de-9d04-2a5dafe99192/status",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "projectId": null,
+      "projectIdent": "fb517312-5af8-49de-9d04-2a5dafe99192",
+      "programId": "fb517312-5af8-49de-9d04-2a5dafe99192",
+      "overallReadiness": null,
+      "contentComplete": false,
+      "submissionReady": false,
+      "submissionBlockers": [
+        "No sequence exists for this project yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.",
+        "No document has been placed in a sequence of this project yet, so the compile has nothing to check and every required section reads as missing. Place approved documents into the sequence in Submission Center (Builder), or with Place into filing from the document.",
+        "No leaf files have been rendered: the linked submission has no eCTD sequence yet, so there are no placed documents to render and the package cannot be transmitted. Create a sequence and place approved documents into it."
+      ],
+      "modules": [],
+      "readinessBasis": "no-sequence",
+      "readinessNote": "No sequence exists for this project yet, so nothing is counted as placed. Approved sections are on the project’s Author tab.",
+      "sequence": null,
+      "requiredSectionSource": {
+        "source": "rule_pack",
+        "docType": "ind",
+        "agency": "fda",
+        "packVersion": "ich-m4-v2.2"
+      },
+      "totalSections": 0,
+      "totalRequired": 0,
+      "totalCompleted": 0,
+      "lastUpdated": null
+    }
+  }
+}

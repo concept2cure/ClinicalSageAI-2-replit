@@ -1,0 +1,77 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.2.A.1",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "sectionKey": "3.2.A.1",
+        "sectionPath": "3.2.A.1",
+        "title": "Facilities and Equipment",
+        "approvalState": "draft",
+        "approvedVersionId": null,
+        "stale": false,
+        "staleReason": null,
+        "compiledHash": "d39b3b669f0dddcae73fbb0ec25d16056958b8e21ad93225af94310f138b3037",
+        "updatedAt": "2026-11-10T02:53:21.935Z",
+        "completeness": 50,
+        "missingInputs": [
+          "containerDescription"
+        ],
+        "narrative": "Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and related controls used in the manufacture of the drug substance and drug product. Manufacturing operations are performed at Basel. The manufacturing route is: Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water. \n\nPrimary container closure equipment and packaging components used during manufacture and storage are not yet specified. \n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system and are evidenced by its GMP documentation, which this register does not hold; this section therefore makes no statement about their content or their compliance status. ",
+        "tables": [
+          {
+            "title": "Facilities Summary",
+            "headers": [
+              "Property",
+              "Value"
+            ],
+            "rows": [
+              [
+                "Manufacturing Site",
+                "Basel"
+              ],
+              [
+                "Synthetic/Manufacturing Route",
+                "Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water"
+              ]
+            ]
+          },
+          {
+            "title": "Primary Equipment / Container Closure",
+            "headers": [
+              "Property",
+              "Value"
+            ],
+            "rows": []
+          }
+        ],
+        "tablesUnknown": false,
+        "markdown": "## Facilities and Equipment\n\nPer ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and related controls used in the manufacture of the drug substance and drug product. Manufacturing operations are performed at Basel. The manufacturing route is: Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water. \n\nPrimary container closure equipment and packaging components used during manufacture and storage are not yet specified. \n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system and are evidenced by its GMP documentation, which this register does not hold; this section therefore makes no statement about their content or their compliance status.\n\n### Facilities Summary\n\n| Property | Value |\n| --- | --- |\n| Manufacturing Site | Basel |\n| Synthetic/Manufacturing Route | Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water |\n\n### Primary Equipment / Container Closure\n\n| Property | Value |\n| --- | --- |\n",
+        "lineage": [
+          {
+            "sourceType": "drug_product",
+            "sourceKey": "drug_product:2",
+            "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8",
+            "changedSinceCompile": false
+          },
+          {
+            "sourceType": "drug_substance",
+            "sourceKey": "drug_substance:5",
+            "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e",
+            "changedSinceCompile": false
+          }
+        ]
+      }
+    }
+  }
+}

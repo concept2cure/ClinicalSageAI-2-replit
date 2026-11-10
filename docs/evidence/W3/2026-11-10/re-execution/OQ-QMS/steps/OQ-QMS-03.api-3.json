@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5200/api/authoring/sections/9ad22888-376e-466e-b1ee-fcd5786429d8",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "content": "<p>OQ-006 Document control SOP 20261110025052: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+      "changeReason": "OQ-006: write the controlled procedure text before review"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "section": {
+        "id": "9ad22888-376e-466e-b1ee-fcd5786429d8",
+        "doc_id": "3f80b867-f573-427a-bb51-2f7f3623df89",
+        "code": "qms-purpose",
+        "title": "Purpose",
+        "content": "<p>OQ-006 Document control SOP 20261110025052: inspect the recorded document identifier, revision and controlled text, and record your own acknowledgement of the released revision.</p>",
+        "order_index": 1,
+        "track_changes": false,
+        "tenant_id": 2,
+        "created_at": "2026-11-10T02:50:53.541Z",
+        "updated_at": "2026-11-10T02:50:54.153Z"
+      },
+      "message": "Section updated successfully",
+      "revision_created": true,
+      "filing": {
+        "committed": false,
+        "reason": "This document is not bound to a filing, so there is no governed section to update."
+      }
+    }
+  }
+}
