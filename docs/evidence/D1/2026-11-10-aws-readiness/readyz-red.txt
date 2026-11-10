@@ -1,0 +1,151 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > runs one database query and one store probe for repeated hits inside the window 55ms
+   → expected 5 to be 1 // Object.is equality
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > shares one computation between concurrent hits 14ms
+   → expected 10 to be 1 // Object.is equality
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > never holds a verdict longer than 10 s, whatever READYZ_CACHE_MS says 4ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > computes every hit when READYZ_CACHE_MS is 0 3ms
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, an outside caller without the token gets the verdict and nothing else 1ms
+   → readyzShowsDetail is not a function
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, the token holder and a loopback peer get the detail 1ms
+   → readyzShowsDetail is not a function
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > a short or unset READYZ_TOKEN admits no one by token 0ms
+   → readyzShowsDetail is not a function
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > outside production the detail is always shown (the Codespace and the doctor read it) 1ms
+   → readyzShowsDetail is not a function
+ × server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > the public body is the verdict alone, with the same status 6ms
+   → expected { ready: false, …(6) } to deeply equal { ready: false }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > runs one database query and one store probe for repeated hits inside the window
+AssertionError: expected 5 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 5
+
+ ❯ server/startup/__tests__/readyz-cache.test.ts:80:21
+     78|       expect(res.status).toBe(200);
+     79|     }
+     80|     expect(queries).toBe(1);
+       |                     ^
+     81|     expect(probe.calls).toBe(1);
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > shares one computation between concurrent hits
+AssertionError: expected 10 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 10
+
+ ❯ server/startup/__tests__/readyz-cache.test.ts:93:21
+     91|     const all = await Promise.all(Array.from({ length: 10 }, () => req…
+     92|     expect(all.every((r) => r.status === 200)).toBe(true);
+     93|     expect(queries).toBe(1);
+       |                     ^
+     94|   });
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, an outside caller without the token gets the verdict and nothing else
+TypeError: readyzShowsDetail is not a function
+ ❯ server/startup/__tests__/readyz-cache.test.ts:120:12
+    118|     process.env.NODE_ENV = 'production';
+    119|     process.env.READYZ_TOKEN = 'r'.repeat(40);
+    120|     expect(readyzShowsDetail(fakeRequest('10.10.101.17'))).toBe(false);
+       |            ^
+    121|     expect(readyzShowsDetail(fakeRequest('10.10.101.17', 'wrong-token-…
+    122|     expect(readyzShowsDetail(fakeRequest('10.10.101.17', 's'.repeat(40…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, the token holder and a loopback peer get the detail
+TypeError: readyzShowsDetail is not a function
+ ❯ server/startup/__tests__/readyz-cache.test.ts:128:12
+    126|     process.env.NODE_ENV = 'production';
+    127|     process.env.READYZ_TOKEN = 'r'.repeat(40);
+    128|     expect(readyzShowsDetail(fakeRequest('10.10.101.17', 'r'.repeat(40…
+       |            ^
+    129|     expect(readyzShowsDetail(fakeRequest('127.0.0.1'))).toBe(true);
+    130|     expect(readyzShowsDetail(fakeRequest('::1'))).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > a short or unset READYZ_TOKEN admits no one by token
+TypeError: readyzShowsDetail is not a function
+ ❯ server/startup/__tests__/readyz-cache.test.ts:137:12
+    135|     process.env.NODE_ENV = 'production';
+    136|     process.env.READYZ_TOKEN = 'short';
+    137|     expect(readyzShowsDetail(fakeRequest('10.10.101.17', 'short'))).to…
+       |            ^
+    138|     delete process.env.READYZ_TOKEN;
+    139|     expect(readyzShowsDetail(fakeRequest('10.10.101.17', ''))).toBe(fa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > outside production the detail is always shown (the Codespace and the doctor read it)
+TypeError: readyzShowsDetail is not a function
+ ❯ server/startup/__tests__/readyz-cache.test.ts:144:12
+    142|   it('outside production the detail is always shown (the Codespace and…
+    143|     process.env.NODE_ENV = 'development';
+    144|     expect(readyzShowsDetail(fakeRequest('10.10.101.17'))).toBe(true);
+       |            ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > the public body is the verdict alone, with the same status
+AssertionError: expected { ready: false, …(6) } to deeply equal { ready: false }
+
+- Expected
++ Received
+
+  {
++   "anaState": "ready",
++   "capabilityRegistry": "pending",
++   "dependencies": {
++     "ana": "ok",
++     "database": "ok",
++     "redis": "skipped",
++     "schema": "down",
++     "storage": "ok",
++     "virusScan": "down",
++     "worker": "skipped",
++   },
++   "failed": [
++     "schema",
++     "virusScan",
++   ],
+    "ready": false,
++   "schemaDetail": "schema was never verified — no boot-time verdict was recorded",
++   "schemaState": "unknown",
+  }
+
+ ❯ server/startup/__tests__/readyz-cache.test.ts:159:22
+    157|     const res = await request(app).get('/readyz');
+    158|     expect(res.status).toBe(503);
+    159|     expect(res.body).toEqual({ ready: false });
+       |                      ^
+    160|   });
+    161| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  01:59:57
+   Duration  762ms (transform 204ms, setup 96ms, import 251ms, tests 91ms, environment 0ms)
+

@@ -32,7 +32,7 @@ function appWithHealth() {
   return app;
 }
 
-const ENV_KEYS = ['NODE_ENV', 'CLAMAV_HOST', 'CLAMAV_PORT', 'REDIS_URL', 'REDIS_TLS_URL'] as const;
+const ENV_KEYS = ['NODE_ENV', 'CLAMAV_HOST', 'CLAMAV_PORT', 'REDIS_URL', 'REDIS_TLS_URL', 'READYZ_CACHE_MS'] as const;
 let savedEnv: Record<string, string | undefined> = {};
 const servers: net.Server[] = [];
 
@@ -145,6 +145,10 @@ describe('/readyz and the virus scanner', () => {
     process.env.NODE_ENV = 'production';
     process.env.CLAMAV_HOST = '127.0.0.1';
     process.env.CLAMAV_PORT = String(port);
+    // This case pins the scanner's own 30 s cache at its boundary; /readyz's
+    // verdict cache (READYZ_CACHE_MS, OPS-22) would add up to 5 s to it, so it
+    // is off here. The verdict cache has its own cases (readyz-cache.test.ts).
+    process.env.READYZ_CACHE_MS = '0';
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-18T12:00:00Z'));
     const app = appWithHealth();

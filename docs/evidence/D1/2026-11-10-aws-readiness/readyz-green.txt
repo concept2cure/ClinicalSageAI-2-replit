@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > runs one database query and one store probe for repeated hits inside the window 36ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > shares one computation between concurrent hits 15ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > never holds a verdict longer than 10 s, whatever READYZ_CACHE_MS says 4ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz verdict cache (OPS-22) > computes every hit when READYZ_CACHE_MS is 0 4ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, an outside caller without the token gets the verdict and nothing else 1ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > in production, the token holder and a loopback peer get the detail 0ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > a short or unset READYZ_TOKEN admits no one by token 0ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > outside production the detail is always shown (the Codespace and the doctor read it) 0ms
+ ✓ server/startup/__tests__/readyz-cache.test.ts > /readyz detail is for the task and its operators, not the public (OPS-22) > the public body is the verdict alone, with the same status 4ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is ready, and says the store is ok, when the store answers 20ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the store does not answer 5ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when the probe throws 3ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready when no store can be selected 3ms
+ ✓ server/startup/__tests__/readyz-vault-storage.test.ts > /readyz and the vault store > is not ready, and does not hang, when the store never answers 3010ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready, and does not hang, when clamd accepts and never answers 2035ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is ready, and says the scanner is ok, when clamd answers PONG 7ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > is not ready in production when no scanner is configured 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > skips the scanner outside production, as the scan does 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > says the scanner is down (503), not a bare 500, when CLAMAV_PORT is malformed 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan.test.ts > /readyz and the virus scanner > reuses one zPING for 30 s: ok after clamd goes away inside the window, down after it 16ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403)
+{
+  "timestamp": "2026-11-10T02:00:06.658Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/metrics"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 32ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401)
+{
+  "timestamp": "2026-11-10T02:00:07.084Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/ai-gateway/health/detail"
+  }
+}
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller
+{
+  "timestamp": "2026-11-10T02:00:07.095Z",
+  "level": "warn",
+  "message": "[inline-endpoints] ai-gateway health probe failed",
+  "context": {
+    "error": "provider openai rejected key sk-live-0000 (401)"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a platform administrator reads them 393ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > the scrape token reads them (the Prometheus path, unchanged) 7ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > an anonymous caller is refused (401) 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 6ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail, at /detail 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401) 6ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > a tenant user's session gets the same answer as an anonymous caller 4ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 3ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 503 and names schema when the boot check found missing tables 24ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 200 when the schema is verified ready 5ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema state is unknown (never verified) 6ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema verification itself threw 4ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > serves traffic when degraded, but names the missing tables 3ms
+ ✓ server/startup/__tests__/readyz-virus-scan-throw.test.ts > /readyz when the scanner check throws > answers 503 with virusScan down, not a bare 500 27ms
+
+ Test Files  6 passed (6)
+      Tests  35 passed (35)
+   Start at  01:59:59
+   Duration  8.26s (transform 663ms, setup 172ms, import 1.34s, tests 5.73s, environment 1ms)
+
