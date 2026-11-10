@@ -1,0 +1,59 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcProposedChange.test.tsx > the classified change can be recorded as a proposed change > POSTs the classifier’s inputs and the open project to /api/cmc-changes, once 439ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcProposedChange.test.tsx > the classified change can be recorded as a proposed change > says what the store refused, and records nothing 114ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > PUTs the edited fields and the reason to the batch’s own id, and shows the server’s row 632ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > offers no edit on a batch with a signed disposition, and says why 133ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchEdit.test.tsx > a logged batch can be edited, with a reason > changes nothing on screen when the edit is refused, and says what was refused 224ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > atomically saves the statistical document and its source basis, then navigates 950ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 600ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 494ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 472ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 696ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the document create fails — and saves no section 520ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > says so, and stays put, when the session is not authenticated 498ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the atomic receipt omits the saved section 503ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the request throws 486ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 161ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 68ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 73ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 84ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 241ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 194ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 197ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 478ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 482ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 104ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 167ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > declares all nine, with both sentences 5ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > splits the nine into the two halves the founder named 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > keeps no band above the title 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > would notice a band put back, or a parser that reads nothing 6ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > gives guidance about the destination and never a claim about the program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > tells a client where to start 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > assesses a stability study for drift from the Stability register 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > shows process capability where the batches are 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > reads a specification’s recorded changes through the one history panel 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > says which store a history came from, because the two attest differently 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > offers the door on every CMC empty state that asks for a project 10ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > would notice a doorless one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > has a client caller, or a named door that serves the same purpose 501ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > measures enough routes to be measuring anything 101ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > every route listed as retired really does refuse 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > still names the caller for every route the sweep cannot see 154ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > would notice a route nothing calls 111ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > does not count a collection call as reaching the route for one record 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > does not count a list call as the caller of an edit (the verb is part of the route) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > maps a persisted batch row onto the display contract, carrying the db id 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > reads deviation count from an array and yield from a string leaf 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > never yields NaN from malformed jsonb 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > batchDisposition normalizes persisted statuses 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > round-trips create-form values → create body → persisted row → display row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > builds a governed release body with a defaulted decision and carried reauth 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchMapping.test.ts > cmcBatch mapping > batchRowsFromApi tolerates a non-array payload 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > keeps a uuid whole — the shape cmc_batch_records actually uses 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > never produces NaN, which is what broke Release 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > keeps a legacy numeric id too, so an older row still addresses itself 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > gives each row a DISTINCT key, so React neither duplicates nor omits one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > leaves dbId absent on a row the server has not given one, so the guard still fires 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcBatchRowIdentity.test.ts > a batch row carries the id the server gave it > still shows the batch NUMBER as the row label, which is what a person reads 0ms
+ Test Files  6 passed (6)
+      Tests  57 passed (57)

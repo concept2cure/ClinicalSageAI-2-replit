@@ -301,6 +301,9 @@ const CMC_MOUNTS: Array<[file: string, prefix: string]> = [
   ['server/api/cmc/sourceEvidenceRoutes.ts', '/api/cmc/module3-os'],
   ['server/routes/cmc-module3-board.routes.ts', '/api/cmc/module3-board'],
   ['server/routes/cmc-agency-questions.routes.ts', '/api/cmc/agency-questions'],
+  /* The proposed-change store (cmc_change_controls), outside /api/cmc. Swept
+     since P-122 (2026-11-10): its POST had no caller, and nothing looked. */
+  ['server/routes/cmc-changes.routes.ts', '/api/cmc-changes'],
 ];
 
 /**
