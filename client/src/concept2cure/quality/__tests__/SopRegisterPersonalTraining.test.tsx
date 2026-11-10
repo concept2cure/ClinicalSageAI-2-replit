@@ -72,9 +72,8 @@ describe('the existing Quality register personal training handoff', () => {
     H.trainingRows = [{ ...H.trainingRows[0], eligible: false, documentVersion: '1.0', unavailableReason: 'Verified approved text is unavailable.' }];
     H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 1, averageCurrentPct: null };
     const { container } = mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('Verified released text is unavailable');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('Verified released text is unavailable.');
     expect(screen.getByText('Verified approved text is unavailable.')).toBeTruthy();
     expect(container.querySelector('.qms-train-pct')).toBeNull();
   });
@@ -84,9 +83,8 @@ describe('the existing Quality register personal training handoff', () => {
     H.trainingRows = [{ ...H.trainingRows[0], assignment: 'no_active_assignees', current: null, of: null }];
     H.summary = { documents: 1, assigned: 0, notAssigned: 0, noActiveAssignees: 1, unavailable: 0, averageCurrentPct: null };
     const { container } = mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('No one assigned is an active member');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('No one assigned is an active member.');
     expect(screen.getByText('No active assignees')).toBeTruthy();
     expect(container.querySelector('.qms-train-pct'), 'no figure, not 0/0').toBeNull();
   });
@@ -100,9 +98,8 @@ describe('the existing Quality register personal training handoff', () => {
     expect(container.querySelector('.qms-train-pct')).toBeNull();
     expect(container.querySelector('.qms-train-bar')).toBeNull();
     expect(container.textContent).not.toMatch(/\b0\//);
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('No document is assigned yet');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('No document is assigned yet.');
   });
 
   it('an assigned document shows how many of the people assigned are current, and the reader\'s own line; the KPI is the server\'s average', () => {
@@ -113,9 +110,8 @@ describe('the existing Quality register personal training handoff', () => {
     expect(pct?.textContent).toBe('2/3');
     expect(pct?.getAttribute('title')).toBe('2 of 3 assigned have acknowledged the version in force');
     expect(screen.getByTestId('qms-train-me').textContent).toBe('You are assigned and have not acknowledged the version in force.');
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('67%');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('Average of assigned people, version in force');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('Coverage 67%: average of assigned people, version in force.');
   });
 
   it('a reader who is not assigned has no line of their own; one who is current is told so', () => {
@@ -131,9 +127,8 @@ describe('the existing Quality register personal training handoff', () => {
   it('rows without a summary from the server show no figure, and say so', () => {
     H.summary = null;
     mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('The coverage summary could not be read');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('The coverage summary could not be read.');
   });
 
   it('closes the selected reader immediately when the authenticated organization changes', async () => {

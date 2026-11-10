@@ -35,7 +35,6 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
-import { Kpi } from './Kpi';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
   STATE_LABEL,
@@ -54,7 +53,7 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { ErrorState } from '../v2/dataConnect';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import { postQmsApproval, verifyLearningReviewHash, type LearningReviewView } from './qmsApproval';
@@ -216,91 +215,36 @@ function ChangeControlSession({
 
   return (
     <>
-      <div className="qms-head">
-        <div>
-          <div className="qms-eyebrow">Workstream</div>
-          <h1 className="qms-h1">Change control</h1>
-          <div className="qms-sub">
-            Your change-control log, aligned to ICH Q10 change management and EU GMP Annex 15. Raise a
-            change request, assess its impact and risk, route it for independent approval, implement and
-            verify effectiveness — and link every change to the deviations, CAPAs and validation documents
-            it touches.
-          </div>
-        </div>
-        <div className="qms-actions">
-          <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
-            onCreated={id => { setEditingId(id); onRetry?.(); }} />
-          <button
-            className="qms-btn ghost"
-            title="Sends this request to AnA; nothing in the log changes"
-            onClick={() =>
-              onAsk(
-                'Run a change-control health check — show every change overdue for implementation, every one ' +
-                  'awaiting approval, and any linked deviation or CAPA that is still open, ranked by risk.',
-              )
-            }
-          >
-            {I.sparkles} Ask AnA for a health check
-          </button>
-          <button
-            className="qms-btn primary"
-            onClick={() => openDrawer({ kind: 'raise' })}
-          >
-            {I.plus} Raise change request
-          </button>
-        </div>
-      </div>
-
-      {/* The KPI row is derived entirely from `summary`, so with no summary
-          there is nothing to count. An unread summary is null rather than a
-          zero-filled shell precisely so this decision has to be made here: a
-          row of zeroes is a claim about the register ("no open changes"), not
-          an absence of information about it. */}
-      {summary === null ? (
-        <div className="qms-kpis">
-          <EmptyState
-            title="Change-log totals are unavailable"
-            hint="The counts appear once the change register loads."
-            regulation="Serves the change-control record (ICH Q10)"
-            testId="change-summary-absent"
-          />
-        </div>
-      ) : (
-      <div className="qms-kpis">
-        <Kpi label="Open changes" val={String(summary.open)} sub={`${summary.total} in the log`} />
-        <Kpi
-          label="Awaiting approval"
-          val={String(summary.awaitingApproval)}
-          sub={summary.awaitingApproval ? 'In impact assessment' : 'None in assessment'}
-          tone={summary.awaitingApproval ? 'warn' : 'ok'}
-        />
-        <Kpi
-          label="In implementation"
-          val={String(summary.inImplementation)}
-          sub={summary.awaitingVerification ? `${summary.awaitingVerification} awaiting verification` : 'Being executed'}
-        />
-        <Kpi
-          label="Overdue"
-          val={String(summary.overdueImplementation)}
-          sub={summary.overdueImplementation ? 'Past target date' : 'All on schedule'}
-          tone={summary.overdueImplementation ? 'err' : 'ok'}
-        />
-      </div>
-      )}
-
-      {/* ── Lifecycle flowchart ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Change-control lifecycle</h2>
-          <span className="meta">Every change, and where it sits right now</span>
-          {stage !== 'all' && (
-            <>
-              <span className="spacer" />
-              <button className="qms-link" onClick={() => onStageChange('all')}>
-                {I.close} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
+      {/* ── Lifecycle (D7-B): the tab's first section carries the log's figures as one
+          line and its one create. The tab's own title, its "Ask AnA for a health check"
+          (now a starter in the row above the tabs, same prompt) and its four tiles went
+          on 2026-11-06. An unread summary states no count: a row of zeroes would be a
+          claim about the register, not an absence of information about it. ── */}
+      <section className="pj-sec qms-sec" aria-labelledby="qcc-lifecycle-h">
+        <div className="pj-sec-h">
+          <h2 id="qcc-lifecycle-h">Change-control lifecycle</h2>
+          <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
+            {summary === null ? 'Change-log totals appear once the change register loads.'
+              /* An empty log is said as empty: "none overdue" of nothing is only vacuously true (finding 112). */
+              : summary.total === 0 ? 'No changes in the log yet.' : <>
+              {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
+              {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
+              {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
+            </>}
+          </span>
+          <div className="pj-sec-acts">
+            {stage !== 'all' && (
+              <button type="button" className="btn ghost small" onClick={() => onStageChange('all')}>
+                Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
               </button>
-            </>
-          )}
+            )}
+            {/* a2f9264a5: a curator prepares reviewed learning from the open project (moved here from the retired head). */}
+            <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
+              onCreated={id => { setEditingId(id); onRetry?.(); }} />
+            <button type="button" className="btn primary small" onClick={() => openDrawer({ kind: 'raise' })}>
+              Raise change request
+            </button>
+          </div>
         </div>
         {unread ? (
           <div className="qms-empty" role="status">
@@ -522,19 +466,17 @@ function ChangeControlSession({
                 {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
               </div>
             )}
+            {/* Each opens "New controlled document" with its template (D7-B: a quiet
+                button per form, not a card per document type). */}
             {changeForms.map((f) => (
               <button
                 key={f.key}
-                className="qms-tpl-card"
-                title={`Create a new ${f.label} as a draft with its standard change-control sections`}
+                type="button"
+                className="btn ghost small"
+                title={`${f.description} Created as a draft with its standard change-control sections.`}
                 onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
               >
-                <div className="qms-tpl-top">
-                  <span className="qms-tpl-ico">{I.fileText}</span>
-                  <span className="qms-tpl-prefix mono">{f.numberPrefix}</span>
-                </div>
-                <div className="qms-tpl-label">{f.label}</div>
-                <div className="qms-tpl-desc">{f.description}</div>
+                {f.numberPrefix ? `${f.label} (${f.numberPrefix})` : f.label}
               </button>
             ))}
           </div>
@@ -696,7 +638,7 @@ function ReviewedLearningPreparationSession({ programId, onCreated, owner }: { p
   }, [owner]);
   if (!canCurate) return null;
   return <>
-    <button className="qms-btn ghost" disabled={!programId} onClick={() => { setError(null); setOpen(true); }}>
+    <button type="button" className="btn ghost small" disabled={!programId} onClick={() => { setError(null); setOpen(true); }}>
       Prepare reviewed learning
     </button>
     {open && <C2CForm config={{ title: 'Prepare reviewed learning', sub: 'Only server-defined generic guidance and coarse cohort counts are prepared. Document review and the exact-artifact invariant signature are separate approvals.', notice: error ?? undefined,

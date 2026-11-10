@@ -33,6 +33,7 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
   const [title, setTitle] = React.useState(document?.title ?? template?.label ?? '');
   const [docType, setDocType] = React.useState<DocType>(document?.docType ?? template?.docType ?? 'sop');
   const [templateKey, setTemplateKey] = React.useState(template?.key ?? '');
+  const chosenTemplate = templates.find(t => t.key === templateKey) ?? null;
   const [number, setNumber] = React.useState('');
   const [reviewDate, setReviewDate] = React.useState('');
   const [reason, setReason] = React.useState('');
@@ -94,14 +95,20 @@ export function ControlledDocumentSetup({ template, templates = [], document, re
       {!loading && !programError && programs.length === 0 && <p>No projects are available. Create a project in Projects to begin.
         {onNavigate && <button type="button" className="qms-btn ghost" onClick={() => { onClose(); onNavigate('projects'); }}>Open Projects</button>}</p>}
       <label>Title<input value={title} onChange={event => setTitle(event.target.value)} maxLength={300} required readOnly={!!document} disabled={busy} /></label>
-      {!template && <label>Template<select value={templateKey} disabled={busy} onChange={event => {
+      {/* The document types are this field (D7-B, RULE 4): the nine library cards that
+          opened this dialog per type went on 2026-11-06. Each option names its number
+          prefix; the chosen one's description is the line beneath; and choosing one
+          names an untitled document after it, as the card did. */}
+      {!template && <label>Template<select value={templateKey} disabled={busy} aria-describedby={chosenTemplate?.description ? 'qms-template-description' : undefined} onChange={event => {
         setTemplateKey(event.target.value);
         const selected = templates.find(t => t.key === event.target.value);
         if (selected) setDocType(selected.docType);
+        if (selected && !document && (title.trim() === '' || templates.some(t => t.label === title))) setTitle(selected.label);
       }}>
         <option value="">Standard controlled-document sections</option>
-        {templates.filter(t => !document || t.docType === document.docType).map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+        {templates.filter(t => !document || t.docType === document.docType).map(t => <option key={t.key} value={t.key}>{t.numberPrefix ? `${t.label} (${t.numberPrefix})` : t.label}</option>)}
       </select></label>}
+      {!template && chosenTemplate?.description && <p className="qms-dialog-hint" id="qms-template-description">{chosenTemplate.description}</p>}
       {!document && <>
         <label>Document type<select value={docType} onChange={event => { setDocType(event.target.value as DocType); setTemplateKey(''); }} disabled={busy || !!template}>
           {(Object.entries(DOC_TYPE_LABEL) as [DocType, string][]).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
