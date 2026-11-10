@@ -1,0 +1,1107 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T06:09:14.666Z",
+  "stops": [
+    {
+      "stop": "home",
+      "url": "/concept2cure",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "projects",
+      "url": "/concept2cure/projects",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi project",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Plan",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Evidence",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Author",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Review",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Submit",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi stage Respond",
+      "url": "/concept2cure/project-home?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Home",
+      "url": "/concept2cure?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Tasks",
+      "url": "/concept2cure/tasks?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Communication",
+      "url": "/concept2cure/communication-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Vault",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Submission Center",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Quality",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2-cdi rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod project",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence",
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Plan",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Evidence",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Author",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Review",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Submit",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod stage Respond",
+      "url": "/concept2cure/project-home?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Home",
+      "url": "/concept2cure?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Tasks",
+      "url": "/concept2cure/tasks?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Communication",
+      "url": "/concept2cure/communication-center?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence",
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Vault",
+      "url": "/concept2cure/vault?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Submission Center",
+      "url": "/concept2cure/submission-center?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence",
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence",
+        "409 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Quality",
+      "url": "/concept2cure/quality?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-401-antibod rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "errorText": [
+        "Couldn't load the reporting canvas",
+        "Your organization's plan, project readiness and portfolio rollup could not be read. Nothing is shown in their place."
+      ],
+      "sideways": false,
+      "apiFailures": [
+        "429 GET /api/authoring/docs?programId=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/records",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/activity",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/team",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/dossier",
+        "429 GET /api/submissions?programId=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/review/board?scope=all&programId=0d848d40-4cc1-4854-bf25-3147f9c6d35d&limit=100",
+        "429 GET /api/chat/threads?program_id=0d848d40-4cc1-4854-bf25-3147f9c6d35d&limit=9",
+        "429 GET /api/ana-ri/runs?mine=live",
+        "429 GET /api/ana-skills/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/authoring/docs?programId=0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+        "429 GET /api/c2c/projects/0d848d40-4cc1-4854-bf25-3147f9c6d35d/intelligence",
+        "429 GET /api/insights-canvas/overview?programId=0d848d40-4cc1-4854-bf25-3147f9c6d35d"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+        "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana project",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Plan",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Evidence",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Author",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Review",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Submit",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana stage Respond",
+      "url": "/concept2cure/project-home?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Home",
+      "url": "/concept2cure?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Tasks",
+      "url": "/concept2cure/tasks?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Communication",
+      "url": "/concept2cure/communication-center?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Vault",
+      "url": "/concept2cure/vault?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Submission Center",
+      "url": "/concept2cure/submission-center?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/7eb2b67f-6d5a-4b05-9e06-1224b597d6b7/intelligence",
+        "409 GET /api/c2c/projects/7eb2b67f-6d5a-4b05-9e06-1224b597d6b7/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Quality",
+      "url": "/concept2cure/quality?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-301-intrana rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho project",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence",
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Plan",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Evidence",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Author",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Review",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Submit",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho stage Respond",
+      "url": "/concept2cure/project-home?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Home",
+      "url": "/concept2cure?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Tasks",
+      "url": "/concept2cure/tasks?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Communication",
+      "url": "/concept2cure/communication-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence",
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Vault",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Submission Center",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence",
+        "409 GET /api/c2c/projects/41b8aa18-664e-48e8-94fd-c46c06314d92/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Quality",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-oral-ho rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent project",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence",
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Plan",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Evidence",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Author",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Review",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Submit",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent stage Respond",
+      "url": "/concept2cure/project-home?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Home",
+      "url": "/concept2cure?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence",
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Tasks",
+      "url": "/concept2cure/tasks?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Communication",
+      "url": "/concept2cure/communication-center?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Vault",
+      "url": "/concept2cure/vault?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Submission Center",
+      "url": "/concept2cure/submission-center?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence",
+        "409 GET /api/c2c/projects/4b73d26d-370b-460f-becb-20c96b40dd1b/intelligence"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)",
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Quality",
+      "url": "/concept2cure/quality?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-201-prevent rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 project",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Plan",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Evidence",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Author",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Review",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Submit",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 stage Respond",
+      "url": "/concept2cure/project-home?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Home",
+      "url": "/concept2cure?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Tasks",
+      "url": "/concept2cure/tasks?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Communication",
+      "url": "/concept2cure/communication-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Vault",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Submission Center",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "422 POST /api/ana-biostats/compute"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+      ]
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Quality",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx-510 rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- project",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Plan",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Evidence",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Author",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Review",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Submit",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- stage Respond",
+      "url": "/concept2cure/project-home?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Home",
+      "url": "/concept2cure?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Tasks",
+      "url": "/concept2cure/tasks?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Communication",
+      "url": "/concept2cure/communication-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Vault",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Submission Center",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail CMC / Module 3",
+      "url": "/concept2cure/cmc?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Biostatistics",
+      "url": "/concept2cure/biostatistics?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Quality",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-anti- rail Reporting & analytics",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "79ab693a-6973-4992-bdd4-8f532228578d",
+      "name": "Xanomeline TTS Phase 2 (CDISCPILOT01)"
+    },
+    {
+      "id": "0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "name": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+    },
+    {
+      "id": "7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "name": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+    },
+    {
+      "id": "41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "name": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)"
+    },
+    {
+      "id": "4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "name": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+    },
+    {
+      "id": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "name": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "id": "792029a1-fcb7-493d-a65b-b5117d11783b",
+      "name": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    }
+  ],
+  "ok": true,
+  "finishedAt": "2026-11-10T06:17:09.072Z",
+  "summary": {
+    "stops": 121,
+    "toLookAt": 13,
+    "serverErrors": 0
+  }
+}
