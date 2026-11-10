@@ -13,7 +13,7 @@ Run on the Codespace-shaped local database, signed in through `/api/auth/dev-log
 | Retention never destroys a version (FD3 c) | `server/jobs/retentionCron.ts`: a policy asking for destruction is refused and counted (`destructionRefused`), and only a tombstone is written; the database refuses the delete (VR-07) | Nothing to add in code. S3 Object Lock is the D1 lane's, with the AWS account |
 | Binders are editable, audited views that never alter a document | The folders and filing binders of `../2026-11-06/`: made, renamed, moved and removed by a project's editors, each with a chained audit row; a folder change writes no document field but its place | Nothing further in this pass |
 | Device coverage follows the eSTAR mapper | not started here | open |
-| A PDF rendition per version, bound to the source's SHA-256 | `pdf-converter.ts` exists | open |
+| A PDF rendition per version, bound to the source's SHA-256 | `server/services/pdf-converter.ts` (LibreOffice, deterministic); the Vault's audited, hash-verified download; the version viewer (`VaultVersionViewer.tsx`), which framed PDFs only | Any rendition: a Word version could only be downloaded |
 
 ## Landed
 
@@ -32,7 +32,50 @@ Run on the Codespace-shaped local database, signed in through `/api/auth/dev-log
    not the sponsor; the walk showed three "sponsors" that were segments. It reads `client_workspace_id` now, with a
    test that pins it.
 
+3. **A Word version is viewed as a PDF rendition, bound to its source.** `vault-rendition.ts` renders a `.docx`
+   through the one converter from the version's verified bytes. The Vault's own download route serves it
+   (`?rendition=pdf`) under its own name, with `X-Rendition-Of-SHA256` (the version's recorded hash) and its own
+   `X-Content-SHA256`, and writes a chained `vault.document.rendition` row with both (`rendition-audit.txt`). It is
+   made on request and never stored, so it cannot be filed, sealed or placed in a submission in place of its source.
+   A source that is a PDF is viewed as itself; another format is refused by name. Red first (six cases). Walk
+   `walk-rendition.cjs`: a Word file uploaded, "View as PDF" frames it, both hashes served, the source still
+   downloads as the Word file with the same hash, a `.txt` refused with 422 (`screenshots/rendition-1-viewer.png`).
+   **Found walking:** the viewer's caption said the rendition's hash was "verified against the vault record", which
+   is true of a stored version only; a rendition now says what it was made from.
+   **Limit, said plainly:** only Word sources are rendered (the converter reads `.docx`); a spreadsheet, dataset or
+   text version has no rendition yet. Each view converts again (a few seconds); nothing is cached.
+
 ## Open
 
 - Device coverage converged onto the eSTAR mapper (the D4/D6 disagreement, red first).
-- A PDF rendition per version through `pdf-converter.ts`, bound to the source's SHA-256, shown in the viewer.
+- Renditions for formats other than Word.
+
+## Device coverage onto the eSTAR mapper: what the convergence needs (not built; design only)
+
+P-107: "Device coverage follows the eSTAR mapper's per-device slots … The rule pack's mandatory flags converge onto
+the mapper, so one rule remains. The D4 and D6 disagreement is a defect, repaired red first."
+
+The disagreement, read from the code on 2026-11-10:
+
+| eSTAR section | Rule pack `k510` × `fda`, `fda-estar-510k-v1.1` (`migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`) | Mapper (`server/services/pathway-engines/estar/estar-mapper.ts`) |
+|---|---|---|
+| D4 Sterilization | `mandatory: false` | slot `sterilization`, `whenFlag('sterile')`: required for a sterile device, not applicable for a non-sterile one, **not known** when nobody has said |
+| D6 Benefits, risks and mitigation (ISO 14971) | `mandatory: false` | slot `risk-management`, `always(...)`: required for every device |
+
+So the Vault's Library shows a 510(k)'s risk management section as "Optional", and never says a sterile device owes
+its sterilization section (`leafDoc` in `server/routes/c2c/project-vault.ts` reads the pack's `mandatory`).
+
+What the repair is, in order, red first:
+
+1. **D6:** mint `fda-estar-510k-v1.2` (and the De Novo pack's matching section, after checking its own keys) with
+   D6 `mandatory: true`, superseding v1.1, in a migration in `C2C_MIGRATION_FILES` with a row-count assertion (RULE 1:
+   a seeded pack is corrected only by a new version row). Documents bound to v1.1 keep their version.
+2. **D4:** a boolean cannot say "required when sterile". The Vault's leaf for D4 reads the project's device flags
+   (`loadProgramDeviceFlags`, `program-device-flags.ts`) through the mapper's own `slotApplicability`, and says
+   Required, Not applicable, or "Not known: nobody has said whether the device is sterile". Never "Optional".
+3. **One rule:** a test that fails if any pack section the mapper has a slot for carries a flag the mapper
+   contradicts, so the two cannot drift again.
+
+Why it was not built in this pass: step 1 changes regulatory reference data that is filed against, and needs the
+De Novo tree checked section by section; it deserves its own slice with the MDX journey lane (which owns the mapper)
+reading it.

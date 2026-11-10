@@ -536,7 +536,9 @@ describe('the export of the sealed record', () => {
     ).rows[0]?.details as Record<string, unknown>;
     expect(recorded).toMatchObject({ status: 'final', sealVerdict: 'intact', sha256: createHash('sha256').update(res.body as Buffer).digest('hex') });
     expect(text).toContain(`Export ${recorded.exportId}`);
-    expect(text).toMatch(/Final\. Signed by .+ as approval/);
+    // 21 CFR 11.50: the meaning in words and the time as the canonical manifestation formats it
+    // (run-pdf.ts signatureLine, 0e5706a308, 2026-11-09); it read "as approval, <ISO> (UTC)".
+    expect(text).toMatch(/Final\. Signed by .+, meaning Approval, \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC\./);
     expect(text).toContain(`Reason: ${SIGNED.reason}`);
     expect(text).toContain('Seal verification at export: intact.');
     expect(text).not.toMatch(/NOT FINAL/);

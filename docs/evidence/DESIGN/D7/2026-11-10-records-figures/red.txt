@@ -1,0 +1,7 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a supplier's quality agreement is unread when the controlled documents could not be read 18ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a capped read is the most recent rows, and its figures are theirs 174ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the facts the figures carried, in brackets, and tells AnA what the register is 6ms
+ × client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > names the rows and counts read 8ms
+ × client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says a capped read is the most recent rows, never the whole register 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 22 passed (27)

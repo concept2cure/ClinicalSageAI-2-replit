@@ -261,9 +261,9 @@ function EditorView({ props, sections, reason, setReason, dirty, discardEpoch, s
       register={handle => { if (handle) handles.current.set(section.key, handle); else handles.current.delete(section.key); }}
       persist={serialized => saving.persist(section.key, serialized)} />)}
     <div className="qms-controlled-actions">
-      <button type="button" className="qms-btn primary" disabled={disabled || !dirty || reason.trim().length < 8}
+      <button type="button" className="btn primary small" disabled={disabled || !dirty || reason.trim().length < 8}
         onClick={() => void save()}>{saving.busy ? 'Saving controlled text…' : 'Save controlled text'}</button>
-      {saving.reloadRequired && props.onReload && <button type="button" className="qms-btn" disabled={saving.busy}
+      {saving.reloadRequired && props.onReload && <button type="button" className="btn ghost small" disabled={saving.busy}
         onClick={() => void props.onReload?.()}>Reload record</button>}
     </div>
     {close.open && <DiscardControlledText dialogRef={close.dialogRef} finish={close.finish} />}
@@ -278,8 +278,8 @@ function DiscardControlledText({ dialogRef, finish }: {
     <h3 id={titleId}>Discard unsaved controlled text?</h3>
     <p>Your unsaved text and reason will be discarded. The stored document will remain unchanged.</p>
     <div className="qms-controlled-actions">
-      <button type="button" className="qms-btn" onClick={() => finish(false)}>Keep editing</button>
-      <button type="button" className="qms-btn" onClick={() => finish(true)}>Discard changes</button>
+      <button type="button" className="btn ghost small" onClick={() => finish(false)}>Keep editing</button>
+      <button type="button" className="btn ghost small" onClick={() => finish(true)}>Discard changes</button>
     </div>
   </div>;
 }

@@ -16,9 +16,15 @@ function fail(message) {
   process.exit(1);
 }
 
-if (pptxPackage?.version !== '4.0.1' || imagePackage?.version !== '1.2.1' ||
+// pptxgenjs 4.0.1 declares image-size ^1.2.1, every release of which is in the
+// range of GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq (<=2.0.2). package.json
+// overrides it to the patched 2.0.4 (2026-11-10). That is safe only because
+// the shipped bundle never imports image-size, which the checks below prove;
+// if pptxgenjs changes, or the override is dropped, this fails and the
+// override is re-reviewed.
+if (pptxPackage?.version !== '4.0.1' || imagePackage?.version !== '2.0.4' ||
     pptxPackage.dependencies?.['image-size'] !== '^1.2.1') {
-  fail('reviewed pptxgenjs/image-size lockfile path changed; reassess the ledger');
+  fail('reviewed pptxgenjs/image-size lockfile path changed; re-review the image-size override in package.json');
 }
 
 const resolvedEntry = require.resolve('pptxgenjs');

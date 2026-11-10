@@ -365,3 +365,19 @@ for (const args of [
     assert.equal(result.status, 2);
   });
 }
+
+// 2026-11-10: with a second sponsor in the organisation (the Lumen pack's), C2C-201 was created with no client
+// named, the intake refused it (409 AMBIGUOUS_CLIENT_WORKSPACE) and the biotech pack stopped: no demo programme's
+// Module 3 composed. C2C-201 is created under C2C-101's own client workspace.
+{
+  const { sameSponsor } = await import('./packs/biotech.mjs');
+  test('biotech: C2C-201 is created under C2C-101\'s client workspace when the run named none', () => {
+    const ctx = { api: () => undefined, clientWorkspaceId: undefined };
+    assert.equal(sameSponsor(ctx, { clientWorkspaceId: 2 }).clientWorkspaceId, 2);
+    assert.equal(sameSponsor(ctx, { clientWorkspaceId: 2 }).api, ctx.api);
+  });
+  test('biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none', () => {
+    assert.equal(sameSponsor({ clientWorkspaceId: 9 }, { clientWorkspaceId: 2 }).clientWorkspaceId, 9);
+    assert.equal(sameSponsor({ clientWorkspaceId: undefined }, { clientWorkspaceId: null }).clientWorkspaceId, undefined);
+  });
+}

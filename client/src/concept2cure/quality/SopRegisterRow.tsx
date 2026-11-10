@@ -64,7 +64,7 @@ function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) 
   return (
     <td title={title}>
       {d.nextReviewDate ? (
-        <span>
+        <span className="qms-when">
           {formatDate(d.nextReviewDate)}
           {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
         </span>
@@ -164,7 +164,7 @@ function actionsOf(d: QmsDoc, act: RegisterRowActions): { key: ActionKey; node: 
 
 /**
  * A Quality register as D0's table: its column headers, then a visually hidden "Actions" header over the row's next
- * step and More (C6). The SOP register and the change log (C8) render through it.
+ * step and More (C6). The SOP register, the change log (C8) and the quality records (C11) render through it.
  */
 export function RegisterTable({ columns, children }: { columns: readonly string[]; children: React.ReactNode }) {
   return (
@@ -189,7 +189,7 @@ export function RegisterBody({ name, className, status, columns, cells, primary,
   /** The record's number: it names the More button and the group of actions it reveals. */
   name: string;
   className: string;
-  status: string;
+  status?: string;
   /** The table's columns, less the actions column. */
   columns: number;
   /** The row's facts, as <td>s, before the actions cell. */
@@ -260,7 +260,7 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
           <RouteLine doc={d} meId={act.meId} />
         </td>
         <td>
-          {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
+          <span className="qms-when">{formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}</span>
           {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
             <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
           )}

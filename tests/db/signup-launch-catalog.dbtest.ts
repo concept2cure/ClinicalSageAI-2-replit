@@ -457,20 +457,28 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     const locked = launchSurfaces
       .filter((id) => v.has(id) && v.get(id)!.entitled !== true)
       .map((id) => `${id}:${v.get(id)!.source}`);
-    // communication-center (Projects) and ind-checklist (Submission Center, P-32)
-    // are listed surfaces with no module of their own in their app: existing
-    // module licensing applies and signup grants nothing for them, so on the
-    // free plan they are tier-locked by design (launch-scope.ts). In
-    // launchSurfaces order, and nothing else is locked.
-    expect(locked).toEqual(['communication-center:tier', 'ind-checklist:tier', 'cmc:tier']);
-    expect(v.get('cmc')).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
-    expect((await grantRows(orgId)).some((grant) => grant.module_id === 'cmc')).toBe(false);
+    // Listed surfaces whose app does not grant their module: existing module
+    // licensing applies and signup grants nothing for them, so on the free plan
+    // they are tier-locked by design (launch-scope.ts). They are:
+    //   - communication-center (Projects, founder request 2026-10-16);
+    //   - the medical-device and diagnostics project features (Projects, founder
+    //     request 2026-10-23: reached from the project, each keeping its existing
+    //     commercial verdict). Written out, not read from
+    //     MDX_PROJECT_FEATURE_SURFACE_IDS: that constant widens the launch scope,
+    //     so a pin that read it could not see a widening made through it;
+    //   - ind-checklist (Submission Center, P-32);
+    //   - the surfaces-only apps: cmc (P-28), rbm (P-76), biostatistics (P-77).
+    // In launchSurfaces order, and nothing else is locked.
+    expect(locked).toEqual(['communication-center', ...'device-510k device-pma device-cer device-diagnostics device-clinical-studies device-software device-engineering device-udi device-postmarket device-presub human-factors labeling'.split(' '), 'ind-checklist', 'cmc', 'rbm', 'biostatistics'].map((id) => `${id}:tier`));
+    for (const id of ['cmc', 'rbm', 'biostatistics']) expect(v.get(id), id).toMatchObject({ entitled: false, source: 'tier', requiredTier: 'professional' });
+    expect((await grantRows(orgId)).filter((grant) => ['cmc', 'rbm', 'biostatistics'].includes(grant.module_id))).toEqual([]);
     for (const s of rail.surfaces) {
       if (isLaunchSurface(s.id)) expect(s.source, s.id).not.toBe(LAUNCH_SCOPE_SOURCE);
     }
-    // CMC alone deliberately has no signup-granted module (launch catalog P-28).
-    expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(['cmc']);
-    expect(LAUNCH_APPS.filter((a) => !a.modules.some((m) => v.get(m)?.entitled === true)).map((a) => a.id)).toEqual(['cmc']);
+    // CMC, RBM and Biostatistics deliberately have no signup-granted module
+    // (P-28, P-76, P-77: `modules: []`); every other launch app opens by its grant.
+    expect(LAUNCH_APPS.filter((app) => app.modules.length === 0).map((app) => app.id)).toEqual(['cmc', 'rbm', 'biostatistics']);
+    expect(LAUNCH_APPS.filter((a) => !a.modules.some((m) => v.get(m)?.entitled === true)).map((a) => a.id)).toEqual(['cmc', 'rbm', 'biostatistics']);
   });
 });
 

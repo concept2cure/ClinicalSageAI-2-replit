@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > keeps the whole font (size, weight, line height) at the old strength on every button, Quality’s included 10ms
+ × client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality styles no button of its own, and its root is the product’s 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)

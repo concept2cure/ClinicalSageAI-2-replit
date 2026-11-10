@@ -11,7 +11,7 @@ import type { EsigMeaning } from '../hooks/useEsignature';
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type Tone = 'ok' | 'warn' | 'err';
-export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
+export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err' | 'warn';
 
 /** One row as AnA is told it (QualityApp's published surface context). */
 export type RecordFacts = Record<string, string | number | null>;
@@ -24,15 +24,26 @@ export interface RecordRegisterContext {
   state: 'loading' | 'failed' | 'ready';
   /** The rows read, or null while loading or after a failed read. */
   count: number | null;
-  counts: Array<{ label: string; val: string }>;
+  counts: Array<{ label: string; val: string; detail?: string }>;
+  /** True when the read stopped at the server's cap: the register shows the most recent rows, and there may be more. */
+  partial: boolean;
+  /** What the register is, in a sentence (the configuration's `sub`). */
+  about: string;
+  /** Whose rows these are (C14): the open project's, or the organisation's while a project is open, or null when no
+   *  project is open or the person chose the whole organisation. */
+  scope: { project: string } | { organisationWide: true } | null;
   records: RecordFacts[];
   /** True when more rows were read than are passed on. */
   truncated: boolean;
 }
 
-/** A cell, form or fact may read what the register read beside its rows (registerContext.ts). */
-export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode }
-export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
+/** A cell, form or fact may read what the register read beside its rows (registerContext.ts). `text` marks a column of
+ *  prose: it wraps at a readable width, while the facts beside it (numbers, dates, states) stay on one line (C11). */
+export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode; text?: true }
+/** A register figure: its label and value, and `detail`, a fact beside it that the value does not already say (C12).
+ *  The line shows it in brackets and AnA is told it: "Open: 3 (5 closed, 1 cancelled)". Until 2026-11-10 each figure
+ *  carried a tile caption ("None", "On record") and the line dropped all of them, the facts among them. */
+export interface KpiSpec { label: string; val: string; detail?: string; tone?: Tone }
 
 /**
  * A decision the form collected, to be signed in the shared EsignModal. Nothing
@@ -68,7 +79,14 @@ export interface RegisterConfig<R extends { id: number | string }> {
   /** Singular and plural, lower case. */
   noun: [string, string];
   listPath: string;
-  grid: string;
+  /** The server's cap on the list read, and the order it keeps (C12): at the cap the register says it shows "the 100
+   *  most recently updated CAPAs", not all of them. Absent, the read is the whole register. */
+  readCap?: { rows: number; order: string };
+  /** The register's rows name a project, and its read takes `program_id`: Quality opened with a project open lists
+   *  only that project's (C14). Absent, the register is the organisation's whichever project is open. */
+  projectKept?: true;
+  /** The record's number or name: its row's "More actions for …" and the group it opens say it. */
+  name: (r: R) => string;
   columns: Column<R>[];
   kpis: (rows: R[], today: string) => KpiSpec[];
   createLabel: string;
@@ -91,7 +109,10 @@ export interface RegisterConfig<R extends { id: number | string }> {
 }
 
 export const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
-export const pill = (tone: PillTone, text: string) => <span className="qms-pill" data-tone={tone}>{text}</span>;
+/** D0's chip for a record's state (C11): effective is ok, a failure red, a warning amber, an ended record dimmed; a
+ *  state in flight is neutral. Until 2026-11-10 Quality kept its own pill, amber for every state in progress. */
+const PILL_CHIP: Record<PillTone, string> = { effective: ' tone-ok', err: ' tone-err', warn: ' tone-warn', muted: ' tone-dim', draft: '', review: '' };
+export const pill = (tone: PillTone, text: string) => <span className={`rd-chip${PILL_CHIP[tone] ?? ''}`}>{text}</span>;
 export const plural = (n: number, [one, many]: [string, string]) => `${n} ${n === 1 ? one : many}`;
 export const num = (s: string) => (s.trim() === '' ? undefined : Math.max(0, Math.trunc(Number(s))));
 

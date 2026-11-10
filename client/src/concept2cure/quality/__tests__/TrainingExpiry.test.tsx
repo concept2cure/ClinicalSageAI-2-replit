@@ -20,10 +20,10 @@ afterEach(() => { cleanup(); H.reads = {}; });
 describe('Training lapsing soon', () => {
   it('names the person, the document and when their training lapses', () => {
     H.reads[PATH] = { data: { data: [{
-      userId: 10, userName: 'Member 1', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
+      kind: 'lapsing', userId: 10, userName: 'Member 1', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
       documentVersion: '1.0', expiresAt: '2026-10-24T12:00:00.000Z', daysLeft: 10, lapsed: false,
     }, {
-      userId: 11, userName: 'Member 2', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
+      kind: 'lapsing', userId: 11, userName: 'Member 2', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
       documentVersion: '1.0', expiresAt: '2026-10-09T12:00:00.000Z', daysLeft: -5, lapsed: true,
     }] }, loading: false, error: null };
     render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
@@ -37,7 +37,7 @@ describe('Training lapsing soon', () => {
     H.reads[PATH] = { data: null, loading: false, error: 'HTTP 500' };
     render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
     expect(screen.getByText('Training expiry could not be read')).toBeTruthy();
-    expect(screen.queryByText(/No one's training has lapsed/)).toBeNull();
+    expect(screen.queryByText(/No one assigned has training/)).toBeNull();
   });
 
   // C2 (finding 112), and the review's repairs: an all-clear is said only where training is assigned to someone active;
@@ -50,12 +50,44 @@ describe('Training lapsing soon', () => {
       view.unmount();
       return text;
     };
-    expect(say({ assigned: 2, noActiveAssignees: 0 })).toMatch(/No one's training has lapsed, and none lapses in the next 60 days/);
+    expect(say({ assigned: 2, noActiveAssignees: 0 })).toMatch(/No one assigned has training overdue, due or lapsing in the next 60 days\./);
     expect(say({ assigned: 0, noActiveAssignees: 0 })).toMatch(/No document is assigned for training yet\./);
     expect(say({ assigned: 0, noActiveAssignees: 1 })).toMatch(/No one assigned to train is an active member\./);
     const reading = say('reading');
     expect(reading).toMatch(/Reading who is assigned to train/);
-    expect(reading).not.toMatch(/could not be read|has lapsed|No document is assigned/);
+    expect(reading).not.toMatch(/could not be read|No one assigned has|No document is assigned/);
     expect(say(null)).toMatch(/could not be read, so no all-clear is given/);
+  });
+
+  /* G10 slice 5 (MR-12 Stage 4): the same view lists who has not yet acknowledged the version they train on next, as
+     the task resolver states it: overdue first, then due, then the lapses, each with its day. A row of an unknown
+     kind, or without its day, makes the read a failure, never a row. */
+  it('lists overdue, then due training, before the lapses, each with its day', () => {
+    const base = { documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure', documentVersion: '1.0' };
+    H.reads[PATH] = { data: { data: [
+      { ...base, kind: 'overdue', userId: 12, userName: 'Untrained', dueDate: '2026-10-01', daysLeft: -13, lateAssignment: false },
+      { ...base, kind: 'due', userId: 13, userName: 'New hire', dueDate: '2026-10-24', daysLeft: 10, lateAssignment: true },
+      { ...base, kind: 'lapsing', userId: 10, userName: 'Member 1', expiresAt: '2026-10-24T12:00:00.000Z', daysLeft: 10, lapsed: false },
+    ], meta: { truncated: false } }, loading: false, error: null };
+    render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
+    expect(screen.getByRole('heading', { name: 'Training overdue, due or lapsing' })).toBeTruthy();
+    expect(screen.getAllByTestId('training-expiry-row').map((r) => r.textContent)).toEqual([
+      'Untrained OverdueSOP-001 Controlled procedure · v1.0 · overdue since 2026-10-01',
+      'New hireSOP-001 Controlled procedure · v1.0 · due 2026-10-24 (in 10 days), 14 days after they were assigned',
+      'Member 1SOP-001 Controlled procedure · v1.0 · lapses 2026-10-24 (in 10 days)',
+    ]);
+    expect(screen.queryByTestId('training-expiry-truncated')).toBeNull();
+  });
+
+  it('says when the list stopped at its cap, and treats a row of an unknown kind as a failed read', () => {
+    const row = { kind: 'overdue', userId: 12, userName: 'Untrained', documentId: 3, docNumber: 'SOP-001', title: 'Controlled procedure',
+      documentVersion: '1.0', dueDate: '2026-10-01', daysLeft: -13, lateAssignment: false };
+    H.reads[PATH] = { data: { data: [row], meta: { truncated: true } }, loading: false, error: null };
+    const { unmount } = render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
+    expect(screen.getByTestId('training-expiry-truncated').textContent).toBe('The first 500 rows: there are more than the list shows.');
+    unmount();
+    H.reads[PATH] = { data: { data: [{ ...row, kind: 'late' }] }, loading: false, error: null };
+    render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
+    expect(screen.getByText('Training expiry could not be read')).toBeTruthy();
   });
 });

@@ -1,0 +1,24 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "approver-clients",
+      "status": 200,
+      "count": 1,
+      "first": {
+        "id": "3",
+        "name": "QS Walk Therapeutics"
+      }
+    },
+    {
+      "name": "approver-create",
+      "status": 201,
+      "body": "{\"data\":{\"id\":\"5d669ca3-055f-48b1-9c34-364eb33ecb95\",\"title\":\"Walk C11 gasket programme\",\"ws\":\"Biotech\",\"pathway\":\"ind\",\"code\":\"C11\",\"stage\":\"Planning\",\"status\":\"active\",\"lead\":\"Quinn Approver\",\"due\":\"—\",\"due_date\":null,\"activity\":\"Updated Nov 10\",\"client_workspace_id\":3,\"client_name\":\"QS Walk Thera"
+    },
+    {
+      "name": "w18-project",
+      "ok": true
+    }
+  ]
+}

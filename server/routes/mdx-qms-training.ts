@@ -58,7 +58,7 @@ import {
 } from '../services/qms/governed-qms-write';
 import {
   currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
-  type TrainingSqlClient,
+  QMS_TRAINING_EXPIRY_ROW_CAP, type TrainingSqlClient,
 } from '../services/qms/training';
 import {
   addQmsJobRoleMember, addQmsTrainingAssignment, createQmsJobRole, deleteQmsJobRole, readQmsJobRoles, readQmsTrainingAssignments,
@@ -292,13 +292,16 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
      record with an expiry inside the window: a superseded version, a receipt
      its member had renewed, a departed member's. No client called it. Person by
      person, it is for administrators and designated QMS approvers; anyone else
-     gets their own rows (P-50 Q3). */
+     gets their own rows (P-50 Q3). Slice 5 (2026-11-10): it also lists who has not
+     yet acknowledged, overdue or due within the window, from the task resolver; at
+     most QMS_TRAINING_EXPIRY_ROW_CAP rows, and `truncated` says when there were more. */
   try {
     const client = requestPgClient(req);
     const userId = getUserId(req);
     const everyone = await seesEveryAssignee(client, orgId, userId);
-    const rows = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
-    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own' });
+    const all = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
+    const rows = all.slice(0, QMS_TRAINING_EXPIRY_ROW_CAP);
+    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own', truncated: all.length > rows.length });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
 
