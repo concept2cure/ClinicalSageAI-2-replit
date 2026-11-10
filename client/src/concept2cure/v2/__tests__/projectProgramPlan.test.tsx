@@ -180,6 +180,9 @@ describe("the program plan's owners and due dates", () => {
     const plan = within(await screen.findByRole('dialog', { name: 'Task t3' })).getByTestId('py-task-plan');
     expect(plan.textContent).toMatch(/Assigned to Dana Ruiz, due May 28, 2027\. The schedule now says Jun 4, 2027\./);
     expect(within(plan).getByRole('button', { name: /Assign another person/ })).toBeTruthy();
+    // The owner's task can be moved to the schedule's date (tasking's governed reschedule).
+    expect(within(plan).getByRole('button', { name: /Use the schedule.s date/ })).toBeTruthy();
+
   });
 
   it('gives no due dates when no target date is recorded, and says where to set one', async () => {

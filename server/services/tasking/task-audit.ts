@@ -43,6 +43,7 @@ export type TaskAuditCommand =
   | 'task.transition'
   | 'task.link'
   | 'task.assign'
+  | 'task.reschedule'
   | 'task.notify'
   | 'task.delete';
 
