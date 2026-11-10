@@ -12,7 +12,7 @@ Run on the Codespace-shaped local database, signed in through `/api/auth/dev-log
 | No cross-sponsor view for a CRO | The no-project Vault (`Vault.tsx` `ProjectVaults`, `VaultOrganizationArtifacts.tsx`); `GET /api/artifacts-center?sameClientAs=<project>`, which narrows by that project's verified sponsor (S6 V4) | Ask which sponsor: with no project open it listed every sponsor's projects and artifacts together |
 | Retention never destroys a version (FD3 c) | `server/jobs/retentionCron.ts`: a policy asking for destruction is refused and counted (`destructionRefused`), and only a tombstone is written; the database refuses the delete (VR-07) | Nothing to add in code. S3 Object Lock is the D1 lane's, with the AWS account |
 | Binders are editable, audited views that never alter a document | The folders and filing binders of `../2026-11-06/`: made, renamed, moved and removed by a project's editors, each with a chained audit row; a folder change writes no document field but its place | Nothing further in this pass |
-| Device coverage follows the eSTAR mapper | not started here | open |
+| Device coverage follows the eSTAR mapper | landed on trunk by `01KnUGoX3g…` | this lane decided its open D6 question (P-123), below |
 | A PDF rendition per version, bound to the source's SHA-256 | `server/services/pdf-converter.ts` (LibreOffice, deterministic); the Vault's audited, hash-verified download; the version viewer (`VaultVersionViewer.tsx`), which framed PDFs only | Any rendition: a Word version could only be downloaded |
 
 ## Landed
@@ -45,37 +45,34 @@ Run on the Codespace-shaped local database, signed in through `/api/auth/dev-log
    **Limit, said plainly:** only Word sources are rendered (the converter reads `.docx`); a spreadsheet, dataset or
    text version has no rendition yet. Each view converts again (a few seconds); nothing is cached.
 
+## P-123 (2026-11-10): this lane's open calls, decided
+
+The founder: "Yes to all but I want you to make the most educated 'right calls' on behalf of our potential customers
+and what they will want to pay for." The decisions: `docs/LAUNCH_DEFINITION_OF_DONE.md` P-123.
+
+What already existed (RULE 3): the eSTAR slot registry (`server/services/pathway-engines/estar/estar-mapper.ts`);
+**the one rule for a device section, landed on trunk by session `01KnUGoX3g…` while this session built the same**
+(`estar-outline-requirements.ts`, evidence `../2026-11-10-p107-device-coverage-estar/`), which left "D6 on a
+Traditional or Abbreviated 510(k)" as an open decision; the organisation-wide `/api/folders` route
+(`server/routes/folder-management.js`), with no caller.
+
+- **Withdrawn, not pushed:** this session's own per-section rule and Vault wording, the duplicate of the above.
+- **510(k) risk management follows FDA's template.** The mapper's slot is `when-applicable` (a Special 510(k)), so D6
+  reads "When applicable" and does not block; a De Novo still owes it. Red first (`estar-mapper.test.ts`, and the
+  contract's "never requires of every device what the outline leaves optional"). Five expectations that pinned the
+  old answer were changed, each with the reason beside it: the contract's v1.0 ledger line, two in
+  `estar-outline-requirements.test.ts`, one in `project-vault-estar-required-sections.test.ts`, one in
+  `tests/db/vault-estar-required-sections.dbtest.ts`.
+- **`/api/folders` retired**: the route, its mount and its test shim deleted; `tenant-isolation-folders.contract.test.ts`
+  now pins that no route but the project Vault writes `public.document_folders`. Replacement, by path:
+  `server/routes/c2c/project-vault.ts` POST `/:id/folders…` and `server/services/vault/vault-folders.ts`.
+- **Walk** (`walk-risk-management.cjs`, `walk-risk-management.json`, `screenshots/risk-management-when-applicable.png`): on
+  the 510(k) demo project, D6 reads "When applicable" in the Library and does not block.
+- Not run: `tests/db/vault-estar-required-sections.dbtest.ts` (needs a disposable PostgreSQL; its D6 expectation was
+  changed to match the mocked route test, which passes).
+- `walk-rendition.cjs` re-run after its last edit: passes.
+
 ## Open
-
-- Device coverage converged onto the eSTAR mapper (the D4/D6 disagreement, red first).
-- Renditions for formats other than Word.
-
-## Device coverage onto the eSTAR mapper: what the convergence needs (not built; design only)
-
-P-107: "Device coverage follows the eSTAR mapper's per-device slots … The rule pack's mandatory flags converge onto
-the mapper, so one rule remains. The D4 and D6 disagreement is a defect, repaired red first."
-
-The disagreement, read from the code on 2026-11-10:
-
-| eSTAR section | Rule pack `k510` × `fda`, `fda-estar-510k-v1.1` (`migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`) | Mapper (`server/services/pathway-engines/estar/estar-mapper.ts`) |
-|---|---|---|
-| D4 Sterilization | `mandatory: false` | slot `sterilization`, `whenFlag('sterile')`: required for a sterile device, not applicable for a non-sterile one, **not known** when nobody has said |
-| D6 Benefits, risks and mitigation (ISO 14971) | `mandatory: false` | slot `risk-management`, `always(...)`: required for every device |
-
-So the Vault's Library shows a 510(k)'s risk management section as "Optional", and never says a sterile device owes
-its sterilization section (`leafDoc` in `server/routes/c2c/project-vault.ts` reads the pack's `mandatory`).
-
-What the repair is, in order, red first:
-
-1. **D6:** mint `fda-estar-510k-v1.2` (and the De Novo pack's matching section, after checking its own keys) with
-   D6 `mandatory: true`, superseding v1.1, in a migration in `C2C_MIGRATION_FILES` with a row-count assertion (RULE 1:
-   a seeded pack is corrected only by a new version row). Documents bound to v1.1 keep their version.
-2. **D4:** a boolean cannot say "required when sterile". The Vault's leaf for D4 reads the project's device flags
-   (`loadProgramDeviceFlags`, `program-device-flags.ts`) through the mapper's own `slotApplicability`, and says
-   Required, Not applicable, or "Not known: nobody has said whether the device is sterile". Never "Optional".
-3. **One rule:** a test that fails if any pack section the mapper has a slot for carries a flag the mapper
-   contradicts, so the two cannot drift again.
-
-Why it was not built in this pass: step 1 changes regulatory reference data that is filed against, and needs the
-De Novo tree checked section by section; it deserves its own slice with the MDX journey lane (which owns the mapper)
-reading it.
+- A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake (P-123 item 2; the device lane's).
+- AnA over folders walked in a conversation: needs a model key.
+- A J-NDA or Health Canada NDS project is refused at intake.
