@@ -584,3 +584,10 @@ reads (`redisRateLimiter.ts`); the Codespace start makes one real drafting reque
   the use (`pq-verdict.ts` `MEASURED_COMPONENTS`; `model-governance.ts` `use-mismatch`). A change to the approved
   file is a new version and a new founder approval. Record: `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
   The 32 fixtures that copy the real protocol now leave `csrDrafting` out; keep that when you add cases.
+  Two things read in the code after that note, both yours to weigh:
+  - `runPq` sends nothing while the preflight is blocked (`run-pq.ts`, `blockedQualificationRun`), and the six
+    retrieval-bank blockers are raised whatever is being qualified (`verify-pq-record.ts`). So the use has to
+    reach the preflight as well as the verdict, or a CSR-only run never starts.
+  - A CSR-only pass cannot be carried as `pq.intendedUses: ['document_drafting']`: the gateway would then admit
+    every drafting call for that model, retrieval-based ones included. The CSR builder's calls need a label of
+    their own at the qualified-pin check (`model-governance.ts:91`).
