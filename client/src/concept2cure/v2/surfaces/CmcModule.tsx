@@ -22,6 +22,8 @@ import {
   batchRowsFromApi,
   batchCreateBody,
   batchReleaseBody,
+  batchUpdateBody,
+  batchEditBlocked,
   type CmcBatch,
   type BatchApiRow,
 } from './cmcBatch';
@@ -2523,7 +2525,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
 function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: bound to the governed cmc_batch_records table
      (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
-     Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
+     Reads GET /:projectId, logs a batch via POST /, corrects one via PUT /:id
+     with a reason for change (P-122), and releases ONLY through
      the governed POST /:id/release endpoint (§11 re-authentication + hash-chained
      recordGovernedAction, carrying a disposition decision). The jsonb yield/
      deviation columns are crossed by the reversible, unit-tested mapping in
@@ -2548,6 +2551,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
   }, [mapped]);
   const [form, setForm] = useState(false);
   const [releasing, setReleasing] = useState<CmcBatch | null>(null);
+  const [editing, setEditing] = useState<CmcBatch | null>(null);
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
   const releasedByName = user?.displayName || user?.email || 'current user';
@@ -2576,6 +2580,27 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
     } catch (e) {
       fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    }
+  };
+  // edit — PUT /:id (P-122: the route had no caller). The route records the
+  // reason and the field-by-field diff on an audit row (§11.10(e)) and refuses
+  // a batch with a signed disposition. Adopts the server's row; nothing on
+  // screen changes on a refusal.
+  const edit = async (v: Record<string, string>) => {
+    if (!editing) return;
+    const target = editing;
+    if (target.dbId == null) { fireToast('This batch isn’t in the governed file yet — reload before editing it.', 'error'); return; }
+    try {
+      const res = await apiRequest('PUT', '/api/cmc/batch-records/' + target.dbId, batchUpdateBody(v));
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fireToast('Couldn’t save batch ' + target.id + ' — ' + specErr(json, res.status) + '. Nothing was changed.', 'error'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.', 'error'); return; }
+      setRows((rs) => rs.map((x) => (x.dbId === target.dbId ? { ...adopted, _new: true } : x)));
+      setEditing(null);
+      fireToast('Batch ' + adopted.id + ' saved, with your reason on its audit trail.');
+    } catch (e) {
+      fireToast('Couldn’t save the batch — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
   // doRelease — REAL governed release. POSTs to the ONLY release path
@@ -2639,7 +2664,12 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
                 <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
                 <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}>{r.st}</span></td>
-                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}</td>
+                <td style={{ textAlign: 'right' }}>
+                  <span className="pj-sec-acts" style={{ justifyContent: 'flex-end' }}>
+                    <button type="button" className="btn ghost small" onClick={() => setEditing(r)} disabled={batchEditBlocked(r) != null} title={batchEditBlocked(r) ?? 'Correct this batch record, with a reason for the change'}>Edit</button>
+                    {r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Close the open deviations first' : ''}>{I.check} Release</button>}
+                  </span>
+                </td>
               </tr>))}</tbody></table>
           )}
         </div>
@@ -2656,6 +2686,13 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
+      {editing && <C2CForm config={{ eyebrow: 'Batch — edit', title: 'Edit batch ' + editing.id, sub: 'The change and your reason are recorded on the batch’s audit trail. A disposition is set only by a signed release.', submitLabel: 'Save batch', fields: [
+        { key: 'id', label: 'Batch number', type: 'text', required: true, default: editing.id },
+        { key: 'stage', label: 'Product', type: 'text', required: true, half: true, default: editing.stage },
+        { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true, default: String(editing.yield) },
+        { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: String(editing.dev) },
+        { key: 'reason', label: 'Reason for change', type: 'textarea', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. Recorded with the change.`, placeholder: 'What was corrected and why…' },
+      ] }} onCancel={() => setEditing(null)} onSubmit={edit} />}
       {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed over the QC results recorded against this batch: a release needs every one reviewed and passing; a conditional release states what is outstanding. Recorded to the hash-chained audit trail, signed by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },

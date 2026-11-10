@@ -325,6 +325,14 @@ const REACHED_ELSEWHERE: Record<string, string> = {
  * the claim — so this list cannot become a place to park a live route.
  */
 const RETIRED_AND_REFUSED: Record<string, { refusal: string; why: string }> = {
+  /* Listed 2026-11-10 (P-122), when the sweep learned the verb: until then the
+     GET of the same path stood in as this POST's caller. */
+  'POST /api/cmc/agency-questions': {
+    refusal: '410',
+    why:
+      'Recording a question in the earlier CMC file is withdrawn with the PATCH below (P-38/P-39, 2026-10-19): ' +
+      'a question is recorded on the letter it came in, in Communication. The route answers 410 and issues no query.',
+  },
   'PATCH /api/cmc/agency-questions/:id': {
     refusal: '410',
     why:
@@ -344,6 +352,16 @@ const RETIRED_AND_REFUSED: Record<string, { refusal: string; why: string }> = {
  * that way; an entry is a verified caller, never a way to quiet the sweep.
  */
 const CALLER_NOT_VISIBLE_TO_THIS_SWEEP: Record<string, string> = {
+  /* These three were found when the sweep learned the verb (P-122,
+     2026-11-10): each path is written as a literal, but the verb is in a
+     helper, so only the path was visible — and a GET of the same path had been
+     standing in as their caller. Each was confirmed by hand. */
+  'POST /api/cmc/ich-compliance':
+    "surfaces/CmcQuality.tsx `runIch` — post('ich', '/api/cmc/ich-compliance', …), where the local `post` helper calls apiRequest('POST', path, body).",
+  'POST /api/cmc/control-strategy':
+    "surfaces/CmcQuality.tsx `runStrategy` — post('strategy', '/api/cmc/control-strategy', …), the same `post` helper.",
+  'POST /api/cmc/module3-os/source-evidence/:projectId':
+    "surfaces/CmcSectionEvidence.tsx, the link form's `submit` — write('', …), which posts to `base`, the project's source-evidence path held in a variable.",
   'POST /api/cmc/module3-os/sections/:projectId/:sectionKey/approve':
     "surfaces/CmcModule.tsx `doSign` — built across five lines as '/api/cmc/module3-os/sections/' + id + '/' + key + '/approve'.",
   'POST /api/cmc/module3-os/register-links/:projectId/:register/:recordId/retry':
@@ -385,7 +403,51 @@ function clientSources(): string[] {
 }
 
 /**
- * Does any client source build this path?
+ * The HTTP verb one call site uses, read from the code around one occurrence of
+ * a route's path.
+ *
+ * ── Why the verb, and not only the path ─────────────────────────────────────
+ * The sweep was verb-blind (P-122 inventory, finding A11, 2026-11-10). `PUT
+ * /api/cmc/batch-records/:id` (edit a logged batch) and `GET
+ * /api/cmc/batch-records/:projectId` (list a project's batches) reduce to the
+ * same literals, so the Batch tab's LIST call read as the EDIT route's caller,
+ * and an edit nothing could make was reported as reached. A route is reached
+ * only by a call that uses its verb.
+ *
+ * The shapes a call is written in, in the order they are tried:
+ *   1. the verb as the argument just before the path —
+ *      `apiRequest('PUT', '/api/…' + id)`, `run('compile', 'POST', '/api/…')`;
+ *   2. a `method:` option after the path, inside the same call or config
+ *      object — `fetch(url, { method: 'PATCH' })`, a register row action's
+ *      `method: 'POST'`;
+ *   3. a register row action's `path: (r) => …` or `retireSignedAction(…)`'s
+ *      path argument with no method, which RegisterCard sends as PUT
+ *      (cmcRegisters.tsx, `action.method ?? 'PUT'`);
+ *   4. a register's `create={{ path: '…' }}`, which RegisterCard POSTs
+ *      (cmcRegisters.tsx, `apiRequest('POST', create.path, …)`);
+ *   5. anything else is a read: `useLiveRows(…)`, `useLiveData(…)`,
+ *      `fetch(path)`, a RegisterCard `path="…"`.
+ * A verb held in a variable reads as GET, so it can make a READ look reached
+ * but never a write — the error this case exists to stop runs one way only.
+ */
+const VERBS = 'GET|POST|PUT|PATCH|DELETE';
+function verbAt(src: string, start: number, end: number): string {
+  const before = src.slice(Math.max(0, start - 80), start);
+  const lead = new RegExp(`['"\x60](${VERBS})['"\x60]\\s*,\\s*['"\x60]?/?$`).exec(before);
+  if (lead) return lead[1];
+  const tail = src.slice(end, end + 300);
+  const stop = tail.search(/\b(label|path):|apiRequest\(|fetch\(|useLive\w*\(/);
+  const option = new RegExp(`method:\\s*['"\x60](${VERBS})['"\x60]`).exec(stop >= 0 ? tail.slice(0, stop) : tail);
+  if (option) return option[1];
+  const wider = src.slice(Math.max(0, start - 400), start);
+  if (/path:\s*\([^)]*\)\s*=>\s*['"\x60]\/?$/.test(before)) return 'PUT';
+  if (/retireSignedAction\([^;]*?\([^)]*\)\s*=>\s*['"\x60]\/?$/.test(wider)) return 'PUT';
+  if (/path:\s*['"\x60]\/?$/.test(before) && /create=\{\{(?:(?!\}\})[\s\S])*$/.test(wider)) return 'POST';
+  return 'GET';
+}
+
+/**
+ * Does any client source build this path, with this verb?
  *
  * The literal segments must appear in order, with a bounded gap between them —
  * a caller writes `'/api/cmc/batch-records/' + id + '/release'`, so the gap
@@ -405,12 +467,17 @@ function clientSources(): string[] {
  * what distinguishes `'/api/cmc/analytical-methods'` from
  * `'/api/cmc/analytical-methods/' + row.id`.
  *
+ * ── The verb (P-122) ────────────────────────────────────────────────────────
+ * When a verb is given, an occurrence counts only if `verbAt` reads that verb
+ * at it. Without one (the cases below that pin the path rule alone) any
+ * occurrence counts, as before.
+ *
  * ── What it still cannot see ────────────────────────────────────────────────
  * A path whose base is held in a variable (`` `${base}/documents` ``). Those
  * are named, with their call site, in CALLER_NOT_VISIBLE_TO_THIS_SWEEP — and
  * every finding is confirmed by hand before it is called a gap.
  */
-function isCalled(routePath: string, sources: string[]): boolean {
+function isCalled(routePath: string, sources: string[], verb?: string): boolean {
   const segments = routePath.split('/').filter(Boolean);
   const literals: string[] = [];
   let run: string[] = [];
@@ -425,9 +492,17 @@ function isCalled(routePath: string, sources: string[]): boolean {
      appended, which a bare collection call never does. */
   const BUILT_ON = String.raw`['\x60]?\s*(\+|\$\{|/)`;
   const body = escaped.join('[^\\n]{0,70}');
-  const pattern = new RegExp(segments[segments.length - 1]?.startsWith(':') ? body + BUILT_ON : body);
-  return sources.some((src) => pattern.test(src));
+  const pattern = new RegExp(segments[segments.length - 1]?.startsWith(':') ? body + BUILT_ON : body, 'g');
+  return sources.some((src) => {
+    for (const m of src.matchAll(pattern)) {
+      if (!verb || verbAt(src, m.index!, m.index! + m[0].length) === verb) return true;
+    }
+    return false;
+  });
 }
+
+/** `"PUT /api/…"` → its verb and path. */
+const routeKey = (key: string): [verb: string, path: string] => [key.slice(0, key.indexOf(' ')), key.slice(key.indexOf(' ') + 1)];
 
 describe('a CMC capability we built is reachable from the product', () => {
   it('has a client caller, or a named door that serves the same purpose', () => {
@@ -440,7 +515,7 @@ describe('a CMC capability we built is reachable from the product', () => {
       .map((r) => `${r.verb} ${r.path}`)
       .filter((key, i, all) => all.indexOf(key) === i)
       .filter((key) => !REACHED_ELSEWHERE[key] && !CALLER_NOT_VISIBLE_TO_THIS_SWEEP[key] && !RETIRED_AND_REFUSED[key])
-      .filter((key) => !isCalled(key.slice(key.indexOf(' ') + 1), sources));
+      .filter((key) => !isCalled(routeKey(key)[1], sources, routeKey(key)[0]));
     expect(
       unreached,
       'built and not reachable from any screen — reach it, or record in REACHED_ELSEWHERE which door serves it',
@@ -488,7 +563,7 @@ describe('a CMC capability we built is reachable from the product', () => {
       expect(live.has(key), `${key} is listed in REACHED_ELSEWHERE and no longer exists`).toBe(true);
       expect(why.length, `${key} has no stated door`).toBeGreaterThan(40);
       expect(
-        isCalled(key.slice(key.indexOf(' ') + 1), sources),
+        isCalled(routeKey(key)[1], sources, routeKey(key)[0]),
         `${key} has a caller now — remove it from REACHED_ELSEWHERE`,
       ).toBe(false);
     }
@@ -500,7 +575,7 @@ describe('a CMC capability we built is reachable from the product', () => {
       expect(live.has(key), `${key} is listed and no longer exists`).toBe(true);
       expect(why).toMatch(/\.tsx?\b/);
       expect(
-        isCalled(key.slice(key.indexOf(' ') + 1), sources),
+        isCalled(routeKey(key)[1], sources, routeKey(key)[0]),
         `${key} is visible to the sweep now — remove it from CALLER_NOT_VISIBLE_TO_THIS_SWEEP`,
       ).toBe(false);
     }
@@ -527,5 +602,23 @@ describe('a CMC capability we built is reachable from the product', () => {
     expect(isCalled('/api/cmc/analytical-methods/:id', ["'/api/cmc/analytical-methods/' + row.id"])).toBe(true);
     expect(isCalled('/api/cmc/analytical-methods/:id', ['`/api/cmc/analytical-methods/${row.id}`'])).toBe(true);
     expect(isCalled('/api/cmc/analytical-methods/:id', ["'/api/cmc/analytical-methods/12'"])).toBe(true);
+  });
+
+  it('does not count a list call as the caller of an edit (the verb is part of the route)', () => {
+    /* P-122 inventory A11: the Batch tab LISTS a project's batches with
+       GET /batch-records/:projectId, and that call made PUT /batch-records/:id —
+       an edit no screen could make — read as reached. Same literals, same
+       trailing parameter; only the verb tells them apart. */
+    const list = ["const rows = useLiveRows('/api/cmc/batch-records/' + projectId);"];
+    expect(isCalled('/api/cmc/batch-records/:projectId', list, 'GET')).toBe(true);
+    expect(isCalled('/api/cmc/batch-records/:id', list, 'PUT')).toBe(false);
+    /* Each shape a write is written in is still read as its own verb. */
+    expect(isCalled('/api/cmc/batch-records/:id', ["apiRequest('PUT', '/api/cmc/batch-records/' + b.dbId, body)"], 'PUT')).toBe(true);
+    expect(isCalled('/api/cmc/batch-records/:id', ["apiRequest('PUT', '/api/cmc/batch-records/' + b.dbId, body)"], 'GET')).toBe(false);
+    expect(isCalled('/api/cmc/x/:id/go', ["fetch('/api/cmc/x/' + id + '/go', { method: 'PATCH' })"], 'PATCH')).toBe(true);
+    expect(isCalled('/api/cmc/x/:id', ['{ label: \'Edit\', path: (r) => `/api/cmc/x/${r.id}`, toBody: (v) => v },'], 'PUT')).toBe(true);
+    expect(isCalled('/api/cmc/x/:id/sign', ['{ label: \'Sign\', path: (r) => `/api/cmc/x/${r.id}/sign`, method: \'POST\', toBody: (v) => v },'], 'POST')).toBe(true);
+    expect(isCalled('/api/cmc/x', ["create={{ label: 'Add', path: '/api/cmc/x', toBody: (v) => v }}"], 'POST')).toBe(true);
+    expect(isCalled('/api/cmc/x', ["create={{ label: 'Add', path: '/api/cmc/x', toBody: (v) => v }}"], 'GET')).toBe(false);
   });
 });

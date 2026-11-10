@@ -1,0 +1,28 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > declares all nine, with both sentences 3ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > splits the nine into the two halves the founder named 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > keeps no band above the title 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > would notice a band put back, or a parser that reads nothing 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > gives guidance about the destination and never a claim about the program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > tells a client where to start 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > assesses a stability study for drift from the Stability register 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > shows process capability where the batches are 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > reads a specification’s recorded changes through the one history panel 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > says which store a history came from, because the two attest differently 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > offers the door on every CMC empty state that asks for a project 7ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > would notice a doorless one 0ms
+ × client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > has a client caller, or a named door that serves the same purpose 559ms
+   → built and not reachable from any screen — reach it, or record in REACHED_ELSEWHERE which door serves it: expected [ Array(5) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > measures enough routes to be measuring anything 104ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > every route listed as retired really does refuse 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > still names the caller for every route the sweep cannot see 136ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > would notice a route nothing calls 116ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > does not count a collection call as reaching the route for one record 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > does not count a list call as the caller of an edit (the verb is part of the route) 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "POST /api/cmc/ich-compliance",
++   "POST /api/cmc/control-strategy",
++   "PUT /api/cmc/batch-records/:id",
++   "POST /api/cmc/module3-os/source-evidence/:projectId",
++   "POST /api/cmc/agency-questions",
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
