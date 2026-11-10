@@ -2346,6 +2346,38 @@ database with trunk's own `.devcontainer` scripts, then clicked through as Ana A
 - Stage 7 steps 2–4 and 8.
 - Switch the common rule set to block two weeks after the first apply.
 
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-10)
+
+The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
+just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
+quiet sections, no tiles or type cards. The sweep plan is C1–C18, each with its findings. The evidence for each step is
+under `docs/evidence/DESIGN/D7/`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| The work area | `a65f886a7` | Quality: one header, three starters, registers as tabs |
+| Rows: one next step and More | `606a9a302`, `63ff5b495`, `b02be8a1d`, `8a0e2836a` | Each register row |
+| Change control as one log section | `6f651cc23` | The Change control tab: stage filter as one segmented control, procedure in a closed disclosure |
+| C1–C2: the SOP tab's quiet sections, honest dates and all-clears | `0561109d1` | SOP register, Periodic review, Training |
+| C3–C5: toasts; refusals said as refusals; every Open reaches the one editor | `ff2a66369`, `3f2ab6ad1`, `1a69d42a1` | Every Quality write and read |
+| Independent review of C1–C5: 23 confirmed findings repaired | `58bed0a70` | `2026-11-10-review-repairs/` |
+| C6: the SOP register is D0's table | `62c7f0031` | SOP register (the 390 sideways scroll found and fixed) |
+| C8: the change log is D0's table, one next step per change, no Approve for the proposer | `ea1d59957` | Change control log |
+| F1: an approved change's signed content cannot be rewritten (409, not 404) | `c555f4a2a`, `faa4b737e` | `PATCH /api/mdx/qms/changes/:id`; checked first by three independent readers |
+| C9: the change record is read and assessed in its row, and read inside the approval ceremony | `135394180` | A change's row; "Edit assessment"; "What you approve" in the signature dialog |
+| F1: a change's approval signs the content the approver read | `c284f3cb4`, `78e9705ef` | The signature is refused, and nothing signed, when the change was edited after the dialog opened |
+| C10: change-control documents open the one "New controlled document" door | `b61c5b088` | Change control: Change-control documents and forms |
+
+**Next** (sweep plan order):
+- C11: the records registers (CAPA, deviations, nonconformances, suppliers, audits, management reviews) as D0's table.
+- C12: the records' read caps and dropped figures.
+- C13: action items as a table.
+- C14: Quality opened from a project, scoped to it (QP3).
+- C15–C18: the dialogs into the product's drawer; the reader; the route sheets; the root and the type ramp.
+- C7 waits on a decision: 48 px rows.
+- Outside D7, from the review of F1 (Part 11 review L-2): an edit while a change is still editable records no reason
+  or before-and-after values, and `DELETE /qms/changes/:id` soft-deletes an approved change.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

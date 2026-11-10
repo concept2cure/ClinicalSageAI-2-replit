@@ -63,10 +63,18 @@ async function change(label: string): Promise<Target> {
   return { id: Number(row.id), type: 'change', target: `qms-change:${row.id}` };
 }
 
-function signed(target: Target, act: 'approve' | 'retire', by = signer) {
+/** The content digest of a change as its approver reads it in the register (GET /api/mdx/qms/changes): an approval
+ *  signs only that content (2026-11-10). */
+async function readDigest(changeId: number, by = signer): Promise<string> {
+  const listed = await http(by, 'get', '/api/mdx/qms/changes', undefined);
+  return (listed.body.data as { id: number; content_digest: string }[]).find((c) => Number(c.id) === changeId)!.content_digest;
+}
+
+async function signed(target: Target, act: 'approve' | 'retire', by = signer) {
   const path = target.type === 'document' ? 'documents' : 'changes';
+  const read = target.type === 'change' ? { expectedContentDigest: await readDigest(target.id, by) } : {};
   return http(by, 'post', `/api/mdx/qms/${path}/${target.id}/${act}`, { password: PASSWORD,
-    meaning: act === 'retire' ? 'retirement' : 'APPROVED', reason: REASON });
+    meaning: act === 'retire' ? 'retirement' : 'APPROVED', reason: REASON, ...read });
 }
 
 async function targetState(target: Target) {
@@ -328,7 +336,8 @@ async function approveCandidate(candidate: Candidate) {
   const moved = await http(curator, 'post', `/api/mdx/qms/changes/${candidate.changeId}/transition`, { to: 'under_assessment', reason: REASON });
   expect(moved.status, JSON.stringify(moved.body)).toBe(200);
   return http(independent, 'post', `/api/mdx/qms/changes/${candidate.changeId}/approve`, { password: PASSWORD,
-    meaning: 'APPROVED', reason: REASON, learningReview: { expectedArtifactSha256: candidate.artifactSha256, invariantAccepted: true } });
+    meaning: 'APPROVED', reason: REASON, expectedContentDigest: await readDigest(candidate.changeId, independent),
+    learningReview: { expectedArtifactSha256: candidate.artifactSha256, invariantAccepted: true } });
 }
 
 async function setupLearningFixture() {
@@ -446,7 +455,7 @@ describe('consented aggregate learning through actual controlled releases', () =
     const target: Target = { id: released.changeId, type: 'change', target: `qms-change:${released.changeId}` };
     expect((await http(curator, 'post', `/api/mdx/qms/changes/${target.id}/transition`, { to: 'under_assessment', reason: REASON })).status).toBe(200);
     const before = await retainedCounts(target);
-    const body = { password: PASSWORD, meaning: 'APPROVED', reason: REASON };
+    const body = { password: PASSWORD, meaning: 'APPROVED', reason: REASON, expectedContentDigest: await readDigest(target.id, independent) };
     for (const learningReview of [undefined, { expectedArtifactSha256: `${released.artifactSha256[0] === 'a' ? 'b' : 'a'}${released.artifactSha256.slice(1)}`, invariantAccepted: true }]) {
       const response = await http(independent, 'post', `/api/mdx/qms/changes/${target.id}/approve`, { ...body, ...(learningReview ? { learningReview } : {}) });
       expect(response.status, JSON.stringify(response.body)).toBe(409);
