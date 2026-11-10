@@ -39,6 +39,10 @@ import { setEditorTarget } from '../editorTarget';
 import { openProgramAction } from '../programAction';
 import { cmcProjectId } from './cmcShared';
 import { RESPONSE_STATE_LABEL, RESPONSE_STATE_TONE, type ResponseState } from './agencyQuestionState';
+/* The letter's own controls, opened here on a Module 3 question (P-122): the one
+   component Communication renders, not a copy. */
+import { AgencyResponses } from './AgencyResponses';
+import { C2CToast, useToast } from '../toast';
 /* The list classes below (cc-comm-issues) are Communication's; CMC is its own
    lazy chunk, so it loads the stylesheet that defines them rather than relying
    on Communication having been opened first. */
@@ -369,7 +373,10 @@ function NotCountedLines({ d }: { d: Module3Payload }) {
 }
 
 /** The question rows, each with its one door. */
-function QuestionTable({ questions, nav }: { questions: Module3Question[]; nav?: (id: string) => void }) {
+/** The question being answered here, on its letter's own controls. */
+interface Working { letterId: string; letterType: string; questionId: number; questionRef: string }
+
+function QuestionTable({ questions, nav, onAnswer }: { questions: Module3Question[]; nav?: (id: string) => void; onAnswer: (w: Working) => void }) {
   return (
     <table className="reg-tbl" data-testid="cmc-module3-questions">
       <thead><tr><th>Letter due</th><th>Section</th><th>Ref</th><th>Question</th><th>Letter</th><th>State</th><th>Owner</th><th style={{ textAlign: 'right' }}><span className="sr-only">Open on its letter</span></th></tr></thead>
@@ -387,11 +394,21 @@ function QuestionTable({ questions, nav }: { questions: Module3Question[]; nav?:
             <td><span className={'rd-chip tone-' + RESPONSE_STATE_TONE[q.state]}>{RESPONSE_STATE_LABEL[q.state]}</span></td>
             <td>{q.owner ? (q.owner.name ?? 'a member') : <span className="cm-meta">none set</span>}</td>
             <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-              {nav ? (
-                <button className="nda-open" title="Open this question on its letter in Communication, where it is answered and approved" onClick={() => openLetterInCommunication(nav, q.letter.id, q.id)}>
-                  {I.arrowRight} Open on its letter
+              <span className="pj-sec-acts" style={{ justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  title="Record, write and approve the response here, with the letter's own controls"
+                  onClick={() => onAnswer({ letterId: q.letter.id, letterType: q.letter.communicationType, questionId: q.id, questionRef: q.questionRef })}
+                >
+                  Answer here
                 </button>
-              ) : null}
+                {nav ? (
+                  <button className="nda-open" title="Open this question on its letter in Communication, where it is answered and approved" onClick={() => openLetterInCommunication(nav, q.letter.id, q.id)}>
+                    {I.arrowRight} Open on its letter
+                  </button>
+                ) : null}
+              </span>
             </td>
           </tr>
         ))}
@@ -427,10 +444,38 @@ function LettersWithoutQuestions({ letters, nav }: { letters: Module3Payload['le
  * The Program records index: the program's Module 3 questions, read from their
  * letters. Read-only; each row's one door opens it on its letter.
  */
+/**
+ * A Module 3 question's letter, worked here (P-122, 2026-11-10).
+ *
+ * c5168933d moved the agency-question workflow out of CMC to the letter in
+ * Communication, where a response is approved under a Part 11 signature, and
+ * left CMC a read-only index with a door. A CMC lead answering FDA's CMC
+ * questions works where the Module 3 is; one hop out of context is one too
+ * many. This opens the SAME controls Communication opens — `AgencyResponses`,
+ * on the same letter, focused on the question — so there is one workflow and
+ * one record (zero duplication), and the earlier CMC file stays read-only.
+ */
+function AnsweringHere({ projectId, working, onClose, nav }: { projectId: string | null; working: Working | null; onClose: () => void; nav?: (id: string) => void }) {
+  const [toast, fire] = useToast();
+  if (!working || !projectId) return null;
+  return (
+    <section className="pj-sec" aria-label={`Answering ${working.questionRef} on its letter`} data-testid="cmc-answer-here">
+      <div className="pj-sec-h">
+        <h3>{working.questionRef} — on its letter, {working.letterType}</h3>
+        <span className="sec-sub">the letter’s own record and approvals, as in Communication</span>
+        <span className="pj-sec-acts"><button type="button" className="btn ghost small" onClick={onClose}>Done</button></span>
+      </div>
+      <AgencyResponses projectId={projectId} letter={{ id: working.letterId }} fire={fire} focusQuestionId={working.questionId} onNav={nav} />
+      <C2CToast msg={toast} />
+    </section>
+  );
+}
+
 export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void }) {
   const read = useCmcQuestions();
   const m = read.module3;
   const d = m.data;
+  const [working, setWorking] = React.useState<Working | null>(null);
   let body: React.ReactNode;
   if (!read.projectId) {
     body = (
@@ -478,7 +523,8 @@ export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void })
             />
           </div>
         ) : null}
-        {d.questions.length > 0 && <QuestionTable questions={d.questions} nav={nav} />}
+        {d.questions.length > 0 && <QuestionTable questions={d.questions} nav={nav} onAnswer={setWorking} />}
+        <AnsweringHere projectId={read.projectId} working={working} nav={nav} onClose={() => setWorking(null)} />
         {d.lettersWithoutQuestions.length > 0 && <LettersWithoutQuestions letters={d.lettersWithoutQuestions} nav={nav} />}
         {d.truncated && (
           <div className="cm-meta" style={{ padding: '6px 12px 0' }}>
@@ -486,7 +532,7 @@ export function CmcModule3QuestionIndex({ nav }: { nav?: (id: string) => void })
           </div>
         )}
         <div className="cm-meta" style={{ padding: '8px 12px 12px' }}>
-          Questions are recorded, answered and approved on their letter, in Communication. This list is read from there and changes nothing.
+          Questions are recorded, answered and approved on their letter. Answer here opens that letter’s own controls on this page; this list is read from the letter.
         </div>
       </>
     );
