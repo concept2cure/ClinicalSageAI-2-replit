@@ -2436,16 +2436,30 @@ under `docs/evidence/DESIGN/D7/`.
 | C9: the change record is read and assessed in its row, and read inside the approval ceremony | `135394180` | A change's row; "Edit assessment"; "What you approve" in the signature dialog |
 | F1: a change's approval signs the content the approver read | `c284f3cb4`, `78e9705ef` | The signature is refused, and nothing signed, when the change was edited after the dialog opened |
 | C10: change-control documents open the one "New controlled document" door | `b61c5b088` | Change control: Change-control documents and forms |
+| C11: the records registers are D0's table, one next step per record | `33682ac65` | CAPA, Deviations, Nonconformances, Suppliers, Internal audits, Management reviews |
+| C12: a capped read says so; the figures keep the facts the tiles carried | `646b855fe` | "The 100 most recently updated CAPAs: …"; "not all read" in a record's CAPA column |
+| C13: CAPA and review action items are a table; their moves are named by the act | `72178e7a2` | A CAPA's or a management review's action items |
+| C14: Quality reads the open project and says whose records it lists | `e39cc0d59` | Quality from a project: "Show the whole organisation"; "Organisation-wide" on the registers kept for the organisation |
+| C15: Quality's dialogs are the product's one drawer | `c9e9fdefd` | New controlled document, Record periodic review, Job roles, Who must train, Version history |
+| C16–C17: the training reader and the review route are the drawer; Reassign is the shared sheet | `91baf7d96` | Read and acknowledge; Review route; Reassign |
+| F1, found walking C17: a QMS document's route reads are record reads, so Reassign is not refused 429; an empty picker says no one can be chosen | `b4129366a` | Reassign right after editing and sending for review |
+| C18a: a register's sentence is the line under its head; dates stay on one line | `e3131458b` | Every register's head at 1440 and 1280 |
+| C18: Quality's root and type are the product's | `df4e7013a` | Quality in dark mode: the product's #262624; no Quality-only buttons |
+| F1: the GA ledger row L97 cites the evidence that now proves it | `e9876d85e` | `docs/GA_COMPLETION_LEDGER_2026-08.md` |
 
-**Next** (sweep plan order):
-- C11: the records registers (CAPA, deviations, nonconformances, suppliers, audits, management reviews) as D0's table.
-- C12: the records' read caps and dropped figures.
-- C13: action items as a table.
-- C14: Quality opened from a project, scoped to it (QP3).
-- C15–C18: the dialogs into the product's drawer; the reader; the route sheets; the root and the type ramp.
-- C7 waits on a decision: 48 px rows.
+The sweep's C1–C18 are done, except C7.
+
+**Open:**
+- C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
+  Stage 5 and RR4 §2.12 placed them there.
+- dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
 - Outside D7, from the review of F1 (Part 11 review L-2): an edit while a change is still editable records no reason
   or before-and-after values, and `DELETE /qms/changes/:id` soft-deletes an approved change.
+- Outside D7, found walking:
+  - D0's refusal words name "this project" for every 404 shown through `ErrorState`'s `read`
+    (`describeReadFailure`'s default subject);
+  - the shared reassign sheet keeps the bottom-sheet variant and its eyebrow;
+  - the editor's project-sources read answered 409 and 503 in the walk environment.
 
 ## 4. How everyone works
 
