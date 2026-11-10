@@ -122,7 +122,9 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('passes the selected library template to the create route', async () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Standard operating procedure/ }));
+    // D7-B: the template is chosen in New controlled document's template field (was a library card).
+    fireEvent.click(screen.getByRole('button', { name: 'New controlled document' }));
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText('Template'), { target: { value: 'sop' } });
     await completeForm('Create and open', 'Controlled procedure');
     await screen.findByTestId('canonical-workbench');
     expect(H.request).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', expect.objectContaining({ templateKey: 'sop', docType: 'sop' }));
@@ -208,13 +210,13 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('the Quality shell forwards navigation and holds its tabs while the workbench is open', async () => {
     render(<QualityApp onAskAna={H.ask} onNavigate={H.nav} />);
-    expect(screen.getByRole('tablist', { name: 'Quality surfaces' })).toBeTruthy();
+    expect(screen.getByRole('tablist', { name: 'Quality registers' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
     await screen.findByTestId('canonical-workbench');
-    expect(screen.queryByRole('tablist', { name: 'Quality surfaces' })).toBeNull();
+    expect(screen.queryByRole('tablist', { name: 'Quality registers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Open Vault' })); expect(H.nav).toHaveBeenCalledWith('vault');
     fireEvent.click(screen.getByRole('button', { name: 'Back to Quality register' }));
-    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Quality surfaces' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Quality registers' })).toBeTruthy());
   });
   it('opens retained signed sections through the versions service as read-only content', async () => {
     H.request.mockResolvedValue(response([{ version: '1.0', approved_at: '2026-10-10T12:00:00Z',

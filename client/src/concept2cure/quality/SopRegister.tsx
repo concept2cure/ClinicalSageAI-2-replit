@@ -99,29 +99,15 @@ const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
 /* Derived, never hand-kept — see registerGrid.ts. Below this the title track
    resolves to 0px and the row's last columns are clipped away. */
 const ROW_MIN = registerRowMinWidth(GRID);
-function Kpi({
-  label,
-  val,
-  unit,
-  sub,
-  tone,
-}: {
-  label: string;
-  val: string;
-  unit?: string;
-  sub: string;
-  tone?: 'ok' | 'warn' | 'err';
-}) {
-  return (
-    <div className="qms-kpi" data-tone={tone === 'ok' ? '' : tone || ''}>
-      <div className="lbl">{label}</div>
-      <div className="val">
-        {val}
-        {unit && <span className="unit">{unit}</span>}
-      </div>
-      <div className="sub">{sub}</div>
-    </div>
-  );
+/** "8 controlled documents: 1 in force, 7 draft; none overdue for review." */
+function registerSentence(total: number, inForce: number, inReview: number, draft: number, overdue: number): string {
+  const parts = [
+    inForce ? `${inForce} in force` : '',
+    inReview ? `${inReview} in review` : '',
+    draft ? `${draft} draft` : '',
+  ].filter(Boolean);
+  const review = overdue ? `${overdue} overdue for review` : 'none overdue for review';
+  return `${total} controlled document${total === 1 ? '' : 's'}: ${parts.length ? parts.join(', ') : 'none in force'}; ${review}.`;
 }
 /* Stable identities for an unread read, so memo deps do not churn. */
 const NO_DOCS: QmsDoc[] = [];
@@ -293,13 +279,24 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const reviewFailed = reviewUnread && regFailed;
   const trainUnread = trainComp.rows == null && training.length === 0;
   const trainFailed = trainUnread && trainComp.error != null;
-  const unreadSub = (failed: boolean) => (failed ? 'Could not be read' : 'Loading…');
   /* A register that was read and holds nothing. "None in review" and "Review
      overdue 0 — All current" were true of the empty set only vacuously, and
      read as a compliant register to a QA lead on a new tenant (launch sweep
      finding 112, the clause the HS-1 fix above left standing). */
   const registerEmpty = !regUnread && docs.length === 0;
-  const nothingToReview = registerEmpty && reviewDue.length === 0;
+
+  /* The register's figures, one sentence (D7-B; D5 §WA rule 7). The same
+     reads the four tiles used, each with its unread arm: an unread register
+     states no count, an empty one states nothing (one quiet line in the rows),
+     and an overdue count is said only of documents that exist. */
+  const figures = regFailed ? 'The register could not be read.'
+    : regUnread ? 'Reading the register…'
+      : registerEmpty ? null
+        : registerSentence(docs.length, effectiveCount, underReviewCount, draftCount, overdueCount);
+  /* Acknowledgement coverage: the server's average, or why there is none — never 0%. */
+  const coverageFigure = trainUnread ? (trainFailed ? 'Coverage could not be read.' : 'Reading coverage…')
+    : coverage.pct === null ? `${coverage.sub}.`
+      : `Coverage ${coverage.pct}%: ${coverage.sub.charAt(0).toLowerCase()}${coverage.sub.slice(1)}.`;
 
   const visible = docs.filter((d) => filter === 'all' || d.status === filter);
 
@@ -310,137 +307,32 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   return (
     <>
       {targetStatus}
-      <div className="qms-head">
-        <div>
-          <div className="qms-eyebrow">Workstream</div>
-          <h1 className="qms-h1">Quality system</h1>
-          <div className="qms-sub">
-            Your controlled-document register and SOP library. Build SOPs, work instructions, policies,
-            forms, validation protocols and training curricula — then track each through draft, review,
-            effective and retirement, with periodic review and read-and-understood training.
-          </div>
-        </div>
-        <div className="qms-actions">
-          <button
-            className="qms-btn ghost"
-            title="Sends this request to AnA; nothing in the register changes"
-            onClick={() =>
-              onAsk(
-                'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
-                  'review, every training gap, and anything not yet effective, ranked by inspection risk.',
-              )
-            }
-          >
-            {I.sparkles} Ask AnA for a pre-inspection check
-          </button>
-          <button
-            className="qms-btn primary"
-            disabled={templates.length === 0}
-            title={templates.length === 0 ? (tpl.error ? 'The Quality system library could not be read' : 'Loading the Quality system library…') : undefined}
-            onClick={() => setSetup({})}
-          >
-            {I.plus} New controlled document
-          </button>
-        </div>
-      </div>
-
-      <div className="qms-kpis">
-        {regUnread ? (
-          <>
-            <Kpi label="Effective documents" val="—" sub={unreadSub(regFailed)} />
-            <Kpi label="Under review" val="—" sub={unreadSub(regFailed)} />
-          </>
-        ) : (
-          <>
-            <Kpi label="Effective documents" val={String(effectiveCount)} sub={`${docs.length} in register`} />
-            <Kpi
-              label="Under review"
-              val={String(underReviewCount)}
-              sub={underReviewCount ? 'Awaiting approval' : registerEmpty ? 'Nothing in the register yet' : 'None in review'}
-              tone={underReviewCount ? 'warn' : 'ok'}
-            />
-          </>
-        )}
-        {reviewUnread ? (
-          <Kpi label="Review overdue" val="—" sub={unreadSub(reviewFailed)} />
-        ) : nothingToReview ? (
-          <Kpi label="Review overdue" val="—" sub="Nothing in the register to review" />
-        ) : (
-          <Kpi
-            label="Review overdue"
-            val={String(overdueCount)}
-            sub={overdueCount ? 'Past next-review date' : 'All current'}
-            tone={overdueCount ? 'err' : 'ok'}
-          />
-        )}
-        {/* Nothing assessed is not 0% compliance: no figure, and why. */}
-        {trainUnread || coverage.pct === null ? (
-          <Kpi
-            label="Acknowledgement coverage"
-            val="—"
-            sub={trainUnread ? unreadSub(trainFailed) : coverage.sub}
-          />
-        ) : (
-          <Kpi
-            label="Acknowledgement coverage"
-            val={String(coverage.pct)}
-            unit="%"
-            sub={coverage.sub}
-            tone={coverage.pct >= 95 ? 'ok' : coverage.pct >= 80 ? 'warn' : 'err'}
-          />
-        )}
-      </div>
-
-      {/* ── Template gallery ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Build from the Quality system library</h2>
-          <span className="meta">{templates.length} document types · standard Purpose to Approval structure</span>
-        </div>
-        <div className="qms-tpl-grid">
-          {templates.map((t) => (
+      {/* ── The register (D7-B): one section, its figures one sentence, its one create.
+          The workstream head, the four tiles and the nine document-type cards went
+          on 2026-11-06: the figures are the sentence below, each with its unread arm,
+          and the document types are the template field of "New controlled document"
+          (RULE 4: a document type is data). ── */}
+      <section className="pj-sec qms-sec" aria-labelledby="qms-register-h">
+        <div className="pj-sec-h">
+          <h2 id="qms-register-h">Controlled documents</h2>
+          {figures && <span className="sec-sub" data-testid="qms-register-figures">{figures}</span>}
+          <div className="pj-sec-acts">
+            <div className="seg" role="group" aria-label="Status">
+              {STATUS_FILTERS.map((f) => (
+                <button key={f.id} type="button" className="seg-b" aria-pressed={filter === f.id} onClick={() => onFilterChange(f.id)}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
             <button
-              key={t.key}
-              className="qms-tpl-card"
-              title={Array.isArray(t.sections) && t.sections.length > 0
-                ? `Create a new ${t.label} as a draft with its standard sections: ${t.sections.map((s) => s.label).join(', ')}`
-                : `Create a new ${t.label} as a draft`}
-              onClick={() => setSetup({ template: t })}
+              type="button"
+              className="btn primary small"
+              disabled={templates.length === 0}
+              title={templates.length === 0 ? (tpl.error ? 'The Quality system library could not be read' : 'Loading the Quality system library…') : undefined}
+              onClick={() => setSetup({})}
             >
-              <div className="qms-tpl-top">
-                <span className="qms-tpl-ico">{I.template}</span>
-                <span className="qms-tpl-prefix mono">{t.numberPrefix}</span>
-              </div>
-              <div className="qms-tpl-label">{t.label}</div>
-              <div className="qms-tpl-desc">{t.description}</div>
+              New controlled document
             </button>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Register ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Controlled-document register</h2>
-          {!regUnread && (
-            <span className="meta">
-              {effectiveCount} effective · {underReviewCount} under review · {draftCount} draft
-            </span>
-          )}
-          <span className="spacer" />
-          <div className="qms-seg" role="tablist">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                className="qms-chip"
-                data-on={filter === f.id}
-                aria-pressed={filter === f.id}
-                style={filter === f.id ? { borderColor: 'var(--text-300)', color: 'var(--text-100)' } : undefined}
-                onClick={() => onFilterChange(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -609,7 +501,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
 
         <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
-          refresh={trainComp.refresh}
+          refresh={trainComp.refresh} figure={coverageFigure}
           canOpen={canOpen} onOpen={openReader} />
         <TrainingExpiry />
       </div>
