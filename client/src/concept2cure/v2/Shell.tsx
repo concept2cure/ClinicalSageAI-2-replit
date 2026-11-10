@@ -507,7 +507,7 @@ type AccountItem = { label: string; ic: string; to?: string; action?: 'logout' |
  * The account menu: settings, the client type, help and sign-out
  * (docs/design/ONE_ANA_ONE_CANVAS.md §5, "Account menu"). The client type
  * moved here from the rail's list on 2026-10-08; the module catalog is here as
- * "Subscription & features", for organization administrators, since 2026-10-25
+ * "Subscription & features", for every member since P-122 (2026-11-10; for organization administrators only from 2026-10-25)
  * (named so on 2026-10-26: "Plan" is the project's first step, the
  * subscription is "subscription", section 9 of
  * .design/client-journey/INFORMATION_ARCHITECTURE.md). Each entry carries its
@@ -678,9 +678,11 @@ function AccountMenu({
        catalog), on the rail and in this menu for everyone, and it read as
        dozens of separate applications: a client testing the product could not
        tell what to use or when (docs/design/CLIENT_JOURNEY_2026-10-25.md).
-       Features open from inside a project; this page is the administrator's
-       licensing view of them. */
-    ...(isOrgAdmin ? [{ label: 'Subscription & features', ic: 'grid', to: 'apps' }] : []),
+       From 2026-10-25 it was an administrator's only, and a member had no list
+       of the features built for them (P-122, 2026-11-10). It is every member's
+       again: a member sees the features they may open, an administrator also
+       the locked ones and the switches (WorkflowCatalog.tsx). */
+    { label: 'Subscription & features', ic: 'grid', to: 'apps' },
     // Platform licensing is the PLATFORM operator's console, not the customer's
     // subscription page (that is "Compare subscriptions" below). It is offered only when the server
     // says its guard admits this viewer — `platformAdmin` is that guard's own
@@ -1046,7 +1048,7 @@ function projectItems(read: PaletteProjectsRead, term: string): CmdKItem[] {
  */
 export const ADMIN_AUDIENCE: Readonly<Record<string, 'org-admin' | 'platform-admin'>> = {
   'admin-console': 'org-admin',
-  apps: 'org-admin',
+  // No `apps`: Subscription & features is every member's (P-122), as the account menu offers it.
   'access-requests': 'org-admin',
   'master-licensing': 'platform-admin',
   coverage: 'platform-admin',

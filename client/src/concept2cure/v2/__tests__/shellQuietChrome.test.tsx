@@ -191,7 +191,10 @@ describe('the account (§D1.A steps 2–3)', () => {
     fireEvent.click(rail.querySelector('.rail-account') as HTMLElement);
     const member = within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent?.trim());
     expect(member).toContain('What AnA remembers');
-    for (const gated of ['Admin', 'Subscription & features', 'Access requests', 'Platform licensing', 'Codebase coverage']) {
+    /* P-122 (2026-11-10): the features catalog is every member's, listing what each person may open
+       (appsCatalogEveryMember.test.tsx). Administration stays an administrator's. */
+    expect(member).toContain('Subscription & features');
+    for (const gated of ['Admin', 'Access requests', 'Platform licensing', 'Codebase coverage']) {
       expect(member, gated).not.toContain(gated);
     }
     cleanup();

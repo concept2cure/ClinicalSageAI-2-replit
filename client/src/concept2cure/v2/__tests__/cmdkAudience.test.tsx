@@ -64,10 +64,17 @@ async function search(term: string): Promise<string[]> {
 afterEach(() => { cleanup(); apiRequest.mockReset(); auth.roles = ['member']; });
 
 describe('⌘K: administration pages by audience', () => {
-  it('a member is offered neither the Admin console, Subscription & features, Access requests nor Platform licensing', async () => {
+  it('a member is offered neither the Admin console, Access requests nor Platform licensing', async () => {
     serve(false);
     const rows = [...await search('admin'), ...await (async () => { cleanup(); return search('licens'); })()];
-    expect(rows.filter((r) => /Admin console|Subscription & features|Access requests|Platform licensing/.test(r))).toEqual([]);
+    expect(rows.filter((r) => /Admin console|Access requests|Platform licensing/.test(r))).toEqual([]);
+  });
+
+  /* P-122 (2026-11-10): the features catalog is every member's, as the account menu now offers it, listing
+     what that person may open (appsCatalogEveryMember.test.tsx). */
+  it('a member is offered Subscription & features', async () => {
+    serve(false);
+    expect(await search('features')).toContain('Subscription & features');
   });
 
   it("a customer's administrator is offered the Admin console, not Platform licensing", async () => {
