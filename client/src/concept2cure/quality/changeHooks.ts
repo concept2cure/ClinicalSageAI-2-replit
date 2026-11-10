@@ -47,6 +47,8 @@ interface ServerChange {
   proposed_by?: number | null;
   impact_assessment?: string | null;
   implementation_plan?: string | null;
+  /** The digest of the content an approval of this change signs (computeQmsChangeContentDigest). */
+  content_digest?: string;
   target_implementation_date: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -93,6 +95,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     proposedBy: typeof r.proposed_by === 'number' ? r.proposed_by : null,
     impactAssessment: typeof r.impact_assessment === 'string' ? r.impact_assessment : null,
     implementationPlan: typeof r.implementation_plan === 'string' ? r.implementation_plan : null,
+    contentDigest: typeof r.content_digest === 'string' && /^[a-f0-9]{64}$/.test(r.content_digest) ? r.content_digest : null,
     learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,

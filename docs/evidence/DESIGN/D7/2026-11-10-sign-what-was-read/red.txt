@@ -1,0 +1,7 @@
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 211ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > signs nothing when the row carries no digest of its content 791ms
+ × server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes — the digest an approval binds > returns each change with the content digest its approval signs 9ms
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 409 QMS_CHANGED_SINCE_READ when the change was edited after it was read; rolled back, nothing signed 7ms
+ × server/routes/__tests__/qms-change-approval-signature.test.ts > POST /api/mdx/qms/changes/:id/approve — the signed door > 400 without the digest of the content read; nothing verified or written 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 50 passed (55)
