@@ -1276,7 +1276,6 @@ router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: 
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) }, requestPgClient(req));
     const refused = row ? null : await changeEditRefusal(orgId, id, requestPgClient(req));
     if (!row) return refused ? clientError(res, 409, refused.message, refused.details) : notFoundInTenant(res, 'Change');
-    /* WO-16C #133; F1 (L-2): the edit stands; its §11.10(e) record keeps the reason and each field before and after. */
     const { edits, ...saved } = row;
     const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined, reason: editReason.data,

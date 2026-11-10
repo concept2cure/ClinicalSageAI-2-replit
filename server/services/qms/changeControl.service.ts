@@ -315,7 +315,8 @@ export async function updateChange(orgId: number, id: number, p: {
     return row ? { ...row, edits: [] } : null;
   }
   /* The row as it was is read and locked in the same statement, so the edit's audit row can say what it replaced
-     (21 CFR 11.10(e)). Both sides are read as JSON, so a date compares as the same text on each. */
+     (21 CFR 11.10(e); the route records the reason and these edits, WO-16C #133). Both sides are read as JSON, so a
+     date compares as the same text on each. */
   const { rows } = await queryRowsClient(client).query<ChangeControlRow & { previous: Record<string, unknown>; current: Record<string, unknown> }>(
     `UPDATE qms_change_controls c SET ${sets.join(', ')}, updated_at = clock_timestamp()
        FROM (SELECT * FROM qms_change_controls WHERE id = $1 AND organization_id = $2 FOR UPDATE) o
