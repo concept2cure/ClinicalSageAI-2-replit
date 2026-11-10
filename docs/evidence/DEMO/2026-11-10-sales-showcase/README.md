@@ -100,7 +100,7 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 | | With `ANTHROPIC_API_KEY` | Without |
 |---|---|---|
 | AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
-| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Scene 8, Build CSR draft | Walked by the CSR-path session (`01QoxbLZ…`) in the Lumen account with a stand-in provider, not a real key: "complete · 100%", 69 headings drafted, then review by the approver, import and assembly (`docs/evidence/DEMO/2026-11-10-showcase-walk/`). Not yet run with a real key | Not pressed on this stack; the earlier walks stopped at "no model key" |
 | Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
 | Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
 
@@ -108,13 +108,15 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 ended "failed · 98%", because §12.5 is written over a vital-signs table that data did not have. The seed now freezes
 a second version of the synthetic study data with exposure, laboratory shifts, vital signs and concomitant
 medications (`b0fce0ab9`), and with it that session's build read "complete · 100%", with review, import and assembly
-working as the lead and the approver. Its walk is to land under `docs/evidence/DEMO/2026-11-10-showcase-walk/` and
-its presenter's script as `docs/demo/lumen-showcase.md`; neither was on trunk when this was written. When the script
-lands, it is the script for scene 8.
+working as the lead and the approver. Its walk is `docs/evidence/DEMO/2026-11-10-showcase-walk/` and its presenter's
+script is `docs/demo/lumen-showcase.md` (both on trunk, `ee1eb0c0fd`). That script is the script for scene 8, step
+by step; where it and this note differ on the CSR, it is the one to follow.
 
 **Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
-build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
-the builder binds figures to is an open question the CSR-path session is answering by running the build.
+build stops part-way, "Resume build N" continues it. The synthetic LMN-201 study data now carries a table for every
+results heading from §10.1 to §12.5 (`server/services/csr/__tests__/lmn201-showcase-source.test.ts`; answered by the
+CSR-path session, which ran the build). It holds no subject-level dates, so "Build narratives" composes none and
+says why.
 
 ## How this was checked
 
@@ -164,13 +166,15 @@ the builder binds figures to is an open question the CSR-path session is answeri
 | | With `ANTHROPIC_API_KEY` | Without |
 |---|---|---|
 | AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
-| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Scene 8, Build CSR draft | Walked by the CSR-path session (`01QoxbLZ…`) in the Lumen account with a stand-in provider, not a real key: "complete · 100%", 69 headings drafted, then review by the approver, import and assembly (`docs/evidence/DEMO/2026-11-10-showcase-walk/`). Not yet run with a real key | Not pressed on this stack; the earlier walks stopped at "no model key" |
 | Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
 | Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
 
 **Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
-build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
-the builder binds figures to is an open question the CSR-path session is answering by running the build.
+build stops part-way, "Resume build N" continues it. The synthetic LMN-201 study data now carries a table for every
+results heading from §10.1 to §12.5 (`server/services/csr/__tests__/lmn201-showcase-source.test.ts`; answered by the
+CSR-path session, which ran the build). It holds no subject-level dates, so "Build narratives" composes none and
+says why.
 
 ## How this was checked
 

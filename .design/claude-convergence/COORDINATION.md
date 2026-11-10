@@ -782,3 +782,49 @@ reads (`redisRateLimiter.ts`); the Codespace start makes one real drafting reque
   - A CSR-only pass cannot be carried as `pq.intendedUses: ['document_drafting']`: the gateway would then admit
     every drafting call for that model, retrieval-based ones included. The CSR builder's calls need a label of
     their own at the qualified-pin check (`model-governance.ts:91`).
+
+## Showcase walk of the Lumen account — 2026-11-10 (`01QoxbLZ…`, F1/DATA, holds no files)
+
+The founder, 2026-11-10: "Keep working to get everything ready for a sales showcase of the entire platform." Walked
+as the Codespace builds it (`post-start.sh` as it stands, a stand-in model provider), signed in through "Demo access"
+as the Lumen lead: every rail destination and its tabs, LMN-201's page, journey, work areas and places, and the
+LMN-201 CSR from "Build CSR draft". Record: `docs/evidence/DEMO/2026-11-10-showcase-walk/`.
+
+**Fixed and on trunk (each red first):**
+- Both demo seeds stopped at Quality's change control on a fresh database, so the account opened half empty
+  (`59dedc451`, `lumen-qms.mjs` `approveChangeAsRead`; cause `c284f3cb4`).
+- The LMN-201 CSR build ended "failed · 98%": its study data had no vital-signs table. The pack now files a source
+  with every safety domain and freezes it (`lmn201_synthetic_csr_source_v2.json`, `lumen-csr.mjs`).
+- The engine table's own unit labels "[yr]" and "[kg]" were read as data placeholders
+  (`shared/authoring/csr-scientific-review.ts`).
+- A build that ran to its end reads "not complete", one a provider stopped reads "stopped" (`CsrRunBuilds.tsx`).
+- Two raw ISO times on Key risk indicators and Central monitoring (`RbmSurfacesA.tsx`, `RbmSurfacesB.tsx`).
+
+**→ the Lumen seed (`01QoxbLdKp…`), in your packs. All three answered by that session the same day:** item 1 by
+`52d1c629c` (LMN-201 is updated last, so it is the newest); item 2 by `aaa8595e9`; item 3's sequence by `7d9112e60`
+(5 leaves; Compile answers "completed"). Site risk stays unscored: the site register has no reachable writer
+(handed over 2026-11-06).
+1. **The rail's work areas open LMN-401, not LMN-201.** With no project open, a project screen reopens the first of
+   the account's projects, newest first (`Shell.tsx` `useRailRecentProjects`). LMN-401 is created last and holds
+   almost nothing: CMC, Biostatistics and Risk-based monitoring read as empty on the presenter's first click, and
+   Recents lists 401, 301 and 801 without 201. Make LMN-201 the newest (create it last, or touch it last).
+2. Home's "Set up your organisation" says "Record your company details: To do".
+3. LMN-201's sequence 0000 has no leaves, so the Builder is empty, and Site risk says "No site risk scored".
+
+**→ S2 and the project page (D3's `surfaces/Project*.tsx`):**
+4. **LMN-201's Evidence step leads its data room with Quality-system records**, above the study's documents:
+   "Training assignment: 4", "CAPA action: 90012220-2fba-…" (a raw id), "Management review: …". Each is labelled
+   "File · added Nov 10", offers a disabled "Work on document" with "The original file is unavailable, so a working
+   copy cannot be created", and a "Review file removal" button. They are native records
+   (`server/services/qms/project-evidence.ts`), never files. A buyer reads the first screen of the spine as broken.
+   Asked: list the study's files first; name a native record by its title, not its id; and give a native record no
+   file wording and no file actions.
+
+**→ RIM:**
+5. Submission Center's Planner prints the pathway codes "ectd_v322 · ectd_v40 · estar".
+
+**→ the founder (a decision, not a repair):**
+6. **CMC / Module 3 composes nothing in the Lumen account.** All four Lumen products are biologics, and the
+   composition boundary refuses a biologic by name (P-28). Quality by design and Module 3 build each say so, and
+   the reads answer 409. The registers under "Study records" are populated. Module 3 composition can be shown in
+   the development organisation (C2C-201, signing in as Cal CMC). Widening the boundary is the founder's.

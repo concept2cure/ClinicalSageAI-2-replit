@@ -122,6 +122,8 @@ interface Collector {
   snapshots: NativeRecordSnapshot[];
   totalText: number;
   currentParents: Map<number, NativeRecordSnapshot['sourceScope']>;
+  /** A controlled document's number and title, for naming its child records. */
+  documentNames: Map<number, string>;
   versions: Map<number, Map<string, NativeRecordSnapshot['sourceScope']>>;
   acceptedAuthored: Map<string, Row>;
   parents: Map<string, Map<string, NativeRecordSnapshot['sourceScope']>>;
@@ -172,6 +174,7 @@ async function readWorkingDocument(c: Collector, row: Row): Promise<void> {
       contentBasis:authoringId ? 'Current saved Authoring sections; working record, not a signed release.' : 'Legacy registry metadata only; no authored content is asserted.' },
     suffix:':working',authoringId });
   c.currentParents.set(Number(row.id),scope); rememberVersion(c,row,scope);
+  c.documentNames.set(Number(row.id),`${row.doc_number ?? ''} ${row.title ?? ''}`.trim());
   if (authoringId) c.acceptedAuthored.set(authoringId,row);
 }
 function releaseApproval(result: Awaited<ReturnType<typeof readQmsTrainingReleaseContext>>): Row {
@@ -242,7 +245,7 @@ async function readRetainedVersions(c: Collector): Promise<void> {
     const authoringId = typeof row.authoring_document_id === 'string' ? row.authoring_document_id : undefined;
     const scope = authoringId ? 'project' : 'organization';
     const sections = Array.isArray(row.sections) ? row.sections.map(s => pick(object(s),'id code title content orderIndex')) : [];
-    addSnapshot(c,{ table:'qms_document_versions',row,scope,title:`Retained Quality document ${row.document_id} v${row.version}`,
+    addSnapshot(c,{ table:'qms_document_versions',row,scope,title:`Retained ${c.documentNames.get(Number(row.document_id)) || `Quality document ${row.document_id}`} v${row.version}`,
       lifecycle:'retained version; current approval not asserted',data:{ record:pick(row,'id document_id version record_kind authoring_document_id content_digest signature_id approved_at'),sections },authoringId });
     rememberVersion(c,row,scope,Number(row.document_id));
     if (authoringId) c.acceptedAuthored.set(authoringId,row);
@@ -267,6 +270,21 @@ function familyScope(c:Collector,family:Family,row:Row): NativeRecordSnapshot['s
   return family.scope === 'project' || family.scope === 'capa-action' || (family.scope === 'optional-project' && row.program_id) ? 'project' : 'organization';
 }
 function unreadableChild():never {throw new QualityEvidenceUnavailable('A Quality record parent changed during the read. No partial evidence was supplied.');}
+const brief = (value: unknown): string => { const t = String(value ?? '').replace(/\s+/g,' ').trim(); return t.length > 120 ? `${t.slice(0,117)}…` : t; };
+/** A person reads this name in the data room: the record's own words, never its bare row id. */
+function childRecordName(c:Collector,family:Family,row:Row):string | null {
+  if (family.table === 'capa_actions') return brief(row.description) ? `${row.n ?? ''}. ${brief(row.description)}`.replace(/^\. /,'') : null;
+  if (family.table === 'qms_change_links') return brief(row.linked_label ?? row.linked_ref) ? brief(`${String(row.relationship ?? row.link_type ?? 'linked to').replace(/_/g,' ')} ${row.linked_label ?? row.linked_ref}`) : null;
+  const document = c.documentNames.get(Number(row.document_id));
+  if (!document) return null;
+  if (family.table === 'qms_training_assignments') return `${brief(document)} (assignment ${row.id})`;
+  if (family.table === 'qms_training_records') return `${brief(document)} v${row.document_version ?? '?'} (receipt ${row.id})`;
+  return null;
+}
+function familyRecordName(c:Collector,family:Family,row:Row):string {
+  const own = row.title ?? row.supplier_name ?? row.name ?? row.change_number ?? row.nc_number ?? row.audit_number ?? row.period;
+  return own ? String(own) : childRecordName(c,family,row) ?? `record ${row.id}`;
+}
 async function readFamilies(c:Collector):Promise<void> {
   for (const family of FAMILIES) {
     const query = familyQuery(c,family);if (!query) continue;
@@ -274,8 +292,7 @@ async function readFamilies(c:Collector):Promise<void> {
     const parents = new Map<string,NativeRecordSnapshot['sourceScope']>();
     for (const row of rows) {
       const scope=familyScope(c,family,row);parents.set(String(row.id),scope);
-      const name=row.title ?? row.supplier_name ?? row.name ?? row.change_number ?? row.nc_number ?? row.audit_number ?? row.period ?? row.id;
-      addSnapshot(c,{table:family.table,row,scope,title:`${family.label}: ${String(name)}`,lifecycle:statusOf(row,family),data:{record:pick(row,family.fields),
+      addSnapshot(c,{table:family.table,row,scope,title:`${family.label}: ${familyRecordName(c,family,row)}`,lifecycle:statusOf(row,family),data:{record:pick(row,family.fields),
         ...(family.table === 'qms_training_records' ? {receiptBinding:pick(object(row.metadata),'contentDigest bindingBasis declaration'),receiptQualification:'Recorded receipt only; current assigned-person training coverage and approval validity are not inferred.'} : {}),
         ...(family.table === 'qms_change_controls' ? {approvalQualification:'Recorded lifecycle and approval stamps; electronic-signature standing is not inferred.'} : {})}});
     }
@@ -304,7 +321,7 @@ async function collectQuality(q:Queryable,input:QualityEvidenceInput):Promise<Na
   const scope=await getCurrentAccessibleProgramScope(reader,scopeInput);
   const workspace=input.programId ? verifiedProgramAnchors(reader,scopeInput,scope)[0]?.clientWorkspaceId ?? null : null;
   const c:Collector={reader,input,program:input.programId?.toLowerCase() ?? null,workspace,snapshots:[],totalText:0,
-    currentParents:new Map(),versions:new Map(),acceptedAuthored:new Map(),parents:new Map()};
+    currentParents:new Map(),documentNames:new Map(),versions:new Map(),acceptedAuthored:new Map(),parents:new Map()};
   await readDocuments(c);await readRetainedVersions(c);await readFamilies(c);fence.stop();
   for (const row of c.acceptedAuthored.values()) if (!await canReadDocument(reader,input,row)) throw new QualityEvidenceUnavailable();
   await requireProgramScopeStillCurrent(reader,scopeInput,scope);await fence.verify();
