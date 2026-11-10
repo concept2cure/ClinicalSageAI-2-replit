@@ -486,6 +486,35 @@ door" is red on trunk.**
 - **The fix belongs to the contract.** It should accept the sponsor gate's read and pin that `vaultSponsors.ts` reads
   `PALETTE_PROJECTS_URL`. Not edited here: both files were changed or are held within six hours.
 
+**→ the founder and the coordinator (`01JbQU…`), and every lane: GitHub CI cannot keep up with trunk, and the gap
+grows every hour (measured 2026-11-10 10:50 UTC).**
+- **The lag.** The newest completed CI run is for a commit pushed 2026-11-09 01:15 (`2480efeb7e`, run 14957). It
+  finished 2026-11-10 09:36, 32 hours later. Run 14933, pushed two hours before it (2026-11-08 23:09), took 21
+  hours, so the lag itself is growing.
+- **The queue.** 257 CI runs are queued on `concept2cure-v2` and 8 are in progress. Across all workflows (CI,
+  CodeQL, Semgrep, Tier 5) 627 runs are queued.
+- **The rates.** Trunk received 285 pushes in the last 35.6 hours, about 190 a day. CI completed 24 runs in 13.7
+  hours, about 42 a day. So the queue grows by about 150 runs a day.
+- **Why.** Inside that run, each job waited 4.6 to 16.8 hours for a runner and then ran for minutes. One CI run is
+  about 20 jobs and 5 runner-hours. 190 pushes a day need about 970 runner-hours a day for CI alone; the account is
+  delivering about 215.
+- **What it means for launch.** A commit pushed now is about 260 runs behind the front, about six days at today's
+  rate if nothing else were pushed. The release-evidence gate needs a completed, green CI run at the release commit
+  (`config/release-evidence-policy.v1.json`), and it cannot get one. Until this changes, the only current signal on
+  trunk is a local reproduction like this lane's.
+- **Per-commit runs are deliberate** (`scripts/ci/check-required-workflow-concurrency.mjs`, 2026-09-06: cancelling
+  superseded runs left three commits in four with no release evidence). So this is a capacity or demand decision,
+  not a workflow bug, and it is the founder's or ops':
+  1. **More runners:** a larger GitHub plan's concurrent-job limit, larger runners or self-hosted runners.
+  2. **Fewer runs:** sessions push once per slice (already this file's rule, not followed: 621 commits and about
+     190 pushes in a day), or a push window per lane.
+  3. **A one-time drain:** cancel the queued runs of superseded commits so that HEAD gets a verdict today. A release
+     needs evidence for its own commit only, and a cancelled run can be dispatched again for a commit that is to be
+     released. Without 1 or 2 the queue refills within a day.
+- **Not done by this lane:** no run was cancelled and no workflow was changed.
+- **One old red in that run is already fixed on trunk:** the Codespace job stopped at the CSR study with "Cannot
+  find module 'playwright'"; `.devcontainer/post-start.sh` now installs it for that step.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
@@ -503,7 +532,9 @@ door" is red on trunk.**
 4. Add none of the retired patterns (plan §2).
 5. If the plan is wrong, ask the founder. No session amends it.
 6. Push well. The pre-push hook takes minutes and trunk moves faster, so a ref race is normal:
-   - **batch**: push once per slice, not once per commit;
+   - **batch**: push once per slice, not once per commit. **Each push costs about 5 runner-hours of CI, and CI is
+     days behind (2026-11-10, measured; see "GitHub CI cannot keep up" below).** A push of only a coordination
+     note or evidence costs the same as a push of code, so send it with the slice it belongs to;
    - **retry at once** after a ref-race rejection: fetch, merge (never rebase), push again; `tsc --incremental` makes
      the second run much faster;
    - **push from a quiet tree**: the ESLint ratchet and the typecheck read the working tree, so an unfinished edit
