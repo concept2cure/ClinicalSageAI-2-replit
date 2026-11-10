@@ -134,7 +134,7 @@ The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 faile
    - file the apply logs, both no-change plans and the run URLs under `docs/evidence/D1/<date>-first-apply/`.
 
 **Landed later the same day, Stage 7 steps 5 and 6:**
-- **OPS-22**, `5e8a7317ce`: `/readyz`'s verdict is cached 5 s (at most 10 s) and coalesced. In production the public body
+- **OPS-22**, `5e8a7317ce`: `/readyz`'s database query and Vault-store probe run at most once per 5 s (at most 10 s), coalesced; the rest is read per hit. In production the public body
   is `{ ready }` alone; the detail goes to a `READYZ_TOKEN` holder (`x-readyz-token`) or a loopback peer.
 - **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
 

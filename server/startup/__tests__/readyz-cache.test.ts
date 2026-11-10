@@ -4,7 +4,8 @@
  * It is mounted before rate limiting and is reachable through CloudFront. Each hit used to run
  * a database query, a Vault-store probe and a scanner ping, and to answer anyone with every
  * dependency's state. Now:
- *  - the verdict is computed at most once per READYZ_CACHE_MS, and concurrent hits share it;
+ *  - the database query and the store probe run at most once per READYZ_CACHE_MS, and concurrent
+ *    hits share them; in-memory state (schema, AnA) is read on every hit;
  *  - in production, the body is { ready } alone for an outside caller without READYZ_TOKEN;
  *  - the status code is the same for every caller.
  */
@@ -24,7 +25,8 @@ vi.mock('../../services/storage', () => ({
 }));
 
 import type { Request } from 'express';
-import { mountFastPathHealthEndpoints, readyzShowsDetail } from '../inline-endpoints';
+import { mountFastPathHealthEndpoints } from '../inline-endpoints';
+import { readyzShowsDetail } from '../readyz';
 import { setSchemaReadiness } from '../readiness-state';
 import { setAnaReadiness } from '../ana-readiness-state';
 
@@ -68,7 +70,7 @@ afterEach(() => {
   }
 });
 
-describe('/readyz verdict cache (OPS-22)', () => {
+describe('/readyz round-trip cache (OPS-22)', () => {
   it('runs one database query and one store probe for repeated hits inside the window', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-11-10T12:00:00Z'));
@@ -84,6 +86,20 @@ describe('/readyz verdict cache (OPS-22)', () => {
     await request(app).get('/readyz');
     expect(queries).toBe(2);
     expect(probe.calls).toBe(2);
+  });
+
+  it('shows a change in in-memory state on the next hit, inside the window', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-10T12:00:00Z'));
+    const app = appWithHealth();
+    setAnaReadiness('no_provider', 'test fixture: no provider');
+    expect((await request(app).get('/readyz')).status).toBe(503);
+    setAnaReadiness('ready', 'test fixture: provider back');
+    vi.setSystemTime(new Date('2026-11-10T12:00:01Z'));
+    const res = await request(app).get('/readyz');
+    expect(res.status).toBe(200);
+    expect(res.body.anaState).toBe('ready');
+    expect(queries).toBe(1);
   });
 
   it('shares one computation between concurrent hits', async () => {

@@ -3447,7 +3447,7 @@
    "batchFile": "infra-lo-1.json",
    "title": "Public /readyz expensive and chatty",
    "statusAtHead": "FIXED",
-   "note": "server/startup/inline-endpoints.ts:50 /readyz mounted before rate limiting runs DB query plus probeVaultStore() each hit with no cache; per-dependency status returned. FIXED 2026-11-10 in 5e8a7317ce: the verdict is cached 5 s (max 10 s) and coalesced; in production the public body is { ready } alone (detail for READYZ_TOKEN or a loopback peer). docs/evidence/D1/2026-11-10-aws-readiness/.",
+   "note": "server/startup/inline-endpoints.ts:50 /readyz mounted before rate limiting runs DB query plus probeVaultStore() each hit with no cache; per-dependency status returned. FIXED 2026-11-10 in 5e8a7317ce and its follow-up: the database query and Vault-store probe run at most once per 5 s (max 10 s), coalesced; in production the public body is { ready } alone (detail for READYZ_TOKEN or a loopback peer). docs/evidence/D1/2026-11-10-aws-readiness/.",
    "severityPilot": "P2",
    "blocksHumanTesting": "no",
    "fixOneLine": "In inline-endpoints.ts cache the readyz verdict 5-10s and return per-dependency detail only with a readiness token.",
