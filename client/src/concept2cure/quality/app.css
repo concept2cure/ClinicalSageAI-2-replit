@@ -228,43 +228,9 @@
 .qcc-class[data-tone="warn"] { background: var(--warning-muted); color: var(--warning); }
 .qcc-class[data-tone="err"]  { background: var(--error-muted); color: var(--error); }
 
-/* ─── Change control: lifecycle flowchart ──────────────────────── */
-.qcc-flow { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 16px; }
-.qcc-flow-track { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-.qcc-node {
-  flex: 1 1 0; min-width: 122px; display: flex; flex-direction: column; gap: 4px;
-  align-items: flex-start; text-align: left; padding: 10px 12px;
-  border: 1px solid var(--bg-200); border-radius: 9px; background: var(--bg-050);
-  transition: border-color 200ms var(--ease), background 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qcc-node:hover { border-color: var(--text-300); }
-.qcc-node[data-on] { border-color: var(--accent-main-100); background: var(--background); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qcc-node[data-empty] { opacity: 0.6; }
-.qcc-node-top { display: flex; align-items: center; gap: 8px; width: 100%; }
-.qcc-node-dot { width: 9px; height: 9px; border-radius: 999px; flex: 0 0 auto; background: var(--text-400); }
-.qcc-node-dot[data-stage="proposed"]         { background: #b6b1a2; }
-.qcc-node-dot[data-stage="under_assessment"] { background: #d6a24a; }
-.qcc-node-dot[data-stage="approved"]         { background: #c17d3a; }
-.qcc-node-dot[data-stage="in_implementation"]{ background: #b5762e; }
-.qcc-node-dot[data-stage="verification"]     { background: #8a8f5a; }
-.qcc-node-dot[data-stage="closed"]           { background: #6f8c5a; }
-.qcc-node-count { font-size: 18px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; margin-left: auto; }
-.qcc-node-label { font-size: 12px; font-weight: 600; color: var(--text-100); }
-.qcc-node-blurb { font-size: 10.5px; color: var(--text-400); line-height: 1.4; }
-.qcc-arrow { display: flex; align-items: center; color: var(--text-500); flex: 0 0 auto; }
-
-.qcc-flow-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
-.qcc-offramps { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
-.qcc-offramp {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500;
-  color: var(--text-300); padding: 3px 9px; border: 1px solid var(--bg-200); border-radius: 999px;
-  background: var(--background); transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
-}
-.qcc-offramp:hover { background: var(--bg-100); color: var(--text-100); }
-.qcc-offramp[data-on] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
-.qcc-offramp-dot { width: 8px; height: 8px; border-radius: 999px; }
-.qcc-offramp-dot[data-stage="rejected"]  { background: var(--error); }
-.qcc-offramp-dot[data-stage="cancelled"] { background: #b6b1a2; }
+/* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
+.qcc-stages { margin: 0 0 12px; }
+.qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
 
 /* ─── Change control: register links ───────────────────────────── */
 .qcc-linkcount {
@@ -297,16 +263,8 @@
   font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
 }
 
-/* ─── Change control: training + forms ─────────────────────────── */
-.qcc-train { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 14px 16px; }
-.qcc-steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.qcc-steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--text-200); line-height: 1.45; }
-.qcc-step-n {
-  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 999px; background: var(--bg-100);
-  color: var(--text-300); font-size: 11px; font-weight: 600; display: inline-flex;
-  align-items: center; justify-content: center;
-}
-.qcc-train-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+/* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
+.qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .qcc-forms { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* CAPA action items (CapaActions.tsx), inside the .qcc-detail panel. */

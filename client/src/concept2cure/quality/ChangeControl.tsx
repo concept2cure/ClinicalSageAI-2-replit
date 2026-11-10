@@ -215,14 +215,16 @@ function ChangeControlSession({
 
   return (
     <>
-      {/* ── Lifecycle (D7-B): the tab's first section carries the log's figures as one
-          line and its one create. The tab's own title, its "Ask AnA for a health check"
-          (now a starter in the row above the tabs, same prompt) and its four tiles went
-          on 2026-11-06. An unread summary states no count: a row of zeroes would be a
-          claim about the register, not an absence of information about it. ── */}
-      <section className="pj-sec qms-sec" aria-labelledby="qcc-lifecycle-h">
+      {/* ── The change log (D7-B): one section. Its figures are one line, its stage filter
+          one .seg ("All" is the clear), its one create "Raise change request". The tab's
+          own title, "Ask AnA for a health check" (now the read-out starter, same asks,
+          ranked by risk) and its four tiles went on 2026-11-06; the lifecycle's box of
+          six count tiles and the separate "Change-control lifecycle" section on
+          2026-11-10. An unread summary states no count: a row of zeroes would be a claim
+          about the register, not an absence of information about it. ── */}
+      <section className="pj-sec qms-sec" aria-labelledby="qcc-log-h">
         <div className="pj-sec-h">
-          <h2 id="qcc-lifecycle-h">Change-control lifecycle</h2>
+          <h2 id="qcc-log-h">Change control log</h2>
           <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
             {summary === null ? 'Change-log totals appear once the change register loads.'
               /* An empty log is said as empty: "none overdue" of nothing is only vacuously true (finding 112). */
@@ -233,11 +235,6 @@ function ChangeControlSession({
             </>}
           </span>
           <div className="pj-sec-acts">
-            {stage !== 'all' && (
-              <button type="button" className="btn ghost small" onClick={() => onStageChange('all')}>
-                Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
-              </button>
-            )}
             {/* a2f9264a5: a curator prepares reviewed learning from the open project (moved here from the retired head). */}
             <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
               onCreated={id => { setEditingId(id); onRetry?.(); }} />
@@ -246,26 +243,9 @@ function ChangeControlSession({
             </button>
           </div>
         </div>
-        {unread ? (
-          <div className="qms-empty" role="status">
-            {failed ? 'Stage counts appear once the change log can be read.' : 'Loading the change log…'}
-          </div>
-        ) : (
-          <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
-        )}
-      </section>
-
-      {/* ── Register / log ── */}
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Change control log</h2>
-          {!unread && (
-            <span className="meta">
-              {visible.length} {visible.length === 1 ? 'change' : 'changes'}
-              {stage !== 'all' ? ` · ${STATE_LABEL[stage as ChangeState] ?? stage}` : ''}
-            </span>
-          )}
-        </div>
+        {/* The stage filter, with counts, once the log has been read and holds changes: an unread log
+            shows no zeroes, and an empty one has nothing to filter. */}
+        {!unread && changes.length > 0 && <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} />}
 
         <div className="qms-table">
           <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
@@ -411,77 +391,48 @@ function ChangeControlSession({
             );
           })}
         </div>
+        {/* How a change is raised: the procedure's five steps, closed by default (D5 §WA.4.2 rule 8). Until
+            2026-11-10 a boxed guidance panel beside the forms, with an orange "Explain the procedure" and a
+            "Find the controlled procedure"; the explanation is the tab's third starter, and the SOP register,
+            where the procedure is read and acknowledged, is the tab beside this one. */}
+        <details className="pj-more">
+          <summary>How a change is raised</summary>
+          <ol className="qcc-steps">
+            <li>Describe the change: current state and proposed state.</li>
+            <li>Give the reason, and classify it minor, major or critical.</li>
+            <li>Assess impact on product, process, validation and filings.</li>
+            <li>Link the deviations, CAPAs and validation records it touches.</li>
+            <li>Route for independent approval, implement, then verify.</li>
+          </ol>
+        </details>
       </section>
 
-      {/* ── How to raise a change (training) + change forms ── */}
-      <div className="qms-grid2">
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>How to raise a change</h2>
-            <span className="meta">Procedure guidance</span>
-          </div>
-          <div className="qcc-train">
-            <ol className="qcc-steps">
-              <li><span className="qcc-step-n">1</span> Describe the change — current state and proposed state.</li>
-              <li><span className="qcc-step-n">2</span> Give the reason, and classify it minor, major or critical.</li>
-              <li><span className="qcc-step-n">3</span> Assess impact on product, process, validation and filings.</li>
-              <li><span className="qcc-step-n">4</span> Link the deviations, CAPAs and validation records it touches.</li>
-              <li><span className="qcc-step-n">5</span> Route for independent approval, implement, then verify.</li>
-            </ol>
-            <div className="qcc-train-acts">
-              <button
-                className="qms-btn primary"
-                onClick={() =>
-                  onAsk(
-                    'Explain how to raise a change request in this quality system. Explain each step of the ' +
-                      'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
-                      'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.',
-                  )
-                }
-              >
-                {I.users} Explain the procedure
-              </button>
-              <button
-                className="qms-btn ghost"
-                onClick={() =>
-                  onAsk(
-                    'Help me find the change-control procedure in the SOP register. I will open its controlled revision and record my own read-and-understood acknowledgement there.',
-                  )
-                }
-              >
-                {I.bookOpen} Find the controlled procedure
-              </button>
+      <section className="pj-sec qms-sec" aria-labelledby="qcc-forms-h">
+        <div className="pj-sec-h">
+          <h2 id="qcc-forms-h">Change-control documents and forms</h2>
+          <span className="sec-sub">Created as controlled drafts in the SOP register</span>
+        </div>
+        <div className="qcc-forms">
+          {tpl.templates == null && (
+            <div className="qms-empty" role="status">
+              {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
             </div>
-          </div>
-        </section>
-
-        <section className="qms-sec">
-          <div className="qms-sec-head">
-            <h2>Change-control documents & forms</h2>
-            <span className="meta">Created as controlled drafts in the SOP register</span>
-          </div>
-          <div className="qcc-forms">
-            {tpl.templates == null && (
-              <div className="qms-empty" role="status">
-                {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
-              </div>
-            )}
-            {/* Each opens "New controlled document" with its template (D7-B: a quiet
-                button per form, not a card per document type). */}
-            {changeForms.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                className="btn ghost small"
-                title={`${f.description} Created as a draft with its standard change-control sections.`}
-                onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
-              >
-                {f.numberPrefix ? `${f.label} (${f.numberPrefix})` : f.label}
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
+          )}
+          {/* Each opens "New controlled document" with its template (D7-B: a quiet
+              button per form, not a card per document type). */}
+          {changeForms.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className="btn ghost small"
+              title={`${f.description} Created as a draft with its standard change-control sections.`}
+              onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
+            >
+              {f.numberPrefix ? `${f.label} (${f.numberPrefix})` : f.label}
+            </button>
+          ))}
+        </div>
+      </section>
       {drawer?.kind === 'raise' && (
         <C2CForm
           config={{

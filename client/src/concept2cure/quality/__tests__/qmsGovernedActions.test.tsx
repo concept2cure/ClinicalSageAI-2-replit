@@ -303,6 +303,6 @@ describe('Change control — governed actions reach their routes', () => {
   // D7-B: the health check is the Change control tab's third starter (QualityWorkArea.test.tsx).
   it('the log carries no AnA request of its own above its rows', () => {
     renderLog();
-    expect(screen.queryByRole('button', { name: /health check/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /health check|Explain the pipeline|Explain the procedure/i })).toBeNull();
   });
 });

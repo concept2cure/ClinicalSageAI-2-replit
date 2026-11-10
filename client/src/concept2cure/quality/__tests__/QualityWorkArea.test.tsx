@@ -106,15 +106,22 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect((within(dialog).getByLabelText('Document type') as HTMLSelectElement).value).toBe('policy');
   });
 
-  it("keeps each tab's own AnA request as a starter: Change control's health check, a record register's read-out", () => {
+  it("keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out", () => {
     mount();
     fireEvent.click(screen.getByRole('tab', { name: 'Change control' }));
     const starters = () => within(screen.getByRole('group', { name: 'Ask AnA' })).getAllByRole('button');
-    expect(starters().map((b) => b.textContent)).toEqual(['Give me a read-out on change control', 'Run a pre-inspection check', 'Run a change-control health check']);
+    expect(starters().map((b) => b.textContent)).toEqual(['Give me a read-out on change control', 'Run a pre-inspection check', 'Explain the change procedure']);
+    // The read-out carries what the health check asked (awaiting approval, overdue, open links), ranked by risk.
+    fireEvent.click(starters()[0]);
+    expect(H.asked[0]).toMatch(/awaiting approval.*overdue for implementation.*deviations or CAPAs.*ranked by risk/);
+    // The procedure's explanation, which was a button in a guidance box under the log; AnA explains, it never attests.
     fireEvent.click(starters()[2]);
-    expect(H.asked[0]).toMatch(/change-control health check/);
+    expect(H.asked[1]).toMatch(/how to raise a change request/i);
+    expect(H.asked[1]).not.toMatch(/quiz me|record read-and-understood training/i);
     // An empty log claims nothing: no "none overdue" of nothing.
     expect(screen.getByTestId('change-figures').textContent).toBe('No changes in the log yet.');
+    // ...and an empty log has no stage filter of zeroes to offer.
+    expect(screen.queryByRole('group', { name: 'Lifecycle stage' })).toBeNull();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     fireEvent.click(screen.getByRole('tab', { name: 'CAPA' }));
     expect(starters()[0].textContent).toBe('Give me a read-out on CAPA');
