@@ -1,0 +1,149 @@
+# Sales showcase: the Lumen account's run of show, by person and scene (2026-11-10)
+
+**Asked by:** the founder, 2026-11-10: "Keep working to get everything ready for a sales showcase of the entire
+platform." The Codespace is the only place the platform is demonstrated today, so this is written for the Codespace.
+
+Every line below was read in the running app on a Codespace-shaped database (`NODE_ENV=development`,
+`deploy-migrate`, the Lumen account seeded as the Codespace seeds it, then `--pack all`), on trunk after `34ecd2981`.
+That stack had **no model key**, so what AnA writes was not exercised here; see "With and without a model key".
+
+## What already exists (RULE 3)
+
+Nothing new was built for this. The showcase is the demo data and the product as they stand. The presenter's
+scripts for the development organisation already exist; this note adds the one that did not: the Lumen account, by
+person.
+
+| Piece | Path | What it does |
+|---|---|---|
+| The Lumen account and its people | `.devcontainer/post-create.sh` `c2c_seed_lumen_accounts`, `c2c_seed_lumen_org` | Created and seeded first on every Codespace start |
+| "Demo access" with a choice of person | `client/src/concept2cure/components/concept2cure-auth/DemoAccounts.tsx` | "Sign in as": Lumen's three people, then the development organisation's seven |
+| The Lumen story | `scripts/demo/launch-demo/packs/lumen*.mjs` | Four projects; LMN-201 carries the full story |
+| The other demo stories | `packs/biotech*.mjs`, `packs/mdx*.mjs`, `packs/faux.mjs` | C2C-101 (antibody IND), C2C-201 (small-molecule IND, Module 3), NeuroPanel-Dx (510(k)) |
+| The presenter's scripts | `docs/demo/biotech-walkthrough.md` (C2C-101, with stop 6b for Module 3 on C2C-201), `mdx-walkthrough.md`, `IVD_510K_WALKTHROUGH.md` | The development organisation's stories, stop by stop. Scenes 13 and 14 below point into them |
+| The sweep of every screen at head | `docs/evidence/DEMO/2026-11-10-showcase-sweep/` (session `01QoxbLdTrwY…`) | 121 stops over 7 projects as Ana Author, then 180 inside the screens; its findings and fixes |
+| An earlier 16-stop tour, no key | `docs/evidence/DEMO/2026-11-09-platform-tour/` | Walked 2026-11-09 |
+| The CSR path with a provider | `docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/` | Walked against a strict stand-in for the provider; says what still stands between the CSR and a filed sequence |
+| Watching a CSR being written | `docs/evidence/D2-CSR/2026-11-10-live-drafting-view/` | The live drafting view and "Resume build" |
+
+## Before the room
+
+1. **Codespaces secrets** (GitHub, Settings, Codespaces, Secrets, for this repository). Never typed into a chat.
+   - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`: without them AnA cannot write or answer.
+   - Optional, for real names on the Lumen people: `C2C_FOUNDER_EMAIL`, `C2C_FOUNDER_NAME`,
+     `C2C_LUMEN_REVIEWER_NAME`, `C2C_LUMEN_APPROVER_NAME`. Without them the people are Lumen Lead, Lumen Reviewer and
+     Lumen Approver.
+2. In the Codespace: `git pull`, then stop and start the Codespace. The demo data re-seeds itself whenever
+   `scripts/demo` changed.
+3. Wait for the terminal line **"Lumen account seeded"**. The Lumen account comes first; the development
+   organisation's data follows and takes 7 to 8 minutes more. Start at least 15 minutes before the room.
+4. Open the app, and on the sign-in page choose a person under **"Sign in as"**, then **Demo access**.
+
+## Who to sign in as
+
+| Person ("Sign in as") | Account | Use for |
+|---|---|---|
+| Lumen Lead (or the founder's name) | Lumen Bioscience (demo) | Scenes 1 to 8, 10 to 12: the whole LMN-201 story |
+| Lumen Reviewer | Lumen Bioscience (demo) | Scene 9: "Waiting on you 1", the Investigator's Brochure |
+| Lumen Approver | Lumen Bioscience (demo) | Scene 9: approval and signature; sealed the Vault |
+| Cal CMC | Concept2Cure Therapeutics (demo) | Scene 13: Module 3 for C2C-201, a small molecule |
+| Ana Author | Concept2Cure Therapeutics (demo) | Scene 14: NeuroPanel-Dx 510(k), a diagnostic |
+| Mo Monitor, Quinn Quality, Sam Statistician, Rhea Reviewer, Ava Approver | Concept2Cure Therapeutics (demo) | The same screens from each role, if asked |
+
+## The scenes
+
+Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names what is on screen.
+
+| # | Where | What is on screen | Say or do |
+|---|---|---|---|
+| 1 | Home, then **LMN-201** | "Good morning"; four Lumen projects. The project: its objective from the public trial listing, AnA's box, the six steps (Plan, Evidence, Author, Review, Submit, Respond), and on the right About, Filing ("Dispatch blocked · 3 blockers"), Team (three people with their open work), Work areas | One project, one goal. Everything else hangs off it |
+| 2 | **Plan**, then **Tasks** | What an initial IND needs, with target Mar 10, 2027; tasks by due date. Tasks: "5 tasks stand between you and Database lock readiness checklist, and 2 tasks are overdue" | Work comes from the plan, quality records and agency letters, in one board |
+| 3 | **Evidence**, then **Vault** | Data room: 45 sources. Vault: 16 uploads, "Required sections: 5 of 36 have a confirmed document", 3 governed artifacts, 1 seal "by Lumen Approver · 16 documents · SHA-256 …" with **Verify** | Give Evidence a few seconds to load. Open Required documents, then Seals & fixity and press Verify: "Intact: every sealed document is recorded with its sealed hash, and each stored file was read again and matches" |
+| 4 | Author, **Write the protocol in the protocol workspace** | Protocol LMN-201-CDI-02 (synthetic): 10 sections, 5 objectives, 10 eligibility criteria, 8 assessments by 7 visits, 6 risks, amendment 2, 2 deviations with a CAPA. Statistics: "375 planned subjects · 80% power · 0.05 alpha". Compliance: 28 rules assessed, 5 unmet, 17 not assessed | Show Schedule of assessments, Statistics, then Compliance: three counts, never one score |
+| 5 | **Biostatistics** | The bound study design and its statistical read | "No governed statistical documents yet" is true: none has been written |
+| 6 | **Risk-based monitoring** | Overall risk High; 6 critical factors; KRIs 1 red and 2 amber of 8; 0 QTLs breached, 1 approaching; 5 open signals; 12 subjects scored | Overview, RACT, Key risk indicators, Patient profiles. Skip Site risk and Site oversight (see below) |
+| 7 | **Quality** | 3 controlled documents, 2 in force, each "Approved by Lumen Reviewer · Meaning: Approval"; 1 change in implementation; 3 open CAPAs; 3 open deviations; 5 suppliers; 4 audits; 2 management reviews | Open SOP-201; show "Read and acknowledge" |
+| 8 | **Author**, open **LMN-201 RePreve Part B Clinical Study Report — SYNTHETIC**, then "Build from the study's data" | Study data frozen: "DEMO-LMN201-PARTB-001 … SYNTHETIC, NOT CLINICAL EVIDENCE". **Build CSR draft** is ready; no build has run | The headline. Press Build CSR draft (needs the model key). The page shows the heading being written and its prose, "N of 69 headings written". Do not promise a filed CSR: see below |
+| 9 | Sign in as **Lumen Reviewer**, LMN-201, **Review** | "Waiting on you 1": 1.14.4.1 Investigator's Brochure, "Awaiting your review" | Open the document and review it. Then sign in as Lumen Approver for approval and signature |
+| 10 | **Submit**, then **Submission Center** | Sequence 0000, Assembling, 5 leaves. Builder lists them. Validation: 7 errors, each naming the missing section. Dispatch: "Not yet. Three things stand between sequence 0000 and dispatch" | The platform refuses to dispatch an incomplete sequence and says exactly why |
+| 11 | **Respond**, or **Communication** | "1 agency communication needs a response": an FDA information request (fictional demo), IND 194021, three questions. Also a fictional approval letter with its commitments | "Draft response with AnA" (needs the model key). Every letter says it is fictional and not issued by FDA |
+| 12 | **Reporting & analytics** | "LMN-201 scores 0% on submission readiness, with 23 critical gaps". Run history: 4 computed reports. Schedules: 2. Bundles: "LMN-201 monthly governance pack", 4 reports | Open a run; export its PDF, or the bundle's. Numbers are computed, not estimated |
+| 13 | Sign in as **Cal CMC**, project **C2C-201**, **CMC / Module 3** | "21 sections in CTD §3.2 · 0 of 21 approved · 18 ready to compile"; each section with its completeness and what is missing | Module 3 build, then Overview. The script is stop 6b of `docs/demo/biotech-walkthrough.md` |
+| 14 | Sign in as **Ana Author**, project **NeuroPanel-Dx 510(k)** | A diagnostic on its own pathway: "Assemble the eSTAR"; sequence 0000 with 7 leaves; the Vault binder is eSTAR, not eCTD | One product for pharma, biotech, device and diagnostic. The script is `docs/demo/mdx-walkthrough.md` |
+
+## What is true and should be said, not hidden
+
+- **A model-drafted CSR can be reviewed, and cannot yet be approved, frozen or filed.** The founder approved the
+  qualification protocol on 2026-11-10 (P-118), and no model is qualified under it yet, so the server refuses those
+  steps (`WORKFLOW_MODEL_QUALIFICATION_REQUIRED`). Scene 8 shows the drafting and the review. It does not end in a
+  filed CSR (from the CSR-path session, `01QoxbLZ…`, which is walking the build in the Lumen account).
+- **Module 3 is not composed for LMN-201, or for any Lumen project.** Each is a biologic, and Module 3 is composed
+  here only for a small-molecule US IND (decision P-28). The screen says so. Show Module 3 on C2C-201 (scene 13).
+- **Validation shows 7 errors on sequence 0000.** That is the state of an IND whose Module 1 forms and Module 3 are
+  not placed yet, and it is the point of scene 10.
+- **Risk-based monitoring's Site risk and Site oversight read "0 sites".** The site register those two tabs read has
+  no writer reachable in the product. It is a known product defect, handed over on 2026-11-06; the other eight tabs
+  are populated.
+- **Home shows "Record your company details · To do".** It is the customer's own setup step, left for the presenter
+  to show or skip.
+- **Of LMN-201's three governed artifacts, one is approved, one is in review and one is a draft.** A placed
+  artifact needs two independent reviewers (decision P-95), and the Lumen account has one besides its author and
+  approver, so the placed one stays in review.
+- **The data room lists quality training records first** ("Training assignment: 4 …"). Use its search, or open the
+  Vault for the documents.
+- **A Codespace that pulled and restarted on 2026-11-10 between 06:45 and 07:15 UTC** has a second protocol on
+  LMN-201 titled "SET ASIDE, do not use". It carried another demo study's eligibility criteria because of a seed
+  defect, now fixed (`34ecd2981`), and the product cannot remove it. The workspace opens the correct protocol first.
+  A Codespace that did not restart in that half hour has one protocol.
+
+## With and without a model key
+
+| | With `ANTHROPIC_API_KEY` | Without |
+|---|---|---|
+| AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
+| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
+| Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
+
+**Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
+build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
+the builder binds figures to is an open question the CSR-path session is answering by running the build.
+
+## How this was checked
+
+- **Three sweeps of the Lumen account** (lead, reviewer, approver): home, the project's six steps, every rail
+  destination and every tab, and the protocol workspace. 70 stops as the lead and 76 as each of the others. No page
+  error. The only failed requests were the two Module 3 refusals for a biologic.
+- **A content read** of each stop as the lead, of the reviewer's and approver's home, Review step, Tasks and
+  Quality, of C2C-101 and C2C-201 as the development organisation's people, and of NeuroPanel-Dx.
+- **The seed, run twice** in the Lumen account: the second run "created 0, found 324".
+
+### Found and fixed during this pass (commits on `concept2cure-v2`)
+
+| Found | Fix |
+|---|---|
+| The protocol workspace was empty for LMN-201 | `lumen-protocol.mjs`, through the biotech pack's `ensureProtocol` (`7d9112e60`) |
+| Submission Center's Builder said "No leaves in sequence 0000 yet" | The approved Vault documents are placed as 5 leaves (`7d9112e60`) |
+| The Team card listed the lead alone: "16 open items assigned to someone not on this list" | Each Lumen project is shared with the reviewer and the approver (`80f5b7c41`) |
+| Reporting's Schedules and Bundles were empty | A bundle of the four runs and two in-platform schedules (`80f5b7c41`) |
+| Every report and bundle PDF export answered 503, "Reporting PDF fonts are unavailable on this deployment" | The Codespace installs the Noto fonts the PDF writer embeds, on every start (`4a473cffe`). After it, both exports answer with a PDF |
+| **The Lumen protocol's Eligibility tab listed the psoriasis study's criteria** | A defect in `7d9112e60`, found by reading the screen. Fixed, with a repair for a copy already seeded (`34ecd2981`) |
+
+### Open, for whoever continues
+
+- **The Codespace lacks other system packages the production image installs** (`Dockerfile.optimized`): LibreOffice
+  (DOCX to PDF), Ghostscript and veraPDF (PDF/A), `libxml2-utils` (`xmllint`, the eCTD backbone's DTD check),
+  `ocrmypdf`, and python-docx with lxml (AnA's DOCX tools). The fonts were the one found failing in front of a
+  person. The others were not exercised here, because this container has most of them and a Codespace does not.
+  Before a showcase, press the editor's PDF export and Submit's "Compile and download" in the real Codespace.
+- **The data room lists quality training records first**, each saying "The original file is unavailable, so a
+  working copy cannot be created". That is the product's ordering, not the data.
+- **Risk-based monitoring's site register** has no reachable writer (handed over 2026-11-06).
+- **A presenter's rehearsal of the whole platform with the launch gate on** is another session's (`01T2woo…`), under
+  `docs/evidence/DEMO/2026-11-10-sales-rehearsal/`. This note is the Lumen account in the Codespace, where launch
+  scope is off.
+
+### Not done
+
+- HawkScan could not run: no `HAWK_API_KEY` in this environment. The changes are seed scripts and this note.
+- The development organisation's `--pack all` was not re-run by this session after `34ecd2981`. The one changed line there reads the
+  same content object as before.
