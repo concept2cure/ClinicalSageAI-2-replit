@@ -254,7 +254,6 @@
 
 /* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
 .qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
-.qcc-forms { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* CAPA action items (CapaActions.tsx), inside the .qcc-detail panel. */
 .qcc-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }

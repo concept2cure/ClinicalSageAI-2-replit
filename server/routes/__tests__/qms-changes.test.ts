@@ -25,6 +25,7 @@ vi.mock('../../services/auditService', () => ({
 const REASON = 'Impact assessment opened by QA';
 
 import mdxQmsRouter from '../mdx-qms';
+import { computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
 
 function appWith(org: number | null, userId = 7, role = 'member') {
   const app = express();
@@ -111,6 +112,18 @@ describe('GET /api/mdx/qms/changes', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.pendingStore).toBe(true);
+  });
+});
+
+/* The approval signs the content the approver read: the register carries its digest (2026-11-10). */
+describe('GET /api/mdx/qms/changes — the digest an approval binds', () => {
+  it('returns each change with the content digest its approval signs', async () => {
+    const row = changeRow({ status: 'under_assessment', impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+    query.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].content_digest).toBe(computeQmsChangeContentDigest(row as never));
+    expect(res.body.data[0].content_digest).not.toBe(computeQmsChangeContentDigest({ ...row, implementation_plan: 'Edited.' } as never));
   });
 });
 

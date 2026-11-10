@@ -60,6 +60,9 @@ export interface ChangeControl {
    *  description, type, classification, risk, reason and target date they are what the approval signs. */
   impactAssessment?: string | null;
   implementationPlan?: string | null;
+  /** The digest of the content as read (`content_digest`). The approval sends it, and the server signs only that
+   *  content: a change edited since it was read is refused. Null when the row carries none; then it is not signed. */
+  contentDigest?: string | null;
   targetImplementationDate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
