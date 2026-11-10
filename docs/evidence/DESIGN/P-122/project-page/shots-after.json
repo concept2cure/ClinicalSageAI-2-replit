@@ -1,0 +1,300 @@
+{
+  "base": "http://localhost:5262",
+  "program": "d56ad63d-8530-4cd5-b81f-dc55102a6dea",
+  "label": "after",
+  "at": "2026-11-10T13:06:25.338Z",
+  "runs": [
+    {
+      "key": "1440-light",
+      "shots": [
+        "after-1440-light-plan-steps.png",
+        "after-1440-light-plan-schedule.png",
+        "after-1440-light-review.png",
+        "after-1440-light-records.png",
+        "after-1440-light-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when. See every document this filing needs. Start each from its template, and assign it to a person with a due date. Next: Evidence"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals",
+            "Schedule"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign. Send each document for review, resolve the comments, and approve it with your signature. Next: Submit"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Tasks and approvals",
+            "Readiness",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "1440-dark",
+      "shots": [
+        "after-1440-dark-plan-steps.png",
+        "after-1440-dark-plan-schedule.png",
+        "after-1440-dark-review.png",
+        "after-1440-dark-records.png",
+        "after-1440-dark-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when. See every document this filing needs. Start each from its template, and assign it to a person with a due date. Next: Evidence"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals",
+            "Schedule"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign. Send each document for review, resolve the comments, and approve it with your signature. Next: Submit"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Tasks and approvals",
+            "Readiness",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "390-light",
+      "shots": [
+        "after-390-light-plan-steps.png",
+        "after-390-light-plan-schedule.png",
+        "after-390-light-review.png",
+        "after-390-light-records.png",
+        "after-390-light-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when. See every document this filing needs. Start each from its template, and assign it to a person with a due date. Next: Evidence"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals",
+            "Schedule"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign. Send each document for review, resolve the comments, and approve it with your signature. Next: Submit"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Tasks and approvals",
+            "Readiness",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    },
+    {
+      "key": "390-dark",
+      "shots": [
+        "after-390-dark-plan-steps.png",
+        "after-390-dark-plan-schedule.png",
+        "after-390-dark-review.png",
+        "after-390-dark-records.png",
+        "after-390-dark-activity.png"
+      ],
+      "facts": {
+        "plan": {
+          "step": "Plan",
+          "underSteps": [
+            "What this filing needs, who does it, and by when. See every document this filing needs. Start each from its template, and assign it to a person with a due date. Next: Evidence"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Strategy",
+            "Due for you",
+            "What this IND needs",
+            "Program plan",
+            "Tasks and approvals",
+            "Schedule"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        },
+        "review": {
+          "step": "Review",
+          "underSteps": [
+            "Review, approve & e-sign. Send each document for review, resolve the comments, and approve it with your signature. Next: Submit"
+          ],
+          "mainHeadings": [
+            "Objective",
+            "Conversations",
+            "Reviews",
+            "Tasks and approvals",
+            "Readiness",
+            "Quality"
+          ],
+          "sideHeadings": [
+            "About",
+            "Filing",
+            "Team",
+            "Work areas",
+            "What AnA knows",
+            "Skills",
+            "Records",
+            "Activity"
+          ],
+          "closedDisclosuresInSide": [
+            "Memory · none saved",
+            "Instructions · none saved"
+          ],
+          "hScroll": 0
+        }
+      },
+      "failed": []
+    }
+  ]
+}

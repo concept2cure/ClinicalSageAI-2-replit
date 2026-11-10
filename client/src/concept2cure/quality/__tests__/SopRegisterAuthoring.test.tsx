@@ -41,7 +41,8 @@ vi.mock('../../v2/editor/DocumentWorkbench', () => ({ DocumentWorkbench: (props:
 } }));
 vi.mock('../../v2/editor/AuthoredHtml', () => ({ AuthoredHtml: ({ html }: { html: string }) => <div data-testid="saved-snapshot-content">{html}</div> }));
 vi.mock('../../_shared/components/EsignModal', () => ({ EsignModal: () => null, esignSignerOf: () => undefined }));
-vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], loading: false, error: null }) }));
+vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], loading: false, error: null }),
+  useChangeSummary: () => ({ summary: null, loading: true, error: null }) }));
 vi.mock('../../v2/surfaceActions', () => ({ useSurfaceActionHandlers: () => undefined, notifySurfaceActionReady: () => undefined }));
 vi.mock('../../v2/surfaceContext', () => ({ usePublishSurfaceContext: () => undefined }));
 import { SopRegister } from '../SopRegister';

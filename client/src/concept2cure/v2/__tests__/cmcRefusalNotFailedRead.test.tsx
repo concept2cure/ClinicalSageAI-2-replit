@@ -116,9 +116,8 @@ const mount = () =>
     />,
   );
 
-/** Land on a tab of the Study records half, as a user would. */
+/** Land on a tab of the Study records group, as a user would: one click, since all nine are one row (P-122). */
 const openRecordsTab = (label: string) => {
-  fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
   fireEvent.click(screen.getByRole('tab', { name: label }));
 };
 
@@ -203,7 +202,6 @@ const PANELS: ReadonlyArray<{
     name: 'the contradiction history',
     path: /^\/api\/cmc\/module3-os\/contradictions\//,
     open: () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Module 3' }));
       fireEvent.click(screen.getByRole('tab', { name: 'Approvals & audit' }));
     },
     what: 'the contradiction history',

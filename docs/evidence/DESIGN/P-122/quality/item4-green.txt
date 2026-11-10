@@ -1,0 +1,63 @@
+# Item 4 green
+# base 2f27f43a7 2026-11-10T12:37:07Z
+## DB: tests/db/p122-quality-surveillance-reads.dbtest.ts, app_service, RLS_ENFORCE=on, c2c_p122q
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > runtime role with RLS on > is not a superuser and does not bypass RLS 8ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's figure line: GET /api/mdx/qms/readiness > answers a member with their organisation's counts, and never another's 43ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's figure line: GET /api/mdx/qms/readiness > refuses a request with no session 2ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > reads one project's signals and CAPAs, and says so 32ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > without a project, reads the organisation's, and never another organisation's 20ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > answers another organisation's project as not found, never an empty feed 23ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > refuses a private project the member is not shared on, and answers its owner 44ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > refuses a malformed project id 12ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > answers a member with their organisation's complaints and MDR events, and never another's 105ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > reads a complaint's vigilance timeline for its member, and refuses another organisation's 43ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > refuses another organisation's project on the complaint list 17ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+## Client and route unit tests: the MDX surfaces and host, the postmarket route
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows none of another project's DHF, trace, change-request or non-conformance rows 
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says why each of the three panels is not shown 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps this project’s risk file in the blocker feed and the risk panel 54ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not claim change requests or non-conformances were checked when they were not 
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says an empty risk file has nothing to check, not that every risk is verified 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the all-clear when the risk file has records and all are verified 105ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > treats an unreported scope as not keyed (fail closed) 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > renders the panels again once the route reports them keyed to the project 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not print the organisation's change-request count or DHF completion as this pr
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > prints them once the route reports change requests and the DHF keyed to the project
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not list or count the organisation's documents as this project's 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > lists and counts the documents once the route reports them keyed to the project 36m
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > says in plain words why a panel is not shown 50ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say the records are organization-wide when the route did not report it 49m
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not promise that records appear here while the read is not keyed to the projec
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > does not say an unreported read is organization-wide in its empty hint 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > keeps the original empty hints once the route reports the panels keyed to the proje
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.projectKeyed.test.tsx > EngineeringSurface — panels that read across projects are not shown (slice 0) > shows a failed read as a failure, not as a panel waiting to be keyed 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > shows none of another project's signals, CAPAs or PMS plan rows 73ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no organisation-wide count as this project’s 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > says why each of the signals, CAPA board, trends and PMS plan panels is not shown 34m
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names what has no per-project store: PMS plan execution, not the PMS plan 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > keeps this project's reporting clocks, read by project 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > names the project the reporting clocks are limited to by its title, not its class and
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > asks AnA to triage only what its triage tool reads, for this project 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > states no scope for PMS plan entries, which have no store 23ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.projectKeyed.test.tsx > PostmarketSurface — panels that read across projects are not shown (slice 0) > the Situational awareness toggle names only what it holds 26ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 6ms
+ ✓ client/src/concept2cure/mdx/__tests__/noFavourableDefaults.test.tsx > PostmarketSurface — statutory-clock cards come from the reads that hold them > explains the mixed scope and keeps reporting-clock requests narrowed to the project 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > asks for this project's records 67ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > shows this project's signals, CAPA board, trends and PMS plan execution when the server
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > says a failed read is a failure, with a retry, and never an empty or unkeyed panel 22ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > keeps the panels hidden when the server does not say the rows are this project's 14ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > 403 without org context 19ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > scopes CAPAs with an INNER JOIN and no NULL-org escape hatch 4ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > passes the caller org and the projects the caller can open, and nothing else, for CAPAs 3ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > reads one project, and says so (P-122) 4ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > refuses a malformed project id before reading anything 3ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > returns an empty feed rather than fabricated rows for a quiet tenant 3ms
+ ✓ server/routes/__tests__/mdx-postmarket.tenancy.test.ts > GET /api/mdx/postmarket > degrades to an empty feed when the vigilance tables are not migrated 3ms
+ Test Files  106 passed (106)
+      Tests  1046 passed (1046)
+## gates
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1048 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+OK: no new local tenant resolvers.
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.

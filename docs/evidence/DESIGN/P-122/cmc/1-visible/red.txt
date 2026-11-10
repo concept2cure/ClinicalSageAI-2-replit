@@ -1,0 +1,18 @@
+ × client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > opens with all nine tabs in one row, and no toggle in front of the registers 5060ms
+   → Unable to find role="tablist" and name "CMC / Module 3"
+ × client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > keeps all nine in the row whichever tab is open 264ms
+   → Unable to find an accessible element with the role "tablist" and name "CMC / Module 3"
+ × client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > prints the open tab’s sentence as one quiet line, and its next step 5027ms
+   → Unable to find an element by: [data-testid="cm-now"]
+ × client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > walks the work in order, and the last destination has no next step 14ms
+   → Unable to find an element by: [data-testid="cm-now"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > opens with all nine tabs in one row, and no toggle in front of the registers
+TestingLibraryElementError: Unable to find role="tablist" and name "CMC / Module 3"
+ FAIL  client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > keeps all nine in the row whichever tab is open
+TestingLibraryElementError: Unable to find an accessible element with the role "tablist" and name "CMC / Module 3"
+ FAIL  client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > prints the open tab’s sentence as one quiet line, and its next step
+TestingLibraryElementError: Unable to find an element by: [data-testid="cm-now"]
+ FAIL  client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > walks the work in order, and the last destination has no next step
+TestingLibraryElementError: Unable to find an element by: [data-testid="cm-now"]
+      Tests  4 failed (4)

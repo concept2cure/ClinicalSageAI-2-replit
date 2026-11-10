@@ -47,6 +47,10 @@ export interface HomeProgram {
 
 /** How many projects Home lists before "All projects". */
 const HOME_PROJECTS = 5;
+/** A project's name on its row: its title, with its code in front only when the title does not already say it. */
+const rowTitle = (p: { code?: string | null; title: string }): string =>
+  p.code && !p.title.includes(p.code) ? `${p.code} — ${p.title}` : p.title;
+
 /**
  * Your projects — on Home, beneath the composer.
  *
@@ -122,7 +126,7 @@ export function HomeProjects({
                   className="home-row"
                   onClick={() => openProjectHome({ id: p.id, title: p.title, code: p.code, ws: p.ws, status: p.status }, onNav)}
                 >
-                  <span className="home-row-t">{p.code ? `${p.code} — ${p.title}` : p.title}</span>
+                  <span className="home-row-t">{rowTitle(p)}</span>
                   <span className="home-row-m">{[p.ws ? WS_LABEL[p.ws] ?? p.ws : null, p.stage, p.status].filter(Boolean).join(' · ')}</span>
                   <span className="home-row-go" aria-hidden="true">{I.right}</span>
                 </button>

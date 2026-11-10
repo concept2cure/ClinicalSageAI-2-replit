@@ -87,9 +87,11 @@ export function useProjectRecords(pid: string | null, epoch = 0): DataState<Proj
 }
 
 /** The project's records as one card in Project knowledge, on every step (D3-2a, D3.md §4.8 item 7). Each store is
- *  a closed disclosure whose summary says its count ("Vault documents · 6") or that it is not available, so the card
- *  is a short list until a person opens a store. It moved here from the Author step's "Records in this project". */
-export function ProjectRecords({ state, activity }: { state: DataState<ProjectRecordsRead>; activity?: React.ReactNode }) {
+ *  an open section headed by its name and count ("Vault documents · 6"), or that it is not available. D3-2a made each
+ *  store a closed disclosure, so the card showed six counts and none of the records; P-122 (2026-11-10) opens them:
+ *  nothing a screen showed goes behind a closed disclosure. It moved here from the Author step's "Records in this
+ *  project". */
+export function ProjectRecords({ state }: { state: DataState<ProjectRecordsRead> }) {
   const records = state.data?.records ?? {};
   return (
     <section className="pj-card" aria-labelledby="pj-records-h">
@@ -100,21 +102,26 @@ export function ProjectRecords({ state, activity }: { state: DataState<ProjectRe
             hint="The project records read didn't respond. Sign in and retry, or check the service is reachable." />
         ) : SECTIONS.map(({ key, label, title, detail }) => {
           const section = records[key];
+          const heading = `pj-records-${key}-h`;
           return (
-            <details key={key} className="pj-more" data-records-section={key}>
-              <summary>{label} · {countLabel(section)}</summary>
+            <section key={key} className="pj-tracking-module" data-records-section={key} aria-labelledby={heading}>
+              <h4 id={heading}>{label} · {countLabel(section)}</h4>
               <SectionBody section={section} title={title} detail={detail} />
-            </details>
+            </section>
           );
         })}
-      {/* The project's audit read, last (D3-2b): every act, its actor and its recorded reason. It was a section of
-          the Author step. It is read by the page, so a failed records read does not hide it. */}
-      {activity && (
-        <details className="pj-more" data-records-section="activity">
-          <summary>Activity</summary>
-          {activity}
-        </details>
-      )}
+    </section>
+  );
+}
+
+/** The project's audit read as its own open card in Project knowledge, on every step (P-122, 2026-11-10): every act,
+ *  its actor and its recorded reason (21 CFR 11.10(e)). It was a section of the Author step until D3-2b made it the
+ *  Records card's last closed disclosure. It is read by the page, so a failed records read does not hide it. */
+export function ProjectActivityCard({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="pj-card" aria-labelledby="pj-activity-h" data-records-section="activity">
+      <div className="pj-card-h"><h3 id="pj-activity-h">Activity</h3></div>
+      {children}
     </section>
   );
 }

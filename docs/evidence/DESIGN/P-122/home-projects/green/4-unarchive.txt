@@ -1,0 +1,9 @@
+After the restore change (working tree on 639e4ba74)
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > lists the archived projects the server returns, and only those 590ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > restores only after a reason and the typed word, through the close-out route, and reads the portfolio again 262ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > a refusal is the server’s words, and nothing is said to be restored 210ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > an answer that may have completed is said so, never as done or refused 179ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > a failed read of the archived projects is said, with a retry, never as none 105ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > with none archived, says so 44ms
+ Test Files  15 passed (15)
+      Tests  118 passed (118)

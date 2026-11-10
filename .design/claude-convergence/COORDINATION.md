@@ -542,6 +542,25 @@ grows every hour (measured 2026-11-10 10:50 UTC).**
 - **One old red in that run is already fixed on trunk:** the Codespace job stopped at the CSR study with "Cannot
   find module 'playwright'"; `.devcontainer/post-start.sh` now installs it for that step.
 
+**→ every lane: three steps of CI's Lint job went red on trunk on 2026-11-10 with no push refused, because none of
+the three gates is in `.husky/pre-push`** (found 14:30 UTC at `8a7e41392d`; the job's other 123 guardrail steps pass).
+Run the gate yourself when you touch one of these subjects.
+- **Fixed here, `ci:lineage-save-gate`** (`2c3627c039`), red since `64da37618f` (S1, the objective's regulatory
+  strategy): `charter-objectives.ts` no longer matched its reviewed fingerprint. This lane reviewed that commit's
+  12 lines (the write, its actor, reason, version chain and audit are unchanged; only a person enters the strategy)
+  and renewed the fingerprint. **→ S1/S11 (`01QoxbLdJqTq…`):** any further change to that file reddens the gate
+  again until someone other than its author reviews it.
+- **Fixed here, `ci:canonicalizers`** (`ff87cab87e`): `data-room-grade.ts` serialized its facts itself. Its
+  fingerprint now goes through `shared/canonical-json.ts`. Each stored grade is stored once more on its next read:
+  the same grade, with a new `graded_at`. That gate is the first command of "Gates that existed but ran nowhere",
+  so the thirteen gates after it had not run in CI either; all thirteen pass.
+- **→ S11 (`01QoxbLdJqTq…`), yours, not patched here because you committed to the file at 11:32:
+  `ci:error-envelope`** fails on `client/src/concept2cure/v2/surfaces/PlanAssign.tsx:318` (`cfe9ce5f49`, "Use the
+  schedule's date"). The refusal's words are read from `json?.error` by hand; the gate asks for
+  `serverMessage(json) ?? '<your fallback>'` from `@/lib/queryClient`, so an enum token is never shown as copy. Keep
+  the `OUTCOME_UNKNOWN` test on `json?.error`: that is a code comparison, not copy. If it is still red after 17:30
+  UTC, this lane takes it.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config

@@ -1740,9 +1740,9 @@
 .c2c-v2 .topbar{height:var(--topbar);display:flex;align-items:center;gap:4px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
 /* Claude's top bar (D1.md §D1.B): where you are in one quiet line, then a few quiet
    icons. The open project is the first crumb, a button that opens its page
-   (Shell.tsx TopBar); the page follows it. The search box, the organisation label,
-   the project chip, the tinted Task and Help left the bar (the sidebar's Search and
-   ⌘K, its account and the account menu hold them). On Home the bar drops its rule:
+   (Shell.tsx TopBar); the page follows it. The organisation label, the project chip
+   and the tinted Task left the bar (its account and ⌘K hold them); Search and Help
+   came back to it under P-122 (2026-11-10). On Home the bar drops its rule:
    V2App.tsx names the screen on .main. */
 .c2c-v2 .main[data-surface="home"] .topbar{border-bottom-color:transparent;}
 /* The crumbs clip (overflow:hidden) so a long trail ellipsizes, and a clip cuts
@@ -1768,6 +1768,14 @@
 .c2c-v2 .tb-spacer{flex:1;}
 .c2c-v2 .tb-btn{position:relative;width:32px;height:32px;border-radius:var(--radius-lg);display:inline-flex;align-items:center;justify-content:center;color:var(--text-300);font-size:16px;transition:background-color var(--dur) var(--ease),color var(--dur) var(--ease);}
 .c2c-v2 .tb-btn:hover{background:var(--bg-100);color:var(--text-100);}
+/* Search, back in the bar (P-122 §3.4, 2026-11-10): a quiet field that opens the
+   command palette, as ⌘K and the sidebar's Search do. Hairline, ink text, no orange;
+   it gives way before the crumbs do, down to its icon. */
+.c2c-v2 .tb-search{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 8px 0 10px;margin-right:4px;flex:0 1 200px;min-width:32px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);color:var(--text-300);font-size:var(--fs-small,13px);overflow:hidden;white-space:nowrap;transition:border-color var(--dur) var(--ease),color var(--dur) var(--ease);}
+.c2c-v2 .tb-search:hover{border-color:var(--border-strong);color:var(--text-100);}
+.c2c-v2 .tb-search .ico{display:inline-flex;font-size:16px;flex-shrink:0;}
+.c2c-v2 .tb-search .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left;}
+.c2c-v2 .tb-search kbd{font-family:var(--font-mono);font-size:var(--fs-caption,12px);padding:0 5px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-300);background:transparent;}
 /* Phone-only: "Open the sidebar" and New conversation (Shell.tsx TopBar). */
 .c2c-v2 :is(.tb-rail, .tb-new){display:none;}
 /* Engaged state for a .tb-btn that toggles something.
@@ -1785,8 +1793,9 @@
    none, so it takes the fill and the text colour only. */
 .c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
-/* At phone width: the menu button, the crumbs, then Your work and New conversation,
-   each 44px. Collaborate and New task are in ⌘K there (D1.md §D1.F step 3). The
+/* At phone width: the menu button, the crumbs, then Search (its icon), Your work, Help
+   and New conversation, each 44px. Collaborate and New task are in ⌘K there (D1.md §D1.F
+   step 3). The
    crumbs and the project crumb sit flush after the menu button: pulled 8px left,
    the row would lie over the button's last 4px and take its taps. */
 @media (max-width:640px){
@@ -1794,6 +1803,8 @@
   .c2c-v2 :is(.tb-rail, .tb-new){display:inline-flex;}
   .c2c-v2 .topbar .tb-collab, .c2c-v2 .topbar .tb-newtask{display:none;}
   .c2c-v2 :is(.tb-btn){width:44px;height:44px;}
+  .c2c-v2 .tb-search{flex:0 0 auto;width:44px;height:44px;margin-right:0;padding:0;justify-content:center;border-color:transparent;}
+  .c2c-v2 .tb-search :is(.lbl, kbd){display:none;}
   .c2c-v2 .topbar .crumbs{margin-left:0;padding-left:0;}
   .c2c-v2 .topbar .crumb-proj{margin-left:0;}
 }

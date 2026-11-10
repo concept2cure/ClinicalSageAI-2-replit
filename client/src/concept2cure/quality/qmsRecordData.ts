@@ -17,7 +17,7 @@ import type { ActionState, CapaState } from '@shared/schema/capa-mdr';
 import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 import { capaWrite, qmsWrite } from './qmsWrites';
 
-export type QmsRecordTab = 'capa' | 'deviations' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
+export type QmsRecordTab = 'capa' | 'complaints' | 'deviations' | 'nonconforming' | 'suppliers' | 'audits' | 'reviews';
 
 /** A GMP deviation (P-57; server/routes/mdx-qms-deviations.ts, table qc_deviations). */
 export interface DeviationRow {

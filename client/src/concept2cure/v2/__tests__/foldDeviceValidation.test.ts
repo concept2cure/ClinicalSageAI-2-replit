@@ -22,6 +22,12 @@
  *     list, and nothing on the client draws an open blocker as a pass;
  *   - neither project scope list names it, nor the rail, a focus list or the
  *     shell's group tables, and the guided tour does not stop there.
+ *
+ * P-122 (2026-11-10) reaches the blockers again, in one place and differently:
+ * Projects' "Which projects are at risk this week?" lists the open blockers of
+ * the projects the person can open (280035bd9 admitted the read and scoped it),
+ * beside Sentinel's findings and the work due. It reads them only: no "Pass", no
+ * PATCH, no screen of its own. That file is the one client caller allowed.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -103,7 +109,10 @@ describe('device-validation is retired into each filing\'s own readiness', () =>
     // The kit's shapes for it went too, the rule's "ok" severity (drawn as "Pass") with them.
     expect(code(path.join(CONCEPT2CURE, 'mdx/data/workbench.ts'))).not.toMatch(/interface Validation(Rule|Program|Summary)\b/);
     const calling = files.filter((f) => !/__tests__/.test(f) && code(f).includes('/api/submission-ops/blockers'));
-    expect(calling.map((f) => path.relative(CLIENT, f))).toEqual([]);
+    expect(calling.map((f) => path.relative(CLIENT, f))).toEqual([path.join('concept2cure', 'v2', 'surfaces', 'ProjectsAtRisk.tsx')]);
+    // It reads them, and draws no blocker as a pass.
+    const atRisk = code(calling[0]);
+    expect(atRisk).not.toMatch(/'PATCH'|\bPass\b/);
   });
 
   it('is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there', () => {
