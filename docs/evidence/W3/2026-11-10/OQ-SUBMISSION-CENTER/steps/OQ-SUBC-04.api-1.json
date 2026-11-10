@@ -1,0 +1,47 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/vault/ingest",
+    "anonymous": false,
+    "identity": null,
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 48,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "document": {
+        "id": "f1dfca81-050b-49fb-8357-0f80301e138d",
+        "programId": "1a0d5ae0-decb-40b4-88a4-07f97b6e47a4",
+        "documentCode": "OQ-004 Sequence cover letter 20261110020503.pdf",
+        "documentTitle": "OQ-004 Sequence cover letter 20261110020503",
+        "documentType": "CORRESPONDENCE",
+        "version": "1.0",
+        "fileName": "OQ-004-Sequence-cover-letter-20261110020503.pdf",
+        "fileSize": 624,
+        "mimeType": "application/pdf",
+        "contentHash": "7bc3945a2cd022b40dee69b5aa9c0b48483a1b14c2c38c0beb8f8ad45c8ca239",
+        "processingStatus": "PENDING",
+        "hasExtractedText": false,
+        "extraction": "pending",
+        "wordCount": null,
+        "createdAt": "2026-11-10T02:05:06.357Z",
+        "updatedAt": "2026-11-10T02:05:06.357Z"
+      },
+      "filing": {
+        "view": "pharma",
+        "folderId": "module-1",
+        "evidenceKind": "resp",
+        "ctdSection": "1.2",
+        "placementStatus": "suggested",
+        "confidence": "high",
+        "rationale": "CTD pattern \"Cover Letter\" → Module 1 (1.2). Uploaded as Agency correspondence.",
+        "folderLabel": "Module 1 · Administrative",
+        "needsReview": false
+      }
+    }
+  }
+}

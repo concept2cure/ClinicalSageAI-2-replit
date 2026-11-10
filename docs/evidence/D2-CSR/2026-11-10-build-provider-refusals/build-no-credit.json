@@ -1,0 +1,12 @@
+{
+  "label": "no-credit",
+  "startedAt": "2026-11-10T01:33:07.209Z",
+  "jobId": 5,
+  "status": "failed",
+  "progress": 0,
+  "failure": "The AI provider would not serve this deployment’s account: it has no credit left, or no access to the drafting model. An administrator must add credit or model access. The build stopped at §1. The sections already saved are kept.",
+  "waitedMs": 148,
+  "onScreen": "The AI provider would not serve this deployment’s account: it has no credit left, or no access to the drafting model. An administrator must add credit or model access. The build stopped at §1. The sections already saved are kept.",
+  "screenshot": "screens/no-credit.png",
+  "finishedAt": "2026-11-10T01:33:23.644Z"
+}

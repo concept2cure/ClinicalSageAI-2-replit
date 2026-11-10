@@ -2107,6 +2107,75 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
     (M7), and the IVD 510(k) outline (M6(a)).
 
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+
+Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
+
+**Where testers run it (L1).**
+- `docker-compose.beta.yml` and the self-host `docker-compose.yml` now run:
+  - TLS on their database;
+  - a provision step;
+  - the self-hosted embeddings lane;
+  - `SETUP_TOKEN` for the first administrator;
+  - loopback-only ports (`27720c8221`, `1847807cb0`).
+- `scripts/db/provision.mjs` skips install-fresh over a complete database.
+- Walked from empty volumes in production mode, through sign-in with an emailed code
+  (`docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/`).
+
+**AnA's CSR path, up to the model** (`docs/evidence/HUMAN-TEST/ANA-CSR/2026-11-06/`). No model key reached the
+session, so no model output was produced or claimed.
+
+| Commit | What it does |
+|---|---|
+| `1d129897b4` | The conversation pins `draft_authoring_document`, so a drafted document reaches the canvas. |
+| `9d7624d9fd` | The CSR builder's title page and synopsis print one field per line (the PDF's title page ran on). |
+| `0e18147b2b` | A refused key, an account with no credit or quota, and a model the account cannot use each say so: `PROVIDER_KEY_REFUSED`, `PROVIDER_ACCOUNT_REFUSED`. |
+| `5aa8aae4d3` | With only an OpenAI key, the refusal names the providers approved for drafting. |
+| `ad3d977314` | A refused turn offers no next steps. |
+| `dbc080553c` | The conversation docked beside the CSR fits its column. |
+| `c0181112ad`, `839efe9471` | Two layout fixes: the editor's filings line, and the protocol head at 390 px. |
+
+**The founder's decisions of 2026-11-06, as said in the session.**
+- Vault is reachable from the rail at all times. With no project open, it lists the projects' Vaults. The editor's
+  "Project files" is "Vault".
+- Biostatistics is a rail work area. The founder's words are recorded in `scripts/ci/one-product-baseline.json`
+  `founderDecisions` as `rail:biostatistics` (`5144702d21`, `adb1c00cba`). P-107 item 1 confirms it.
+- The Vault change broke two contract tests, `projectCreationDoors.contract` and `projectDestination`. The project
+  page's session repaired them (`d50c5f07e9`, `aeedd1b86e`). All 46 pass on trunk at 2026-11-10.
+
+**The Codespace click-through** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-06/`, with its rerun scripts,
+`0a617f4cd4`, `0ca1f5f4`).
+- **Ran on:** the founder's Codespace data, built here by `.devcontainer`'s own scripts. The CSR study preparation
+  passed.
+- **Fixed:** Manage billing (`1f97ae5495`, `3a473d045e`).
+- **Landed elsewhere:** the demo organisation now signs out after 120 idle minutes, not 15 (`fe3bdced33`, the
+  Codespace session). The Lumen organisation follows when R1's founder-organisation change lands.
+- **Open:**
+  - the CSR study's filing identity, for the inspection copy (sent to R1's DATA; no change for it found on trunk at
+    2026-11-10);
+  - RBM's "Generate from RACT" 409, not yet checked.
+- **Coverage is incomplete.** The last run's results were lost when the container was replaced. Rerun it to the end.
+
+**Started for the founder's Vault and data request** (2026-11-06; the surveys' "What already exists" is in each
+session's brief). Each records its own progress here; as reported to this session:
+- `session_01QoxbLZMScz1c2iFESBLn9J`, **S6**: step 1 landed (`b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+  A project's Vault has "New folder", Rename and "Move to…", each audited. Its cabinet is the filing's binder from the
+  active rule pack. Steps 2 to 4 landed 2026-11-10 (`d208ba8f68`, `844b7de191`, `a36449dd90`, `c80d21ae3b`,
+  `7d918fe90e`, `f9643421e9`, `84004c287e`): IND, NDA, MAA, 510(k), EU MDR and EU IVDR each open on their own binder; a
+  binder folder lists the plan tasks that feed it; AnA files into folders as suggestions a person confirms (not walked
+  in a conversation: no model key). With it, `9d01cdb37b` stops `/api/folders` reaching another sponsor's project
+  folders.
+- `session_01QoxbLdTrwYyiaSgLDxgHQJ`, **S2**: landed (`c15afd47`..`07a1c645`). Vault has a "Data catalog" tab with
+  a grade A to D per item and its basis, and "Use in this project". Open: the CSR study-data chooser putting used items
+  first (S3), and AnA over the catalog.
+- **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
+  D3-4 (`d50c5f07e9`).
+
+**Open for the founder:**
+- `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
+- the PQ decision for production drafting (every model is `pending`);
+- whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for

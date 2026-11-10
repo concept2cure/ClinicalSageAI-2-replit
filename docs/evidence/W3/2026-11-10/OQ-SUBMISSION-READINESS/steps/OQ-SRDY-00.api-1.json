@@ -1,0 +1,109 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-005 Readiness program 20261110020625",
+      "programType": "ind",
+      "productType": "drug",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 110,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "fc7b2edb-3601-4215-a081-81f3f6730da8",
+        "title": "OQ-005 Readiness program 20261110020625",
+        "ws": "Biotech",
+        "pathway": "ind",
+        "code": "OQ-005",
+        "stage": "Planning",
+        "status": "active",
+        "lead": "oq-runner@validation.local",
+        "due": "—",
+        "due_date": null,
+        "activity": "Updated Nov 10",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "description": null,
+        "indication": "Validation exercise",
+        "agency": "FDA",
+        "program_type": "ind",
+        "readiness": 0,
+        "readinessState": "measured"
+      },
+      "program": {
+        "id": "fc7b2edb-3601-4215-a081-81f3f6730da8",
+        "code": "OQ-005",
+        "name": "OQ-005 Readiness program 20261110020625",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-005 Readiness program 20261110020625",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "lead_user_id": 1,
+        "team_members": [],
+        "created_at": "2026-11-10T02:06:26.177Z",
+        "updated_at": "2026-11-10T02:06:26.177Z",
+        "application_number": null,
+        "product_type": "drug",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "client_workspace_id": 2,
+        "client_name": "Concept2Cure Therapeutics",
+        "registry_id": "US_IND",
+        "submission_type_id": null,
+        "riskBasedMonitoring": false,
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null,
+        "readiness": 0,
+        "readinessState": "measured",
+        "readinessAsOf": "2026-11-10T02:06:26.260Z"
+      },
+      "meta": {
+        "created": true,
+        "organizationId": 2,
+        "actorUserId": 1,
+        "clientWorkspaceId": 2,
+        "clientWorkspaceName": "Concept2Cure Therapeutics",
+        "documentId": "doc_aec3e4f0ee554f2990879360a3e6709e",
+        "scaffoldedSections": 92,
+        "marketSupport": {
+          "tier": "build_and_sequence",
+          "label": "Build and sequence",
+          "reason": "Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.",
+          "appliesTo": [
+            "US_IND",
+            "US_IND_AMENDMENT"
+          ]
+        },
+        "submissionId": 10,
+        "submissionCreated": true,
+        "projectAnchorId": 8,
+        "projectAnchorCreated": true
+      }
+    }
+  }
+}

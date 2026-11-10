@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/10/dispatch-qc",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "region": "fda",
+      "sequenceId": 3,
+      "validationErrors": 0,
+      "unresolvedShadowCriticals": 0,
+      "leaves": [
+        {
+          "sectionCode": "m5.3.5",
+          "operation": "new"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 39,
+    "rateLimitRetries": 0,
+    "body": {
+      "clearedToDispatch": false,
+      "blockers": [
+        "9 open error-severity validation finding(s) must be resolved before dispatch.",
+        "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:3)."
+      ],
+      "warnings": [
+        "Leaf \"Protocol\" (m5.3.5) points at vault_documents f20b1245-7c17-4d13-a40f-e069925e5259, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+        "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch."
+      ],
+      "checklist": [
+        {
+          "item": "No open error-severity validation findings on the stored leaves",
+          "pass": false
+        },
+        {
+          "item": "No unacknowledged Shadow Review criticals",
+          "pass": true
+        },
+        {
+          "item": "At least one completed Shadow Review has run for this sequence",
+          "pass": false
+        },
+        {
+          "item": "External agency-grade validation gate clear",
+          "pass": true
+        },
+        {
+          "item": "Release signature gate clear (21 CFR Part 11 §11.70)",
+          "pass": false
+        },
+        {
+          "item": "Required Module 1 sections present for the region",
+          "pass": false
+        },
+        {
+          "item": "Lifecycle operations coherent (new/replace/append/delete; original sequence carries only new)",
+          "pass": true
+        }
+      ],
+      "verdictSource": "assess-dispatch-readiness",
+      "narrative": null,
+      "narrativeUnavailable": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+      }
+    }
+  }
+}

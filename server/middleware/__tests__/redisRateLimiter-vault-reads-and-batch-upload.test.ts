@@ -214,6 +214,20 @@ describe('the bucket each path is counted in', () => {
     expect(getCategory('/c2c/documents', 'POST')).toBe('documents');
   });
 
+  // Walked 2026-11-10 (CSR path): since 2026-11-09 the editor reads the open document's review route when it opens,
+  // and Send for review reads who the route admits. Both were metered as document content, 20 a minute. Opening the
+  // CSR a few times in a minute spent that, and POST …/request-review answered 429 "Too many document requests":
+  // the same refusal the two entries above record, for the third time.
+  it('the review route of the open document and who it admits are record reads; sending for review stays a write', () => {
+    for (const read of ['review-route', 'route-candidates']) {
+      expect(getCategory(`/api/authoring/documents/${docId(0)}/${read}`, 'GET'), read).toBe('document_metadata');
+      expect(getCategory(`/authoring/documents/${docId(0)}/${read}`, 'GET'), read).toBe('document_metadata');
+    }
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/request-review`, 'POST')).toBe('documents');
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/review-route/reassign`, 'POST')).toBe('documents');
+    expect(getCategory(`/api/authoring/documents/${docId(0)}/review-route/hand-back`, 'POST')).toBe('documents');
+  });
+
   it('chat uploads are upload reads', () => {
     expect(getCategory('/chat/upload', 'POST')).toBe('upload');
   });

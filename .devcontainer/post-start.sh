@@ -267,6 +267,20 @@ else
         : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the key check did not run")}})'
   )"
   c2c_log "ANTHROPIC_API_KEY: $C2C_ANTHROPIC_LINE"
+  # The model list above is answered for an account with no credit, and for a key whose workspace cannot call a
+  # model it can see: this start said "key accepted" while every drafting call was refused (2026-11-10). One small
+  # billable request (about 60 tokens) to an approved drafting model says whether the key can draft, and if not, why.
+  if [[ "$C2C_ANTHROPIC_LINE" == "key accepted"* ]]; then
+    C2C_DRAFTING_LINE="$(
+      set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+      env "${C2C_UNSET[@]}" node scripts/ops/codespaces-doctor.mjs --json --probe-anthropic-usage \
+        "--expect-anthropic-models=$C2C_DRAFTING_MODELS" 2>/dev/null |
+      node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("{"),s.lastIndexOf("}")+1)).anthropicDrafting;
+        console.log(a.status==="passed" ? "answered by " + a.model + ((a.modelsRefused||[]).length ? " (not offered to this key: " + a.modelsRefused.join(", ") + ")" : "")
+          : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the check did not run")}})'
+    )"
+    c2c_log "A drafting call with this key (one small billable request): $C2C_DRAFTING_LINE"
+  fi
 fi
 if [[ -z "${OPENAI_API_KEY:-}" ]]; then
   c2c_log "No OPENAI_API_KEY secret: search (Vault, knowledge base, AnA's project memory) uses OpenAI embeddings and will fail."
@@ -281,6 +295,11 @@ case "$C2C_APP_ANA" in
       c2c_log "This start has no ANTHROPIC_API_KEY. A Codespaces secret reaches a Codespace when it starts:"
       c2c_log "after adding one, stop and start the Codespace (Codespaces menu: Stop Current Codespace), not just reload the page."
     fi ;;
+  embedding_lane_down|no_embedding_lane)
+    # /readyz is red for search only. Read as "AnA is down", it sent a person holding a working Anthropic key
+    # looking for a fault in that key.
+    c2c_log "AnA in the running app answers and drafts with the Anthropic key (see the drafting call above)."
+    c2c_log "Search is off ($C2C_APP_ANA): Vault search, the knowledge base and AnA's project memory need OPENAI_API_KEY for embeddings." ;;
   *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
 esac
 

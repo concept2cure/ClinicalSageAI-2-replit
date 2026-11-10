@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/compile/53be45d6-0591-45ec-a571-e6512b00baeb",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "code": "CMC_PRODUCT_CLASS_OUT_OF_SCOPE",
+      "error": "This project records its product as a biologic, and Module 3 is composed here only for a drug (a small-molecule medicinal product). A biologic's quality requirements are ICH Q6B, Q5A(R2) and Q5C and its cell-bank sections; a device or IVD files no CTD Module 3 at all. Author its quality content in Document editor & authoring, keep the evidence in Vault (DMS), and file it through the Submission center.",
+      "hint": "Author its quality content in Document editor & authoring, keep the evidence in Vault (DMS), and file it through the Submission center."
+    }
+  }
+}
