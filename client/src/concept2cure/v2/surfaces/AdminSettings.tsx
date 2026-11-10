@@ -10,6 +10,7 @@
  *
  *   OrganizationProfileCard   name and client type, under one reason
  *   SessionPolicySetting      idle sign-out and concurrent sessions, under a reason
+ *   ReviewPolicySetting       reviewers an approval needs and sole-member self-approval (P-117)
  *                             (it replaces the read-only "Session timeout" row
  *                             GET /api/mdx/admin used to serve)
  *   GatewayAccountsSetting    whose agency gateway account submissions go out under
@@ -40,7 +41,7 @@ import { LegalHoldsCard } from './LegalHoldsCard';
 import { OrganizationProfileCard, saveFailure, type OrganizationProfileContext } from './OrganizationProfileCard';
 import { PdfARequirementSetting } from './PdfARequirementSetting';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
-import { SessionPolicySetting } from '../onboarding/SessionPolicySetting';
+import { ReviewPolicySetting, SessionPolicySetting } from '../onboarding/SessionPolicySetting';
 import { ValidationKitCard } from './ValidationKitCard';
 import '../styles/translation-v2.css';
 
@@ -69,6 +70,8 @@ export function OrganizationSettingsCards({ onNav, onProfileContext, onAsk }: Ca
     <div className="txw-settings">
       <OrganizationProfileCard onContext={onProfileContext} />
       <SessionPolicySetting />
+      {/* How many reviewers an approval needs, and a one-person organisation's self-approval (P-117). */}
+      <ReviewPolicySetting />
       {/* Agency gateway accounts: the platform's or the organisation's own, per
           gateway and environment (D7, founder decision 2026-10-01). */}
       <GatewayAccountsSetting />
