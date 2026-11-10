@@ -80,6 +80,11 @@ With no second or third person, every two-person step says "not executed" and no
      independent reviewers. The Lumen organisation has one reviewer besides its author and approver, so its placed
      artifacts stay in review with the review recorded, and the step says so. A fourth person in the organisation,
      added to the roster as a second reviewer, would let them be approved.
+   - **"Demo access" chooses who** (2026-11-10). Under "Sign in as" the login screen lists every demo person by
+     account and role: Lumen's three, then the development organisation's seven. Each signs in through the same dev
+     login and readiness check (`client/src/concept2cure/components/concept2cure-auth/DemoAccounts.tsx`). The
+     Codespace passes the list as `VITE_DEMO_ACCOUNTS` (`post-create.sh` `c2c_demo_accounts`, roles in
+     `c2c_demo_role`). With no list, the single button is as it was.
 2. **The Vault re-files on every run.** The second run counts `vault-filing: 21`. `ensureFiled` in `lumen-vault.mjs`
    trusts the ingest reply's `filing` on a re-upload. It should read the document's current filing before calling
    `POST …/file`. There is no data harm, only audit entries on each re-seed.
