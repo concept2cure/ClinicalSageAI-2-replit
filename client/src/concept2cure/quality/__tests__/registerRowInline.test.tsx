@@ -90,6 +90,12 @@ describe('a controlled document row shows the actions that fit its state', () =>
     expect(behindMore(row, 'QS-SOP-007')).toEqual(['Open']);
   });
 
+  it('scrolls a wide register inside its own box, so its pinned actions are never clipped by the page', () => {
+    const { row } = mount(doc({}));
+    const table = row.closest('table') as HTMLElement;
+    expect(table.parentElement?.className).toBe('qms-reg-scroll');
+  });
+
   it('every inline action is a ghost button, and Ask AnA is an icon with its name for assistive technology', () => {
     const { row } = mount(doc({}));
     const acts = row.querySelector('.qms-rowacts') as HTMLElement;

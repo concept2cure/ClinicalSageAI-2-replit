@@ -62,7 +62,10 @@ describe('Quality says whose records it lists', () => {
     mount();
     expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
     expect(new URLSearchParams(window.location.search).get('quality')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Show C11 · Gasket programme only' }));
+    // The control names the project by its code; its title carries the full name.
+    const narrow = screen.getByRole('button', { name: 'Show C11 only' });
+    expect(narrow.getAttribute('title')).toBe('Show C11 · Gasket programme only');
+    fireEvent.click(narrow);
     expect(new URLSearchParams(window.location.search).get('quality')).toBe('project');
     expect(screen.getByTestId('quality-scope').textContent).toMatch(/^C11 · Gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances\. Training, deviations, suppliers, audits and management reviews are the organisation's\.$/);
     fireEvent.click(screen.getByRole('button', { name: 'Show the whole organisation' }));

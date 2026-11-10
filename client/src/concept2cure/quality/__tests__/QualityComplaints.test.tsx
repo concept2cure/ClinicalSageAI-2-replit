@@ -80,6 +80,9 @@ describe("Quality's Complaints and MDR tab", () => {
     expect(mdr.textContent).toContain('FDA 30-day');
     expect(within(mdr).getByText('Overdue').className).toContain('tone-err');
     expect(screen.queryByText(/program_id/)).toBeNull();
+    // One primary action per view (§2): the second register's create is a ghost button.
+    expect(within(complaints).getByRole('button', { name: 'Record complaint' }).className).toBe('btn primary small');
+    expect(within(mdr).getByRole('button', { name: 'Record MDR decision' }).className).toBe('btn ghost small');
   });
 
   it('narrowed to the project, reads its complaints and reports only', () => {

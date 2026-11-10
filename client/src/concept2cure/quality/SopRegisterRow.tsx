@@ -178,20 +178,25 @@ export function AskAnaButton({ label, onAsk }: { label: string; onAsk: () => voi
 }
 
 /**
- * A Quality register as D0's table: its column headers, then a visually hidden "Actions" header over the row's next
- * step and More (C6). The SOP register, the change log (C8) and the quality records (C11) render through it.
+ * A Quality register as D0's table: its column headers, then a visually hidden "Actions" header over the row's
+ * actions and More (C6). The SOP register, the change log (C8) and the quality records (C11) render through it.
+ * The table scrolls inside its own box, and from tablet width up the actions column stays pinned at the box's right
+ * edge (P-122): measured at 1440 on the demo, the CAPA, nonconformance, supplier and audit registers ran 200 to 525 px
+ * past their section, and their actions were clipped out of reach.
  */
 export function RegisterTable({ columns, children }: { columns: readonly string[]; children: React.ReactNode }) {
   return (
-    <table className="reg-tbl qms-reg">
-      <thead>
-        <tr>
-          {columns.map((c) => <th key={c} scope="col">{c}</th>)}
-          <th scope="col"><span className="sr-only">Actions</span></th>
-        </tr>
-      </thead>
-      {children}
-    </table>
+    <div className="qms-reg-scroll">
+      <table className="reg-tbl qms-reg">
+        <thead>
+          <tr>
+            {columns.map((c) => <th key={c} scope="col">{c}</th>)}
+            <th scope="col"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        {children}
+      </table>
+    </div>
   );
 }
 

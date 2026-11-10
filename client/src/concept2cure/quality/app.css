@@ -58,6 +58,15 @@
 .qms-vigilance { list-style: none; margin: 0; padding: 0; }
 .qms-vigilance li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-small); }
 .qms-vigilance .qms-vigilance-why { flex-basis: 100%; color: var(--text-300); }
+/* A register scrolls inside its own box at every width (P-122), and from tablet width up its actions column is pinned
+   at the box's right edge, on the page's own background, so a wide register never clips a row's actions. At phone
+   width the column scrolls with the row: pinned, it would cover the facts. */
+.qms-reg-scroll { max-width: 100%; overflow-x: auto; }
+@media (min-width: 641px) {
+  .c2c-v2 .reg-tbl.qms-reg > thead > tr > th:last-child,
+  .c2c-v2 .reg-tbl.qms-reg > tbody > tr:first-child > td:last-child { position: sticky; right: 0; z-index: 1; background: var(--bg-000); }
+  .c2c-v2 .reg-tbl.qms-reg > tbody:is(:hover, [data-more]) > tr:first-child > td:last-child { background: var(--bg-050); }
+}
 /* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
 .qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
 .qms-ask-ico svg { width: 16px; height: 16px; }

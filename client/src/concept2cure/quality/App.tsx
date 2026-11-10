@@ -393,8 +393,11 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
               </div>
               {scope.projectName && (
                 <div className="ph-acts">
-                  <button type="button" className="btn ghost small" onClick={() => setQualityWide(!scope.wide)}>
-                    {scope.wide ? `Show ${scope.projectName} only` : 'Show the whole organisation'}
+                  {/* One quiet control (P-122). It names the project by its code: the full name ("C11 · Gasket
+                      programme …") made the button wider than a phone. The full name is its title. */}
+                  <button type="button" className="btn ghost small" title={scope.wide ? `Show ${scope.projectName} only` : undefined}
+                    onClick={() => setQualityWide(!scope.wide)}>
+                    {scope.wide ? `Show ${scope.projectName.split(' · ')[0]} only` : 'Show the whole organisation'}
                   </button>
                 </div>
               )}

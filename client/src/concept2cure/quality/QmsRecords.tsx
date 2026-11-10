@@ -39,8 +39,10 @@ import { DEVIATIONS } from './qmsDeviationRegister';
 import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegisters';
 import { COMPLAINTS, MDR_EVENTS } from './qmsComplaintRegisters';
 
-function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
+function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext, secondary }: {
   config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
+  /** A second register on the tab: its create is a ghost button, so the view keeps one primary action (§2). */
+  secondary?: boolean;
 }) {
   const scope = useQualityScope();
   const read = useFetchJson<unknown>(config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath);
@@ -132,7 +134,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         <div className="pj-sec-h">
           <h2 id={headId}>{config.title}</h2>
           <div className="pj-sec-acts">
-            <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
+            <button type="button" className={secondary ? 'btn ghost small' : 'btn primary small'} onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
           </div>
         </div>
         {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
@@ -290,7 +292,7 @@ function ComplaintsAndMdr({ onAsk, onContext }: { onAsk: (q: string) => void; on
   return (
     <>
       <RecordRegister config={COMPLAINTS} onAsk={onAsk} onContext={fromComplaints} />
-      <RecordRegister config={MDR_EVENTS} onAsk={onAsk} onContext={fromMdr} />
+      <RecordRegister config={MDR_EVENTS} onAsk={onAsk} onContext={fromMdr} secondary />
     </>
   );
 }

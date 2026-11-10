@@ -169,3 +169,55 @@ and that another organisation's project is refused (404) with no rows.
 
 - Red (`item5-red.txt`): 10 of 10 fail at HEAD.
 - Green (`item5-green.txt`).
+
+## Walked in the running app, and what the walk fixed
+
+`walk.cjs` ran as `rr5-author@example.test` (organisation 5, the demo packs) against a local instance on port 5263,
+with the demo's Lumen project LMN-201 open in Quality and the IVD 510(k) project NEUR on Post-market. It took every
+shot at 1440 and 390 px, in light and dark, before any change and after all of them. It recorded no page error and no
+failed API read in either run (`shots/before-walk.log.json`, `shots/after-walk.log.json`, with each screen's text).
+The password is read from the environment and never written down.
+
+| Screen | Before (`shots/before-*`) | After (`shots/after-*`) |
+|---|---|---|
+| SOP register, LMN-201 open | 3 of the organisation's 11 controlled documents, under "LMN-201 …: its controlled documents …"; one next step and More per row | the organisation's 11, "The whole organisation's quality records.", "Show LMN-201 only"; the figure line; Send for review, Open and Ask AnA inline |
+| CAPA, LMN-201 open | the project's CAPAs; the action column clipped past the section | the organisation's CAPAs; Advance, Add action and Ask AnA pinned at the right edge |
+| Complaints and MDR | no such tab | the tab; both registers honest-empty (the demo holds no complaint or MDR event) |
+| Post-market, NEUR | four "Shown once this screen reads this project's records" notes | the panels drawn for NEUR (honest zeros: the demo holds no signal or CAPA for a device project) |
+
+The walk found three defects in this work, each fixed red first (`walkfix-red.txt`):
+1. **The narrowing control ran off a phone.** Labelled with the project's full name, it was wider than 390 px. It is
+   now "Show LMN-201 only", the full name in its title.
+2. **Two primary buttons on the Complaints and MDR tab.** The MDR register's "Record MDR decision" is now a ghost
+   button, so the view keeps one primary action (§2).
+3. **Wide registers clipped their actions.** At 1440 the CAPA, deviation, nonconformance, supplier and audit tables ran
+   200–525 px past their section, and the actions column was cut off; it already was before item 2, with one button.
+   `RegisterTable` now scrolls inside its own box, and from 641 px up its actions column is pinned at the box's right
+   edge on the page's background (`register-width.txt`: every row's actions now end inside the section). At phone width
+   the column scrolls with the row, since pinned it would cover the facts.
+
+## Gates
+
+- `node scripts/ci/check-one-design-plan.mjs`: OK on every commit (D7 for Quality's own files; R1 where a commit
+  reaches the server, the device screen or `shared/`). No `UI_SURFACES` id, `SURFACE_VIEWS` entry, mount or table was
+  added.
+- `npm run -s ci:sql-interpolation`: OK. `ci:tenant-resolvers`, `ci:unkeyed-request-tables`: OK.
+  `ci:launch-scope-api`: no Quality or post-market finding (its one finding, `/api/cmc-changes`, is the CMC lane's).
+- Typecheck (`typecheck.txt`): none of this work's files. Five errors remain in
+  `client/src/concept2cure/v2/surfaces/AgencyResponses.tsx`, from `9e9bc42ff` (the CMC lane), untouched here.
+- Lint: no new warning. `client/src/concept2cure/quality/**` and `mdx/**` are outside ESLint's scope
+  (`eslint.config.js` ignores `client/src/concept2cure/*` but `v2/`); every changed server, shared and test file lints
+  at HEAD's count (0, or 1 for `surface-actions.ts`, unchanged).
+
+## Not done here
+
+- **Typecheck of the tree is not clean**, for the reason above; this work adds no error.
+- **The demo holds no complaint, MDR event, or device-project signal or CAPA**, so the after shots of the new tab and of
+  Post-market show honest empty states. Nothing was written to the shared demo database. The DB test is the proof of
+  the reads with rows in them.
+- **Module entitlement for the Complaints and MDR reads.** Launch scope serves them under `device-postmarket`'s claim
+  on `/api/capa-mdr`. If module enforcement is turned on (`MODULE_ENFORCEMENT`, off by default), an organisation
+  licensed for Quality but not for Projects would be refused them; claiming the three families on `quality` too is a
+  registry change left to the registry's owner.
+- **Acknowledgement coverage** is not on the figure line: the SOP register's training section already states it from
+  the server's summary, and putting it on every tab would add a fifth read.
