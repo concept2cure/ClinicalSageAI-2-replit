@@ -9,14 +9,16 @@ async function section(page, who) {
   const sec = page.getByTestId('training-expiry');
   await sec.scrollIntoViewIfNeeded();
   await page.waitForTimeout(600);
-  const seen = await sec.evaluate((s) => ({
-    heading: s.querySelector('h2')?.textContent?.trim() ?? null,
-    sub: s.querySelector('.pj-sec-h .sec-sub')?.textContent?.trim() ?? null,
-    rows: [...s.querySelectorAll('[data-testid="training-expiry-row"]')].map((r) => r.textContent.trim().replace(/\s+/g, ' ').slice(0, 160)),
-    empty: s.querySelector('.c2c-empty-state, [class*="empty"]')?.textContent?.trim()?.slice(0, 160) ?? null,
-    unassessed: s.querySelector('[data-testid="training-expiry-unassessed"]')?.textContent?.trim() ?? null,
-    capped: s.querySelector('[data-testid="training-expiry-capped"]')?.textContent?.trim() ?? null,
-  }));
+  const seen = await sec.evaluate((s) => {
+    const text = (sel) => { const el = s.querySelector(sel); return el ? el.textContent.trim().slice(0, 160) : null; };
+    return {
+      heading: text('h2'), sub: text('.pj-sec-h .sec-sub'),
+      rows: [...s.querySelectorAll('[data-testid="training-expiry-row"]')].map((r) => r.textContent.trim().replace(/\s+/g, ' ').slice(0, 160)),
+      empty: text('.c2c-empty-state, [class*="empty"]'),
+      unassessed: text('[data-testid="training-expiry-unassessed"]'), capped: text('[data-testid="training-expiry-capped"]'),
+    };
+  });
+
   log.steps.push({ name: `section-${who}`, status: meta.status, meta: meta.body?.meta ?? null, ...seen });
   await shot(page, `w29-training-${who}-1440`, false);
 }

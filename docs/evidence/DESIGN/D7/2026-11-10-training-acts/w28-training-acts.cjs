@@ -18,30 +18,38 @@ async function openJobRoles(page) {
 
 /* The organization had no job roles, so the walk first makes one through the real routes: a role, one holder (Theo,
    the trainee) and an assignment to an effective SOP. Each write states its reason. */
+const WHY = 'Walk 28: a job role to read the training drawers against.';
+const readRoles = async (page) => (await api(page, 'GET', '/api/mdx/qms/job-roles')).body?.data?.roles ?? [];
+
+async function ensureRole(page) {
+  const found = (await readRoles(page)).find((r) => r.name === 'QA reviewer (walk)');
+  if (found) return found;
+  const made = await api(page, 'POST', '/api/mdx/qms/job-roles', { name: 'QA reviewer (walk)', description: 'Reviews controlled procedures before release.', reason: WHY });
+  log.steps.push({ name: 'setup-role', status: made.status });
+  return made.body?.data ?? null;
+}
+
+async function ensureHolder(page, role) {
+  if ((role.members ?? []).some((m) => m.userId === 3)) return;
+  const add = await api(page, 'POST', `/api/mdx/qms/job-roles/${role.id}/members`, { userId: 3, reason: WHY });
+  log.steps.push({ name: 'setup-holder', status: add.status, error: add.body?.message ?? add.body?.error ?? null });
+}
+
+async function ensureAssignment(page, role) {
+  if (role.documentCount) return;
+  const docs = (await api(page, 'GET', '/api/mdx/qms/documents')).body?.data ?? [];
+  const sop = docs.find((d) => d.status === 'effective' && d.doc_type === 'sop');
+  if (!sop) { log.steps.push({ name: 'setup-assignment', skipped: 'no effective SOP' }); return; }
+  const assign = await api(page, 'POST', `/api/mdx/qms/documents/${sop.id}/training-assignments`, { jobRoleId: role.id, reason: WHY });
+  log.steps.push({ name: 'setup-assignment', document: sop.doc_number, status: assign.status, error: assign.body?.message ?? assign.body?.error ?? null });
+}
+
 async function setup(page) {
-  const WHY = 'Walk 28: a job role to read the training drawers against.';
-  let roles = (await api(page, 'GET', '/api/mdx/qms/job-roles')).body?.data?.roles ?? [];
-  let role = roles.find((r) => r.name === 'QA reviewer (walk)');
-  if (!role) {
-    const made = await api(page, 'POST', '/api/mdx/qms/job-roles', { name: 'QA reviewer (walk)', description: 'Reviews controlled procedures before release.', reason: WHY });
-    log.steps.push({ name: 'setup-role', status: made.status });
-    role = made.body?.data;
-  }
-  if (!role?.id) return;
-  roles = (await api(page, 'GET', '/api/mdx/qms/job-roles')).body?.data?.roles ?? [];
-  role = roles.find((r) => r.id === role.id) ?? role;
-  if (!(role.members ?? []).some((m) => m.userId === 3)) {
-    const add = await api(page, 'POST', `/api/mdx/qms/job-roles/${role.id}/members`, { userId: 3, reason: WHY });
-    log.steps.push({ name: 'setup-holder', status: add.status, error: add.body?.message ?? add.body?.error ?? null });
-  }
-  if (!role.documentCount) {
-    const docs = (await api(page, 'GET', '/api/mdx/qms/documents')).body?.data ?? [];
-    const sop = docs.find((d) => d.status === 'effective' && d.doc_type === 'sop');
-    if (sop) {
-      const assign = await api(page, 'POST', `/api/mdx/qms/documents/${sop.id}/training-assignments`, { jobRoleId: role.id, reason: WHY });
-      log.steps.push({ name: 'setup-assignment', document: sop.doc_number, status: assign.status, error: assign.body?.message ?? assign.body?.error ?? null });
-    } else log.steps.push({ name: 'setup-assignment', skipped: 'no effective SOP' });
-  }
+  const made = await ensureRole(page);
+  if (!made?.id) return;
+  const role = (await readRoles(page)).find((r) => r.id === made.id) ?? made;
+  await ensureHolder(page, role);
+  await ensureAssignment(page, role);
 }
 
 async function wide(browser) {
