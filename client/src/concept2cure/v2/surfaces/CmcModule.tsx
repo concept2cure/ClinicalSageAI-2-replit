@@ -565,7 +565,7 @@ function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C
    relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {
   return (
-    <span className={bar ? 'pj-sec-acts cm-push cm-pushbar' : 'pj-sec-acts cm-push'}>
+    <span className={bar ? 'pj-sec-acts cm-pushbar' : 'pj-sec-acts'}>
       <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
       <button type="button" className="btn ghost small" onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
       <button type="button" className="btn ghost small" onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
@@ -3350,7 +3350,7 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
      pending. */
   return (
     <CmcQuestionsContextProvider value={questionsRead}>
-      <div className="page-inner cm" data-work-area="cmc">
+      <div className="page-inner" data-work-area="cmc">
         <ProjectBack onNav={onNav} />
         <header className="ph">
           <div>
