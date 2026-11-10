@@ -292,3 +292,23 @@ describe('coverageSentence — an INTACT verdict never implies more than it cove
     expect(coverageSentence({ ...BASE, totalEntries: 0, hashedEntries: 0, unhashedEntries: 0 })).toBeNull();
   });
 });
+
+// 2026-11-10, the Codespace click-through: with no signing key configured the panel said "Couldn't produce the
+// attestation · Attestation not configured" and offered "Try again", which can never work. A key that is not
+// configured is said as what it is, with no retry, and without implying anything is wrong with the audit trail.
+describe('an installation with no attestation signing key', () => {
+  it('says the key is not configured, and offers no retry', async () => {
+    apiRequest.mockImplementation(async () => {
+      throw Object.assign(new Error('Attestation not configured'), { name: 'ApiRequestError', status: 503,
+        payload: { error: 'Attestation not configured', code: 'ATTESTATION_KEY_NOT_CONFIGURED', detail: 'AUDIT_ATTESTATION_KEY env var is required' } });
+    });
+    await runIt();
+    const note = await screen.findByTestId('attestation-not-configured');
+    expect(note.getAttribute('role')).toBe('status');
+    expect(note.textContent).toMatch(/no attestation signing key/);
+    expect(note.textContent).toMatch(/audit trail is unaffected/);
+    expect(screen.queryByTestId('attestation-error')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Try again|Retry/ })).toBeNull();
+    expect(screen.queryByText(/AUDIT_ATTESTATION_KEY/)).toBeNull();
+  });
+});

@@ -154,7 +154,7 @@ type State =
   | { k: 'idle' }
   | { k: 'running' }
   | { k: 'done'; report: AttestationReport }
-  | { k: 'failed'; message: string; forbidden: boolean };
+  | { k: 'failed'; message: string; forbidden: boolean; notConfigured?: boolean };
 
 /** One counted fact of the report. */
 function Fact({ term, value }: { term: string; value: string }) {
@@ -342,6 +342,7 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
       setState({
         k: 'failed',
         forbidden: res.status === 403,
+        notConfigured: (res.body as { code?: unknown } | null)?.code === 'ATTESTATION_KEY_NOT_CONFIGURED',
         message: apiErrorText(res, 'The attestation could not be produced.'),
       });
       return;
@@ -393,6 +394,13 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
           {state.forbidden ? (
             <div role="alert" style={{ fontSize: 13, color: 'var(--text-200)' }}>
               {I.lock} {state.message}
+            </div>
+          ) : state.notConfigured ? (
+            /* No signing key in this installation: not an outage, and a retry cannot fix it (2026-11-10: it read
+               "Couldn’t produce the attestation · Attestation not configured" beside "Try again"). */
+            <div role="status" data-testid="attestation-not-configured" style={{ fontSize: 13, color: 'var(--text-200)' }}>
+              {I.lock} This installation has no attestation signing key, so a signed attestation cannot be produced here.
+              The audit trail is unaffected. Whoever runs the installation configures the key.
             </div>
           ) : (
             <ErrorState
