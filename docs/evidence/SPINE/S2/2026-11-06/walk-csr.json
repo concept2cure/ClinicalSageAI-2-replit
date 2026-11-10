@@ -1,0 +1,38 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "phase": "csr",
+  "startedAt": "2026-11-10T02:42:29.929Z",
+  "steps": [
+    {
+      "name": "1440: cdiscpilot01-adam-bundle.json captured into the CSR project's data room",
+      "sourceId": 190
+    },
+    {
+      "name": "1440: used in the CSR project"
+    },
+    {
+      "name": "1440: the CSR's study-data chooser lists the used source first",
+      "options": [
+        "Choose a source",
+        "cdiscpilot01-adam-bundle.json · v1.0 · approved · used in this project"
+      ]
+    },
+    {
+      "name": "390: cdiscpilot01-adam-bundle.json captured into the CSR project's data room",
+      "sourceId": 190
+    },
+    {
+      "name": "390: used in the CSR project"
+    },
+    {
+      "name": "390: the CSR's study-data chooser lists the used source first",
+      "options": [
+        "Choose a source",
+        "cdiscpilot01-adam-bundle.json · v1.0 · approved · used in this project"
+      ]
+    }
+  ],
+  "apiErrors": [],
+  "ok": true,
+  "finishedAt": "2026-11-10T02:42:58.376Z"
+}

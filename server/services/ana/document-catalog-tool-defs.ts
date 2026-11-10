@@ -29,10 +29,23 @@ export const LIST_PROJECT_DOCUMENTS: AnaTool = {
     'exists — never assume a file is gone because it was uploaded in an earlier session. Also returns the ' +
     'actor-accessible CHAT-UPLOADED files (the Data Room evidence spine) with each one\'s file_id, so a file ' +
     'attached in a past conversation can be reopened with inspect_uploaded_document / read_uploaded_document. ' +
-    'Follow up with read_project_document to study a vault document and catalog_project_document to record what it is.',
+    'Follow up with read_project_document to study a vault document and catalog_project_document to record what it is. ' +
+    'With catalog:true it answers instead with the DATA CATALOG (the user\u2019s Vault \u2192 Data catalog): every captured ' +
+    'file across the user\u2019s projects of the open project\u2019s sponsor, organized by project, study, kind, CTD section ' +
+    'and proposed Vault folder, each with its grade (A\u2013D, a score, and the recorded fact behind each criterion), its ' +
+    'version and what it revises, and whether this project already uses it. Grades are computed by an engine: report ' +
+    'them, never invent or adjust one. To bring a capture into this project, propose it and tell the user to press ' +
+    '"Use in this project" in the Data catalog; to file one into the Vault, use file_chat_upload_to_vault with its source_id.',
   input_schema: {
     type: 'object',
     properties: {
+      catalog: { type: 'boolean', description: 'true: the data catalog across the user\u2019s projects of this sponsor, graded, instead of the open project\u2019s documents. Needs an open project.' },
+      query: { type: 'string', description: 'With catalog: words to find in a capture\u2019s title or text.' },
+      kind: { type: 'string', description: 'With catalog: only this evidence kind (from organizedBy.kind).' },
+      ctd: { type: 'string', description: 'With catalog: only this CTD section and its subsections (e.g. "5.3").' },
+      folder: { type: 'string', description: 'With catalog: only this proposed Vault folder (from organizedBy.folder).' },
+      project: { type: 'string', description: 'With catalog: only this project of the catalog (from organizedBy.project).' },
+      study: { type: 'number', description: 'With catalog: only this study (from organizedBy.study).' },
       program_id: {
         type: 'string',
         description: 'Optional regulatory program UUID to scope to. Default: the admitted open project’s program, else the current actor’s accessible projects.',
@@ -175,10 +188,18 @@ export const FILE_CHAT_UPLOAD_TO_VAULT: AnaTool = {
     'report, a CoA, a protocol — rather than a throwaway. It performs the SAME governed admission as an upload ' +
     'through the Vault surface (virus scan, stored bytes, 21 CFR Part 11 audit entry, filing proposal), so tell ' +
     'the user the file was filed and where. Returns the vault document_id: read it with read_project_document ' +
-    'and record what it is with catalog_project_document.',
+    'and record what it is with catalog_project_document. ' +
+    'For a DATA-ROOM capture (a source in list_project_documents with catalog:true marked fileable), pass its ' +
+    'source_id instead of file_id, title and type: it is filed through the Vault\u2019s own "File into Vault" for the ' +
+    'data room (the same governed ingest; the bytes are checked against the capture\u2019s SHA-256), and lands ' +
+    'suggested or unfiled for a person to confirm. Say so; never that it is confirmed.',
   input_schema: {
     type: 'object',
     properties: {
+      source_id: {
+        type: 'number',
+        description: 'A data-room capture\u2019s sourceId, from list_project_documents with catalog:true (fileable). Use instead of file_id, document_title and document_type.',
+      },
       file_id: {
         type: 'string',
         description: 'The chat upload\u0027s file_id, from list_project_documents\u0027 `chatUploads` array (e.g. "file_1712345678_ab12cd").',
@@ -207,7 +228,8 @@ export const FILE_CHAT_UPLOAD_TO_VAULT: AnaTool = {
           'Optional explicit dossier folder. Omit to let the classifier propose a placement (which a person then confirms) — do not guess a folder to avoid an unfiled state.',
       },
     },
-    required: ['file_id', 'document_title', 'document_type'],
+    // file_id, document_title and document_type, or source_id: checked by the handler.
+    required: [],
   },
 };
 
