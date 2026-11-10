@@ -53,6 +53,8 @@ import { useAuth } from '@/services/portal/authService';
 import { reportCmcLinkage } from './CmcRegisterLinks';
 import { RecordHistoryPanel } from './cmcRecordHistory';
 import { keepsRegisterHistory } from '@shared/constants/cmc-register-history';
+/* Two engines on their registers (P-122): the impurity verdicts and dissolution f2. */
+import { DissolutionCompare, ImpurityVerdictCell, useImpurityAssessments } from './cmcRegisterEngines';
 
 /* ═══════════════════════════════════════════════════════════════════
    CMC registers — real org-scoped data, read AND written honestly.
@@ -1539,6 +1541,9 @@ function impurityLevel(r: ImpurityProfileApiRow): React.ReactNode {
  */
 export function CmImpurityProfiles() {
   const projectId = cmcProjectUuid();
+  /* Each impurity against the guideline that governs it (P-122): the verdict
+     §3.2.S.3.2 composes from, on the row it is about. */
+  const assessed = useImpurityAssessments(projectId);
   return (
     <RegisterCard<ImpurityProfileApiRow>
       path={`/api/cmc/impurity-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
@@ -1631,6 +1636,7 @@ export function CmImpurityProfiles() {
           },
         },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
+        { header: 'Against the guideline', render: (r) => <ImpurityVerdictCell id={r.id} read={assessed} /> },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
@@ -1675,7 +1681,11 @@ function profileDepth(r: DissolutionProfileApiRow): React.ReactNode {
  */
 export function CmDissolutionProfiles() {
   const projectId = cmcProjectUuid();
+  const path = `/api/cmc/dissolution-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`;
+  /* The same list the card reads, for the f2 comparison under it (P-122). */
+  const profiles = useLiveRows<DissolutionProfileApiRow>(path);
   return (
+    <>
     <RegisterCard<DissolutionProfileApiRow>
       path={`/api/cmc/dissolution-profiles${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`}
       title="Dissolution profiles"
@@ -1723,6 +1733,8 @@ export function CmDissolutionProfiles() {
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
     />
+    <DissolutionCompare profiles={profiles.loading || profiles.error ? [] : profiles.rows} />
+    </>
   );
 }
 
