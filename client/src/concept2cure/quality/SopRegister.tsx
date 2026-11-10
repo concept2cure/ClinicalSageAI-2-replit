@@ -134,7 +134,10 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   /* In a project's scope the register is its documents, so the schedule (read for the whole organisation, the
      route has no project) is filtered to them: the SOP tab is the project's documents and their review (C14). */
   const scopedIds = React.useMemo(() => (scope.programId && reg.docs ? new Set(reg.docs.map((d) => d.id)) : null), [scope.programId, reg.docs]);
-  const reviewRows = React.useMemo(() => (rev.rows && scopedIds ? rev.rows.filter((r) => scopedIds.has(r.id)) : rev.rows), [rev.rows, scopedIds]);
+  /* Scoped, with the project's documents not yet read, the schedule is unread too: never the organisation's rows under
+     the project's heading (Quality review, 2026-11-10). */
+  const reviewRows = React.useMemo(() => (!scope.programId ? rev.rows : rev.rows && scopedIds ? rev.rows.filter((r) => scopedIds.has(r.id)) : null),
+    [scope.programId, rev.rows, scopedIds]);
   const reviewDue = reviewRows ?? NO_REVIEW;
   /* The overdue count is the review schedule's; while that read is unread or failed the register says nothing about
      overdue (a derivation from the register left out a version in force under revision, review C2-1). */
@@ -259,7 +262,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const regFailed = regUnread && reg.error != null;
   /* Review dates come from their own read, or are derived from the register;
      they are unknown only when both are. */
-  const reviewUnread = rev.rows == null;
+  const reviewUnread = reviewRows == null;
   const reviewFailed = reviewUnread && rev.error != null;
   const trainUnread = trainComp.rows == null && training.length === 0;
   const trainFailed = trainUnread && trainComp.error != null;

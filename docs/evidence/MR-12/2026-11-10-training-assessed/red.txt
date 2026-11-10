@@ -1,0 +1,53 @@
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > requires a fresh acknowledgment after revision and retains v1 training as history 115ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > counts distinct members with unexpired current-version evidence and preserves cycle dates 57ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > uses the active organization roster for both counts, excluding departed and foreign users 58ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > isolates documents and organizations even when they have equal version strings 80ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > says a document is assigned but has nobody active when no assigned member remains, retaining training history 38ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > current-version controlled-procedure training > includes all trainable effective types and excludes draft, retired, deleted and nontrainable records 111ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (e) the denominator is the distinct active people assigned by role and by name, not the roster 43ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > (f) a document assigned to nobody, or to a role nobody active holds, has no figure: never 0 of N 39ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > a removed assignment, a removed holder and a deleted role assign nobody 61ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > the viewer's own line: whether they are assigned, and whether their receipt counts now 84ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > the summary averages the assigned, readable documents only 71ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > expiry lists the people assigned only 50ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > per-person training expiry (G10) > lists each active member whose current training lapses within the window, and by when 65ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > per-person training expiry (G10) > names a member whose training on the release in force lapsed, and never one who renewed it 60ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > per-person training expiry (G10) > never lists a member whose current receipt has no expiry 51ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5) > lists a member assigned before it took effect who never acknowledged it as overdue, first; never one who did, nor twice one who lapsed 73ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5) > a member assigned after it took effect is due 14 days after they were assigned, listed within the window only 67ms
+ ✓ server/services/qms/__tests__/training-compliance.pglite.test.ts > outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5) > a member not assigned, or no longer active, is never listed as due 47ms
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > what the per-person view assessed > counts an assigned document whose released text cannot be read as not assessed 43ms
+   → readQmsTrainingView is not a function
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > what the per-person view assessed > counts nothing as not assessed when every assigned document was read 25ms
+   → readQmsTrainingView is not a function
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > names the person, the document and when their training lapses 37ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says a failed read failed, and never that no one lapses 9ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says each assignment state as it is, and an all-clear only where training is assigned 12ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > lists overdue, then due training, before the lapses, each with its day 145ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says when the list stopped at its cap, and treats a row of an unknown kind as a failed read 10ms
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > speaks for the reader alone when the read was their own rows 10ms
+   → expected 'Training overdue, due or lapsingOverd…' to contain 'You have no training overdue, due or …'
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > gives no all-clear over documents it could not assess, and says so 8ms
+   → Unable to find an element by: [data-testid="training-expiry-unassessed"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ view server/services/qms/__tests__/training-compliance.pglite.test.ts:386:40
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:392:18
+ ❯ view server/services/qms/__tests__/training-compliance.pglite.test.ts:386:40
+ ❯ server/services/qms/__tests__/training-compliance.pglite.test.ts:398:18
+AssertionError: expected 'Training overdue, due or lapsingOverd…' to contain 'You have no training overdue, due or …'
+ ❯ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx:99:35
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx:107:19
+ Test Files  2 failed (2)
+      Tests  4 failed | 23 passed (27)
+
+# The own-reader count, run against the organisation-wide count it replaces
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > what the per-person view assessed > counts, for a reader who sees only their own rows, only the documents assigned to them 55ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 1 to be +0 // Object.is equality
+- Expected
++ Received
+      Tests  1 failed | 20 passed (21)

@@ -18,8 +18,8 @@ import { ChangeLinkForm } from '../ChangeLinkForm';
 
 afterEach(() => { cleanup(); H.reads = {}; });
 
-const open = (onSubmit = vi.fn()) => {
-  render(<ChangeLinkForm changeNumber="CC-2026-014" refusal={null} onCancel={vi.fn()} onSubmit={onSubmit} />);
+const open = (onSubmit = vi.fn(), reasonRequired = false) => {
+  render(<ChangeLinkForm changeNumber="CC-2026-014" refusal={null} reasonRequired={reasonRequired} onCancel={vi.fn()} onSubmit={onSubmit} />);
   return { d: screen.getByRole('dialog'), onSubmit };
 };
 
@@ -31,7 +31,7 @@ describe('Link a record', () => {
     fireEvent.change(within(d).getByLabelText(/Choose the CAPA/), { target: { value: 'CAPA-007' } });
     expect((within(d).getByLabelText(/^Reference/) as HTMLInputElement).readOnly).toBe(true);
     fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
-    expect(onSubmit).toHaveBeenCalledWith({ linkType: 'capa', linkedRef: 'CAPA-007', linkedLabel: 'Assay OOS recurrence', relationship: undefined });
+    expect(onSubmit).toHaveBeenCalledWith({ linkType: 'capa', linkedRef: 'CAPA-007', linkedLabel: 'Assay OOS recurrence', relationship: undefined, note: undefined });
   });
 
   it('links a deviation chosen from the deviation register (P-57)', () => {
@@ -51,5 +51,18 @@ describe('Link a record', () => {
     fireEvent.change(within(d).getByLabelText(/^Reference/), { target: { value: 'DEV-2026-041' } });
     fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ linkType: 'deviation', linkedRef: 'DEV-2026-041' }));
+  });
+
+  // Quality review, 2026-11-10: past proposal, a link says why it is added, and the reason goes with it.
+  it('asks why the record is linked when the change is past proposal', () => {
+    const { d, onSubmit } = open(vi.fn(), true);
+    fireEvent.change(within(d).getByLabelText(/Record type/), { target: { value: 'deviation' } });
+    fireEvent.change(within(d).getByLabelText(/^Reference/), { target: { value: 'DEV-2026-041' } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(within(d).getByLabelText(/Why it is linked/).getAttribute('aria-invalid')).toBe('true');
+    fireEvent.change(within(d).getByLabelText(/Why it is linked/), { target: { value: '  Raised by this excursion.  ' } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Link record' }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ linkedRef: 'DEV-2026-041', note: 'Raised by this excursion.' }));
   });
 });

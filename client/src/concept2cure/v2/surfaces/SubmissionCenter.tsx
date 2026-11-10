@@ -40,6 +40,7 @@
  * real regulatory reference config, not sample data.
  */
 import React from 'react';
+import { PATHWAYS } from '@shared/types/submission-constants';
 import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
@@ -200,6 +201,11 @@ interface RegionProfile {
  * An ABSENT `requiredFor` means "every application type", per the server's own
  * contract — so it is kept, not dropped.
  */
+/** A filing pathway in words ("eCTD v3.2.2"), from the product's one list of them; a pathway it has no name for is
+ * shown as recorded, never as blank. The Planner printed the stored codes, "ectd_v322 · ectd_v40 · estar"
+ * (showcase walk, 2026-11-10). */
+const pathwayName = (code: string): string => PATHWAYS.find((p) => p.value === code)?.label ?? code;
+
 function requiredModule1For(
   sections: RegionProfileSection[],
   applicationType: string | null | undefined,
@@ -1831,7 +1837,7 @@ export function SubmissionCenter({
                     <div className="tl-spec-row">
                       <span className="tl-spec-k">Pathways</span>
                       <span className="tl-spec-v">
-                        {profile.data.pathways?.length ? profile.data.pathways.join(' · ') : '—'}
+                        {profile.data.pathways?.length ? profile.data.pathways.map(pathwayName).join(' · ') : '—'}
                       </span>
                     </div>
                     <div className="tl-spec-row">

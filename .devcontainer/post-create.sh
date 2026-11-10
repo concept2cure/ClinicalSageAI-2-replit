@@ -131,6 +131,19 @@ c2c_start_postgres() {
 }
 
 # Generate the credentials once. Hex passwords need no URL encoding.
+# The app's own attestation signing key, minted like its JWT secrets (docs/operations/attestation-key-rotation.md,
+# step 1). Without one, Compliance reports' "Run attestation" answered 503 in every Codespace (2026-11-10). Called
+# when the state is written and on every start, so an app.env made before this gains one; never replaced, so
+# reports it signed still verify.
+c2c_ensure_attestation_key() {
+  local app_env="$C2C_CODESPACE_STATE/app.env"
+  [[ -s "$app_env" ]] || return 0
+  grep -q '^AUDIT_ATTESTATION_KEY=' "$app_env" && return 0
+  ( umask 077
+    printf 'AUDIT_ATTESTATION_KEY=%s\nAUDIT_ATTESTATION_KEY_ID=codespace-k1\n' "$(openssl rand -base64 48 | tr -d '\n')" >>"$app_env" )
+  chmod 600 "$app_env"
+}
+
 c2c_write_state() {
   install -d -m 700 "$C2C_CODESPACE_STATE"
   local owner_env="$C2C_CODESPACE_STATE/owner.env" app_env="$C2C_CODESPACE_STATE/app.env"
@@ -171,6 +184,7 @@ EOF
     )
   fi
   chmod 600 "$owner_env" "$app_env"
+  c2c_ensure_attestation_key
 }
 
 # Run a command with ONLY the owner credential file added, in a subshell.

@@ -128,7 +128,8 @@ describe('Job roles', () => {
     const qa = screen.getByTestId('qms-job-role-3');
     const del = within(qa).getByRole('button', { name: 'Delete' }) as HTMLButtonElement;
     expect(del.disabled).toBe(true);
-    expect(del.title).toBe('Assigned to a document: withdraw those assignments first.');
+    // Said beside it, not in a hover title (Quality review, 2026-11-10).
+    expect(document.getElementById(del.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(/withdraw those assignments first/);
     fireEvent.click(within(qa).getAllByRole('button', { name: 'Remove' })[0]);
     const form = screen.getByRole('form', { name: 'Remove Ana Ortiz from QA reviewer' });
     giveReason(form);
@@ -216,3 +217,56 @@ describe('Who must train on a document', () => {
     expect(screen.getByRole('alert').textContent).toBe('The job roles and people could not be read, so nothing can be assigned now.');
   });
 });
+
+/* Quality review, 2026-11-10 (Part 11 #3, a11y #2, #3). The drawer reported busy=false while its act was saving, so
+   Escape or the scrim closed it mid-write and a refusal was never seen; the act's controls unmounted with focus on
+   them; a disabled Delete said why only on hover. */
+describe('the drawer and its act', () => {
+  it('cannot be dismissed while its act is saving', async () => {
+    H.apiRequest.mockReturnValue(new Promise(() => {}));
+    const onClose = vi.fn();
+    render(<JobRolesPanel onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: /New job role/ }));
+    const form = screen.getByRole('form', { name: 'New job role' });
+    fireEvent.change(within(form).getByLabelText('Name'), { target: { value: 'Validation' } });
+    giveReason(form);
+    fireEvent.click(within(form).getByRole('button', { name: 'Create role' }));
+    await within(form).findByRole('button', { name: 'Saving…' });
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Job roles' }).getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('moves focus into an act when it opens, and back to the button that opened it when it closes', () => {
+    render(<JobRolesPanel onClose={() => {}} />);
+    const rename = within(screen.getByTestId('qms-job-role-3')).getByRole('button', { name: 'Rename' });
+    rename.focus();
+    fireEvent.click(rename);
+    expect(document.activeElement?.textContent).toBe('Rename QA reviewer');
+    fireEvent.click(within(screen.getByRole('form', { name: 'Rename QA reviewer' })).getByRole('button', { name: 'Cancel' }));
+    expect(document.activeElement).toBe(rename);
+  });
+
+  /* Walked in the app, 2026-11-10: under StrictMode, which the app runs in development, the act's effect mounted twice
+     and took its own heading as the opener the second time, so Cancel left focus on the drawer, not on New job role. */
+  it('gives focus back to the footer button that opened the act, under StrictMode', () => {
+    render(<React.StrictMode><JobRolesPanel onClose={() => {}} /></React.StrictMode>);
+    const create = screen.getByRole('button', { name: /New job role/ }) as HTMLButtonElement;
+    create.focus();
+    fireEvent.click(create);
+    expect(document.activeElement?.tagName).toBe('H3');
+    expect(create.disabled).toBe(true);
+    fireEvent.click(within(screen.getByRole('form', { name: 'New job role' })).getByRole('button', { name: 'Cancel' }));
+    expect(document.activeElement).toBe(create);
+  });
+
+  it('says beside a disabled Delete why it is unavailable', () => {
+    render(<JobRolesPanel onClose={() => {}} />);
+    const del = within(screen.getByTestId('qms-job-role-3')).getByRole('button', { name: 'Delete' }) as HTMLButtonElement;
+    expect(del.disabled).toBe(true);
+    expect(document.getElementById(del.getAttribute('aria-describedby') ?? '')?.textContent)
+      .toBe('Delete is unavailable while it is assigned to a document: withdraw those assignments first.');
+  });
+});
+

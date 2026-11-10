@@ -291,6 +291,22 @@ describe('Change control — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
+  // Quality review, 2026-11-10 (Part 11 #3): Escape while a drawer's write is in flight kept the write and closed the
+  // drawer, so a refusal had nowhere to show.
+  it('keeps a drawer open while its write is in flight', async () => {
+    H.apiRequest.mockImplementation((method: string) => (method === 'PATCH' ? new Promise(() => {}) : Promise.resolve(json(200, { data: [] }))));
+    renderLog();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    const d = drawer(/Assess CC-2026-014/);
+    fill(d, /Reason for this edit/, 'Second source added after the supplier audit.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/changes/1', expect.anything()));
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.click(within(d).getByRole('button', { name: 'Cancel' }));
+    expect(drawer(/Assess CC-2026-014/)).toBeTruthy();
+  });
+
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
     fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
@@ -298,10 +314,12 @@ describe('Change control — governed actions reach their routes', () => {
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');
     fill(d, /Reference/, 'CAPA-91');
+    // CC-2026-014 is under assessment, so the link says why (Quality review, 2026-11-10).
+    fill(d, /Why it is linked/, 'The CAPA this change implements.');
     fireEvent.click(within(d).getByRole('button', { name: /Link record/ }));
     await waitFor(() =>
       expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/changes/1/links', expect.objectContaining({
-        linkType: 'capa', linkedRef: 'CAPA-91',
+        linkType: 'capa', linkedRef: 'CAPA-91', note: 'The CAPA this change implements.',
       })),
     );
     expect(asked).toEqual([]);

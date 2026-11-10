@@ -20,10 +20,10 @@ const TEMPLATES = [
 const DOC = { id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', docType: 'sop', category: null,
   version: '1.0', status: 'in_review', effectiveDate: null, nextReviewDate: null, updatedAt: null, authorId: 1 };
 const H = vi.hoisted(() => ({ asked: [] as string[], request: vi.fn(), user: { id: '2', name: 'Quinn Approver' } as { id: string; name: string },
-  shell: null as null | { id: string; code?: string; title?: string },
+  shell: null as null | { id: string; code?: string; title?: string }, docsUnread: false,
   reviewRows: [] as Array<Record<string, unknown>> }));
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: [DOC], loading: false, error: null, refresh: vi.fn() }),
+  useSopRegister: () => (H.docsUnread ? { docs: null, loading: true, error: null, refresh: vi.fn() } : { docs: [DOC], loading: false, error: null, refresh: vi.fn() }),
   useSopTemplates: () => ({ templates: TEMPLATES, loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
@@ -55,7 +55,7 @@ const mount = () => render(<QualityApp onAskAna={(q) => H.asked.push(q)} />);
 
 /* C14 (QP3): opened with a project open, Quality says whose records it lists and offers the whole organisation. */
 describe('Quality says whose records it lists', () => {
-  afterEach(() => { H.shell = null; H.reviewRows = []; window.history.replaceState(null, '', '/concept2cure/quality'); });
+  afterEach(() => { H.shell = null; H.reviewRows = []; H.docsUnread = false; window.history.replaceState(null, '', '/concept2cure/quality'); });
   it('names the open project, and widens to the whole organisation and back', () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
     mount();
@@ -68,6 +68,18 @@ describe('Quality says whose records it lists', () => {
   });
 
   // The SOP tab in a project's scope is its documents and their review: the organisation's schedule is filtered to them.
+  // Quality review, 2026-11-10: with the project's documents unread, the schedule is unread too, never the organisation's.
+  it("lists no periodic review for a project whose documents are not read yet", () => {
+    H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
+    H.docsUnread = true;
+    H.reviewRows = [{ id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', nextReviewDate: '2026-11-20', overdue: false,
+      status: 'effective', version: '1.0', underRevision: false, lastReview: null, signedReviewDate: null }];
+    mount();
+    const review = screen.getByRole('heading', { name: 'Periodic review' }).closest('section') as HTMLElement;
+    expect(review.textContent).not.toContain('QS-SOP-001');
+    expect(within(review).queryByTestId('qms-review-figure')).toBeNull();
+  });
+
   it("lists for periodic review only the project's documents, and says training is the organisation's", () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
     H.reviewRows = [

@@ -103,4 +103,36 @@ describe('useDialog keeps Tab inside the panel', () => {
     expect(document.activeElement).toBe(opener);
     opener.remove();
   });
+
+  /* Quality review, 2026-11-10: the review route keeps its panel open beneath a reason sheet (Return for revision,
+     Reassign, Add a reviewer). Each dialog listened on the document, so one Escape closed both, and each Tab was pulled
+     back and forth between them until it could reach neither's controls. Only the topmost open dialog answers. */
+  it('lets only the topmost of two open dialogs answer Escape and Tab', () => {
+    const outer = vi.fn();
+    const inner = vi.fn();
+    function Inner({ onClose }: { onClose: () => void }) {
+      const ref = useDialog(onClose);
+      return (
+        <div role="dialog" aria-modal="true" aria-label="Inner" tabIndex={-1} ref={ref}>
+          <button>inner first</button>
+          <button>inner last</button>
+        </div>
+      );
+    }
+    const { rerender } = render(<><Panel onClose={outer} /></>);
+    rerender(<><Panel onClose={outer} /><Inner onClose={inner} /></>);
+    const last = screen.getByRole('button', { name: 'inner last' });
+    last.focus();
+    fireEvent.keyDown(last, { key: 'Tab' });
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'inner first' }));
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: 'Escape' });
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(outer).not.toHaveBeenCalled();
+    // With the inner one closed, the outer one answers again.
+    rerender(<><Panel onClose={outer} /></>);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(outer).toHaveBeenCalledTimes(1);
+  });
 });

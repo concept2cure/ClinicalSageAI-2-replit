@@ -105,6 +105,18 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     fireEvent.click(within(failed).getByRole('button',{name:'Dismiss this message'}));
     expect(screen.queryByTestId('qms-target-failed')).toBeNull();
   });
+  // Quality review, 2026-11-10: a 404 on the version history names the document, not "this project".
+  it('says a version history that is not there was not found, naming the document',async()=>{
+    H.docs=[{...DRAFT,status:'effective'}];
+    H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/versions')?response(null,404):response({}));
+    renderRegister();
+    openMore();
+    fireEvent.click(screen.getByRole('button',{name:'View version history of SOP-004'}));
+    const failed=await screen.findByTestId('qms-history-failed');
+    expect(failed.textContent).toMatch(/This document's version history was not found in your organization/);
+    expect(failed.textContent).not.toMatch(/project/);
+    expect(within(failed).queryByRole('button',{name:'Try again'})).toBeNull();
+  });
   it('queues a new notification target while the current canonical editing copy remains open',async()=>{
     H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/editor')?response({...editor,qmsDocument:{id:Number(path.split('/').at(-2)),status:'draft'}}):
       response({id:Number(path.split('/').at(-1)),doc_number:'SOP-009',title:'Notification target',doc_type:'sop',version:'1.0',status:'draft',authoring_document_id:DOCUMENT}));

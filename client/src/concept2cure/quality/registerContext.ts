@@ -8,7 +8,7 @@
  *
  * @module client/src/concept2cure/quality/registerContext
  */
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useSyncExternalStore } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import { listOf } from './qmsList';
@@ -93,3 +93,14 @@ export function useQualityScope(): QualityScope {
 /** A list path read for the scope: with `program_id` when a project is in scope. */
 export const scopedPath = (path: string, programId: string | null): string =>
   programId ? `${path}${path.includes('?') ? '&' : '?'}program_id=${encodeURIComponent(programId)}` : path;
+
+/**
+ * A read's data only while it is the answer to `path`. useFetchJson keeps its last answer while a new path loads, so
+ * after "Show the whole organisation", or another project, the previous scope's rows stood as the new scope's until
+ * the new read landed (Quality review, 2026-11-10). An answer belongs to the path it arrived for.
+ */
+export function useAnswerOf<T>(path: string, data: T | null | undefined): T | null {
+  const owner = useRef<{ data: unknown; path: string } | null>(null);
+  if (data != null && owner.current?.data !== data) owner.current = { data, path };
+  return data != null && owner.current?.data === data && owner.current.path === path ? data : null;
+}
