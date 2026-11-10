@@ -25,7 +25,14 @@ export const CAPA_SOURCE_KIND = {
 } as const;
 
 /** The CAPA codes raised from each record of `kind`, by record id; null while unread or when the read failed. */
-export function useCapasBySource(kind: string | undefined): { codesFor: (id: string) => string[] | null; failed: boolean } {
+/** GET /api/capa-mdr/capa returns the 100 most recently updated CAPAs (capaMdr.service.ts listCapas). */
+export const CAPA_READ_CAP = 100;
+
+/**
+ * The CAPAs raised from each record. A record with none found is "none" only when every CAPA was read: at the cap a
+ * CAPA raised from it may be among those not read, so it is unknown (`partial`), never "—" (C12).
+ */
+export function useCapasBySource(kind: string | undefined): { codesFor: (id: string) => string[] | null; failed: boolean; partial: boolean } {
   const read = useFetchJson<unknown>(kind ? '/api/capa-mdr/capa' : null);
   const index = useMemo(() => {
     const rows = listOf<CapaRow>(read.data);
@@ -39,5 +46,14 @@ export function useCapasBySource(kind: string | undefined): { codesFor: (id: str
     return byId;
   }, [kind, read.data]);
   const failed = !!kind && !read.loading && (read.error != null || (read.data != null && index === null));
-  return { codesFor: (id) => (index ? index.get(id) ?? [] : null), failed };
+  const partial = (listOf<CapaRow>(read.data)?.length ?? 0) >= CAPA_READ_CAP;
+  return {
+    codesFor: (id) => {
+      if (!index) return null;
+      const codes = index.get(id) ?? [];
+      return codes.length === 0 && partial ? null : codes;
+    },
+    failed,
+    partial,
+  };
 }

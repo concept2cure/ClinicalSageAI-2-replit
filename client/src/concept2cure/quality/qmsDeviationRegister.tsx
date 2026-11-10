@@ -25,7 +25,7 @@ import { signDeviationCancel, signDeviationClose } from './qmsApproval';
 const STATUS_TONE: Record<string, PillTone> = {
   open: 'draft', under_investigation: 'review', pending_approval: 'review', closed: 'effective', cancelled: 'muted',
 };
-const CLASS_TONE: Record<string, PillTone> = { minor: 'muted', major: 'review', critical: 'err' };
+const CLASS_TONE: Record<string, PillTone> = { minor: 'draft', major: 'warn', critical: 'err' };
 const isOpen = (r: DeviationRow) => !DEVIATION_ENDED.includes(r.status as DeviationStatus);
 const clip = (s: string | null, n: number) => (!s ? '—' : s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
@@ -129,11 +129,14 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
     'affected; a nonconforming product itself goes in Nonconformances.',
   noun: ['deviation', 'deviations'],
   listPath: '/api/mdx/qms/deviations',
-  grid: '120px minmax(0, 1fr) 96px 140px 110px 110px',
+  name: (r) => r.deviation_number,
+  /* GET /api/mdx/qms/deviations: the 500 most recently detected (mdx-qms-deviations.ts). */
+  readCap: { rows: 500, order: 'most recently detected' },
   columns: [
     { label: 'Deviation', cell: (r) => <span className="mono">{r.deviation_number}</span> },
     {
       label: 'What happened',
+      text: true,
       cell: (r) => (
         <span title={r.description}>
           {r.title}
@@ -152,9 +155,9 @@ export const DEVIATIONS: RegisterConfig<DeviationRow> = {
     const critical = open.filter((r) => r.classification === 'critical').length;
     const late = open.filter((r) => isPast(r.target_closure_date, today)).length;
     return [
-      { label: 'Open', val: String(open.length), sub: `${rows.length - open.length - cancelled} closed${cancelled ? `, ${cancelled} cancelled` : ''}` },
-      { label: 'Critical, open', val: String(critical), sub: critical ? 'Not yet closed' : 'None', tone: critical ? 'err' : 'ok' },
-      { label: 'Past target close', val: String(late), sub: late ? 'Target date has passed' : 'None past due', tone: late ? 'warn' : 'ok' },
+      { label: 'Open', val: String(open.length), detail: `${rows.length - open.length - cancelled} closed${cancelled ? `, ${cancelled} cancelled` : ''}` },
+      { label: 'Critical, open', val: String(critical), tone: critical ? 'err' : 'ok' },
+      { label: 'Past target close', val: String(late), tone: late ? 'warn' : 'ok' },
     ];
   },
   createLabel: 'Record deviation',

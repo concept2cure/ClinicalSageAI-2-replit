@@ -400,6 +400,12 @@ function isAnaRiNonModelRequest(path: string, method?: string): boolean {
  * bucket and Send for review was refused 429 again. Reassigning and handing back
  * a route are writes and stay in `documents`.
  *
+ * 2026-11-10 (Quality walk, D7 C17): the same two reads on a QMS controlled
+ * document (GET /api/mdx/qms/documents/:id/review-route, …/route-candidates,
+ * server/routes/mdx-qms-review-route.ts). An author wrote the procedure in the
+ * editor, sent it for review and opened Reassign within the minute, and the
+ * reassign sheet's candidates read was refused 429, so no one could be chosen.
+ *
  * Every download, section text read, compare and write stays in `documents`:
  * those move content or change it.
  */
@@ -408,6 +414,7 @@ const DOCUMENT_METADATA_READS: readonly RegExp[] = [
   /(^|\/)c2c\/documents\/?$/,
   /(^|\/)c2c\/documents\/[^/]+\/outline\/?$/,
   /(^|\/)authoring\/documents\/[^/]+\/(reviews|comments|tracked-change-decisions|review-route|route-candidates)\/?$/,
+  /(^|\/)mdx\/qms\/documents\/[^/]+\/(review-route|route-candidates)\/?$/,
   /(^|\/)data-origins\/document\/?$/,
 ];
 

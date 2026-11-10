@@ -1,0 +1,224 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "reference-raise-change-1440",
+      "dialog": "Raise change request",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1012,
+      "right": 1452,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Raise change request",
+      "sub": "The change is recorded as proposed. Assessment, independent approval (your electronic signature is not enough — a second person signs), implementation and verification follow.",
+      "footer": [
+        {
+          "text": "Cancel",
+          "h": 36
+        },
+        {
+          "text": "Raise change",
+          "h": 36
+        }
+      ],
+      "primaryDisabled": false,
+      "primaryOpacity": "1",
+      "viewport": 1440
+    },
+    {
+      "name": "new-document-1440",
+      "dialog": "New controlled document",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1000,
+      "right": 1440,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "New controlled document",
+      "sub": "Choose a project for the editing copy, then write and save its sections before sending it for review.",
+      "footer": [
+        {
+          "text": "Cancel",
+          "h": 36
+        },
+        {
+          "text": "Create and open",
+          "h": 36
+        }
+      ],
+      "primaryDisabled": true,
+      "primaryOpacity": "0.5",
+      "viewport": 1440
+    },
+    {
+      "name": "job-roles-1440",
+      "dialog": "Job roles",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1000,
+      "right": 1440,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Job roles",
+      "sub": "A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.",
+      "footer": [
+        {
+          "text": "New job role",
+          "h": 36
+        }
+      ],
+      "primaryDisabled": null,
+      "primaryOpacity": null,
+      "viewport": 1440
+    },
+    {
+      "name": "job-roles-new-1440",
+      "dialog": "Job roles",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1000,
+      "right": 1440,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Job roles",
+      "sub": "A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.",
+      "footer": [],
+      "primaryDisabled": null,
+      "primaryOpacity": null,
+      "viewport": 1440
+    },
+    {
+      "name": "training-1440",
+      "dialog": "Who must train on QS-SOP-001",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1000,
+      "right": 1440,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Who must train on QS-SOP-001",
+      "sub": "QS-SOP-001 Handling of customer complaints. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.",
+      "footer": [
+        {
+          "text": "Assign a job role",
+          "h": 36
+        },
+        {
+          "text": "Assign a person",
+          "h": 36
+        }
+      ],
+      "primaryDisabled": null,
+      "primaryOpacity": null,
+      "viewport": 1440
+    },
+    {
+      "name": "history-1440",
+      "dialog": "Version history of QS-SOP-001",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1000,
+      "right": 1440,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Version history of QS-SOP-001",
+      "sub": "Handling of customer complaints. Retained signed versions and earlier registry records are read-only; revisions use a separate draft.",
+      "footer": [],
+      "primaryDisabled": null,
+      "primaryOpacity": null,
+      "viewport": 1440
+    },
+    {
+      "name": "record-review-offered",
+      "count": 1
+    },
+    {
+      "name": "record-review-1440",
+      "dialog": "Record periodic review",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 1016,
+      "right": 1456,
+      "width": 440,
+      "height": 900,
+      "bg": "rgb(250, 249, 245)",
+      "title": "Record periodic review",
+      "sub": "QS-SOP-001 Handling of customer complaints. You are reviewing v1.0, the version in force. You sign the review in the next step. It does not change the document or its approval.",
+      "footer": [
+        {
+          "text": "Cancel",
+          "h": 36
+        },
+        {
+          "text": "Continue to sign",
+          "h": 36
+        }
+      ],
+      "primaryDisabled": false,
+      "primaryOpacity": "1",
+      "viewport": 1440
+    },
+    {
+      "name": "new-document-390",
+      "dialog": "New controlled document",
+      "open": true,
+      "cls": "de",
+      "backdrop": "de-bd",
+      "z": "120",
+      "scrim": "rgba(20, 20, 19, 0.24)",
+      "left": 0,
+      "right": 390,
+      "width": 390,
+      "height": 844,
+      "bg": "rgb(250, 249, 245)",
+      "title": "New controlled document",
+      "sub": "Choose a project for the editing copy, then write and save its sections before sending it for review.",
+      "footer": [
+        {
+          "text": "Cancel",
+          "h": 44
+        },
+        {
+          "text": "Create and open",
+          "h": 44
+        }
+      ],
+      "primaryDisabled": true,
+      "primaryOpacity": "0.5",
+      "viewport": 390
+    },
+    {
+      "name": "w22-drawers",
+      "ok": true
+    }
+  ]
+}

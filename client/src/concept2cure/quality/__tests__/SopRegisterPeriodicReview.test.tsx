@@ -168,10 +168,22 @@ describe('the Periodic review panel records a signed review of the version in fo
     expect(H.reviewRefresh).toHaveBeenCalled();
   });
 
+  // C15: an approval that set no review date: the drawer does not claim one is kept (walked: the walk's SOP had none).
+  it('says so when the approval set no review date, rather than claiming one is kept', () => {
+    H.reviewRows = [{ ...DUE, signedReviewDate: null }];
+    const { dialog } = openDecision();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Revision required' }));
+    expect(dialog.textContent).toContain('Its approval set no periodic review date, and recording this does not set one.');
+    expect(dialog.textContent).not.toContain('keeps the review date its approval set');
+  });
+
   it('signs "revision required" with no date, saying the document keeps the date its approval set', async () => {
     H.apiRequest.mockResolvedValue(signedAnswer());
     const { dialog } = openDecision();
-    fireEvent.click(within(dialog).getByLabelText('Revision required'));
+    // C15: the outcome is the product's single choice (C2CForm's seg), a radiogroup.
+    expect(within(dialog).getByRole('radio', { name: 'Remains current' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Revision required' }));
+    expect(within(dialog).getByRole('radio', { name: 'Revision required' }).getAttribute('aria-checked')).toBe('true');
     expect(within(dialog).queryByLabelText('Next periodic review')).toBeNull();
     expect(dialog.textContent).toContain(`The document keeps the review date its approval set (${day(5)}).`);
     expect(dialog.textContent).toContain('Recording this does not open a revision');

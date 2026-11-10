@@ -1,0 +1,46 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "CAPA",
+      "toast": null,
+      "drawerOpen": true,
+      "refusal": null
+    },
+    {
+      "name": "Deviations",
+      "toast": "DEV-C11-76213 was recorded as open.",
+      "drawerOpen": false,
+      "refusal": null
+    },
+    {
+      "name": "Nonconformances",
+      "toast": "NC-C11-76213 was recorded as awaiting disposition.",
+      "drawerOpen": false,
+      "refusal": null
+    },
+    {
+      "name": "Suppliers",
+      "toast": "Walk C11 Gaskets 76213 was added as pending.",
+      "drawerOpen": false,
+      "refusal": null
+    },
+    {
+      "name": "Internal audits",
+      "toast": "IA-C11-76213 was planned.",
+      "drawerOpen": false,
+      "refusal": null
+    },
+    {
+      "name": "Management reviews",
+      "toast": "The H2-76213 management review was recorded.",
+      "drawerOpen": false,
+      "refusal": null
+    },
+    {
+      "name": "w18-seed-records",
+      "ok": true
+    }
+  ]
+}

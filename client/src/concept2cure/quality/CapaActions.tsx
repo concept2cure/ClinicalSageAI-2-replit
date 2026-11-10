@@ -16,12 +16,23 @@ import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import type { ActionState } from '@shared/schema/capa-mdr';
 import { formatDate } from './data';
+import { pill, type PillTone } from './qmsRegisterKit';
 import {
   ACTION_STATE_LABEL, CAPA_ACTION_TYPE_LABEL, actionMoves, transitionCapaAction,
   type CapaActionRow, type CapaRow,
 } from './qmsRecordData';
 
-const TONE: Record<ActionState, string> = { planned: 'draft', in_progress: 'review', done: 'effective', blocked: 'err', cancelled: 'muted' };
+const TONE: Record<ActionState, PillTone> = { planned: 'draft', in_progress: 'review', done: 'effective', blocked: 'err', cancelled: 'muted' };
+
+/** A move is named by the act, not by the state it lands in (C13): "Mark done", not "Done". Until 2026-11-10 the
+ *  buttons read "Done", "Blocked", "Cancelled", a list of states that looked like a status, not a choice. */
+export function moveLabel(from: ActionState, to: ActionState): string {
+  if (to === 'in_progress') return from === 'blocked' ? 'Resume' : 'Start';
+  if (to === 'done') return 'Mark done';
+  if (to === 'blocked') return 'Mark blocked';
+  if (to === 'cancelled') return 'Cancel action';
+  return ACTION_STATE_LABEL[to];
+}
 
 export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (confirmation?: string) => void }) {
   const read = useFetchJson<{ actions?: unknown }>(`/api/capa-mdr/capa/${encodeURIComponent(capa.id)}`);
@@ -68,26 +79,35 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (co
       ) : actions.length === 0 ? (
         <EmptyState title="No action items yet. Add one with Add action." />
       ) : (
-        <ol className="qcc-actions">
-          {actions.map((a) => (
-            <li key={a.id} className="qcc-action">
-              <span className="mono">#{a.n}</span>
-              <span className="qms-tag">{CAPA_ACTION_TYPE_LABEL[a.type] ?? a.type}</span>
-              <span className="qcc-action-desc">{a.description}</span>
-              <span className="qcc-action-meta">
-                {[a.owner, a.dueDate ? `due ${formatDate(a.dueDate)}` : null, a.completedAt ? `done ${formatDate(a.completedAt)}` : null].filter(Boolean).join(' · ') || '—'}
-              </span>
-              <span className="qms-pill" data-tone={TONE[a.state]}>{ACTION_STATE_LABEL[a.state] ?? a.state}</span>
-              <span className="qms-rowacts">
-                {actionMoves(a).map((to) => (
-                  <button key={to} className="qms-chip" onClick={() => { setRefusal(null); setMoving({ action: a, to }); }}>
-                    {ACTION_STATE_LABEL[to]}
-                  </button>
-                ))}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <table className="reg-tbl qcc-action-tbl" aria-label={`Action items of ${capa.capaCode}`}>
+          <thead>
+            <tr>
+              <th scope="col">#</th><th scope="col">Type</th><th scope="col">Action</th><th scope="col">Owner · due</th>
+              <th scope="col">State</th><th scope="col"><span className="sr-only">Moves</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {actions.map((a) => (
+              <tr key={a.id}>
+                <td className="mono">{a.n}</td>
+                <td><span className="rd-chip">{CAPA_ACTION_TYPE_LABEL[a.type] ?? a.type}</span></td>
+                <td className="qms-title">{a.description}</td>
+                <td>{[a.owner, a.dueDate ? `due ${formatDate(a.dueDate)}` : null, a.completedAt ? `done ${formatDate(a.completedAt)}` : null].filter(Boolean).join(' · ') || '—'}</td>
+                <td>{pill(TONE[a.state], ACTION_STATE_LABEL[a.state] ?? a.state)}</td>
+                <td>
+                  <div className="qms-rowacts">
+                    {actionMoves(a).map((to) => (
+                      <button key={to} type="button" className="btn ghost small" aria-label={`${moveLabel(a.state, to)}: action ${a.n}`}
+                        onClick={() => { setRefusal(null); setMoving({ action: a, to }); }}>
+                        {moveLabel(a.state, to)}
+                      </button>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
       {moving && (
         <C2CForm

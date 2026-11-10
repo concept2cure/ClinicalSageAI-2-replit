@@ -29,24 +29,39 @@ export function viewableAsPdf(v: { fileName: string | null }): boolean {
   return claimsToBePdf('', v.fileName ?? '');
 }
 
-/** View on a version row, for a version whose file is named as a PDF; nothing for any other. */
+/** Whether a version is offered as a PDF rendition (P-107): its file is named as a Word document. The server decides by its bytes. */
+export function viewableAsRendition(v: { fileName: string | null }): boolean {
+  return /\.docx$/i.test(v.fileName ?? '');
+}
+
+/** What a rendition is, said beside it: a PDF made for reading, bound to the version it came from. */
+export function renditionNote(sourceSha256: string | null): string {
+  const from = sourceSha256 ? `the version with SHA-256 ${sourceSha256.slice(0, 12)}…` : 'this version';
+  return `A PDF rendition made from ${from}, for reading here. The version in the Vault is the Word file; download it for the original.`;
+}
+
+/** View on a version row: a PDF as itself, a Word document as its PDF rendition; nothing for any other. */
 export function VersionViewButton({ version, title, onView, viewingId }: {
   version: { id: string; version: string | null; fileName: string | null; contentHash: string | null };
   title: string;
-  onView?: (versionId: string, label: string, hash: string | null) => void;
+  onView?: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
   viewingId?: string | null;
 }) {
-  if (!onView || !viewableAsPdf(version)) return null;
+  const rendition = viewableAsRendition(version);
+  if (!onView || (!viewableAsPdf(version) && !rendition)) return null;
   const label = version.version ? `${title} v${version.version}` : title;
   const opening = viewingId === version.id;
+  const of = `${version.version ? `version ${version.version} of ` : ''}${title}`;
   return (
     <button
       className="sp-ask"
       disabled={opening}
-      onClick={() => onView(version.id, label, version.contentHash)}
-      aria-label={`View ${version.version ? `version ${version.version} of ` : ''}${title}`}
+      onClick={() => onView(version.id, rendition ? `${label} · PDF rendition` : label, version.contentHash, rendition ? 'rendition' : undefined)}
+      aria-label={rendition ? `View a PDF rendition of ${of}` : `View ${of}`}
+      title={rendition ? 'A PDF made from this Word version for reading here. The version itself is unchanged.' : undefined}
+      data-testid={rendition ? 'vault-view-rendition' : undefined}
     >
-      {I.eye} {opening ? 'Opening…' : 'View'}
+      {I.eye} {opening ? 'Opening…' : rendition ? 'View as PDF' : 'View'}
     </button>
   );
 }
@@ -59,14 +74,22 @@ export function useVaultVersionViewer(projectId: string) {
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
-  const view = async (id: string, title: string, hash: string | null) => {
+  const view = async (id: string, title: string, hash: string | null, as?: 'rendition') => {
     if (viewing) return;
     setViewing(id);
     setNote(null);
     const doc: ViewedVersion = { id, title, hash };
     try {
-      const file = await downloadVaultFile(projectId, id, doc);
-      if (alive.current) presentOpenedFile({ file, doc, report: (text, tone) => setNote({ text, tone }), showPdf });
+      const file = await downloadVaultFile(projectId, id, doc, as);
+      if (!alive.current) return;
+      if (as === 'rendition' && file.kind === 'pdf') {
+        /* A rendition is framed with no "verified against the vault record" line: that is said of a stored version.
+           Its own line says what it was made from. */
+        showPdf(doc, file.blob, null);
+        setNote({ text: renditionNote(file.renditionOf ?? null), tone: 'ok' });
+        return;
+      }
+      presentOpenedFile({ file, doc, report: (text, tone) => setNote({ text, tone }), showPdf });
     } catch (e) {
       if (alive.current) setNote({ text: redactInternals(e instanceof Error ? e.message : '', `${title} was not opened.`), tone: 'error' });
     } finally {

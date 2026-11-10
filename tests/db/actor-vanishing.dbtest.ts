@@ -46,6 +46,7 @@ const projects: number[] = [];
 let client = 0;
 let silent = 0; // never in A's audit trail, then left
 let rbmProgram = '';
+let rbmProject = 0; // the program's one project anchor, as intake records it
 const artifactKey = `${TAG}-reviewed`;
 let app: express.Express;
 
@@ -116,6 +117,18 @@ beforeAll(async () => {
     [ORG_A, `${TAG}-rbm`, `${TAG}-rbm`]
   );
   rbmProgram = rp.rows[0].id;
+  // Since b602ecad97 (P-76, 2026-10-30) a monitoring read is admitted only for a
+  // program with exactly one project anchor the reader can open
+  // (rbm-access.ts requireRbmProgram -> requireCurrentProgramAccess), as intake
+  // records it (program-project-anchor.ts). The reader's own project, as in
+  // actor-displays.dbtest.ts: the leaver stays historical attribution on the
+  // plan and its actions, never the access grant.
+  const anchored = await owner.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, regulatory_program_id)
+     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $4, $5) RETURNING id`,
+    [ORG_A, workspaceA, `${TAG}-rbm`, userA, rbmProgram]
+  );
+  rbmProject = Number(anchored.rows[0].id);
   const plan = await owner.query(
     `INSERT INTO rbm_monitoring_plans (organization_id, program_id, title, status, approved_by, approved_at)
      VALUES ($1, $2, 'Monitoring plan', 'approved', $3, now()) RETURNING id`,
@@ -172,6 +185,7 @@ afterAll(async () => {
       );
       await owner.query('DELETE FROM rbm_monitoring_plans WHERE program_id = $1', [rbmProgram]);
     }
+    if (rbmProject) await owner.query('DELETE FROM projects WHERE id = $1', [rbmProject]);
     await owner.query('DELETE FROM cro_team_assignments WHERE client_id = $1', [client]);
     await owner.query('DELETE FROM cro_clients WHERE id = $1', [client]);
     await owner.query('DELETE FROM concept2cure_artifacts WHERE artifact_id = $1', [artifactKey]);

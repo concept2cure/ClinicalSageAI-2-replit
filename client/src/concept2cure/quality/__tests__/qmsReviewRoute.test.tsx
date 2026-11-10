@@ -63,6 +63,7 @@ vi.mock('../../_shared/components/EsignModal', () => ({
 }));
 
 import { SopRegister } from '../SopRegister';
+import { ceremonyOpen } from '../../v2/ceremony';
 
 const ok = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
 const DOC = { id: 21, docNumber: 'SOP-021', title: 'Deviation handling', docType: 'sop', category: null, version: '1.0', status: 'draft',
@@ -189,6 +190,35 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     fireEvent.change(within(act).getByTestId('qms-act-reason'), { target: { value: 'Section 4 cites the retired form.' } });
     fireEvent.click(confirm);
     await waitFor(() => expect(posted('POST', '/api/mdx/qms/documents/21/return')!.body).toEqual({ reason: 'Section 4 cites the retired form.' }));
+  });
+
+  /* C17: reassigning is the product's shared sheet (v2/reviewRoute/RouteReassignSheet), as the Vault and Authoring
+     reassign. The member lines' Remind and Reassign are quiet buttons, and the route's sheets are the drawer: no
+     bottom-sheet variant and no eyebrow, and registered as a ceremony. */
+  it('reassigns through the shared sheet, which reads who may take it over again after a failed read', async () => {
+    H.docs = [{ ...DOC, status: 'in_review', reviewRoute: ROUTED }];
+    let fail = true;
+    answers['GET /api/mdx/qms/documents/21/route-candidates?for=reassign'] = () => (fail ? ok({ error: 'down' }, 500) : ok(CANDIDATES));
+    renderRegister();
+    const row = rowOf('SOP-021');
+    openMore(row);
+    fireEvent.click(within(row).getByTestId('qms-route-open'));
+    const panel = await screen.findByTestId('qms-route-panel');
+    expect(panel.parentElement!.className).toBe('de-bd');
+    expect(panel.querySelector('.de-h-eye')).toBeNull();
+    expect(ceremonyOpen()).toBe(true);
+    expect(within(panel).getByRole('button', { name: 'Remind Rae Reviewer' }).className).toBe('btn ghost small');
+    const reassign = within(panel).getByRole('button', { name: 'Reassign Rae Reviewer' });
+    expect(reassign.className).toBe('btn ghost small');
+    fireEvent.click(reassign);
+    const sheet = await screen.findByTestId('vault-route-reassign');
+    fail = false;
+    fireEvent.click(await within(sheet).findByRole('button', { name: 'Read it again' }));
+    fireEvent.click(await within(sheet).findByTestId('vr-reassign-8'));
+    fireEvent.change(within(sheet).getByTestId('vr-reassign-reason'), { target: { value: 'Rae is on leave until the 20th.' } });
+    fireEvent.click(within(sheet).getByTestId('vr-reassign-confirm'));
+    await waitFor(() => expect(posted('POST', '/api/mdx/qms/documents/21/review-route/reassign')!.body)
+      .toEqual({ taskId: 'ROUTE-abcd1234-5', assigneeId: 8, reason: 'Rae is on leave until the 20th.' }));
   });
 
   it('the reviewer whose turn it is signs the review with meaning REVIEWED; they may hand back, not approve', async () => {

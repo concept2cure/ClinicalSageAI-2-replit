@@ -9,6 +9,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { databaseUrl } from '../setup.db';
 import { tenantIsolationPolicySql } from './harness';
 import { provisionAppServiceRole } from '../../scripts/db/provision-app-role.mjs';
+import { LazyRequestDbClient } from '../../server/middleware/lazyRequestDbClient';
+import { bindRequestDbClient } from '../../server/db/requestDbLease';
+import { applySessionScope } from '../../server/db/sessionScope';
 
 const h = vi.hoisted(() => ({ pool: null as unknown }));
 vi.mock('../../server/db.js', () => ({ get pool() { return h.pool; } }));
@@ -35,10 +38,16 @@ async function tableDdl(file: string, tables: string[]) {
 
 function app(actor = 7, organizationId = 9) {
   const a = express(); a.use(express.json());
-  a.use((req, _res, next) => {
+  a.use((req, res, next) => {
     void store.runWithTenantScope({ tenantId: String(organizationId), accountId: actor, role: 'member', source: 'request', caller: 'pm06-native-settings' }, async () => {
       Object.assign(req, { userId: actor, userRole: 'admin', user: { id: actor, organizationId, role: 'admin' },
-        organizationId, tenantId: organizationId, dbClient: runtime.getPool() });
+        organizationId, tenantId: organizationId });
+      // The request's one pinned connection, installed as the auth boundary installs it
+      // (establishRequestTenantScope.ts: a LazyRequestDbClient bound by bindRequestDbClient), over the
+      // fault-injecting connect below. Since 3755f542ca the settings transaction runs on this connection
+      // (requestConnectable); a bare pool here spread BEGIN, UPDATE, audit and COMMIT over different ones.
+      bindRequestDbClient(req, res, new LazyRequestDbClient(h.pool as Pool, client =>
+        applySessionScope(client, { tenantId: String(organizationId), role: 'member', orgUuid: '', accountId: actor })));
       next();
     }).catch(next);
   });
@@ -105,6 +114,7 @@ beforeAll(async () => {
           return result;
         },
         release(error?: Error) { if (error) discards++; client.release(error); },
+        getTransactionStatus: () => (client as typeof client & { getTransactionStatus?: () => string | null }).getTransactionStatus?.() ?? null,
       };
     },
   };

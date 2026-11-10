@@ -1,0 +1,24 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source 28ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's 29ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > files a new nonconformance under the open project by default 179ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > names the open project, and widens to the whole organisation and back 108ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 36ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > counts its own rows, not the organisation summary 19ms
+ × client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the open project, and the whole organisation when the person widens it 32ms
+ × client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says 5ms
+ × client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says whose rows these are while a project is open 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > counts its own rows, not the organisation summary
+ FAIL  client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source
+ FAIL  client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's
+ FAIL  client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > files a new nonconformance under the open project by default
+ FAIL  client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > names the open project, and widens to the whole organisation and back
+ FAIL  client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open
+ FAIL  client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the open project, and the whole organisation when the person widens it
+ FAIL  client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says
+ FAIL  client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > says whose rows these are while a project is open
+      Tests  9 failed | 41 passed (50)
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > lists for periodic review only the project's documents, and says training is the organisation's 48ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 12 passed (14)
