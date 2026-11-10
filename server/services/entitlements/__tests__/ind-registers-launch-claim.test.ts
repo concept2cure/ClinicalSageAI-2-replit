@@ -36,6 +36,23 @@ describe('the cross-reference and letter of authorization register is served on 
   });
 });
 
+describe('the annual-report tracker is served on the IND screen', () => {
+  it.each([
+    '/api/ind-lifecycle/submission/7/annual-reports', //          the tracked reports, and tracking one
+    '/api/ind-lifecycle/submission/7/annual-reports/overdue', //  the server's overdue feed
+    '/api/ind-lifecycle/submission/7/annual-reports/overdue?asOf=2030-01-01',
+    '/api/ind-lifecycle/submission/:p/annual-reports',
+    '/api/ind-lifecycle/submission/:p/annual-reports/overdue',
+  ])('%s', (path) => {
+    expect(verdict(path)).toBe('launch');
+    expect(claimedBy(path)).toEqual(['ind-checklist']);
+  });
+
+  it('one stored report by its id has no screen caller, and stays unattributed', () => {
+    expect(verdict('/api/ind-lifecycle/annual-reports/0b6d2c8e-1111-4c4c-8c8c-123456789abc')).toBe('unmapped');
+  });
+});
+
 describe('nothing beside the registers the screen calls is admitted', () => {
   it.each([
     // P-32: the IND safety-report and ICSR registers stay shut.

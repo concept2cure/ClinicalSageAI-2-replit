@@ -8,6 +8,9 @@
  *   - Cross-references and letters of authorization (eCTD m1.4): every DMF, IND, NDA or BLA the IND relies on, the
  *     server's LOA-coverage QC over them, recording one, filing its letter as the m1.4.1 leaf of a new sequence,
  *     marking a letter on file, and removing one.
+ *   - Annual reports (21 CFR 312.33): each tracked report with the due date and open sections the server computed, its
+ *     state from the server's overdue feed (overdue, or no due date because no IND effective date was recorded), and
+ *     tracking one. A tracked report is filed from the annual report on the Lifecycle tab.
  * Production serves exactly these paths (the `ind-checklist` claim in ui-surface-registry.ts), and each route admits
  * the submission's project for the person first. Counts and verdicts are the server's; this only shows them. A read
  * that fails says so, never "none recorded".
@@ -30,7 +33,15 @@ interface CrossReferenceRegister {
   counts: { total: number; withLoa: number; missingLoa: number };
 }
 
+interface AnnualReport {
+  id: string; indNumber: string; reportingPeriodStart: string | null; reportingPeriodEnd: string | null;
+  dueDate: string | null; status: string; gapCount: number; filedAt: string | null;
+}
+type OverdueReport = AnnualReport & { overdueState: 'overdue' | 'deadline_unknown' };
+
 const isList = <T,>(v: unknown): v is T[] => Array.isArray(v);
+/** A stored calendar date (UTC midnight), as the date it is. */
+const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : 'Not known');
 const isRegister = (v: unknown): v is CrossReferenceRegister =>
   !!v && typeof v === 'object' && Array.isArray((v as CrossReferenceRegister).findings) && !!(v as CrossReferenceRegister).counts;
 const FILE_TYPES = ['DMF', 'IND', 'NDA', 'BLA'];
@@ -247,14 +258,125 @@ function CrossReferences({ submissionId, sponsorName }: { submissionId: number; 
   );
 }
 
-export function SubmissionIndRegisters({ submissionId, sponsorName }: { submissionId: number | null; sponsorName: string | null }) {
+function TrackAnnualReport({ submissionId, productName, onDone }: { submissionId: number; productName: string | null; onDone: (note: string | null) => void }) {
+  const [f, setF] = useState({ ind: '', product: productName ?? '', start: '', end: '', effective: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    const r = await send('POST', `/api/ind-lifecycle/submission/${submissionId}/annual-reports`, {
+      report: { indNumber: f.ind.trim(), productName: f.product.trim(), reportingPeriodStart: f.start, reportingPeriodEnd: f.end },
+      ...(f.effective ? { indEffectiveDate: f.effective } : {}),
+    });
+    setBusy(false);
+    if (r.ok) onDone(`The report for ${f.start} to ${f.end} is tracked.`); else setError(r.message);
+  };
+  return (
+    <form onSubmit={(e) => void submit(e)} style={{ display: 'grid', gap: 8, margin: '8px 0 12px', maxWidth: 520 }} data-testid="indl-annual-form">
+      <Field label="IND number"><input className="c2c-input" value={f.ind} onChange={set('ind')} required /></Field>
+      <Field label="Product name"><input className="c2c-input" value={f.product} onChange={set('product')} required /></Field>
+      <Field label="Reporting period start"><input className="c2c-input" type="date" value={f.start} onChange={set('start')} required /></Field>
+      <Field label="Reporting period end"><input className="c2c-input" type="date" value={f.end} onChange={set('end')} required /></Field>
+      <Field label="IND effective date (sets the due date)"><input className="c2c-input" type="date" value={f.effective} onChange={set('effective')} /></Field>
+      {error && <p role="alert" className="sec-sub">{error}</p>}
+      <span className="pj-sec-acts">
+        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
+        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+      </span>
+    </form>
+  );
+}
+
+/** The server's overdue feed, in its own words: what is overdue, and what cannot be known. */
+function overdueSentence(feed: OverdueReport[]): string {
+  const overdue = feed.filter((r) => r.overdueState === 'overdue').length;
+  const unknown = feed.filter((r) => r.overdueState === 'deadline_unknown').length;
+  if (overdue === 0 && unknown === 0) return 'No tracked report is overdue.';
+  const parts = [
+    ...(overdue > 0 ? [`${overdue.toLocaleString()} overdue`] : []),
+    ...(unknown > 0 ? [`${unknown.toLocaleString()} with no due date, because no IND effective date was recorded`] : []),
+  ];
+  return `${parts.join('; ')}.`;
+}
+
+function annualState(r: AnnualReport, feed: OverdueReport[]): string {
+  if (r.status === 'filed') return r.filedAt ? `Filed ${day(r.filedAt)}` : 'Filed';
+  const state = feed.find((o) => o.id === r.id)?.overdueState;
+  return state === 'overdue' ? 'Draft, overdue' : state === 'deadline_unknown' ? 'Draft, due date not known' : 'Draft';
+}
+
+function AnnualReportTable({ rows, feed }: { rows: AnnualReport[]; feed: OverdueReport[] }) {
+  return (
+    <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+      <table className="reg-tbl">
+        <thead><tr><th scope="col">Reporting period</th><th scope="col">IND</th><th scope="col">Due</th><th scope="col">Open sections</th><th scope="col">State</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td>{day(r.reportingPeriodStart)} to {day(r.reportingPeriodEnd)}</td>
+              <td className="mono">{r.indNumber}</td>
+              <td>{day(r.dueDate)}</td>
+              <td>{r.gapCount.toLocaleString()}</td>
+              <td>{annualState(r, feed)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AnnualReports({ submissionId, productName }: { submissionId: number; productName: string | null }) {
+  const [version, setVersion] = useState(0);
+  const [tracking, setTracking] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const rows = useLiveData<AnnualReport[]>(`/api/ind-lifecycle/submission/${submissionId}/annual-reports`, [submissionId, version], isList<AnnualReport>);
+  const feed = useLiveData<OverdueReport[]>(`/api/ind-lifecycle/submission/${submissionId}/annual-reports/overdue`,
+    [submissionId, version], isList<OverdueReport>);
+  const done = (text: string | null) => { setTracking(false); if (text) { setNote(text); setVersion((v) => v + 1); } };
+  let body: React.ReactNode;
+  if ((rows.loading && !rows.data) || (feed.loading && !feed.data)) body = <p role="status" className="sec-sub">Reading the annual-report tracker…</p>;
+  else if (rows.error || feed.error || !rows.data || !feed.data) {
+    body = <p role="alert" className="sec-sub">The annual-report tracker could not be read, so nothing is shown. <button type="button" className="btn ghost sm" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
+  } else if (rows.data.length === 0) body = tracking ? null : <p className="sec-sub">No annual report is tracked for this IND yet.</p>;
+  else {
+    body = (
+      <>
+        <p className="sec-sub" data-testid="indl-annual-verdict">{overdueSentence(feed.data)}</p>
+        <AnnualReportTable rows={rows.data} feed={feed.data} />
+      </>
+    );
+  }
+  return (
+    <div data-testid="indl-annual-register" style={{ marginTop: 16 }}>
+      <div className="pj-sec-h">
+        <h3>Annual reports (21 CFR 312.33)</h3>
+        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost sm" onClick={() => { setNote(null); setTracking(true); }}>Track an annual report</button></span>}
+      </div>
+      {note && <p role="status" className="sec-sub">{note}</p>}
+      {tracking && <TrackAnnualReport submissionId={submissionId} productName={productName} onDone={done} />}
+      {body}
+    </div>
+  );
+}
+
+export function SubmissionIndRegisters({ submissionId, sponsorName, productName }: {
+  submissionId: number | null; sponsorName: string | null; productName: string | null;
+}) {
   return (
     <section className="pj-card" data-testid="indl-registers" aria-labelledby="indl-registers-h" style={{ marginTop: 16 }}>
       <div className="pj-card-h"><h2 className="t" id="indl-registers-h">Registers</h2><span className="s">what this IND relies on and what it has filed since</span></div>
       <div className="pj-card-b">
         {submissionId == null
           ? <p className="sec-sub">This checklist carries no submission, so there is no register to show.</p>
-          : <CrossReferences submissionId={submissionId} sponsorName={sponsorName} />}
+          : (
+            <>
+              <CrossReferences submissionId={submissionId} sponsorName={sponsorName} />
+              <AnnualReports submissionId={submissionId} productName={productName} />
+            </>
+          )}
       </div>
     </section>
   );

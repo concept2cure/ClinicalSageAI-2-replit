@@ -72,6 +72,7 @@ vi.mock('../../../services/ind-lifecycle/icsr-gateway-transport', async importOr
 import indLifecycleRouter from '../../ind-lifecycle.routes';
 import { createSubmission } from '../../../services/submission-service/submission-service';
 import { persistAnnualReport } from '../../../services/ind-lifecycle/ind-lifecycle-persistence';
+import { createAnnualReportDraft } from '../../../services/ind-lifecycle/ind-annual-report-persistence';
 
 let harness: IndPgliteDb;
 let seededSubmissionId: number;
@@ -852,37 +853,41 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     ibChanges: [],
   });
 
-  it('POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date', async () => {
-    const res = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`)
-      .send({ report: report(), indEffectiveDate: '2026-01-01' });
-    expect(res.status).toBe(201);
-    expect(res.body.status).toBe('draft');
-    expect(res.body.indNumber).toBe('123456');
-    expect(res.body.dueDate).toBeTruthy();
-    expect(typeof res.body.gapCount).toBe('number');
-    draftId = res.body.id;
+  /* P-122 (2026-11-10): the tracker is served in production for the IND screen, so its routes (tracking a report, the
+     list and the overdue feed) admit the submission's project first. This harness installs no request scope and files
+     no project, so they are refused, never answered organisation-wide; the served tracker is
+     tests/db/p122-ind-registers.dbtest.ts. The draft the filing cases below file is tracked through the service. */
+  it('a tracked draft has a due date and its open sections', async () => {
+    const row = await createAnnualReportDraft({ submissionId: seededSubmissionId, report: report(), indEffectiveDate: '2026-01-01' },
+      { organizationId: 1, userId: 9 });
+    expect(row.status).toBe('draft');
+    expect(row.indNumber).toBe('123456');
+    expect(row.dueDate).toBeTruthy();
+    expect(typeof row.gapCount).toBe('number');
+    draftId = row.id;
   });
 
-  it('refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404', async () => {
+  it.each([
+    ['POST', 'annual-reports'], ['GET', 'annual-reports'], ['GET', 'annual-reports/overdue?asOf=2030-01-01'],
+  ] as const)('%s /submission/:id/%s is refused without the project admitted', async (method, tail) => {
+    const path = `/api/ind-lifecycle/submission/${seededSubmissionId}/${tail}`;
+    const res = method === 'GET' ? await request(app).get(path) : await request(app).post(path).send({ report: report() });
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.error.code).toBe('REQUEST_DB_CONTEXT_REQUIRED');
+  });
+
+  /* The route answers this refusal 400 VALIDATION once the project is admitted (tests/db/p122-ind-registers.dbtest.ts). */
+  it('refuses a report with no reporting period dates as VALIDATION, and stores nothing', async () => {
     // Absent dates used to coerce to 1 January 1970 and the draft persisted.
     const noStart: Record<string, unknown> = { ...report() };
     delete noStart.reportingPeriodStart;
-    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: noStart });
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('VALIDATION');
-    expect(res.body.error.message).toMatch(/reportingPeriodStart/);
+    await expect(createAnnualReportDraft({ submissionId: seededSubmissionId, report: noStart }, { organizationId: 1, userId: 9 }))
+      .rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/reportingPeriodStart/) });
   });
 
   it('POST /annual-reports → 400 without indNumber/productName', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`).send({ report: { indNumber: '1' } });
     expect(res.status).toBe(400);
-  });
-
-  it('GET /annual-reports → 200 lists the draft', async () => {
-    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports`);
-    expect(res.status).toBe(200);
-    expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
   it('GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404', async () => {
@@ -901,10 +906,7 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     expect(missing.body.error.code).toBe('NOT_FOUND');
   });
 
-  it('overdue with a far-future asOf includes it; filing then drops it', async () => {
-    const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
-    expect(before.body.map((r: any) => r.id)).toContain(draftId);
-
+  it('filing the draft refuses its open sections until acknowledged, then files it', async () => {
     // The draft still has open 312.33 sections: filing it silently used to be
     // the default. It is refused until the caller acknowledges the gaps, and
     // the filing then records that they were filed open.
@@ -922,9 +924,6 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     expect(filed.body.draft.status).toBe('filed');
     expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
     expect(filed.body.filedWithOpenGaps).toBe(refused.body.error.gapCount);
-
-    const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
-    expect(after.body.map((r: any) => r.id)).not.toContain(draftId);
   });
 });
 

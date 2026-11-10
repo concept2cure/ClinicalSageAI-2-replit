@@ -1883,9 +1883,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         </aside>
       </div>
 
-      {/* P-122: the IND's registers (cross-references and letters of authorization), a quiet section below the
-          filing work. Built on the server and unreached until 2026-11-10. */}
-      <SubmissionIndRegisters submissionId={submissionId} sponsorName={prog.sponsorName ?? null} />
+      {/* P-122: the IND's registers (cross-references and letters of authorization, annual reports), a quiet section
+          below the filing work. Built on the server and unreached until 2026-11-10. */}
+      <SubmissionIndRegisters submissionId={submissionId} sponsorName={prog.sponsorName ?? null} productName={prog.productName ?? null} />
     </div>
   );
 }

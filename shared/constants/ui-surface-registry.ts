@@ -720,6 +720,9 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-lifecycle/submission/:id/cross-references',
       '/api/ind-lifecycle/submission/:id/cross-reference-register',
       '/api/ind-lifecycle/cross-references',
+      // The annual-report tracker (21 CFR 312.33): the tracked reports and tracking one, and the server's overdue
+      // feed beneath it. One report by its id (/annual-reports/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/annual-reports',
     ],
     anaToolFamilies: [],
     sharedContract: null,

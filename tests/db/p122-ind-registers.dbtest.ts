@@ -233,6 +233,93 @@ describe('and refused to anyone who cannot open the project', () => {
   });
 });
 
+/** A 312.33 report for a period that ended on 31 December 2025: with the IND effective on 15 January 2025, the server
+ *  dates it due 60 days after the anniversary, which has passed. Without an effective date, its due date is not known. */
+const annualReport = (label: string, effective = true) => ({
+  report: { indNumber: '999001', productName: `${TAG}-${label}`, reportingPeriodStart: '2025-01-01', reportingPeriodEnd: '2025-12-31' },
+  ...(effective ? { indEffectiveDate: '2025-01-15' } : {}),
+});
+const annual = { open: '', unknown: '', priv: '' };
+type Overdue = { id: string; overdueState: string };
+
+describe('the annual-report tracker, for a member of the organisation', () => {
+  it('tracks a report, with the due date and the open sections the server computes', async () => {
+    const created = await post('memberA', `${sub(ind.open)}/annual-reports`, annualReport('annual-open'));
+    expect(created.status, show(created)).toBe(201);
+    expect(created.body).toMatchObject({ status: 'draft', indNumber: '999001', submissionId: ind.open });
+    expect(new Date(created.body.dueDate).getTime()).toBeLessThan(Date.now());
+    expect(created.body.gapCount).toBeGreaterThan(0);
+    annual.open = created.body.id;
+    const list = await get('memberA', `${sub(ind.open)}/annual-reports`);
+    expect(list.status, show(list)).toBe(200);
+    expect(list.body.map((r: { id: string }) => r.id)).toEqual([annual.open]);
+  });
+
+  it('a report with no reporting period is refused as 400 VALIDATION, and nothing is tracked', async () => {
+    const { report } = annualReport('annual-no-period');
+    const res = await post('memberA', `${sub(ind.open)}/annual-reports`, { report: { ...report, reportingPeriodStart: undefined } });
+    expect(res.status, show(res)).toBe(400);
+    expect(res.body.error).toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/reportingPeriodStart/) });
+    expect((await get('memberA', `${sub(ind.open)}/annual-reports`)).body).toHaveLength(1);
+  });
+
+  it('the overdue feed names it overdue, and one with no IND effective date as not known', async () => {
+    const unknown = await post('memberA', `${sub(ind.open)}/annual-reports`, annualReport('annual-unknown', false));
+    expect(unknown.status, show(unknown)).toBe(201);
+    annual.unknown = unknown.body.id;
+    const overdue = await get('memberA', `${sub(ind.open)}/annual-reports/overdue`);
+    expect(overdue.status, show(overdue)).toBe(200);
+    expect(Object.fromEntries((overdue.body as Overdue[]).map((r) => [r.id, r.overdueState])))
+      .toEqual({ [annual.open]: 'overdue', [annual.unknown]: 'deadline_unknown' });
+  });
+
+  it('a tracked report filed through the IND forms filing is filed in the register, and leaves the overdue feed', async () => {
+    const filed = await post('memberA', '/api/ind-lifecycle/annual-report/file',
+      { submissionId: ind.open, sequenceNumber: '0005', draftId: annual.open, acknowledgeGaps: true });
+    expect(filed.status, show(filed)).toBe(201);
+    const list = await get('memberA', `${sub(ind.open)}/annual-reports`);
+    expect(list.body.find((r: { id: string }) => r.id === annual.open)).toMatchObject({ status: 'filed', sequenceId: filed.body.sequence.id });
+    const overdue = await get('memberA', `${sub(ind.open)}/annual-reports/overdue`);
+    expect((overdue.body as Overdue[]).map((r) => r.id)).toEqual([annual.unknown]);
+  });
+});
+
+describe('the annual-report tracker is refused to anyone who cannot open the project', () => {
+  beforeAll(async () => {
+    const created = await post('ownerA', `${sub(ind.priv)}/annual-reports`, annualReport('annual-private'));
+    expect(created.status, show(created)).toBe(201);
+    annual.priv = created.body.id;
+  });
+
+  it('another organisation', async () => {
+    for (const res of [
+      await get('memberB', `${sub(ind.priv)}/annual-reports`),
+      await get('memberB', `${sub(ind.priv)}/annual-reports/overdue`),
+      await post('memberB', `${sub(ind.priv)}/annual-reports`, annualReport('annual-theirs')),
+    ]) expect(res.status, show(res)).toBe(404);
+  });
+
+  it('a colleague who can read the project but does not edit it tracks nothing', async () => {
+    expect((await get('readerA', `${sub(ind.open)}/annual-reports`)).status).toBe(200);
+    const res = await post('readerA', `${sub(ind.open)}/annual-reports`, annualReport('annual-reader'));
+    expect(res.status, show(res)).toBe(403);
+    expect(res.body.error?.code).toBe('PROJECT_PERMISSION_DENIED');
+  });
+
+  it('a colleague who is not on a private project', async () => {
+    for (const res of [
+      await get('memberA', `${sub(ind.priv)}/annual-reports`),
+      await get('memberA', `${sub(ind.priv)}/annual-reports/overdue`),
+      await post('memberA', `${sub(ind.priv)}/annual-reports`, annualReport('annual-colleague')),
+    ]) {
+      expect(res.status, show(res)).toBe(403);
+      expect(res.body.error?.code).toBe('PROJECT_PERMISSION_DENIED');
+    }
+    const owners = await get('ownerA', `${sub(ind.priv)}/annual-reports`);
+    expect(owners.body.map((r: { id: string }) => r.id)).toEqual([annual.priv]);
+  });
+});
+
 /** Every route the IND lifecycle routers mount, as a request carries it. */
 const ROUTES = listIndLifecycleRoutes().map((r) => ({ method: r.method.toLowerCase(), path: r.path.replace(/\{[^}]+\}/g, '7') }));
 const UNCLAIMED = ROUTES.filter((r) => launchScopeApiVerdict(r.path, buildPrefixMap(), NEVER_GATED) !== 'launch');

@@ -387,13 +387,14 @@ router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), asyn
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'report.indNumber and report.productName are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
     res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
     if (err instanceof AnnualReportError) {
       return res.status(err.code === 'VALIDATION' ? 400 : 404).json({ error: { code: err.code, message: err.message } });
     }
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -404,9 +405,10 @@ router.get('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), async
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await listAnnualReports(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -432,10 +434,11 @@ router.get('/submission/:id/annual-reports/overdue', limiter, requireRole(AUTHOR
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     const asOf = typeof req.query.asOf === 'string' ? new Date(req.query.asOf) : undefined;
     res.json(await listOverdueAnnualReports(submissionId, ctx, asOf));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 

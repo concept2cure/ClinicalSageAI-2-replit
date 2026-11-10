@@ -61,6 +61,8 @@ const CALLED = [
   '/api/ind-lifecycle/submission/{id}/cross-reference-register', //               the LOA-coverage QC
   '/api/ind-lifecycle/submission/{id}/cross-references/{crossRefId}/file-loa', // filing the letter (m1.4.1)
   '/api/ind-lifecycle/cross-references/{crossRefId}', //                          marking it on file (PATCH), removing it (DELETE)
+  '/api/ind-lifecycle/submission/{id}/annual-reports', //                          the tracked reports (GET), tracking one (POST)
+  '/api/ind-lifecycle/submission/{id}/annual-reports/overdue', //                  the server's overdue feed
   // client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx (embedded in the IND screen)
   '/api/ind-forms/',
   '/api/ind-forms/program-facts',
