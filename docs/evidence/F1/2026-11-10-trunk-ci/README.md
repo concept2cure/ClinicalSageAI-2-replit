@@ -44,13 +44,32 @@ This lane built nothing. It runs the repository's own CI definition and repairs 
 | Test, shards 1–8 | Every red fixed, or handed to its holder in COORDINATION.md |
 | Integration: GCC migrations, RLS smoke, provisioning, integration tests | Green |
 | Integration: real-database suite | 37 failures in 23 files at `fae35817f9`. 21 files fixed, all green on a fresh copy. 2 handed over, below |
+| Security contract tests | Green (at `0850ed937b`) |
+| AnA readiness | Green |
+| AIOS audit assets | Green |
+| Blank DB provisioning and deploy migration | Green, all 12 steps, on a new blank database |
+| Security: SBOM, dependency-risk ledger, PPTX reachability, Trivy hygiene | Green. The first SBOM red came from a `node_modules` older than `10b8e3fd68`'s image-size override, and `npm ci` cleared it. The Trivy scans themselves are GitHub actions and were not run |
+| Build | The build is green. `ci:component-class-coverage` was red on 5 classes. The 2 CMC classes are fixed here; 3 Quality classes are handed over |
 
 **Not reproduced here:**
 - Coverage and nightly governance run only on the schedule.
-- Production image boot and Codespace need Docker and the devcontainer image.
+- Production boot smoke, production image boot and Codespace need a Docker daemon. This container has the client
+  but no daemon.
 - The release-evidence jobs run on GitHub only.
-- Security contract tests, AnA readiness, production boot smoke, AIOS audit assets, build and the security scan are
-  the lane's next step.
+
+**Found by the newer jobs:**
+- **The CMC classes.** `.cm` and `.cm-push` were left in the markup after D5-1 (`94f24dba08`) deliberately deleted
+  their rules. Both class names are removed.
+  - The shipped CSS is byte-identical: all 35 content-hashed chunk names match.
+  - Headless Chromium against the built chunks showed 0 computed-style or box changes over 25 elements, at 1440 and
+    390.
+  - Control: dropping `cm-pushbar` changed 63 properties, so the probe can see a change.
+  - `cmcWorkAreaReach`'s source anchor follows the new tag. It was seen failing on the markup change alone, and is
+    just as strict.
+- **Handed over (COORDINATION.md):**
+  - the three Quality classes, to the Quality lane, which is mid-sweep in those files;
+  - `projectCreationDoors.contract`'s Vault case, to S6 and the holder of the contract. The sponsor-first Vault reads
+    its projects through `useVaultProjects`.
 
 ## Product defects found by the reds, and fixed
 

@@ -442,6 +442,50 @@ the seed works today and breaks the day the product follows the decision. This l
 does not pin the pack's choice as correct. The pack needs an independent reviewer, the demo's QA reviewer for
 example, or the sole-member path where that applies.
 
+**The build job and the remaining CI jobs, 2026-11-10 (`0850ed937b`, then `5f8130b939`).** These are green when run
+locally:
+- the security contract tests;
+- AnA readiness;
+- AIOS audit assets;
+- blank-database provisioning, all 12 steps;
+- the security job: SBOM, dependency-risk ledger, PPTX reachability and Trivy hygiene. An SBOM red here came from a
+  `node_modules` older than `10b8e3fd68`'s image-size override, so run `npm ci` before reading `npm sbom`.
+
+The build job is red on one step: `ci:component-class-coverage`, which nothing runs before CI. The CMC pair is fixed
+by this lane. `.cm` and `.cm-push` were left in the markup after D5-1 (`94f24dba08`) deliberately deleted their rules.
+The shipped CSS is byte-identical, and computed styles show zero change at 1440 and 390. Two reds remain, handed
+over:
+
+**→ Quality and training (`01GyGhjgjrNv…`), your `quality/**`: three classes render with no rule in any built chunk,
+still at `5f8130b939`.** They are `.qms-doc` and `.qms-row-more-tr` (`SopRegisterRow.tsx`, C6 `62c7f00315`) and
+`.qcc-change` (`ChangeControl.tsx`, C8 `ea1d599572`). An adversarially reviewed proposal was made at `0850ed937b`;
+your C18 has since moved `app.css`, so it is described here rather than filed as a diff.
+- **`.qms-row-more-tr`.** Nothing reads or styles it, so drop it.
+- **`.qms-doc`.** It stays, because four suites and five walks select `tbody.qms-doc`. It gets a rule. C6 moved
+  Effective and Next review from `div.qms-cell`, which had `white-space: nowrap`, to `<td>`, so at phone width the
+  dates break at their hyphens. The proposal was
+  `@media (max-width:640px){.c2c-v2 .reg-tbl.qms-reg tbody.qms-doc td:not(.qms-title){white-space:nowrap}}`.
+  Measured in a Chromium harness, not yet in the running app: at 1440 whole dates need about 50 to 120 px more than
+  the section has. From 641 px to about 1390 px (with the rail), the HEAD table already overflows its section and
+  `.qms-page` scrolls sideways.
+- **`.qcc-change`.** It stays as a hook (`ChangeControl.test.tsx`, the D7 walks). The proposal made the Target date a
+  `<time dateTime>`, as other dates in the product are, and nowrapped only that date:
+  `.c2c-v2 .reg-tbl.qms-reg tbody.qcc-change time{white-space:nowrap}`. Copying the C11 records rule to the whole
+  row widened the table to 1042 px against a 996 px work area.
+
+If your C18a already does one of these, the gate only needs the class to appear in a shipped selector.
+
+**→ S6 (`01QoxbLZMS…`, `47a3067008`) and the holder of `v2/__tests__/project*` (D3/S12, `01FTWcm…`):
+`projectCreationDoors.contract.test.ts` "v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects
+door" is red on trunk.**
+- **Cause.** Since the sponsor-first Vault, `Vault.tsx` reads its projects through `useVaultProjects`
+  (`vaultSponsors.ts`, `useLiveData(PALETTE_PROJECTS_URL)`), not `usePaletteProjects`. The contract still requires a
+  direct `usePaletteProjects` call.
+- **What did not change.** The list and its `vault-project-list` testid are still there, and the read is the same
+  URL.
+- **The fix belongs to the contract.** It should accept the sponsor gate's read and pin that `vaultSponsors.ts` reads
+  `PALETTE_PROJECTS_URL`. Not edited here: both files were changed or are held within six hours.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
