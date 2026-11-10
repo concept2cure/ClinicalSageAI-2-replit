@@ -1,0 +1,19 @@
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > 403 without org context 19ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > projects the real-store changes through the classifier, source = cmc_change_controls 14ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > GET /api/cmc-changes > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 403 without org context 15ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > proposes a change and returns the classified view (audited) 7ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 400 on invalid input 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > write-throughs to the canonical §3.2 source layer when a CMC project is stated 4ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > says skipped when no project is stated — the change persists org-wide but feeds nothing 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > reports a failed write-through instead of pretending it recorded, and meters it 6ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 404 for another organization's project — nothing is written 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > 404 for an id that names no project — nothing is written 3ms
+ ✓ server/routes/__tests__/cmc-changes-read.test.ts > POST /api/cmc-changes > a project lookup that cannot complete writes nothing and is not answered as a success 3ms
+ × server/routes/__tests__/cmc-changes-read.test.ts > /api/cmc-changes while launch scope is enforced > GET is refused 409 and reads nothing 8ms
+   → expected 500 to be 409 // Object.is equality
+ × server/routes/__tests__/cmc-changes-read.test.ts > /api/cmc-changes while launch scope is enforced > POST is refused 409 and writes nothing 3ms
+   → expected 500 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)

@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks constrains organization_id 27ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary constrains organization_id 6ms
+ × server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary measures nothing when there are no tasks 10ms
+   → expected { total: +0, completed: +0, …(5) } to match object { total: +0, completed: +0, …(3) }
+(2 matching properties omitted from actual)
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary still measures the tasks there are 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks resolves the project within the org 15ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks 404s on a project belonging to another org 6ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks/bulk resolves the project within the org 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > PUT /projects/:id/tasks/:taskId constrains organization_id 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > DELETE /projects/:id/tasks/:taskId constrains organization_id 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess constrains organization_id on both reads 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary measures nothing when there are no tasks
+AssertionError: expected { total: +0, completed: +0, …(5) } to match object { total: +0, completed: +0, …(3) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "completed": 0,
+-   "completionRate": null,
+-   "healthScore": null,
++   "completionRate": 100,
++   "healthScore": 100,
+    "overdue": 0,
+    "total": 0,
+  }
+
+ ❯ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts:156:27
+    154|     results = [[]];
+    155|     const res = await request(app()).get('/api/concept2cure/projects/1…
+    156|     expect(res.body.data).toMatchObject({ total: 0, completed: 0, over…
+       |                           ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  12:33:05
+   Duration  5.96s (transform 3.22s, setup 132ms, import 5.35s, tests 89ms, environment 0ms)
+

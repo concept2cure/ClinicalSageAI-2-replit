@@ -41,7 +41,8 @@ vi.mock('../../v2/editor/DocumentWorkbench', () => ({ DocumentWorkbench: (props:
 } }));
 vi.mock('../../v2/editor/AuthoredHtml', () => ({ AuthoredHtml: ({ html }: { html: string }) => <div data-testid="saved-snapshot-content">{html}</div> }));
 vi.mock('../../_shared/components/EsignModal', () => ({ EsignModal: () => null, esignSignerOf: () => undefined }));
-vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], loading: false, error: null }) }));
+vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], loading: false, error: null }),
+  useChangeSummary: () => ({ summary: null, loading: true, error: null }) }));
 vi.mock('../../v2/surfaceActions', () => ({ useSurfaceActionHandlers: () => undefined, notifySurfaceActionReady: () => undefined }));
 vi.mock('../../v2/surfaceContext', () => ({ usePublishSurfaceContext: () => undefined }));
 import { SopRegister } from '../SopRegister';
@@ -100,10 +101,22 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     H.request.mockResolvedValue(response(null,404));
     render(<QualityApp qmsDocumentId="9" />);
     const failed=await screen.findByTestId('qms-target-failed');
-    expect(failed.textContent).toMatch(/This controlled document was not found in your organization/);
+    expect(failed.textContent).toContain('This controlled document was not found in your organization, so it was not read.');
     expect(within(failed).queryByRole('button',{name:'Try again'})).toBeNull();
     fireEvent.click(within(failed).getByRole('button',{name:'Dismiss this message'}));
     expect(screen.queryByTestId('qms-target-failed')).toBeNull();
+  });
+  // Quality review, 2026-11-10: a 404 on the version history names the document, not "this project".
+  it('says a version history that is not there was not found, naming the document',async()=>{
+    H.docs=[{...DRAFT,status:'effective'}];
+    H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/versions')?response(null,404):response({}));
+    renderRegister();
+    openMore();
+    fireEvent.click(screen.getByRole('button',{name:'View version history of SOP-004'}));
+    const failed=await screen.findByTestId('qms-history-failed');
+    expect(failed.textContent).toContain('This controlled document was not found in your organization, so its version history was not read.');
+    expect(failed.textContent).not.toMatch(/project/);
+    expect(within(failed).queryByRole('button',{name:'Try again'})).toBeNull();
   });
   it('queues a new notification target while the current canonical editing copy remains open',async()=>{
     H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/editor')?response({...editor,qmsDocument:{id:Number(path.split('/').at(-2)),status:'draft'}}):

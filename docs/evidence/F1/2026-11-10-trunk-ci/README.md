@@ -159,11 +159,14 @@ everything passes. The ESLint warning count per file is unchanged against HEAD.
 
 ## Still red, handed over (COORDINATION.md)
 
-- `tests/db/estar-audit-admission.dbtest.ts` goes to Vault parity, whose row holds `pathway-engines/estar/**` and
-  its tests.
-  - **Cause:** since `776d9da460` the UPDATE runs on a checked-out client, and the barrier is still on `pool.query`.
-  - **Proposed fix:** `estar-barrier-proposed.diff`. It ran 13/13 five times, and turns red when the status guard is
-    removed.
+- ~~`tests/db/estar-audit-admission.dbtest.ts`~~ **Fixed by this lane, 2026-11-10 12:20 UTC.** Vault parity's row
+  released `pathway-engines/estar/**` when it moved to the eTMF, and nobody had committed to the test since
+  2026-10-17.
+  - **Cause:** since `776d9da460` the UPDATE runs on a checked-out client, and the barrier was still on `pool.query`.
+  - **Fix, test only:** the barrier holds the UPDATE on the client `pool.connect` hands out.
+  - **Run at `64e1722af7`, on fresh copies:** 13/13. With the product's status guard removed
+    (`estar-submission-service.ts`, the `status = current.status` condition), the concurrency case is red:
+    `[200, 200]` against `[200, 409]`. The product file was restored.
 - `tests/db/tenant-purge-blocking-keys.dbtest.ts` needs a founder decision.
   - **Cause:** the P-104 owner boundary on `ana_relational_profiles` (`fd04214563`) leaves the D6 purge unable to
     erase a project-bound profile. The purge fails 23503, and the whole erasure rolls back.

@@ -22,8 +22,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
-import { asArray, makeTally } from './biotech-shared.mjs';
-import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_CODE, CSR_SOURCE_FILE, CSR_SOURCE_TITLE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
+import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_CODE, CSR_SOURCE_FILE, CSR_SOURCE_TITLE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
@@ -187,14 +187,16 @@ export async function seed(ctx) {
      eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
      Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
      "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
-  await ensureApplicantIdentity(c, lmn201);
+  await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
   const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
-    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title }));
-  const submission = await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
-  await ensureStudyTags(c, submission);
+    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title, studyId: d.stf?.studyId, stfFileTag: d.stf?.fileTag }));
+  // The study files are placed with their study id and STF file-tag, and ones an earlier run placed are tagged
+  // (biotech-submission.mjs ensureLeaves, from each document's `stf` in lumen-vault-content.mjs).
+  await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
   await ensureLumenReportPack(c);
+  await ensureCompanyDetails(c);
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
@@ -254,78 +256,34 @@ async function ensureProjectTeam({ api, run, tally, signer, approver }, project,
 }
 
 /**
- * LMN-201's applicant identity: the IND number the fictional information request already cites (IND 194021,
- * lumen-content.mjs) and a clearly fictional sponsor record with its D-U-N-S and FDA contact, through the routes
- * Submission Center's "Recorded applicant identity" uses (POST /api/ind-master-data/sponsors, PUT
- * /api/ind-forms/program-facts). The same step the CSR study's preparation takes (walk-identity.cjs, cc06768a5).
- * Without it the project said "IND number: not assigned" beside a letter naming one, and Compile answered four
- * PACKAGE_IDENTITY_MISSING errors before it could say what the sequence itself lacks (showcase pass, 2026-11-10).
- * Found or recorded, never replaced. No real person is named: the contact is a fictional role mailbox.
+ * The Lumen account's company details, through the route Administration's company settings write
+ * (PUT /api/client-branding/company-documents). Home asked this demonstration account to "Record your company
+ * details" as its first to-do (showcase walk, 2026-11-10); with them recorded, Home's setup list is complete and gone.
+ * Only in the Lumen account: in any other organisation this pack runs in (the Codespace's development organisation),
+ * the company is someone else's and nothing is written. The address and contact are the fictional ones of LMN-201's
+ * sponsor record. The letterhead is left exactly as the server holds it, and is not applied to reports or letters.
+ * Details a person has recorded are left alone.
  */
-const LMN201_IND = '194021';
-const LUMEN_SPONSOR = {
-  name: 'Lumen Bioscience (fictional demo sponsor)', duns: '999999902',
-  contactName: 'Regulatory Affairs (fictional contact)', contactPhone: '+1 555 0102', contactEmail: 'regulatory@lumen-demo.example',
-  signatoryName: 'Regulatory Affairs (fictional contact)', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
-};
-
-async function ensureApplicantIdentity({ api, run, tally }, program) {
-  await run.step('Submission Center: LMN-201\'s applicant identity (fictional IND number, sponsor, D-U-N-S, FDA contact)', async () => {
-    const unwrap = (json) => (json?.data !== undefined ? json.data : json);
-    const facts = unwrap(must(await api('GET', `/api/ind-forms?projectIdent=${encodeURIComponent(program.id)}`), 200, 'read the IND facts'))?.program;
-    if (!facts?.factsVersion) throw new Error('the project\'s IND facts were not returned');
-    if (facts.applicationNumber && facts.applicantSponsorId) { tally.found('applicant-identity'); return `found IND ${facts.applicationNumber}`; }
-    const listed = unwrap(must(await api('GET', '/api/ind-master-data/sponsors'), 200, 'list sponsor records'));
-    let sponsor = (Array.isArray(listed) ? listed : []).find((row) => row.name === LUMEN_SPONSOR.name);
-    if (sponsor) tally.found('sponsor-record');
-    else {
-      sponsor = unwrap(must(await api('POST', '/api/ind-master-data/sponsors',
-        { ...LUMEN_SPONSOR, reason: 'Demo seed: the fictional sponsor record of the Lumen demonstration, for its IND.' }), 201, 'record the fictional sponsor'));
-      tally.created('sponsor-record');
-    }
-    if (!sponsor?.id) throw new Error('the sponsor record carries no id');
-    const bound = unwrap(must(await api('PUT', '/api/ind-forms/program-facts', {
-      projectIdent: program.id, expectedFactsVersion: facts.factsVersion,
-      reason: 'Demo seed: LMN-201 is an open IND (fictional number) of the fictional demo sponsor.',
-      applicationNumber: LMN201_IND, applicantSponsorId: sponsor.id, sponsorAddress: '1 Fictional Way, Demo City, WA 00000, USA',
-    }), 200, 'bind the IND number and sponsor'));
-    if (bound?.applicationNumber !== LMN201_IND) throw new Error('the IND number did not read back');
-    tally.created('applicant-identity');
-    return `IND ${LMN201_IND}, sponsor #${sponsor.id}`;
-  });
-}
-
-/**
- * Study tagging for the sequence's Module 4 and 5 study files, through the Builder's "Edit study tagging" route
- * (PUT /api/submissions/sequences/:id/leaves with studyTaggingEdit). A study file with no study id and STF file-tag
- * is in no Study Tagging File, and Compile refuses the sequence for it (FDA validation 1789) before it says anything
- * else (showcase pass, 2026-11-10). The ids are this pack's own fictional studies; a tag a person set is left alone.
- */
-const LMN201_STUDY_TAGS = [
-  { section: /^4\.2\./, title: /./, studyId: 'lmn201-tox-13wk', stfFileTag: 'pre-clinical-study-report' },
-  { section: /^5\.3\.5/, title: /protocol/i, studyId: 'lmn-201-cdi-02', stfFileTag: 'protocol-or-amendment' },
-  { section: /^5\.3\.5/, title: /consent/i, studyId: 'lmn-201-cdi-02', stfFileTag: 'iec-irb-consent-form-list' },
-];
-
-async function ensureStudyTags({ api, run, tally }, submission) {
-  await run.step('Submission Center: study id and STF file-tag on the Module 4 and 5 study files', async () => {
-    const sequenceId = submission?.sequence?.id;
-    if (!sequenceId) return 'not executed: no sequence';
-    const leaves = asArray(must(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`), 200, 'list leaves'), 'data', 'leaves');
-    const out = [];
-    for (const leaf of leaves) {
-      const tag = LMN201_STUDY_TAGS.find((t) => t.section.test(leaf.sectionCode ?? '') && t.title.test(leaf.title ?? ''));
-      if (!tag) continue;
-      if (leaf.studyId || leaf.stfFileTag) { tally.found('study-tag'); out.push(`${leaf.sectionCode}: found`); continue; }
-      must(await api('PUT', `/api/submissions/sequences/${sequenceId}/leaves`, {
-        leafId: leaf.id, sectionCode: leaf.sectionCode, title: leaf.title, studyId: tag.studyId, stfFileTag: tag.stfFileTag,
-        reason: 'Demo seed: the study this file belongs to, and its role in the Study Tagging File.',
-        studyTaggingEdit: { expectedStudyId: leaf.studyId ?? null, expectedStfFileTag: leaf.stfFileTag ?? null, expectedUpdatedAt: leaf.updatedAt },
-      }), 200, `tag leaf ${leaf.sectionCode}`);
-      tally.created('study-tag');
-      out.push(`${leaf.sectionCode}: ${tag.studyId} / ${tag.stfFileTag}`);
-    }
-    return out.join('; ') || 'no study files in the sequence';
+async function ensureCompanyDetails({ api, run, tally }) {
+  await run.step('Administration: the Lumen account\'s company details (fictional address and contact)', async () => {
+    const read = await api('GET', '/api/client-branding/company-documents?includeLegal=false');
+    if (read.status !== 200) return `not executed: the company details could not be read (HTTP ${read.status})`;
+    const profile = read.json?.data ?? read.json;
+    if (!/^Lumen Bioscience/.test(String(profile?.companyName ?? ''))) return 'not executed: this organisation is not the Lumen account';
+    if (read.json?.canManage === false) return 'not executed: this person may not manage the company details';
+    if (Number(profile.revision) > 0 && String(profile.address ?? '').trim()) { tally.found('company-details'); return 'found'; }
+    const { sponsor, sponsorAddress } = LMN201_IDENTITY;
+    must(await api('PUT', '/api/client-branding/company-documents', {
+      expectedRevision: Number(profile.revision) || 0,
+      reason: 'Demo seed: the fictional company details of the Lumen demonstration account.',
+      companyName: profile.companyName, address: sponsorAddress,
+      contact: `${sponsor.contactName}, ${sponsor.contactEmail}, ${sponsor.contactPhone}`,
+      registrationDetails: 'FICTIONAL demonstration company. Not affiliated with Lumen Bioscience, Inc.',
+      letterhead: profile.letterhead, importedFrom: profile.importedFrom ?? null,
+      applyToReports: profile.applyToReports === true, applyToSubmissionCorrespondence: profile.applyToSubmissionCorrespondence === true,
+    }), 200, 'record the company details');
+    tally.created('company-details');
+    return 'recorded';
   });
 }
 

@@ -32,11 +32,14 @@
  * project chip that named the open project a second time, the organisation with an
  * orange mark, a 230px search box, an orange-tinted "Task", Help, and an orange
  * badge. Pinned here:
- *   - no `.tb-cmdk`, `.tb-org`, `.tb-proj`, `.tb-task`, no "Get help" in the bar;
+ *   - no `.tb-cmdk`, `.tb-org`, `.tb-proj`, `.tb-task` in the bar;
  *     the open project is the first crumb, a `.crumb-proj` button that opens its
  *     page, on every screen while one is open; no root or tier crumb;
- *   - on Home with no project open, exactly Collaborate, New task and Your work,
- *     and no text; at phone width "New conversation" sits last;
+ *   - on Home with no project open, Search, Collaborate, New task, Your work and
+ *     Help, and no text but Search's; at phone width "New conversation" sits last.
+ *     P-122 (2026-11-10) brought Search and Help back to the bar
+ *     (p122TopBarSearchHelp.test.tsx); D1-2 had moved them to the sidebar and the
+ *     account menu;
  *   - in the bar's rules: no orange, nothing under 12px, Home's bar drops its rule,
  *     the badge is ink and turns red when something is overdue; the lazy fallback
  *     is a quiet line ("Loading…"), not a box.
@@ -312,13 +315,14 @@ const visibleWords = (el: HTMLElement) => {
 };
 
 describe('the top bar: where you are, in one quiet line (§D1.B steps 1 and 4)', () => {
-  it('draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button', () => {
+  it('draws no organisation label, project chip or Task chip; the open project is a crumb button', () => {
     publishShellProject(C2C_101);
     const { bar } = mountBar(registry('vault'));
     for (const gone of ['.tb-cmdk', '.tb-org', '.tb-proj', '.tb-task', '.crumb-root', '.crumb-tier']) {
       expect(bar.querySelector(gone), gone).toBeNull();
     }
-    expect(within(bar).queryByRole('button', { name: 'Get help' }) ?? within(bar).queryByText('Get help')).toBeNull();
+    // Search and Help are back in the bar since P-122 (p122TopBarSearchHelp.test.tsx).
+    expect(within(bar).getByRole('button', { name: 'Get help' })).toBeTruthy();
     expect(bar.textContent).not.toContain('Concept2Cure');
     const crumb = bar.querySelector('.crumbs > .crumb-proj') as HTMLElement;
     expect(crumb.tagName).toBe('BUTTON');
@@ -359,13 +363,13 @@ describe('the top bar: where you are, in one quiet line (§D1.B steps 1 and 4)',
     }
   });
 
-  it('on Home with no project open: exactly Collaborate, New task and Your work, and no text', () => {
+  it('on Home with no project open: Search, Collaborate, New task, Your work and Help, and no text but Search’s', () => {
     const { bar } = mountBar({ id: 'home', label: 'Home' }, { onOpenRail: () => {} });
     expect(wideControls(bar).map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Collaborate on this screen', 'New task from this screen', 'Your work',
+      'Search, jump, or run a command', 'Collaborate on this screen', 'New task from this screen', 'Your work', 'Get help',
     ]);
     expect(crumbText(bar)).toEqual([]);
-    expect(visibleWords(bar)).toBe('');
+    expect(visibleWords(bar)).toBe('Search⌘K');
   });
 
   it('on Home and in a conversation with a project open, the project crumb is the bar’s one text', () => {
@@ -373,7 +377,8 @@ describe('the top bar: where you are, in one quiet line (§D1.B steps 1 and 4)',
     for (const surface of [{ id: 'home', label: 'Home' }, registry('conversation-thread')]) {
       const { bar } = mountBar(surface);
       expect(crumbText(bar), surface.id).toEqual(['C2C-101']);
-      expect(visibleWords(bar), surface.id).toBe('C2C-101');
+      // Besides the Search field's own words (P-122).
+      expect(visibleWords(bar), surface.id).toBe('C2C-101Search⌘K');
       cleanup();
     }
   });
@@ -400,7 +405,8 @@ describe('the top bar’s controls (§D1.B steps 2 and 3)', () => {
     const open = vi.fn();
     (window as { C2C?: unknown }).C2C = { open };
     const { bar } = mountBar(registry('vault'));
-    const [collab, task, work] = wideControls(bar);
+    // After Search, which P-122 put back first (p122TopBarSearchHelp.test.tsx).
+    const [, collab, task, work] = wideControls(bar);
     expect(collab.classList.contains('tb-collab') && collab.classList.contains('tb-btn')).toBe(true);
     expect(task.classList.contains('tb-newtask') && task.classList.contains('tb-btn')).toBe(true);
     expect(work.classList.contains('tt-trigger')).toBe(true);

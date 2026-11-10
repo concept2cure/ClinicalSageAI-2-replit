@@ -1,5 +1,8 @@
 # Submission-readiness walkthroughs (mock walk-through pack)
 
+> **Presenting the whole platform?** The run of show for the Lumen account in the Codespace is
+> [`lumen-showcase.md`](./lumen-showcase.md) (2026-11-10). The pages below are the script-driven readiness demos.
+
 Four runnable, end-to-end demos — one per regulatory pathway — that exercise the
 real, deterministic regulatory services (no DB, no network) and end in the
 submission-readiness capstone. The capstone reports the **completeness of the

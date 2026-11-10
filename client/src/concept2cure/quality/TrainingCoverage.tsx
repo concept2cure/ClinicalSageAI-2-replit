@@ -100,7 +100,14 @@ const REASON_MIN = 8;
 const refusalOf = (err: unknown, fallback: string) => redactInternals(err instanceof Error ? err.message : '', fallback);
 const day = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : '—');
 
-/** One governed act: a reason, then the act; the refusal stays until the next try. */
+/** The drawer an act sits in, told while the act's write is in flight, so it cannot be dismissed mid-write. */
+const ActBusy = React.createContext<(busy: boolean) => void>(() => {});
+
+/**
+ * One governed act: a reason, then the act; the refusal stays until the next try. It tells its drawer while it saves
+ * (ActBusy), takes focus on its heading when it opens, and gives focus back to the button that opened it, or to the
+ * drawer, when it closes (Quality review, 2026-11-10).
+ */
 function ReasonAct({ label, action, hint, extra, ready = true, onSubmit, onCancel }: {
   label: string; action: string; hint: string; extra?: React.ReactNode; ready?: boolean;
   onSubmit: (reason: string) => Promise<void>; onCancel: () => void;
@@ -108,6 +115,19 @@ function ReasonAct({ label, action, hint, extra, ready = true, onSubmit, onCance
   const [reason, setReason] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const reportBusy = React.useContext(ActBusy);
+  React.useEffect(() => { reportBusy(busy); }, [busy, reportBusy]);
+  React.useEffect(() => () => reportBusy(false), [reportBusy]);
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const headRef = React.useRef<HTMLHeadingElement>(null);
+  /* Read at the first render, while the button that opened the act still has focus. Read in the effect, StrictMode's
+     second mount took the act's own heading for its opener, and focus fell back to the drawer (walked, 2026-11-10). */
+  const [opener] = React.useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
+  React.useEffect(() => {
+    const drawer = formRef.current?.closest<HTMLElement>('[role="dialog"]') ?? null;
+    headRef.current?.focus();
+    return () => { (opener?.isConnected ? opener : drawer)?.focus(); };
+  }, [opener]);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (busy || !ready || reason.trim().length < REASON_MIN) return;
@@ -116,8 +136,8 @@ function ReasonAct({ label, action, hint, extra, ready = true, onSubmit, onCance
     catch (err) { setError(refusalOf(err, 'The change could not be confirmed. Nothing was changed.')); }
     finally { setBusy(false); }
   };
-  return <form className="qms-train-act" aria-label={label} onSubmit={event => void submit(event)}>
-    <h3 className="de-label">{label}</h3>
+  return <form ref={formRef} className="qms-train-act" aria-label={label} onSubmit={event => void submit(event)}>
+    <h3 className="de-label" ref={headRef} tabIndex={-1}>{label}</h3>
     {extra}
     <DrawerField label="Reason" hint={`${hint} State the reason in at least ${REASON_MIN} characters; it is kept with the change.`}>
       <textarea className="de-textarea" rows={3} value={reason} onChange={event => setReason(event.target.value)} minLength={REASON_MIN} maxLength={2000} required disabled={busy} />
@@ -136,10 +156,12 @@ type RoleAct = { kind: 'create' } | { kind: 'rename' | 'delete' | 'add'; role: J
 export function JobRolesPanel({ onClose }: { onClose: () => void }) {
   const jr = useJobRoles();
   const [act, setAct] = React.useState<RoleAct | null>(null);
+  const [busy, setBusy] = React.useState(false);
   const done = async (write: Promise<unknown>) => { await write; setAct(null); jr.refresh(); };
-  const footer = jr.listing?.canAdminister && !act
-    ? <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'create' })}>{I.plus} New job role</button> : undefined;
-  return <DialogPanel title="Job roles" onClose={onClose} busy={false} footer={footer}
+  // Kept mounted while an act is open, so focus can come back to it.
+  const footer = jr.listing?.canAdminister
+    ? <button type="button" className="de-btn ghost" disabled={act !== null} onClick={() => setAct({ kind: 'create' })}>{I.plus} New job role</button> : undefined;
+  return <ActBusy.Provider value={setBusy}><DialogPanel title="Job roles" onClose={onClose} busy={busy} footer={footer}
     sub="A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.">
     {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} read={jr.failure} readWhat="the job roles list" testId="qms-job-roles-failed" />}
     {!jr.failed && !jr.listing && <EmptyState title="Loading job roles…" busy />}
@@ -149,7 +171,7 @@ export function JobRolesPanel({ onClose }: { onClose: () => void }) {
       {jr.listing.roles.map(role => <JobRoleRow key={role.id} role={role} canAdminister={jr.listing!.canAdminister} onAct={setAct} />)}
       {act && <JobRoleActForm act={act} people={jr.listing.people} onDone={done} onCancel={() => setAct(null)} />}
     </>}
-  </DialogPanel>;
+  </DialogPanel></ActBusy.Provider>;
 }
 
 function JobRoleRow({ role, canAdminister, onAct }: { role: JobRole; canAdminister: boolean; onAct: (act: RoleAct) => void }) {
@@ -161,10 +183,12 @@ function JobRoleRow({ role, canAdminister, onAct }: { role: JobRole; canAdminist
         <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'add', role })}>Add a person</button>
         <button type="button" className="btn ghost small" onClick={() => onAct({ kind: 'rename', role })}>Rename</button>
         <button type="button" className="btn ghost small" disabled={role.documentCount > 0}
-          title={role.documentCount > 0 ? 'Assigned to a document: withdraw those assignments first.' : undefined}
+          aria-describedby={role.documentCount > 0 ? `qms-role-${role.id}-delete-note` : undefined}
           onClick={() => onAct({ kind: 'delete', role })}>Delete</button>
       </>}
     </div>
+    {canAdminister && role.documentCount > 0 && <p className="de-desc" id={`qms-role-${role.id}-delete-note`}>
+      Delete is unavailable while it is assigned to a document: withdraw those assignments first.</p>}
     {role.description && <p className="de-desc">{role.description}</p>}
     {role.members.length === 0 ? <p className="de-desc">Nobody holds this role.</p> : <ul className="qms-train-people">
       {role.members.map(m => <li key={m.userId}>
@@ -233,17 +257,19 @@ export function TrainingAssignmentsPanel({ doc, onClose }: { doc: QmsDoc; onClos
   const ta = useTrainingAssignments(doc.id);
   const jr = useJobRoles();
   const [act, setAct] = React.useState<AssignAct | null>(null);
+  const [busy, setBusy] = React.useState(false);
   const done = async (write: Promise<unknown>) => { await write; setAct(null); ta.refresh(); jr.refresh(); };
-  const footer = ta.listing?.canAssign === true && !act ? <>
-    <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'role' })}>Assign a job role</button>
-    <button type="button" className="de-btn ghost" onClick={() => setAct({ kind: 'person' })}>Assign a person</button>
+  // Kept mounted while an act is open, so focus can come back to them.
+  const footer = ta.listing?.canAssign === true ? <>
+    <button type="button" className="de-btn ghost" disabled={act !== null} onClick={() => setAct({ kind: 'role' })}>Assign a job role</button>
+    <button type="button" className="de-btn ghost" disabled={act !== null} onClick={() => setAct({ kind: 'person' })}>Assign a person</button>
   </> : undefined;
-  return <DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={false} footer={footer}
+  return <ActBusy.Provider value={setBusy}><DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={busy} footer={footer}
     sub={`${doc.docNumber} ${doc.title}. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.`}>
     {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} read={ta.failure} readWhat="who must train" testId="qms-assignments-failed" />}
     {!ta.failed && !ta.listing && <EmptyState title="Loading assignments…" busy />}
     {ta.listing && <AssignmentsBody documentId={doc.id} listing={ta.listing} roles={jr.listing} rolesFailed={jr.failed} act={act} onAct={setAct} onDone={done} />}
-  </DialogPanel>;
+  </DialogPanel></ActBusy.Provider>;
 }
 
 function AssignmentsBody({ documentId, listing, roles, rolesFailed, act, onAct, onDone }: {

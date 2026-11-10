@@ -1,0 +1,7 @@
+ ✓ server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > samples the fit from t = 0 past the shelf life and the observed period, in order 6ms
+ ✓ server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > is the regression line and the one-sided lower bound for a decreasing attribute 5ms
+ ✓ server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > meets the specification where the data decided the shelf life 2ms
+ ✓ server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > is the upper bound for an increasing impurity 2ms
+ ✓ server/services/cmc/__tests__/shelf-life-band.test.ts > estimateShelfLife returns the line and bound it computed > stops at a bounded horizon when the bound never crosses, not the 120-month search limit 4ms
+ Test Files  3 passed (3)
+      Tests  25 passed (25)

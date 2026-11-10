@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "1f8b6f80-3a4d-4d98-9f8e-22dc8ad004ca",
+      "projectId": "58bda61e-df60-4677-bdce-fe6b22786b3c",
       "productName": "Q1E-noaccel",
       "batchNumber": "B-1",
       "dosageForm": "tablet",
@@ -60,14 +60,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 22,
+    "durationMs": 38,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 53,
+        "id": 71,
         "organizationId": 2,
-        "projectId": "1f8b6f80-3a4d-4d98-9f8e-22dc8ad004ca",
+        "projectId": "58bda61e-df60-4677-bdce-fe6b22786b3c",
         "studyTitle": null,
         "productName": "Q1E-noaccel",
         "batchNumber": "B-1",
@@ -125,8 +125,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T03:45:35.027Z",
-        "updatedAt": "2026-11-10T03:45:35.027Z"
+        "createdAt": "2026-11-10T13:26:05.510Z",
+        "updatedAt": "2026-11-10T13:26:05.510Z"
       },
       "module3Linked": true
     }

@@ -28,14 +28,15 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(scripts.test).not.toMatch(/\|\|\s*true|exit\s+0/);
   });
 
-  // MR-02 Stage 3 (2026-10-30): the suite runs in eight shards, each the same
-  // `npm test` with Vitest's --shard, and the `test` job is their one verdict.
+  // MR-02 Stage 3: the suite runs in four shards, each the same `npm test` with
+  // Vitest's --shard (and, since 2026-11-10, three files at a time in CI only:
+  // the config above stays one at a time), and the `test` job is their verdict.
   it('each Test shard runs npm test on its shard and saves results even when it fails', () => {
     const shard = workflow.jobs['test-shard'];
-    expect(shard.strategy?.matrix?.shard).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(shard.strategy?.matrix?.shard).toEqual([1, 2, 3, 4]);
     expect(shard.strategy?.['fail-fast']).toBe(false);
     const run = stepNamed(workflow, 'test-shard', 'Run tests');
-    expect(run.run).toBe('npm test -- --shard=${{ matrix.shard }}/8');
+    expect(run.run).toBe('npm test -- --shard=${{ matrix.shard }}/4 --maxWorkers=3 --fileParallelism');
     expect(run['continue-on-error']).not.toBe(true);
     const upload = stepNamed(workflow, 'test-shard', 'Upload shard test results');
     expect(upload.if).toBe('always()');
@@ -49,10 +50,11 @@ describe('bounded test execution and retained CI evidence', () => {
     expect(job.name).toBe('Test');
     expect(job.needs).toEqual(expect.arrayContaining(['lint', 'test-shard']));
     const merge = stepNamed(workflow, 'test', 'Every collected file ran once and every shard passed');
-    expect(merge.run).toBe('node scripts/ci/merge-test-shards.mjs --shards 8 --dir shards --out test-results');
+    expect(merge.run).toBe('node scripts/ci/merge-test-shards.mjs --shards 4 --dir shards --out test-results');
     expect(merge.env?.SHARD_JOBS_RESULT).toBe('${{ needs.test-shard.result }}');
     expect(merge['continue-on-error']).not.toBe(true);
-    expect(workflow.jobs['test-shard'].strategy.matrix.shard).toHaveLength(8);
+    // The merge's --shards must equal the matrix, or a shard is never read.
+    expect(merge.run).toContain(`--shards ${workflow.jobs['test-shard'].strategy.matrix.shard.length} `);
     const upload = stepNamed(workflow, 'test', 'Upload core test results');
     expect(upload.if).toBe('always()');
     expect(upload.with?.name).toBe('test-results');

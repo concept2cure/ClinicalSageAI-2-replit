@@ -1,0 +1,11 @@
+After the Projects change (working tree on d6c61cd12); projectCreationDoors.contract fails at HEAD too (Vault.tsx, another lane), so it is left out
+ ✓ client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx > Vault — AnA operates the real surface > the navigate→mount stash performs when the Vault mounts (AnA acts before the screen exists) 161ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > in the default grid view, above the cards: active projects and filings due within 60 days 356ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > shows the server’s counts, not the loaded page’s recount, and no browser-computed average 29ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > a read that carries no server figures says so, and is not recounted from its rows 24ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > Projects shows the portfolio figures by default, from the server (P-122 §3.2) > in list view the same figures sit above the table 95ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > each card says its readiness, stage, lead and status (P-122 §3.2) > a measured project: its dossier readiness, stage, lead and status, in words 26ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > each card says its readiness, stage, lead and status (P-122 §3.2) > no figure is "Not recorded", no lead is said, and a blocked status names its missing cause 19ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsFiguresByDefault.test.tsx > the grid or list choice is remembered (P-122 §3.2) > opens in the view the person chose last time 200ms
+ Test Files  17 passed (17)
+      Tests  131 passed (131)

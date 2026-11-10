@@ -409,7 +409,8 @@ describe('Evidence — every way a source comes in', () => {
     serve();
     render(<ProjectHome {...props()} />);
     await open('Evidence');
-    expect(document.querySelector('.pj-step-blurb')?.textContent).toBe('Project files and the data room the documents are written from');
+    /* P-122: the line under the steps opens with the blurb, then says what to do and offers the next step. */
+    expect(document.querySelector('.pj-step-blurb')?.textContent).toMatch(/^Project files and the data room the documents are written from\. /);
   });
 });
 

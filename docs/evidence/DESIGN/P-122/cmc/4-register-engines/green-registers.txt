@@ -1,0 +1,19 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > the impurity register says what each impurity is against its guideline > shows the M7 class, control and intake, a Q3A verdict, and a refusal in the engine’s words 372ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > posts the two ids and shows the server’s f2, similarity and scope 115ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > shows the engine’s refusal and what it needs 95ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > cannot compare a profile with itself 61ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > names each act, the person, and what each change moved 85ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > counts the acts rather than implying completeness 15ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > reports a failed read as a failure, never as a record with no changes 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > says the audit store was unreachable when the server fails closed 11ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > reports a 200 of the wrong shape as a failure too 9ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > carries the server’s own note when nothing is recorded 9ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > marks a row with no chain position as unsealed instead of dropping it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > says an act has no recorded actor rather than naming one 13ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > says when a record has more acts than one read returns 121ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > claims no truncation when the read returned everything 13ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the change history of one register record > shows a value cleared to nothing as a change, with both sides readable 10ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the History action reaches the registers the server serves > offers it for every register card whose register keeps a history 3ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcRecordHistory.test.tsx > the History action reaches the registers the server serves > does not offer it for a register with no history 0ms
+ Test Files  2 passed (2)
+      Tests  17 passed (17)

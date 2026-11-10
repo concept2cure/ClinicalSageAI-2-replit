@@ -30,7 +30,7 @@ import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { isDeviceFamily, isDeviceOrDiagnosticProgram, workstreamForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
-import { StageTracker, lifecycleFor } from './ProjectStages';
+import { StageTracker, StepGuidance, lifecycleFor } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
@@ -45,6 +45,7 @@ import type { ProjectTeamMember } from '@shared/project-team';
 import { useAgencyInbox, type CommRow } from './AgencyInbox';
 import { isCommitmentsPayload, type CommitmentsPayload } from './CommitmentRow';
 import { ProjectSide } from './ProjectSide';
+import { ProjectSchedule } from './ProjectSchedule';
 import { ProjectProtocol, useProjectRecords } from './ProjectRecords';
 import { ProjectClientReview } from './ProjectClientReview';
 import { ProjectTeamSharing } from './ProjectTeamSharing';
@@ -379,6 +380,13 @@ function kindLabel(mime: string | null): string {
   return 'File';
 }
 
+/** What a row is and when it arrived: a file by its kind and size, a Quality record as the record it is. */
+function sourceKindLine(s: SourceRow, size: string | null): string {
+  const when = fmtWhen(s.createdAt);
+  if (s.catalog?.nativeRecord) return `Quality record${when ? ` · recorded here ${when}` : ''}`;
+  return `${kindLabel(s.mimeType)}${size ? ` · ${size}` : ''}${when ? ` · added ${when}` : ''}`;
+}
+
 /**
  * Whether this source's text is actually available to draft from.
  *
@@ -418,6 +426,20 @@ function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; pr
     </button>
     {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
   </div>;
+}
+
+/** What a person does with a captured file. A Quality record is not a file: no working copy to make, no file to remove. */
+function SourceFileActions({ source: s, projectId: pid, reloadKey, onPull, onChanged }: {
+  source: SourceRow; projectId: string | null; reloadKey: number; onPull: (s: SourceRow) => void; onChanged: () => void;
+}) {
+  if (s.catalog?.nativeRecord) return null;
+  return <>
+    <SourceWorkButton source={s} projectId={pid} onPull={onPull} />
+    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
+      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
+      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={onChanged}
+    /></div>}
+  </>;
 }
 
 function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
@@ -703,9 +725,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {s.title || `Source ${s.id}`}
                       </span>
                       <span className="sec-sub" style={{ fontSize: 11.5 }}>
-                        {kindLabel(s.mimeType)}
-                        {size ? ` · ${size}` : ''}
-                        {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
+                        {sourceKindLine(s, size)}
                       </span>
                       <SourceCatalogLine catalog={s.catalog} />
                       <SourceSnippet show={searching} text={s.snippet} />
@@ -729,11 +749,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     >
                       {rs.label}
                     </span>
-                    <SourceWorkButton source={s} projectId={pid} onPull={setPullSource} />
-                    {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
-                      key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
-                      title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
-                    /></div>}
+                    <SourceFileActions source={s} projectId={pid} reloadKey={reloadKey} onPull={setPullSource} onChanged={() => setReloadKey(k => k + 1)} />
                   </div>
                 );
               })}
@@ -959,8 +975,9 @@ function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRo
   return `${open.length} open${next ? ` · next response due ${dayWords(next)}` : ''}`;
 }
 
-/** Tasks and approvals: the project's open work by due date, on Plan only (D3-4, D3.md §4.7 Plan item 3). It was a
- *  second panel on Review over the same read; the Tasks handoff now opens Plan with the requested row first. */
+/** Tasks and approvals: the project's open work by due date, on Plan (D3-4, D3.md §4.7 Plan item 3) and again on
+ *  Review (P-122, 2026-11-10: d50c5f07e had taken it off Review, where an approver looks for it), over the page's one
+ *  read. The Tasks handoff opens Plan with the requested row first. */
 function ProjectWorkPanel({ pid, onNav, targetId, state }: {
   pid: string | null; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
 }) {
@@ -1055,6 +1072,23 @@ function ProjectWorkPanel({ pid, onNav, targetId, state }: {
           <button type="button" className="btn small" onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
         </div>
       )}
+    </section>
+  );
+}
+
+/** The Review step's readiness (P-122, 2026-11-10): the dossier readiness the server computes
+ *  (GET /api/c2c/projects/:id/dossier), its figure line and each market's, from the page's one dossier read. Each
+ *  market's dispatch verdict is on Submit. */
+function ReviewReadiness({ read, copyFor, onOpen }: {
+  read: DossierState; copyFor: (filingId: string) => RowCopy; onOpen: (doc: BuiltDocument, within?: string | null) => void;
+}) {
+  return (
+    <section className="pj-sec" aria-labelledby="pj-review-readiness-h" data-testid="pj-review-readiness">
+      <div className="pj-sec-h">
+        <h2 id="pj-review-readiness-h">Readiness</h2>
+        <span className="sec-sub">Sections approved or locked, as the server counts them</span>
+      </div>
+      <DossierReadinessCard read={read} copyFor={copyFor} onOpen={onOpen} />
     </section>
   );
 }
@@ -2193,7 +2227,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* A lifecycle belongs to a project; with none selected nothing here
               renders (the empty state above stands instead). */}
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
-          {openStep && <p className="pj-step-blurb">{openStep.blurb}</p>}
+          {/* The open step's line: what it is, what to do on it, and the next step (P-122). */}
+          <StepGuidance stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={sequenced} planListed={planListed} />
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -2207,7 +2242,15 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
               }}
               onOpenDocument={docId => openDocument({ id: docId } as BuiltDocument)}
               onWorkChanged={() => setWorkVersion(value => value + 1)}
-              tasks={<ProjectWorkPanel pid={pid} onNav={onNav} targetId={workTarget} state={work} />} />
+              tasks={<>
+                <ProjectWorkPanel pid={pid} onNav={onNav} targetId={workTarget} state={work} />
+                {/* Section owners, deadlines and milestones, the milestone tasks and the roll-up (P-122 §3.5). */}
+                <ProjectSchedule projectId={sharingProjectId} filingType={prog?.id === pid ? prog.program_type ?? null : null}
+                  targetDate={prog?.id === pid ? prog.target_submission_date ?? null : null} canChange={prog?.canChange !== false}
+                  unverified={sharingProjectId !== null || teamState.loading ? null : teamState.error
+                    ? "This project's record could not be verified, so its schedule is not listed."
+                    : 'This project has no tracking record, so no schedule is kept on it.'} />
+              </>} />
           )}
 
           {/* Evidence, in spine order (D3.md §4.7): the data room, the protocol, then the project's files: every way a
@@ -2233,11 +2276,16 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             </div>
           )}
 
-          {/* Review — this filing's reviews, each opening its document (F7), and its quality records. The project's
-              tasks and approvals are on Plan (D3-4, D3.md §4.7). */}
+          {/* Review — this filing's reviews, each opening its document (F7), its approvals and the readiness the server
+              computes (P-122: d50c5f07e had moved both off Review), and its quality records. The full task list is on
+              Plan (D3-4, D3.md §4.7). */}
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+              {/* The project's tasks and approvals, as Review listed them until d50c5f07e (P-122): the same panel and the
+                  same one read as Plan's. A Tasks handoff still lands on Plan. */}
+              {pid && <ProjectWorkPanel pid={pid} onNav={onNav} state={work} />}
+              {pid && <ReviewReadiness read={dossier} copyFor={filingCopyIn(docsRead)} onOpen={openDocument} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for

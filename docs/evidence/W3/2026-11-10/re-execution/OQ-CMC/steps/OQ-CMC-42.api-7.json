@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/concept2cure/projects/78731580-7719-4562-985d-a412edebff5a/team",
+    "url": "http://localhost:5200/api/concept2cure/projects/6270d978-aff3-43f0-ad87-1e6726350bf8/team",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 54,
+    "durationMs": 144,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

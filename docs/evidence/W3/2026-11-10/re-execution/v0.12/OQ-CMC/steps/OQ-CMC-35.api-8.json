@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/analytical-methods/14",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "ichQ2Parameters": {
+        "characteristics": [
+          "Specificity",
+          "Accuracy",
+          "Precision"
+        ],
+        "summary": "All criteria met."
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 14,
+        "organizationId": 2,
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
+        "methodCode": "OQ-168309",
+        "title": "OQ probe assay",
+        "purpose": "Assay",
+        "analyte": "API",
+        "matrix": "Drug substance",
+        "technique": "HPLC",
+        "status": "development",
+        "ichQ2Parameters": {
+          "characteristics": [
+            "Specificity",
+            "Accuracy",
+            "Precision"
+          ],
+          "summary": "All criteria met."
+        },
+        "systemSuitability": null,
+        "acceptance_criteria": null,
+        "robustness_data": null,
+        "validationDate": null,
+        "developedBy": null,
+        "validatedBy": null,
+        "createdAt": "2026-11-10T03:42:48.837Z",
+        "updatedAt": "2026-11-10T03:43:00.861Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

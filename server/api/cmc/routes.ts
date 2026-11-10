@@ -1715,6 +1715,78 @@ router.post('/impurity-profiles/:id/qualify', async (req, res) => {
  * not a state somebody signs. What IS signed is the specification it supports,
  * which lives in the specification register and already has one.
  */
+/**
+ * GET /api/cmc/impurity-profiles/assessment?projectId= — what each recorded
+ * impurity IS against the guideline that governs it (P-122: the verdicts were
+ * reachable only through AnA and the composed section). ICH Q3A/Q3B thresholds
+ * for an ordinary impurity, Q3C class and limit for a solvent, Q3D PDE for an
+ * element, and the ICH M7 class, control approach and acceptable intake for a
+ * mutagenic one — from `assessRecordedImpurity`, the function §3.2.S.3.2 and
+ * §3.2.P.5.5 compose from, so the register and the section cannot disagree.
+ * A refusal (no daily dose, a unit that does not convert) is returned as the
+ * row's answer, never dropped.
+ *
+ * The project is put to the composition boundary first (P-28): Q3A/Q3B are
+ * small-molecule guidelines, and applying them to a biologic is one of the
+ * reasons the boundary exists.
+ */
+router.get('/impurity-profiles/assessment', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    if (projectId) {
+      if (await answeredUnknownProgram(res, orgId, projectId)) return;
+      if (await refusedAtCompositionBoundary(res, orgId, projectId)) return;
+    }
+    const rows = await db
+      .select()
+      .from(cmcImpurityProfiles)
+      .where(and(eq(cmcImpurityProfiles.organizationId, orgId), projectFilter(req, cmcImpurityProfiles.projectId)));
+    const { assessRecordedImpurity } = await import('../../services/cmc/impurity-assessment');
+    const data = rows.map((row) => {
+      const scope = String(row.scope ?? 'drug_substance');
+      const sides: Array<'drug_substance' | 'drug_product'> =
+        scope === 'both' ? ['drug_substance', 'drug_product'] : [scope === 'drug_product' ? 'drug_product' : 'drug_substance'];
+      return {
+        id: row.id,
+        impurityName: row.impurityName,
+        assessments: sides.map((side) => ({ side, ...assessRecordedImpurity(row as Record<string, unknown>, side) })),
+      };
+    });
+    res.json({ success: true, data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess the recorded impurities');
+  }
+});
+
+/**
+ * POST /api/cmc/dissolution-profiles/compare { referenceId, testId } — f2
+ * similarity between two recorded profiles (P-122: it was reachable only as
+ * AnA's compare_recorded_dissolution). The comparison, its eligibility checks
+ * and every refusal are `compareRecordedDissolutionProfiles`, the one the AnA
+ * tool calls. A refusal is the engine's answer (200, status not_comparable);
+ * a missing or foreign id is a 404 and nothing is compared.
+ */
+router.post('/dissolution-profiles/compare', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const refId = Number(req.body?.referenceId);
+    const testId = Number(req.body?.testId);
+    const ids = [refId, testId].filter((n) => Number.isInteger(n) && n > 0);
+    const rows = ids.length === 2
+      ? await db.select().from(cmcDissolutionProfiles)
+        .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), inArray(cmcDissolutionProfiles.id, ids)))
+      : [];
+    const { compareRecordedDissolutionProfiles } = await import('../../services/cmc/dissolution-comparison');
+    const outcome = compareRecordedDissolutionProfiles(refId, testId, rows);
+    if (outcome.status === 'needs_parameters') return res.status(400).json({ success: false, error: outcome.message });
+    if (outcome.status === 'not_found') return res.status(404).json({ success: false, error: outcome.message });
+    res.json({ success: true, data: outcome });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to compare the dissolution profiles');
+  }
+});
+
 router.get('/dissolution-profiles', async (req, res) => {
   try {
     const orgId = getOrgId(req);

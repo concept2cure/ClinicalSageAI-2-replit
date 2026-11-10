@@ -57,7 +57,7 @@ import {
   type GovernedQmsCommand, type GovernedQmsSubject,
 } from '../services/qms/governed-qms-write';
 import {
-  currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
+  currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingView, summarizeQmsTrainingCompliance,
   QMS_TRAINING_EXPIRY_ROW_CAP, type TrainingSqlClient,
 } from '../services/qms/training';
 import {
@@ -299,9 +299,11 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
     const client = requestPgClient(req);
     const userId = getUserId(req);
     const everyone = await seesEveryAssignee(client, orgId, userId);
-    const all = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
+    const view = await readQmsTrainingView(client, orgId, withinDays, undefined, everyone ? null : userId);
+    const all = view.rows.filter(r => everyone || r.userId === userId);
     const rows = all.slice(0, QMS_TRAINING_EXPIRY_ROW_CAP);
-    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own', truncated: all.length > rows.length });
+    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own', truncated: all.length > rows.length,
+      unassessed: view.unassessed, documentsCapped: view.documentsCapped });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
 

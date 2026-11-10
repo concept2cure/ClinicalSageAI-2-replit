@@ -1,0 +1,32 @@
+# Item 1 red: the organisation-default tests against HEAD's registerContext.ts (project default, e39cc0d59)
+# 98d2f1975 2026-11-10T11:53:27Z
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back 147ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > narrowed to the project, lists for periodic review only the project's documents, and says training is the organisation's 318ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > offers no choice with no project open 87ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > has one title, the rail label, and no second topbar or eyebrow 41ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > puts the registers as tabs below the header, with no icons, and keeps arrow keys 105ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > asks AnA through at most three starters, one of them the pre-inspection check 100ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > shows no stat tiles and no per-document-type cards (RULE 4) 20ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps the document types in "New controlled document", each with its number prefix and description 131ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open 148ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out 120ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its next step and More, and More reveals every other action in the row 101ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > does not offer its author an approval the server refuses: the author's next step is the review route 23ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box 74ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 90ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 17ms
+ × client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the whole organisation with a project open, and the project's records only when the person narrows it 29ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > keeps a narrowed link: a reload of ?quality=project reads the project 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > a link from before P-122 (?quality=organisation) reads the organisation, as the default does 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > with no project open, reads the whole organisation and offers no choice, whatever the URL says 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back
+AssertionError: expected 'C11 · Gasket programme: its controlle…' to be 'The whole organisation\'s quality rec…' // Object.is equality
+Expected: "The whole organisation's quality records."
+Received: "C11 · Gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's."
+ FAIL  client/src/concept2cure/quality/__tests__/qualityScope.test.tsx > the scope Quality reads > reads the whole organisation with a project open, and the project's records only when the person narrows it
+AssertionError: expected { …(3) } to deeply equal { programId: null, …(2) }
+- Expected
++ Received
+ Test Files  2 failed (2)
+      Tests  2 failed | 17 passed (19)

@@ -12,9 +12,13 @@
  * The "active programs" figure is upstream's truncation-aware count
  * (countFloor, 7332200d8) and is pinned by its own tests, not here.
  *
- * D2-1 (2026-11-01): the figures are the list view's footing and each row's
- * readiness is a column there (.design/claude-convergence/D2.md §1.4 items 2,
- * 6, 7), so these switch to the list before reading them.
+ * D2-1 (2026-11-01): each row's readiness is a column in the list view.
+ *
+ * P-122 (2026-11-10): the portfolio mean is gone. It was the browser's mean over
+ * the loaded page, and the server sends no portfolio figure for it (Rule 2), so
+ * the defect above cannot recur: no mean is computed at all. What stays pinned is
+ * that a program with no figure never reads as 0, now on its card as well as its
+ * row, and that the server's zero counts over an empty portfolio are zeros.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,6 +40,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 
 import { Projects } from '../surfaces/Projects';
 
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
+
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
 const props = () =>
   ({ surface: { id: 'projects', label: 'Projects' } as never, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
@@ -55,77 +62,68 @@ const row = (id: string, status: string, readiness: number | null) => ({
 afterEach(cleanup);
 beforeEach(() => apiRequest.mockReset());
 
+/** The server's counts for `total` projects (meta.counts). */
+const counts = (total: number) => ({ total, filingWithin60Days: 0, byWorkstream: { Pharma: total }, byPathway: { other: total } });
+const card = (title: string) =>
+  Array.from(document.querySelectorAll('.pj-card')).find((c) => c.textContent?.includes(title)) as HTMLElement;
+
 describe('Projects — summary over a successful empty read', () => {
-  it('states no mean readiness over zero programs', async () => {
-    apiRequest.mockImplementation(async () => ok({ data: [] }));
+  it('states no readiness over zero programs, and the server’s zero counts as zeros', async () => {
+    apiRequest.mockImplementation(async () => ok({ data: [], meta: { counts: counts(0) } }));
     render(<Projects {...props()} />);
     expect(await screen.findByText('No projects yet')).toBeTruthy();
-    expect(document.querySelector('.pj-summary'), 'the figures are the list view’s footing (D2-1)').toBeNull();
-    showList();
-
-    expect(figure(/average readiness/i), 'a mean over no programmes rendered as a figure').toBe('Not recorded');
-    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%/);
-    // The counts over an empty set are real zeros and stay so.
+    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%|average/i);
+    // The counts over an empty set are real zeros, counted by the server, and stay so.
     expect(figure(/active projects/i)).toBe('0');
     // No "Blocked" figure at all since 2026-10-08: nothing writes a blocked
     // status or computes a blocker, so it could only state an unchecked 0
     // (projectsHonestCounts.test.tsx).
     expect(figure(/blocked/i)).toBeNull();
+    showList();
+    expect(figure(/average readiness/i)).toBeNull();
   });
 });
 
-describe('Projects — a mixed portfolio still has a mean', () => {
-  it('averages readiness over every program shown', async () => {
+/* Was "a mixed portfolio still has a mean": the mean was the browser's, over the
+   loaded page; the server sends no portfolio figure for it (P-122, Rule 2). */
+describe('Projects — a mixed portfolio states each program’s figure, and no mean', () => {
+  it('shows each program’s own dossier readiness on its card, and no average', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) =>
       url === '/api/c2c/projects'
-        ? ok({ data: [row('a1', 'active', 40), row('b1', 'blocked', 20), row('c1', 'complete', 90)] })
+        ? ok({ data: [row('a1', 'active', 40), row('b1', 'blocked', 20), row('c1', 'complete', 90)], meta: { counts: counts(3) } })
         : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program a1')).toBeTruthy());
-    showList();
-
-    // (40 + 20 + 90) / 3 = 50 — the mean still covers every program shown.
-    expect(figure(/average readiness/i)).toBe('50%');
+    expect(card('Program a1').textContent).toContain('Dossier readiness 40%');
+    expect(card('Program c1').textContent).toContain('Dossier readiness 90%');
+    expect(figure(/average readiness/i)).toBeNull();
+    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/50%/);
   });
 });
 
 describe('Projects — a program with nothing measurable has no readiness figure', () => {
-  it('keeps failed dossier measurements unavailable in the mean', async () => {
-    apiRequest.mockImplementation(async () => ok({ data: [{ ...row('failed', 'active', null), readinessState: 'unavailable' }] }));
+  it('keeps a failed dossier measurement unavailable, on its card and its row', async () => {
+    apiRequest.mockImplementation(async () => ok({ data: [{ ...row('failed', 'active', null), readinessState: 'unavailable' }], meta: { counts: counts(1) } }));
     render(<Projects {...props()} />);
     await screen.findByText('Program failed');
+    expect(card('Program failed').textContent).toContain('Dossier readiness unavailable');
     showList();
-    expect(figure(/average readiness/i)).toBe('unavailable');
-    // The row's own figure is the list's Dossier readiness column (D2-1).
     expect(listRow('Program failed').textContent).toContain('unavailable');
   });
   /* The server answers readiness null when the measurement failed or a
      program has no governed sections to measure (server/routes/c2c/projects.ts);
      both used to reach the card as a stored, never-updated "0% ready". */
-  it('says "Not recorded" on its list row, never "0% ready"', async () => {
+  it('says "Not recorded" on its card and its list row, never "0% ready"', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === '/api/c2c/projects' ? ok({ data: [row('u1', 'active', null)] }) : ok({ data: [] }),
+      url === '/api/c2c/projects' ? ok({ data: [row('u1', 'active', null)], meta: { counts: counts(1) } }) : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program u1')).toBeTruthy());
-    // D2-1: the card states no readiness; the list's Dossier readiness column does
-    // (named so since QA 2026-10-08, projectsCardStatusReadiness.test.tsx).
+    expect(card('Program u1').textContent).toContain('Dossier readiness Not recorded');
     showList();
     expect(document.querySelector('.ct-head')?.textContent).toContain('Dossier readiness');
     expect(listRow('Program u1').textContent).toContain('Not recorded');
     expect(screen.queryByText('0% ready')).toBeNull();
-    expect(figure(/average readiness/i)).toBe('Not recorded');
-  });
-
-  it('averages only the programs that were measured', async () => {
-    apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === '/api/c2c/projects' ? ok({ data: [row('m1', 'active', 40), row('u1', 'active', null)] }) : ok({ data: [] }),
-    );
-    render(<Projects {...props()} />);
-    await waitFor(() => expect(screen.getByText('Program m1')).toBeTruthy());
-    showList();
-    // 40 over the one measured program — not (40 + 0) / 2.
-    expect(figure(/average readiness/i)).toBe('40%');
   });
 });

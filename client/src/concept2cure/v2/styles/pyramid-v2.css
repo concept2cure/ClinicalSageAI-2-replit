@@ -313,3 +313,7 @@
 @media(max-width:760px){
   .c2c-v2 .py-gs-row{grid-template-columns:minmax(0,1fr);}
 }
+
+/* THE_PROGRAM §8 item 1: the strategy at the head of the Plan step (ProjectObjective.tsx PlanStrategy). Its line
+   breaks are the author's. */
+.c2c-v2 .pj-strategy-t{white-space:pre-line;color:var(--text-100);}

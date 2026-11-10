@@ -64,8 +64,9 @@ export interface QmsChangeAssessment {
   targetImplementationDate: string | null;
 }
 
-export function updateQmsChange(id: number, assessment: QmsChangeAssessment): Promise<{ id: number }> {
-  return qmsWrite('PATCH', `changes/${id}`, { ...assessment });
+/** The edit states its reason; the audit row keeps it with each field before and after (F1, Part 11 review L-2). */
+export function updateQmsChange(id: number, assessment: QmsChangeAssessment, editReason: string): Promise<{ id: number }> {
+  return qmsWrite('PATCH', `changes/${id}`, { ...assessment, editReason });
 }
 
 export function createQmsChange(input: NewQmsChange): Promise<{ id: number; change_number: string }> {

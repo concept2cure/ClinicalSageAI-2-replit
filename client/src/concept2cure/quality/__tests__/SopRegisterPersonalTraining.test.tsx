@@ -142,7 +142,9 @@ describe('the existing Quality register personal training handoff', () => {
     mount();
     expect(screen.queryByRole('button', { name: 'Read and acknowledge' })).toBeNull();
     const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
-    expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Open', 'More']);
+    // P-122: an effective form shows Revise and Controlled copy inline, Ask AnA as an icon; Open is under More.
+    expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Revise', 'Controlled copy', '', 'More']);
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for FORM-002' }));
     // A bound document's Open reads its editing copy for the one editor, not the training reader.
     fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
     await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/6/editor'));

@@ -1,0 +1,5 @@
+  • Communication: data-room source "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — found 163
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND C2C-101" on C2C-101 … ok — found ace_1794309996343_0e830ca2
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - IND C2C-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Communication: record the questions of "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — 3 recorded of 3
+exit 0

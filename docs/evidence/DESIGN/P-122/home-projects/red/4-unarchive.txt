@@ -1,0 +1,16 @@
+HEAD 38ae15e1d (Projects.tsx and projectSettingsRequest.ts as at HEAD)
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > lists the archived projects the server returns, and only those 491ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > restores only after a reason and the typed word, through the close-out route, and reads the portfolio again 149ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > a refusal is the server’s words, and nothing is said to be restored 164ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > an answer that may have completed is said so, never as done or refused 133ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > a failed read of the archived projects is said, with a retry, never as none 104ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsRestoreArchived.test.tsx > Projects: archived projects, and restoring one (P-122 §3.5) > with none archived, says so 143ms
+   → Unable to find an accessible element with the role "button" and name "Archived projects"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed (6)

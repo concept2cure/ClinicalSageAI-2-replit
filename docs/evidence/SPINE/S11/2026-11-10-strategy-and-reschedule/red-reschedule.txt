@@ -1,0 +1,25 @@
+ ✓ task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns the exact current scope and only eligible already-admitted accounts with unique labels 57ms
+ ✓ task-assignment.pglite.test.ts > scoped assignment read and named handoff > changes only assignment provenance, retains the task and approval facts, and commits canonical lineage before notifying 71ms
+ ✓ task-assignment.pglite.test.ts > scoped assignment read and named handoff > returns no candidate directory to a project reader 23ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 8 without granting access 42ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 9 without granting access 46ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 10 without granting access 41ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses recipient 11 without granting access 47ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > denies stale administrator claims, other client scope and mixed status bodies 52ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > refuses same-assignee and stale version or assignee snapshots 66ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects completed tasks 52ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > protects cancelled tasks 69ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > reports roster verification failure instead of an empty success 19ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > rolls back the row and both lineage rows if the second ledger INSERT fails 55ms
+ ✓ task-assignment.pglite.test.ts > assignment refuses stale or inadmissible requests > returns unknown and evicts after a real COMMIT loses its acknowledgement 54ms
+ ✓ task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > selects only eligible users and preserves optional real reason and old result shape 59ms
+ ✓ task-assignment.pglite.test.ts > existing automatic assignment uses the same admission and ledger > denies a project reader and skips terminal work without inventing a reason 36ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > changes only the due date, clears the reminder markers, and commits its ledger row with the reason 18ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > refuses a stale date, the same date, a missing reason and a malformed date, changing nothing 11ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > refuses a project reader, another client scope and another organisation, changing nothing 11ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > protects completed tasks 13ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > protects cancelled tasks 12ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > rolls the date back when its ledger row cannot be written 12ms
+ × task-assignment.pglite.test.ts > a task's due date is changed with a reason, on the ledger > says the outcome is unknown when the COMMIT loses its acknowledgement 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 16 passed (23)

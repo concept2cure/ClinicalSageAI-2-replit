@@ -1,0 +1,13 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — selecting batches > will not run on fewer than two batches 721ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — selecting batches > sends the selected study ids and nothing else 414ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — selecting batches > clearing the selection takes the verdict with it 532ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — reading the verdict > shows a pooled result as one claim, with both F-tests 402ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — reading the verdict > shows a non-poolable result as the shortest batch, and says the intercept test was never reached 401ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — reading the verdict > names an attribute it could not assess, and the conflict behind it 398ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcPoolability.test.tsx > Poolability — when the server refuses > surfaces the refusal as its reason and leaves no verdict behind 704ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > estimates a study with results when the register opens, and draws its fit 325ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > draws the server’s numbers, and computes none of its own 122ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > draws nothing the engine did not return 85ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcStabilityChart.test.tsx > the Stability register draws each Q1E fit > says a refused estimate in the register, without a failure toast 136ms
+ Test Files  2 passed (2)
+      Tests  11 passed (11)

@@ -1,0 +1,17 @@
+# Walk fix, red: at 390 px the narrowing control, labelled with the project's full name, ran off the screen (shots/after-quality-sop-390-dark.png before this fix). The test asks for the code-only label, against d3db227c1's App.tsx.
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality says whose records it lists > reads the whole organisation with a project open, narrows to the project and back 609ms
+   → Unable to find an accessible element with the role "button" and name "Show C11 only"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 15 skipped (16)
+
+# Walk fix, red: the Complaints and MDR tab showed two primary buttons (shots/after-quality-complaints-1440-dark.png before this fix); against d3db227c1's QmsRecords.tsx
+ × client/src/concept2cure/quality/__tests__/QualityComplaints.test.tsx > Quality's Complaints and MDR tab > lists the organisation's complaints and MDR reports, with the server's reportability and reporting clock 324ms
+   → expected 'btn primary small' to be 'btn ghost small' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 skipped (10)
+
+# Walk fix, red: at 1440 the CAPA, deviation, nonconformance, supplier and audit registers ran past their section and clipped the row's actions (measured below); against e20c0469f's SopRegisterRow.tsx
+ × client/src/concept2cure/quality/__tests__/registerRowInline.test.tsx > a controlled document row shows the actions that fit its state > scrolls a wide register inside its own box, so its pinned actions are never clip
+   → expected '' to be 'qms-reg-scroll' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 skipped (9)

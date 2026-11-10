@@ -110,12 +110,15 @@ export async function ensureAgencyLetter() { state.downstream.push('ensureAgency
   await write('scripts/demo/launch-demo/packs/biotech-content.mjs', `
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
 export const PROVENANCE = { fictional: true }, SOPS = [], CHANGE = {}, VAULT_DOCS = [];
+export const C2C101_IDENTITY = { applicationNumber: '999101', sponsor: { name: 'Fictional test sponsor' } };
 export const T = name => '[Demo · Biotech] ' + name;
 export const findDemoByTitle = (rows, name) => rows.find(row => row.title === T(name));
 export const inDays = () => '2027-04-30';
 `);
   await write('scripts/demo/launch-demo/packs/biotech-shared.mjs', `
+import { state } from '../../../../state.mjs';
 export const NOT_EXECUTED_NO_SIGNER = 'not executed — signer credential not supplied';
+export async function ensureApplicantIdentity() { state.downstream.push('ensureApplicantIdentity'); }
 export const asArray = (body, key) => body[key] ?? [];
 export function makeTally() { const tally = { created: {}, found: {} }; return { tally,
 created(key) { tally.created[key] = (tally.created[key] ?? 0) + 1; },

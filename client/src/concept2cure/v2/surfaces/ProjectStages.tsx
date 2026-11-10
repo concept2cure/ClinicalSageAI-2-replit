@@ -1,6 +1,7 @@
 /**
- * Project home's six steps: the segmented control that opens one.
- * Moved out of ProjectHome.tsx on 2026-10-25; its band retired on 2026-11-06 (D3-1).
+ * Project home's six steps: the segmented control that opens one, and the line under it.
+ * Moved out of ProjectHome.tsx on 2026-10-25; its band retired on 2026-11-06 (D3-1); its guidance back as one line
+ * on 2026-11-10 (P-122).
  */
 import React from 'react';
 import { I } from '../icons';
@@ -62,9 +63,31 @@ export function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { st
   );
 }
 
-/* The band under the steps ("What to do now", "Next step") was retired on
-   2026-11-06 (D3-1; ONE_DESIGN_PLAN §2: guidance boxes move into AnA and the
-   composer). Its guidance lives on as each step's starter in the composer
-   (PJ_LIFECYCLE[].starter, ProjectHome.tsx stepStarters) and its blurb as one
-   quiet line under the steps; its "next step" is the next item of this
-   control. */
+/* The band under the steps ("What to do now", "Next step") was retired on 2026-11-06 (D3-1), and with it the only
+   place the step's guidance (PJ_LIFECYCLE[].now) was shown: a new team member could not tell what to do on a step or
+   what came after. P-122 (2026-11-10) brings the guidance back, not as a band: one quiet line under the steps, the
+   step's blurb, what to do on it, and its action, the next step. Respond is the last, and has no next. */
+
+/** The open step's line under the steps: what it is, what to do on it, and the next step.
+ *  `sequenced`: the filing builds an eCTD sequence (Submit's sentence promises one). `planListed`: Plan lists what
+ *  this filing needs (its sentence promises that list). Without them the step says what it is, and no more. */
+export function StepGuidance({ stage, lifecycle = PJ_LIFECYCLE, onStage, sequenced, planListed = true }: {
+  stage: string; lifecycle?: LifecycleStage[]; onStage: (s: string) => void; sequenced: boolean; planListed?: boolean;
+}) {
+  const at = lifecycle.findIndex((s) => s.id === stage);
+  const step = lifecycle[at];
+  if (!step) return null;
+  const next = lifecycle[at + 1];
+  const now = (step.id === 'submit' && !sequenced) || (step.id === 'plan' && !planListed) ? null : step.now;
+  return (
+    <p className="pj-step-blurb" data-testid="pj-step-guidance">
+      <span>{step.blurb}.</span>
+      {now && <> <span data-testid="pj-step-now">{now}</span></>}
+      {next && (
+        <> <button type="button" className="btn small" onClick={() => onStage(next.id)} aria-label={`Next: ${next.label}, ${next.blurb}`}>
+          Next: {next.label} {I.right}
+        </button></>
+      )}
+    </p>
+  );
+}

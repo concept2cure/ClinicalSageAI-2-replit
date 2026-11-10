@@ -76,7 +76,53 @@ export interface ShelfLifeResult {
   nominalCrossing: number | null;
   regression: { slope: number; intercept: number; r2: number; residualSd: number; n: number; df: number };
   confidence: { alpha: number; tQuantile: number; bound: 'lower' | 'upper' };
+  /**
+   * The fit, sampled for drawing (P-122, 2026-11-10): the mean line and the
+   * one-sided confidence bound at each `time`, from t = 0 to a horizon past the
+   * reported shelf life, the observed period and the Q1E extrapolation limit —
+   * and to where the bound meets the specification, when that is within half as
+   * far again. It samples every observed time, the reported shelf life and the
+   * crossing, so a chart marks them on the curve rather than between samples.
+   *
+   * It exists so a chart computes nothing (RULE 2): the bound needs this fit's
+   * t-quantile, residual SD and leverage term, and a browser that re-derived
+   * them would be a second implementation of the statistic a shelf life is set
+   * from.
+   */
+  band: ShelfLifeBandPoint[];
   notes: string[];
+}
+
+/** One sample of the fitted line and its one-sided confidence bound. */
+export interface ShelfLifeBandPoint { time: number; fitted: number; bound: number }
+
+const BAND_STEPS = 24;
+
+/**
+ * The fit, sampled for drawing — see `band` on ShelfLifeResult. `shelf` and
+ * `crossing` are the figures the estimate reports, so the curve passes through
+ * the very times the result states. `fittedAt` and `boundAt` are the
+ * estimate's own unrounded line and confidence limit: nothing is re-fitted.
+ */
+function sampleBand(s: {
+  observedTimes: number[];
+  fittedAt: (t: number) => number;
+  boundAt: (t: number) => number;
+  shelf: number;
+  crossing: number;
+  observed: number;
+  allowance: number;
+}): ShelfLifeBandPoint[] {
+  const floor = Math.max(s.observed, s.allowance, s.shelf);
+  const end = Math.max(floor, Math.min(s.crossing, floor * 1.5));
+  const times = new Set<number>(s.observedTimes.map((t) => round(t, 2)));
+  for (let i = 0; i <= BAND_STEPS; i++) times.add(round((end * i) / BAND_STEPS, 2));
+  times.add(round(s.shelf, 2));
+  if (s.crossing <= end) times.add(round(s.crossing, 2));
+  return [...times]
+    .filter((t) => t >= 0 && t <= end)
+    .sort((a, b) => a - b)
+    .map((t) => ({ time: t, fitted: round(s.fittedAt(t)), bound: round(s.boundAt(t)) }));
 }
 
 /**
@@ -162,6 +208,7 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
 
   const observedPeriod = Math.max(...x);
   const extrapolationLimit = q1eExtrapolationLimit(observedPeriod);
+  const band = (shelf: number, crossing: number) => sampleBand({ observedTimes: x, fittedAt: yhat, boundAt: cl, shelf, crossing, observed: observedPeriod, allowance: extrapolationLimit });
 
   /* The mean line meets the limit only if it is heading toward it. A line
      heading away (an assay rising, an impurity falling) never crosses at any
@@ -195,6 +242,7 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
       nominalCrossing,
       regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
       confidence: { alpha, tQuantile: round(tq), bound },
+      band: band(proposed, crossing),
       notes: wasCapped
         ? [
             ...notes,
@@ -206,17 +254,10 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
 
   if (g(0) <= 0) {
     /* The allowance is a CEILING, never a floor: a study already out of spec at
-       t=0 supports nothing, and min() must not lift it off zero. */
+       t=0 supports nothing, and min() must not lift it off zero — capped(0)
+       reports zero, uncapped, with the band drawn over the observed period. */
     return {
-      shelfLife: 0,
-      statisticalCrossing: 0,
-      observedPeriod: round(observedPeriod, 2),
-      extrapolationLimit: round(extrapolationLimit, 2),
-      cappedByExtrapolationLimit: false,
-      exceedsEvaluatedRange: false,
-      nominalCrossing,
-      regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
-      confidence: { alpha, tQuantile: round(tq), bound },
+      ...capped(0, false),
       notes: [...notes, 'The confidence limit is already at/over the specification at t=0 — no shelf life can be supported from these data.'],
     };
   }

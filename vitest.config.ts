@@ -93,6 +93,9 @@ export default defineConfig({
     pool: 'forks',
     // Vitest 4 removed poolOptions.forks.singleFork. Keep the existing memory
     // budget real: one fork and no parallel files, using supported controls.
+    // CI's Test shards override this to three files at a time, on 4-core,
+    // 16 GB runners, with the measurement in .github/workflows/ci.yml
+    // (test-shard) — the default here is what an unknown machine gets.
     maxWorkers: 1,
     fileParallelism: false,
     reporters: ['verbose'],

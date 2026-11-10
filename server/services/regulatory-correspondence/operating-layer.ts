@@ -263,18 +263,22 @@ export async function createCanonicalTasksForIssue(input: {
 export async function readCanonicalDueSoonAndWorkload(input: {
   orgId: number;
   projectId?: number;
+  /** Only these projects' work (the projects the reader can open; P-122). Absent: every project of the organization. */
+  projectIds?: readonly number[];
 }): Promise<{
   dueSoon: Array<Record<string, unknown>>;
   workload: Array<Record<string, unknown>>;
 }> {
   const now = new Date();
   const next7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const scope = input.projectIds === undefined ? null : JSON.stringify([...input.projectIds]);
 
   const dueSoon = await db.execute(sql`
-    SELECT work_item_id, owner_id, owner_name, title, status, priority, due_at
+    SELECT work_item_id, project_id, owner_id, owner_name, title, status, priority, due_at
     FROM c2c_project_work_items
     WHERE org_id = ${input.orgId}
       AND (${input.projectId ?? null}::int IS NULL OR project_id = ${input.projectId ?? null})
+      AND (${scope}::jsonb IS NULL OR project_id IN (SELECT (jsonb_array_elements_text(${scope}::jsonb))::int))
       AND status IN ('open','in_progress')
       AND due_at IS NOT NULL
       AND due_at <= ${next7d}
@@ -288,6 +292,7 @@ export async function readCanonicalDueSoonAndWorkload(input: {
     FROM c2c_project_work_items
     WHERE org_id = ${input.orgId}
       AND (${input.projectId ?? null}::int IS NULL OR project_id = ${input.projectId ?? null})
+      AND (${scope}::jsonb IS NULL OR project_id IN (SELECT (jsonb_array_elements_text(${scope}::jsonb))::int))
     GROUP BY owner_id, owner_name
     ORDER BY overdue_tasks DESC, open_tasks DESC
   `);

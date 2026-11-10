@@ -1,0 +1,55 @@
+# 04-linked-content-probe: what LibreOffice requests while converting an uploaded Word file (2026-11-10)
+#
+# Why this was measured: services/pdf-converter.ts ran only on Word files this platform built. A rendition runs it
+# on a file someone uploaded. This asks whether such a file can make the converter call an address.
+#
+# Setup: LibreOffice 24.2.7.2, started exactly as pdf-converter.ts starts it:
+#   libreoffice --headless -env:UserInstallation=file://<fresh profile> --norestore --nologo --nofirststartwizard \
+#     --convert-to pdf:writer_pdf_Export --outdir <dir> <file>.docx
+# A listener on 127.0.0.1 (python3 -m http.server) logged every request. Each .docx was written by hand: the
+# three parts a Word file needs, and the one reference under test. Every run exited 0 and wrote a PDF.
+
+## 1. A linked image: <a:blip r:link="rId5"/> with, in word/_rels/document.xml.rels,
+##    <Relationship Id="rId5" Type="…/relationships/image" Target="http://127.0.0.1:<port>/probe.png" TargetMode="External"/>
+          2 GET /probe.png HTTP/1.1
+          1 OPTIONS /probe.png HTTP/1.1
+
+## 2. The same image, its relationship typed …/relationships/hyperlink
+          2 GET /typed-as-hyperlink.png HTTP/1.1
+          1 OPTIONS /typed-as-hyperlink.png HTTP/1.1
+
+## 3. The same image, TargetMode="Ex&#116;ernal" (a character reference); and with no TargetMode at all
+          2 GET /charref-targetmode.png HTTP/1.1
+          1 OPTIONS /charref-targetmode.png HTTP/1.1
+    (the request is for the character-reference file; the file with no TargetMode made none)
+
+## 4. No relationship: field codes INCLUDEPICTURE and INCLUDETEXT with a URL, the same as w:fldSimple, a VML
+##    v:imagedata with src and o:href, and a HYPERLINK field
+    (no request)
+
+## 5. A w:hyperlink on an external hyperlink relationship; an attached template (settings.xml.rels, external)
+    (no request)
+
+## 6. An HTML altChunk inside the file holding <img src="http://127.0.0.1:<port>/…"> and a stylesheet link
+    (no request)
+
+## 7. The linked image of run 1, twice against one listener: first with the setting below in the profile's
+##    user/registrymodifications.xcu before LibreOffice started (target /with-block-setting.png), then with a
+##    fresh default profile as a control (target /default-profile-control.png)
+##    <item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="BlockUntrustedRefererLinks" oor:op="fuse"><value>true</value></prop></item>
+          2 GET /default-profile-control.png HTTP/1.1
+          1 OPTIONS /default-profile-control.png HTTP/1.1
+    (only the control was requested; both runs wrote a PDF. The image typed as a hyperlink, run 2, was tried
+    with the setting in an earlier run that had no control beside it; no request was logged.)
+
+## Reading it
+# - The converter requests a linked image named by an external relationship (1). The relationship's declared
+#   type does not stop it (2), and neither does writing the TargetMode value with a character reference (3).
+#   A relationship with no TargetMode is not requested (3).
+# - Nothing else tried here was requested (4, 5, 6). That is what was tried, not a proof that nothing else is.
+# - With BlockUntrustedRefererLinks set in the profile the converter writes the PDF and requests nothing (7).
+#
+# What was done with it: vault-pdf-rendition.ts does not hand the converter a Word file whose relationship parts
+# name anything outside the file (any TargetMode other than Internal). What was not done: setting
+# BlockUntrustedRefererLinks in the profile pdf-converter.ts makes for each run. That file is not in this work's
+# list. See README, "Not done here".

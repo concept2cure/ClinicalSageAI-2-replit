@@ -1,0 +1,16 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > moves between a study record and the Module 3 build in one click each way 208ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > gives AnA a vocabulary for driving the screen 17ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > publishes MEASURED readiness once the endpoint resolves 64ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > says the gate would pass when it would 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > publishes NO measured fact when the readiness read fails 19ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > publishes no measured fact without a project either 14ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > withdraws its context on unmount, so the next surface inherits nothing 16ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC opens with both groups in one row > shapes onto the wire without empty keys 16ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > opens with all nine tabs in one row, and no toggle in front of the registers 313ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > CMC shows every destination at once > keeps all nine in the row whichever tab is open 115ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > prints the open tab’s sentence as one quiet line, and its next step 111ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcAllTabsVisible.test.tsx > each tab says what to do now, with its action > walks the work in order, and the last destination has no next step 187ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > declares all nine, with both sentences 3ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > splits the nine into the two halves the founder named 1ms
+ Test Files  6 passed (6)
+      Tests  110 passed (110)
