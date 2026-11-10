@@ -36,11 +36,8 @@ export function ControlledDocumentHistory({ document, onClose }: { document: Qms
   }, [document.id, retry]);
   return <DialogPanel title={`Version history of ${document.docNumber}`} busy={false} onClose={onClose}
     sub={`${document.title}. Retained signed versions and earlier registry records are read-only; revisions use a separate draft.`}>
-    {error ? (error.read?.status === 404
-      // A 404 is said in the document's words: the shared refusal words name "this project" (Quality review, 2026-11-10).
-      ? <ErrorState title="Not found in your organization" message="This document's version history was not found in your organization, so it was not read." testId="qms-history-failed" />
-      : <ErrorState title="The signed version history could not be read" message={error.message} read={error.read} readWhat="this document's version history"
-        retry={() => setRetry(n => n + 1)} testId="qms-history-failed" />) :
+    {error ? <ErrorState title="The signed version history could not be read" message={error.message} read={error.read}
+      readWhat="its version history" readSubject="this controlled document" retry={() => setRetry(n => n + 1)} testId="qms-history-failed" /> :
       versions === null ? <EmptyState title="Loading document versions…" busy /> :
       versions.length === 0 ? <p>No document versions recorded yet.</p> : versions.map((version, index) => (
         <details key={`${version.version}:${version.approved_at}`} open={index === 0} className="qms-signed-version">
