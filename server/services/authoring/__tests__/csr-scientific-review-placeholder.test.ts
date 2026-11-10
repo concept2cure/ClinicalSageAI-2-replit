@@ -106,7 +106,7 @@ describe('the engine table\'s own unit labels are not data placeholders', () => 
     const { readFileSync } = await import('node:fs');
     const source = JSON.parse(readFileSync('data/seeds/lumen-demo/seed-data/lmn201_synthetic_csr_source_v2.json', 'utf8'));
     const withWeight = { ...source.studyData, demographics: source.studyData.demographics.map((d: object, i: number) => ({ ...d, weight: 60 + i })) };
-    const tables = buildCSRTables(withWeight) as Record<string, { headers?: string[]; rows?: string[][] } | undefined>;
+    const tables = buildCSRTables(withWeight) as unknown as Record<string, { headers?: string[]; rows?: string[][] } | undefined>;
     const labels = Object.values(tables).flatMap(t => [...(t?.headers ?? []), ...(t?.rows ?? []).map(row => row[0])]);
     expect(labels.some(label => /\[kg\]/.test(label))).toBe(true);
     expect(labels.filter(label => hasUnresolvedPlaceholders(label))).toEqual([]);

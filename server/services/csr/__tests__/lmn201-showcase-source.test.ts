@@ -31,8 +31,8 @@ describe('the Lumen showcase study data (v2)', () => {
   });
 
   it('gives every results heading a table: §12.5 has vital signs to be written over, where v1 has none', () => {
-    const before = buildCSRTables(v1.studyData) as Record<string, unknown>;
-    const after = buildCSRTables(v2.studyData) as Record<string, unknown>;
+    const before = buildCSRTables(v1.studyData) as unknown as Record<string, unknown>;
+    const after = buildCSRTables(v2.studyData) as unknown as Record<string, unknown>;
     expect(hasRows(before.vitalSigns)).toBe(false);
     for (const key of ['exposure', 'labShifts', 'vitalSigns', 'concomitantMedications']) expect(hasRows(after[key]), key).toBe(true);
     for (const heading of ['10.1', '11.1', '11.2', '11.4', '12.1', '12.2', '12.3', '12.4', '12.5']) {
