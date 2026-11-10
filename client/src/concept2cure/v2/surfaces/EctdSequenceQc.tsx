@@ -108,7 +108,7 @@ function DiffBlock({ seq, prior, onPdfError }: { seq: Seq; prior: Seq | null; on
         {' '}{summary.deleted} only in sequence {prior.sequenceNumber}, {summary.unchanged} unchanged.
       </p>
       {changed.length > 0 && (
-        <div className="ec-qc-scroll" style={{ overflowX: 'auto', marginBottom: 12 }}>
+        <div style={{ overflowX: 'auto', marginBottom: 12 }}>
           <table className="reg-tbl">
             <thead><tr><th scope="col">Section</th><th scope="col">Leaf</th><th scope="col">Change</th></tr></thead>
             <tbody>
@@ -144,7 +144,7 @@ function ManifestBlock({ seq, onPdfError }: { seq: Seq; onPdfError: (m: string) 
         {man.missingChecksums > 0 ? `; ${plural(man.missingChecksums, 'has', 'have')} no checksum yet, so its file is not attached.` : ', each with its checksum.'}
       </p>
       {man.modules.map((mod) => (
-        <div key={mod.module} className="ec-qc-scroll" style={{ overflowX: 'auto', marginBottom: 12 }}>
+        <div key={mod.module} style={{ overflowX: 'auto', marginBottom: 12 }}>
           <table className="reg-tbl" aria-label={mod.label}>
             <caption className="sec-sub" style={{ textAlign: 'left' }}>{mod.label}</caption>
             <thead><tr><th scope="col">Section</th><th scope="col">Leaf</th><th scope="col">Operation</th><th scope="col">SHA-256</th></tr></thead>
@@ -178,7 +178,7 @@ export function EctdSequenceQc({ programId, openedSequence }: { programId: strin
   else {
     body = (
       <>
-        <label className="ec-qc-pick" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+        <label style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <span>Sequence</span>
           <select className="c2c-input" style={{ maxWidth: '100%' }} value={seq.id} onChange={(e) => { setPdfError(null); setChosen(Number(e.target.value)); }}>
             {ordered.map((s) => <option key={s.id} value={s.id}>{s.submissionTitle} · {s.sequenceNumber}</option>)}

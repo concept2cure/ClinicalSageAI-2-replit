@@ -49,7 +49,7 @@ function ParserReading({ c }: { c: ProposalClassification | null | undefined }) 
   const said = found.length === 0
     ? 'no topic found; classify it yourself'
     : [found.join(', '), c.suggested.severity, c.suggested.ctdSection].filter(Boolean).join(' · ');
-  return <span className="cc-q-note cc-q-parser">Keyword rules, no AI: {said}</span>;
+  return <span className="cc-q-note">Keyword rules, no AI: {said}</span>;
 }
 
 function isPayload(v: unknown): v is ProposalsPayload {
