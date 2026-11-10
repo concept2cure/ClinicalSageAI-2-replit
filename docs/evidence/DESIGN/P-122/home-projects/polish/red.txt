@@ -1,0 +1,3 @@
+ × client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > lists the org’s REAL projects (not a constant), each opening its Project home 74ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)

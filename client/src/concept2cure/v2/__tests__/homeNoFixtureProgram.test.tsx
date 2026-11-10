@@ -96,9 +96,12 @@ describe('Home — your projects are real or absent, never invented', () => {
     render(<Home {...props()} onNav={onNav} />);
 
     const list = await screen.findByTestId('home-projects');
-    expect(list.textContent).toContain('ZX-9 — First-in-Human, ZX-9');
+    // A title that already carries its code is not prefixed with it again (P-122 review:
+    // "LMN-401 — [Demo · Lumen] LMN-401 — …"); a title without it is.
+    expect(list.textContent).toContain('First-in-Human, ZX-9');
+    expect(list.textContent).not.toContain('ZX-9 — First-in-Human, ZX-9');
     expect(list.textContent).toContain('CA-2 — Companion assay');
-    fireEvent.click(screen.getByRole('button', { name: /ZX-9 — First-in-Human, ZX-9/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^First-in-Human, ZX-9/ }));
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect((window.C2C_PROJECT as unknown as { id: string } | undefined)?.id).toBe('p-1');
     expectNoRetiredProgram();
