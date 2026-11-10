@@ -70,7 +70,7 @@ Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source
 | Files | Held by | For |
 |---|---|---|
 | `tests/validation/**`, `scripts/validation/**`, `docs/validation/**` (VSR-001, TM-001, RA-001, the URS and OQ documents), `docs/evidence/W3/2026-11-10/**` | Validation for GA (`01QoxbLcnW…`), from 2026-11-10 | **Launch row D4, workstream W3. Where it stands, 2026-11-10:** the package was executed three times on a fresh installation under the W3 posture, with unattributed API paths refused as in production. **Final: 170 pass, 0 fail, 8 deviation, 2 not executed of 180 steps**, IQ 12 / 0 / 3. All 34 failures of the first two executions were a step overtaken by a recorded decision or a runner defect; **no product regression, no product file changed**. OQ-007 (Reporting & analytics) now exists with URS-008: 17 / 0 / 1. TM-001 regenerated (120 pass, 4 partial, 6 open, 2 uncovered of 132). Record `docs/evidence/W3/2026-11-10/README.md`; dispositions VSR-001 §21; plan §3a. **D4 stays red; the package is unsigned.** **Remains, and the hold stays for it:** (1) execution on a production build with `AUDIT_EXPORT_SIGNING_KEY`, the audit seal key and the anchor store (OQ-SUBC-16, OQ-CMC-30, IQ-12); (2) a PQ-passed AI provider (OQ-AUTH-16, OQ-CMC-26); (3) fixtures: a critical CMC contradiction (OQ-CMC-17), a Module 3 whose every section can be approved (OQ-CMC-19, -27, -28), an organisation on a lower plan (OQ-RPT-16); (4) URS revisions through change control for what left the release (URS-PROJ-007, URS-AUTH-014's organisation store, URS-SRDY-004/-005, URS-QMS-011 and -012's plan half); (5) PQ; (6) review and the founder's signature. **→ Part 11 owner:** `GET /api/c2c/actions/verify-chain` is claimed by no launch surface, so production refuses it 403 `LAUNCH_SCOPE`; the reachable chain verdict is `GET /api/audit/reports/audit-trail-integrity`. `GET /api/part11/signatures/by-target` does not return `bound_payload_digest`. **→ security (D6):** `POST /api/audit/export/verify` has no role gate, compares no organisation and writes no audit row. **→ installation (D1):** IQ-001 has no check for `fonts-noto-core`; without it a report export answers 503 `REPORT_PDF_FONTS_UNAVAILABLE`. `report_snapshots` (the sealed report) is updatable by the runtime role: a change is detected on read, not prevented. **→ CMC:** the final-export gate's sentence names one blocker where URS-CMC-010 says each is named (the counts are in `data`). |
-| (none held; the Biostatistics hold was released with `d529eeab14`) | Trunk CI at HEAD (`01E8btkB…`), from 2026-11-10 | **F1 under launch row D2 (L1): trunk CI to green.** No CI run on `concept2cure-v2` has completed green: the last completed run (`04fd70b23`, 2026-11-09 00:12) failed all eight test shards, the integration tests, six lint guardrails, the proof tier and the full-history secret scan. Runs since then wait about a day in the queue, so nobody has seen trunk green or red since. This lane runs every CI job's own steps locally at HEAD (`.github/workflows/ci.yml`, same commands, the CI Postgres image's pgvector), lists what is still red, fixes what is in files nobody holds (red first, each fix its own commit), and hands what is in a held file to its holder here, with the failing case and the cause. The Anna-runtime area's triage (A, B, E, lint, proof tier, secret scan, row 346) is that lane's and is not redone. |
+| (none held; the Biostatistics hold was released with `d529eeab14`) | Trunk CI at HEAD (`01E8btkB…`), from 2026-11-10 | **F1 under launch row D2 (L1): trunk CI to green.** No CI run on `concept2cure-v2` has completed green: the last completed run (`04fd70b23`, 2026-11-09 00:12) failed all eight test shards, the integration tests, six lint guardrails, the proof tier and the full-history secret scan. Runs since then wait about a day in the queue, so nobody has seen trunk green or red since. This lane runs every CI job's own steps locally at HEAD (`.github/workflows/ci.yml`, same commands, the CI Postgres image's pgvector), lists what is still red, fixes what is in files nobody holds (red first, each fix its own commit), and hands what is in a held file to its holder here, with the failing case and the cause. The Anna-runtime area's triage (A, B, E, lint, proof tier, secret scan, row 346) is that lane's and is not redone. **State, 2026-11-10:** lint job, secret scan, the eight test shards and the integration job reproduced at HEAD. Every red is fixed or handed over below (section "Found by the trunk-CI lane"). The real-database suite is down to two reds, both handed over: one held file and one founder decision. Record: `docs/evidence/F1/2026-11-10-trunk-ci/README.md`. |
 | (none held) | Codebase market readiness (`01Gx2fiw…`), 2026-11-09 | **P-112 item 1 landed: the Vault admits a `.zip`, stored as one file.** `.zip` is `vault: true` in `shared/constants/document-intake-formats.ts`, and its name binds a zip container in `shared/constants/upload-name-bindings.ts` (a `.zip` declared `text/html` with HTML bytes passed both checks before). The archive bound, the signature check and the no-text extraction were already there. The Data Room's in-browser expansion is unchanged. Evidence `docs/evidence/MR-08/2026-11-09-vault-admits-zip/`. **→ RIM:** P-108 4(a) (a sponsor's copy of a sent package, matched by SHA-256) can now take the package from the Vault; it is under the 50 MB upload limit until the founder sets the admission size (P-112, open). **→ Vault parity (S6):** P-112 items 2 to 4 (the picked-document export, reaching compression, combining). Holds released. |
 | `server/routes/ind-lifecycle/sequence.routes.ts` (deleted whole); the P-106 handlers in `server/routes/ind-lifecycle/submission.routes.ts` (`GET /portfolio` stays); their mounts in the IND lifecycle router; `tests/schema-contract/one-dispatch-verdict.contract.test.ts` (:72–76 read `sequence.routes.ts`); `server/services/export/__tests__/recorded-downloads.contract.test.ts` (:88, :195 list the portfolio/drift handlers); the openapi route-count test | RIM system build-out (`011e42…`), recorded by the coordinating session 2026-11-09 | `Plan: R1`, one deletion commit: P-87 with P-106, both the founder's (no `LAUNCH_DEFINITION_OF_DONE.md` change). R1's holder (`01QoxbLdKp…`) does **not** hold these files. R1's rule is met by RIM's commit: no caller in any history (the full-history search re-run and filed with the commit), and the replacement named by path (the sequence's one verdict, per project). Taken after D7-A1, D7-A2, C3 and P-92 C1/C2 unless re-ordered; released with the commit |
 | (none held) | D7-record (`015weq…`), 2026-11-09 | P-95 Q2 landed as ruled in row 38 (`4eb094196f`, evidence `docs/evidence/W5/2026-11-01/p95-q2/`). A placed artifact (a CTD section set, in any module) or type `section` needs two independent reviewers, refused 409 REVIEW_REQUIRED with the count. Any `ctd_section` change with a decision on the current version moves the version on, as an edit does: the editor's save, placement, ctd-section, the spine's `setPlacementTx` and the signed `place_in_dossier`, which now binds the version at its new place. `GET …/reviews/status` reads readiness from the quorum. **B (write-once class) is owed**, with its ten re-resolution sites listed in that README. **→ S4 (`01KZK3…`):** `reviews/status` adds `notReadyReason` beside `readyForApproval`; the Review step may show it. **→ CMC/AnA:** a placed document now needs two reviewers, and moving a reviewed document returns it to review. |
@@ -391,6 +391,56 @@ a live request.** `server/middleware/auditLogger.js` is mounted on no production
 credential-capture and private-key redaction that commit hardened is tested and dead. Found by the adversarial review
 of the unreferenced-modules baseline fix (`76f2921686`), which correctly counts the file as referenced (a test runs
 it) but does not make it run. Mount it where audit and telemetry are written, or retire it with its test.
+
+**The integration job's real-database suite (`npm run test:db`, CI's "real-database" step), 2026-11-10.** On a
+deploy-shaped database (install-fresh, then deploy-migrate, `RLS_ENFORCE=on`, the restricted `app_service` role) it
+was 37 failures in 23 files at `fae35817f9`. 21 files were fixed by this lane, each red first and each change reviewed
+adversarially with mutants, which put three stronger versions in place of the first drafts. One product defect is
+among them: a schedule generation's response said AnA had just reviewed it, and the committed row did not. The rest
+are fixtures that fell behind the product. Record: `docs/evidence/F1/2026-11-10-trunk-ci/README.md`. Two files stay
+red, handed over here:
+
+**→ Vault parity (`01KnUG…`), your row's `pathway-engines/estar/** … and their tests`:
+`tests/db/estar-audit-admission.dbtest.ts` "native tracked-filing concurrency" is red on trunk.** Since `776d9da460`
+the transition's UPDATE runs inside `db.transaction`, on a client drizzle checks out with `pool.connect`. The test's
+barrier still wraps `pool.query`, so it never sees either UPDATE and times out ("Both real transition UPDATEs did not
+reach the barrier"). A test-only fix moves the barrier onto the checked-out client and restores it at release:
+`docs/evidence/F1/2026-11-10-trunk-ci/estar-barrier-proposed.diff`. On a fresh database it ran 13/13 five times. With
+the status guard removed from the UPDATE's WHERE it went red (`[200, 200]` for `[200, 409]`), so it still proves the
+409. Not applied here because your row holds the file's subject.
+
+**→ the founder, the P-104 private-profile owner (`fd04214563`) and the D6 offboarding owner
+(`tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `tenant-full-export.service.ts`): a tenant with
+a project-bound AnA relational profile can no longer be purged.** `tests/db/tenant-purge-blocking-keys.dbtest.ts` is
+red, 3 of 6, and it is right to be red: it pins D6.
+- **The mechanism.** `fd04214563` amended `0013_ana_intelligence_system.sql` and
+  `20260612_ana_relational_external_intel.sql` in place. They now add FORCE RLS and a RESTRICTIVE policy,
+  `ana_relational_profiles_owner_boundary` (the same on `user_intelligence_profiles`): the row's org and its owner's
+  account. The purge runs in the organization's scope with no account. So its `DELETE FROM ana_relational_profiles`
+  removes 0 rows, and the later `DELETE FROM projects` fails with 23503 on `ana_relational_profiles_project_id_fkey`.
+  The whole erasure rolls back.
+- **The export.** It runs in A's scope, so it leaves those rows out too.
+- **Proof that this policy is the only cause.** With only that policy dropped, on a scratch copy, the file passed 6/6.
+- **Two decisions disagree.** P-58: the export returns every row the purge erases, then the purge erases. P-104: a
+  private profile admits only its owner, "even inside the tenant or system scope".
+- **Decision needed:**
+  1. Does the offboarding export return members' private AnA profiles to the organization? Or are they excluded by
+     a founder-approved entry, and erased without being returned?
+  2. How does the purge erase them? For example: a door in the `purge-held-doors.ts` pattern (SECURITY DEFINER,
+     owned by `tenant_record_purger`, allowlisted), with the owner boundary amended in place in both creating
+     migrations so that role may delete (RULE 1).
+- **Also covered by the same decision:** `user_intelligence_profiles` is not in the purge's list at all.
+- **Not this lane's to change.** The fix is either a privacy boundary or a new door (RULE 6).
+
+**→ the demo seed's owner (Design continuation, `011Dpx…`, last in `scripts/demo/launch-demo/packs/mdx.mjs` at
+`7aeecfc654`): the pack's reviewer is its approver.** `seedAuthoring` asks for the 510(k) Summary's review from
+`reviewerOf(signer, identity)`, the second signer, and that same person then freezes and approves. The demo
+organization has more than one member, so this is what P-95's clarification of 2026-11-09 (question 1) and P-116
+(2026-11-10) forbid. The product does not refuse it yet: `authoring-review-route.ts:181` calls it "a later slice". So
+the seed works today and breaks the day the product follows the decision. This lane's dbtest
+(`authoring-governed-delete-signed-freeze.dbtest.ts`, the mdx case) now uses a third org-A member as reviewer, so it
+does not pin the pack's choice as correct. The pack needs an independent reviewer, the demo's QA reviewer for
+example, or the sole-member path where that applies.
 
 ## What every session does
 
