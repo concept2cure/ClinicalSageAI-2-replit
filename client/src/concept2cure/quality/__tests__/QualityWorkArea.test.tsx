@@ -18,8 +18,8 @@ const TEMPLATES = [
     description: 'A governing statement of intent.', category: 'misc', sections: [{ key: 'purpose', label: 'Purpose', order: 1 }] },
 ];
 const DOC = { id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', docType: 'sop', category: null,
-  version: '1.0', status: 'in_review', effectiveDate: null, nextReviewDate: null, updatedAt: null };
-const H = vi.hoisted(() => ({ asked: [] as string[], request: vi.fn() }));
+  version: '1.0', status: 'in_review', effectiveDate: null, nextReviewDate: null, updatedAt: null, authorId: 1 };
+const H = vi.hoisted(() => ({ asked: [] as string[], request: vi.fn(), user: { id: '2', name: 'Quinn Approver' } as { id: string; name: string } }));
 vi.mock('../hooks', () => ({
   useSopRegister: () => ({ docs: [DOC], loading: false, error: null, refresh: vi.fn() }),
   useSopTemplates: () => ({ templates: TEMPLATES, loading: false, error: null }),
@@ -33,7 +33,7 @@ vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], load
   useChangeSummary: () => ({ summary: { total: 0, open: 0, awaitingApproval: 0, inImplementation: 0, awaitingVerification: 0, overdueImplementation: 0 }, loading: false, error: null }) }));
 // Change control's reviewed-learning step reads the session through authService (a2f9264a5): keep the real module.
 vi.mock('@/services/portal/authService', async (original) => ({
-  ...(await original<typeof import('@/services/portal/authService')>()), useAuthUser: () => ({ name: 'Ada Author' }),
+  ...(await original<typeof import('@/services/portal/authService')>()), useAuthUser: () => H.user,
 }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...a: unknown[]) => H.request(...a) }));
 vi.mock('../../v2/shellProject', () => ({ useShellProject: () => null, shellProgramId: () => null }));
@@ -44,6 +44,7 @@ import { QualityApp } from '../App';
 
 beforeEach(() => {
   H.asked = [];
+  H.user = { id: '2', name: 'Quinn Approver' };
   H.request.mockReset().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: [], meta: {} }) });
 });
 afterEach(cleanup);
@@ -118,6 +119,32 @@ describe('Quality is one work area with one header (D7-B)', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'CAPA' }));
     expect(starters()[0].textContent).toBe('Give me a read-out on CAPA');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  });
+
+  // D7-B item 6: a row is one line, its next step and "More"; the rest open in the row, same names, no menu.
+  it('a register row shows its next step and More, and More reveals every other action in the row', () => {
+    mount();
+    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    const shown = () => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
+    expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'More actions for QS-SOP-001']);
+    const more = within(row).getByRole('button', { name: 'More actions for QS-SOP-001' });
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(more);
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    const group = within(row).getByRole('group', { name: 'Actions for QS-SOP-001' });
+    expect(within(group).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
+      'Open document', 'Training', 'Review route', 'Revise', 'View version history of QS-SOP-001', 'Ask AnA about this document',
+    ]);
+    fireEvent.click(within(group).getByRole('button', { name: 'Ask AnA about this document' }));
+    expect(H.asked).toEqual(['Summarize QS-SOP-001 Handling of customer complaints and tell me what it needs next.']);
+  });
+
+  it("does not offer its author an approval the server refuses: the author's next step is the review route", () => {
+    H.user = { id: '1', name: 'Ada Author' };
+    mount();
+    const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    expect(within(row).queryByRole('button', { name: 'Approve' })).toBeNull();
+    expect(within(row).getByTestId('qms-route-open').textContent).toBe('Review route');
   });
 
   it('states the register in one sentence above its rows', () => {

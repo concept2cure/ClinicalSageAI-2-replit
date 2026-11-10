@@ -80,14 +80,6 @@ function CoverageFigure({ current, of, lastCycle }: { current: number; of: numbe
   </>;
 }
 
-export function DocumentReadButton({ doc, disabled, onOpen }: {
-  doc: QmsDoc; disabled: boolean; onOpen: (documentId: number) => void;
-}) {
-  return <button className="qms-chip" disabled={disabled}
-    title="Read this controlled revision and check your personal acknowledgement"
-    onClick={() => onOpen(doc.id)}>{I.bookOpen} {doc.status === 'effective' ? 'Read and acknowledge' : 'Open document'}</button>;
-}
-
 /* ── Job roles and who must train (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12) ──
    Every change names its reason and goes through the governed QMS routes; the
    server's refusal is shown in its own words. A failed read is said, never

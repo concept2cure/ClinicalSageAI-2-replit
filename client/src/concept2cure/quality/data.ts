@@ -51,6 +51,8 @@ export interface QmsDoc {
   effectiveDate: string | null;
   nextReviewDate: string | null;
   updatedAt: string | null;
+  /** Who wrote it; the server refuses the author's approval, so the register does not offer it to them. */
+  authorId?: number | null;
   /** Canonical editing copy; null for a legacy entry awaiting explicit binding. */
   authoringDocumentId?: string | null;
   programId?: string | null;
