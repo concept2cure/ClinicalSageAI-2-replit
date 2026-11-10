@@ -42,14 +42,31 @@ async function ensureSequence({ api, tally }, rec) {
 }
 
 const readLeaves = async (api, seqId) => asArray(must(await api('GET', `/api/submissions/sequences/${seqId}/leaves`), 200, 'list leaves'), 'data', 'leaves');
-const leafRef = (l) => ({ id: l.id, sectionCode: l.sectionCode ?? l.section_code, title: l.title, documentUuid: l.documentUuid ?? l.document_uuid ?? null });
+const leafRef = (l) => ({ id: l.id, sectionCode: l.sectionCode ?? l.section_code, title: l.title, documentUuid: l.documentUuid ?? l.document_uuid ?? null,
+  studyId: l.studyId ?? l.study_id ?? null, stfFileTag: l.stfFileTag ?? l.stf_file_tag ?? null, updatedAt: l.updatedAt ?? l.updated_at ?? null });
 
-async function ensureLeaves({ api, tally }, rec, vaultDocs) {
+/** A leaf an earlier run placed with no study gets its study id and STF file-tag, against the values it was read with.
+ *  One that already names a study is a person's and is left. */
+async function tagStudy(api, seqId, leaf, d) {
+  if (!d.studyId || leaf.studyId) return false;
+  must(await api('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
+    leafId: leaf.id, sectionCode: leaf.sectionCode, title: leaf.title,
+    studyId: d.studyId, stfFileTag: d.stfFileTag,
+    studyTaggingEdit: { expectedStudyId: leaf.studyId, expectedStfFileTag: leaf.stfFileTag, expectedUpdatedAt: leaf.updatedAt },
+  }), 200, `tag leaf ${d.sectionCode} ${d.key}`);
+  return true;
+}
+
+/* A document filed in a Module 4/5 study section carries its study id and STF file-tag (d.studyId, d.stfFileTag):
+   placed with neither, FDA validation 1789 refuses the package, and "Download an inspection copy" returned nothing
+   (2026-11-10). */
+export async function ensureLeaves({ api, tally }, rec, vaultDocs) {
   const leaves = (await readLeaves(api, rec.sequence.id)).map(leafRef);
   let added = 0;
   for (const d of vaultDocs) {
-    if (leaves.some((l) => l.sectionCode === d.sectionCode && String(l.documentUuid) === String(d.id))) {
-      tally.found('leaf');
+    const placed = leaves.find((l) => l.sectionCode === d.sectionCode && String(l.documentUuid) === String(d.id));
+    if (placed) {
+      if (await tagStudy(api, rec.sequence.id, placed, d)) tally.created('leaf-study-tag'); else tally.found('leaf');
       continue;
     }
     must(await api('PUT', `/api/submissions/sequences/${rec.sequence.id}/leaves`, {
@@ -59,6 +76,7 @@ async function ensureLeaves({ api, tally }, rec, vaultDocs) {
       documentUuid: d.id,
       lifecycleOp: 'new',
       reason: 'Placed by the launch demo pack',
+      ...(d.studyId ? { studyId: d.studyId, stfFileTag: d.stfFileTag } : {}),
     }), 200, `place leaf ${d.sectionCode} ${d.key}`);
     tally.created('leaf');
     added += 1;

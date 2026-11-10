@@ -187,7 +187,7 @@ export async function seed(ctx) {
      Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
      "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
   const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
-    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title }));
+    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title, studyId: d.stf?.studyId, stfFileTag: d.stf?.fileTag }));
   // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
   await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
   await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);

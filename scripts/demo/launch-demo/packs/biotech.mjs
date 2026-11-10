@@ -232,6 +232,7 @@ async function ensureVaultDoc(ctx, program, spec) {
     folderId: spec.folderId,
     sectionCode: spec.sectionCode,
     leafTitle: spec.leafTitle,
+    studyId: spec.studyId, stfFileTag: spec.stfFileTag,
     pages,
     bytes: pdf.length,
     sha256: bytesSha,

@@ -82,6 +82,7 @@ export const VAULT_DOCS = [
     folderId: 'module-5',
     sectionCode: 'm5.3.5.1',
     leafTitle: `Protocol ${STUDY} v1.0`,
+    studyId: STUDY, stfFileTag: 'protocol-or-amendment',
     pdf: {
       subtitle: `A Phase 2, Randomized, Double-Blind, Placebo-Controlled, Dose-Ranging Study of ${MOLECULE} in Adults with Moderate-to-Severe Plaque Psoriasis — Version 1.0`,
       sections: [
@@ -126,6 +127,7 @@ export const VAULT_DOCS = [
     folderId: 'module-5',
     sectionCode: 'm5.3.5.1',
     leafTitle: `Statistical Analysis Plan ${STUDY} v1.0`,
+    studyId: STUDY, stfFileTag: 'statistical-methods-interim-analysis-plan',
     pdf: {
       subtitle: `Statistical Analysis Plan for Protocol ${STUDY} Version 1.0 — Concept2Cure Therapeutics (fictional)`,
       sections: [
