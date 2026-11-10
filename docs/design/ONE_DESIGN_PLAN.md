@@ -674,6 +674,25 @@ Each session records what it delivered here, under its package, while the coordi
 facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
 status or ownership; closing a package stays §3 step 5.
 
+#### S2 — the data catalog across projects, graded, used in a project (2026-11-06 to 2026-11-10)
+
+The founder, 2026-11-06: see the data room as a catalog organized into folders and buckets, graded, and subscribed
+to by a project; AnA in control of it. 2026-11-10: "I can not see the data catalog / data room from anywhere in the
+UI": the 2026-11-06 commits had been refused by the pre-push gates and never pushed, and the catalog sat four clicks
+deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/2026-11-06/README.md`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| 1. The catalog across projects | `7a2cfe34` (S2: `data-room-search.ts` reads the person's accessible projects of the open project's sponsor, with facets by project, study, kind, CTD section, Vault folder), `1b4d3c12` (R1: `GET /api/c2c/projects/:id/sources?scope=catalog`) | Vault → **Data catalog** (`cef3d557`, S6); the project page's Data room → **Open the data catalog** (`08927463`, R1); Project files → Data room → All my projects |
+| 2. The grade | `7a2cfe34` (`data-room-grade.ts`: provenance, integrity with the Vault copy's fixity, currency, processing, verification by a person, CDISC conformance for datasets; stored on the capture, `migrations/20261106_data_room_grade.sql`), `c04ba737` (a native record graded by its snapshot and its register) | each item's *Grade A–D · score*, its basis criterion by criterion |
+| 3. Use in this project | `1b4d3c12` (the pinned-evidence routes take `data_room`, checked against the person's catalog, audited), `c04ba737` (the panel) | **Use in this project** / **Remove**; the project's Data room lists **Used in this project** first |
+| 4. AnA over it | not started | — |
+
+**Next** (the README's "Not done yet"): the CSR study-data chooser ordering used captures first (`StudyDataSource.tsx`,
+S3); whether a used capture of another project may be assembled into this project's document (a governance
+decision); step 4, AnA, by extending existing tools over the same routes (no new tool names); a sponsor chooser for
+the Data catalog with no project open (S6's open item).
+
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
 **What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
@@ -1483,6 +1502,23 @@ first.
    Plan. Evidence gains Protocol, lifting the records read. Author shows Module completion without the ring. Submit
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
+
+#### F1 — the project page's walk findings, closed (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The D3-4 session's acceptance walk handed four findings to other owners. None of their files is held, so this
+session took them under F1.
+- **The inbox's "Draft response with AnA" is a quiet button**, `d4a3934b7`,
+  `docs/evidence/F1/2026-11-10-inbox-draft-button-quiet/`. The list is one component in Communication, the HAQ
+  manager and Respond, and it put a filled orange button on every open letter. It is now `cc-btn sm` like its
+  neighbours. It was red on trunk and is green (42 tests); in the running app each view keeps one orange.
+- **"install-fresh refuses `ctd_cross_references`" does not reproduce on trunk.**
+  `docs/evidence/F1/2026-11-10-install-fresh-ctd-cross-references/`: on an empty database the install and then
+  deploy-migrate both exit 0, and the table is policied through `csr_studies`. The report fits a partial install
+  with pgvector absent. No code change.
+- **Already fixed on trunk, by others:** Tasks hands a project task to Plan (`stage: 'plan'` in
+  `TaskBoard.tsx` `publishNativeTaskHome`), and the `documents` alias follows Vault (`projectDestination`,
+  `projectCreationDoors.contract`: 32 of 32 pass).
+- **Left with its owner:** the demo seed's Lumen pack recorded on other projects' data rooms (DATA).
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 

@@ -1,0 +1,27 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "0e8acdb9-40ba-41ed-bb5d-d0b3cf836a54",
+  "startedAt": "2026-11-10T01:29:09.156Z",
+  "steps": [
+    {
+      "name": "Respond step",
+      "filled": [
+        "Start the conversation"
+      ],
+      "draftClass": "cc-btn sm",
+      "draftBackground": "rgb(250, 249, 245)",
+      "shot": "respond-1440.png"
+    },
+    {
+      "name": "Communication",
+      "filled": [
+        "Log communication"
+      ],
+      "draftClass": "btn ghost al-btn",
+      "draftBackground": "rgba(0, 0, 0, 0)",
+      "shot": "communication-1440.png"
+    }
+  ],
+  "result": "pass",
+  "finishedAt": "2026-11-10T01:29:15.126Z"
+}

@@ -43,3 +43,23 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "waf_rate_limit_per_5_minutes" {
+  type        = number
+  description = "Requests one IP may make in 5 minutes before the web ACL blocks it (P-11)."
+  default     = 2000
+  validation {
+    condition     = var.waf_rate_limit_per_5_minutes >= 100
+    error_message = "AWS WAF's smallest rate limit is 100 requests per evaluation window."
+  }
+}
+
+variable "waf_common_rule_set_action" {
+  type        = string
+  description = "count for the first two weeks (P-11), then block. Its body-size rule counts either way."
+  default     = "count"
+  validation {
+    condition     = contains(["count", "block"], var.waf_common_rule_set_action)
+    error_message = "waf_common_rule_set_action is count or block."
+  }
+}

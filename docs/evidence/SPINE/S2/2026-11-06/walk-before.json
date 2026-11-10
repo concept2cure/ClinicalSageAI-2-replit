@@ -1,0 +1,18 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "phase": "before",
+  "startedAt": "2026-11-06T19:03:36.919Z",
+  "steps": [
+    {
+      "name": "1440: before, the lane lists only this project's captures, ungraded",
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue 5 matching sources · showing 5. zx-201-statistical-analysis-plan.txt Readable zx-201-statistical-analysis-plan.txt Superseded source zx-201-adsl-extract.csv Readable zx-201-protocol-synopsis.txt Readable [Demo] FDA information request (fictional) - IND "
+    },
+    {
+      "name": "390: before, the lane lists only this project's captures, ungraded",
+      "text": "Project sources and recorded catalogue facts. Expand a source to work on it or ask AnA to study it. Refresh sources Search the data room catalogue 5 matching sources · showing 5. zx-201-statistical-analysis-plan.txt Readable zx-201-statistical-analysis-plan.txt Superseded source zx-201-adsl-extract.csv Readable zx-201-protocol-synopsis.txt Readable [Demo] FDA information request (fictional) - IND "
+    }
+  ],
+  "apiErrors": [],
+  "ok": true,
+  "finishedAt": "2026-11-06T19:03:51.308Z"
+}
