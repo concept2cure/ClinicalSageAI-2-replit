@@ -85,9 +85,10 @@ With no second or third person, every two-person step says "not executed" and no
      login and readiness check (`client/src/concept2cure/components/concept2cure-auth/DemoAccounts.tsx`). The
      Codespace passes the list as `VITE_DEMO_ACCOUNTS` (`post-create.sh` `c2c_demo_accounts`, roles in
      `c2c_demo_role`). With no list, the single button is as it was.
-2. **The Vault re-files on every run.** The second run counts `vault-filing: 21`. `ensureFiled` in `lumen-vault.mjs`
-   trusts the ingest reply's `filing` on a re-upload. It should read the document's current filing before calling
-   `POST …/file`. There is no data harm, only audit entries on each re-seed.
+2. **Done (2026-11-10): the Vault no longer re-files on every run.** The Vault now hangs a filed upload under a
+   binder node (`cab-bn:1.14.4.1`), so the seed's folder check never matched. `readCabinet` in `lumen-vault.mjs` reads
+   each document's own filing record instead. A second run in the Lumen organisation: "created 0, found 208", no
+   filing repaired.
 3. **QMS: SOPs stay draft and training stays empty.** That lasts until an administrator designates a QMS approver
    (`PUT /api/tenant-users/:org/:user/qms-approver`). It is an access grant, so it is left to the founder; the
    question is open with them. After it, a re-run routes and approves LMN-SOP-201/202 and assigns training. That path

@@ -97,7 +97,14 @@ async function readCabinet(api, programId) {
       if (Array.isArray(n.children)) { walk(n.children, n.id); continue; }
       if (n.src !== 'upload' || !n.docId) continue;
       if (byTitle.has(n.title)) twice.add(n.title);
-      byTitle.set(n.title, { id: n.docId, folder, placement: n.status, num: n.num });
+      /* The document's own filing record, not the node it hangs under: since the Vault's filing binders
+         (2026-11-06) a filed upload sits under a binder node (cab-bn:1.14.4.1), so the parent's id never equalled
+         the folder and every found document was filed again on each run (vault-filing 21 on a second run). */
+      const f = n.filing ?? {};
+      byTitle.set(n.title, {
+        id: n.docId, folder: f.folderId ? `cab-${f.folderId}` : folder,
+        placement: f.placementStatus ?? n.status, num: f.ctdSection ?? n.num,
+      });
     }
   };
   walk((d.tree ?? []).filter((f) => f.id === 'cabinet'), null);
