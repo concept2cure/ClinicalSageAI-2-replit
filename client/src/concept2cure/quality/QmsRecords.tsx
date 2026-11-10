@@ -22,15 +22,14 @@ import { I } from '../v2/icons';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { registerRowMinWidth } from './registerGrid';
 import { listOf } from './qmsList';
-import { Kpi } from './Kpi';
 import { C2CForm } from '../v2/C2CForm';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { ErrorState } from '../v2/dataConnect';
 import { useCapasBySource } from './capaSources';
 import { useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
-import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep, plural } from './qmsRegisterKit';
+import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep } from './qmsRegisterKit';
 
 /** How many rows AnA is passed; the count says when there are more. */
 const MAX_FACT_ROWS = 100;
@@ -70,6 +69,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const grid = config.grid + (config.capaSourceKind ? ' 120px' : '') + ' 230px';
   const rowMin = registerRowMinWidth(grid);
 
+  const headId = React.useId();
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
   /* A row action that signs hands its decision to the EsignModal; one that submits writes now. */
   const submitRow = (row: R, action: RowAction<R>, v: Record<string, string>) => {
@@ -118,38 +118,20 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
   return (
     <>
-      <div className="qms-head">
-        <div>
-          <div className="qms-eyebrow">Quality records</div>
-          <h1 className="qms-h1">{config.title}</h1>
-          <div className="qms-sub">{config.sub}</div>
-        </div>
-        <div className="qms-actions">
-          <button className="qms-btn ghost" title="Sends this request to AnA; nothing in the register changes" onClick={() => onAsk(config.ask)}>
-            {I.sparkles} Ask AnA
-          </button>
-          <button className="qms-btn primary" onClick={() => open({ kind: 'create' })}>
-            {I.plus} {config.createLabel}
-          </button>
-        </div>
-      </div>
-
-      <div className="qms-kpis">
-        {loaded ? (
-          config.kpis(rows, today).map((k) => <Kpi key={k.label} {...k} />)
-        ) : (
-          <EmptyState
-            title={`${config.title} totals are unavailable`}
-            hint="The counts appear once the register loads."
-            testId="qms-record-kpis-absent"
-          />
-        )}
-      </div>
-
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Register</h2>
-          {loaded && <span className="meta">{plural(rows.length, config.noun)}</span>}
+      {/* One section (D7-B): the register's name, its figures as one line, its one create.
+          The tab's own title, its "Ask AnA" (the starter row's first starter sends the same
+          prompt) and its tiles went on 2026-11-06; the figures keep their unread arm. */}
+      <section className="pj-sec qms-sec" aria-labelledby={headId}>
+        <div className="pj-sec-h">
+          <h2 id={headId}>{config.title}</h2>
+          {failed ? <span className="sec-sub" data-testid="qms-record-figures">The register could not be read.</span>
+            : !loaded ? <span className="sec-sub" data-testid="qms-record-figures">Reading the register…</span>
+              : rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
+                {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span></React.Fragment>)}
+              </span>}
+          <div className="pj-sec-acts">
+            <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
+          </div>
         </div>
         <div className="qms-table">
           <div className="qms-thead" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>

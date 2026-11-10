@@ -1,0 +1,414 @@
+{
+ "apiErrors": [],
+ "pageErrors": [],
+ "steps": [
+  {
+   "name": "sop-1440-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "page page-full",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "qms-page",
+     "sw": 1120,
+     "cw": 1120
+    }
+   ],
+   "rows": [
+    192
+   ],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 33,
+   "starters": [
+    "Give me a read-out on SOP register",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": "1 controlled document: 1 in review; none overdue for review.",
+   "coverage": "No training-controlled documents yet.",
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "tab-Change control-1440-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "page page-full",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "qms-page",
+     "sw": 1120,
+     "cw": 1120
+    }
+   ],
+   "rows": [],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 33,
+   "starters": [
+    "Give me a read-out on change control",
+    "Run a pre-inspection check",
+    "Run a change-control health check"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": null,
+   "coverage": null,
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "tab-CAPA-1440-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "page page-full",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "qms-page",
+     "sw": 1120,
+     "cw": 1120
+    }
+   ],
+   "rows": [],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 33,
+   "starters": [
+    "Give me a read-out on CAPA",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": null,
+   "coverage": null,
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "tab-Management reviews-1440-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "page page-full",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "qms-page",
+     "sw": 1120,
+     "cw": 1120
+    }
+   ],
+   "rows": [],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 33,
+   "starters": [
+    "Give me a read-out on management reviews",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": null,
+   "coverage": null,
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "template-options",
+   "opts": [
+    "Standard controlled-document sections",
+    "Quality manual (QM-)",
+    "Policy (POL-)",
+    "Standard operating procedure (SOP-)",
+    "Work instruction (WI-)",
+    "Form (FORM-)",
+    "Validation protocol (VP-)",
+    "Change-control procedure (SOP-CC-)",
+    "Change-request form (CC-)",
+    "Training curriculum (TC-)"
+   ]
+  },
+  {
+   "name": "after-choose",
+   "title": "Quality manual",
+   "type": "manual"
+  },
+  {
+   "name": "sop-390-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "page page-full",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "qms-page",
+     "sw": 390,
+     "cw": 390
+    }
+   ],
+   "rows": [
+    192
+   ],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 28,
+   "starters": [
+    "Give me a read-out on SOP register",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": "1 controlled document: 1 in review; none overdue for review.",
+   "coverage": "No training-controlled documents yet.",
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "tab-change-390-light",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "page page-full",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "qms-page",
+     "sw": 390,
+     "cw": 390
+    }
+   ],
+   "rows": [],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 28,
+   "starters": [
+    "Give me a read-out on change control",
+    "Run a pre-inspection check",
+    "Run a change-control health check"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": null,
+   "coverage": null,
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "sop-1440-dark",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "page page-full",
+     "sw": 1176,
+     "cw": 1176
+    },
+    {
+     "cls": "qms-page",
+     "sw": 1120,
+     "cw": 1120
+    }
+   ],
+   "rows": [
+    192
+   ],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 33,
+   "starters": [
+    "Give me a read-out on SOP register",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": "1 controlled document: 1 in review; none overdue for review.",
+   "coverage": "No training-controlled documents yet.",
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "sop-390-dark",
+   "docScroll": 0,
+   "scrollers": [
+    {
+     "cls": "main",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "page page-full",
+     "sw": 390,
+     "cw": 390
+    },
+    {
+     "cls": "qms-page",
+     "sw": 390,
+     "cw": 390
+    }
+   ],
+   "rows": [
+    192
+   ],
+   "h1": [
+    "Quality"
+   ],
+   "titleHeight": 28,
+   "starters": [
+    "Give me a read-out on SOP register",
+    "Run a pre-inspection check",
+    "Where is training missing?"
+   ],
+   "tabs": [
+    "SOP register",
+    "Change control",
+    "CAPA",
+    "Deviations",
+    "Nonconformances",
+    "Suppliers",
+    "Internal audits",
+    "Management reviews"
+   ],
+   "figures": "1 controlled document: 1 in review; none overdue for review.",
+   "coverage": "No training-controlled documents yet.",
+   "kpiTiles": 0,
+   "typeCards": 0,
+   "topbar": 0,
+   "upper": []
+  },
+  {
+   "name": "w3-design",
+   "ok": true
+  }
+ ]
+}

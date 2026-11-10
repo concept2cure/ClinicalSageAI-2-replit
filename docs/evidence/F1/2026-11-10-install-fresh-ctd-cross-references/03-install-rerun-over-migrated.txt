@@ -1,0 +1,11 @@
+◇ injected env (6) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ✓ pgvector (extension "vector") present
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+
+❌ Install failed: drizzle-kit push was killed (SIGTERM) after 5 minutes with no exit. The single '\n' this script sends answers one prompt — drizzle-kit push's final "apply these statements?" confirmation — and nothing else. A database that already carries an OLDER schema than what shared/schema.ts declares now (a re-used local dev database, not one this script created fresh) can make push ask a disambiguation question per ambiguous rename BEFORE that confirmation; stdin is already closed by then, and push blocks reading from it rather than failing. It leaves no error, no output, and no CPU use — nothing to distinguish it from still working. If the target database is disposable, the fix is to drop and recreate it so push runs against a genuinely empty schema (its only supported starting point); this script is safe to re-run afterward. If it holds data worth keeping, resolve the drift with drizzle-kit's own migration path instead of push.
+EXIT 1

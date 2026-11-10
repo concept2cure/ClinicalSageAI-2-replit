@@ -423,8 +423,9 @@ function AgencyInboxCard({ c, onAdvance, onAsk, onOpenTask, projectId, responses
               {I.checkSquare} {c.taskId}
             </button>
           )}
+          {/* Quiet, not primary (plan §2, one primary per view): this list is in Communication, HAQ and Respond. */}
           {c.responseRequired && c.closureStatus !== 'closed' && (
-            <button className="cc-btn sm primary" onClick={() => draftResponseWithAna(c, onAsk)}>
+            <button className="cc-btn sm" onClick={() => draftResponseWithAna(c, onAsk)}>
               {I.penLine} Draft response with AnA
             </button>
           )}

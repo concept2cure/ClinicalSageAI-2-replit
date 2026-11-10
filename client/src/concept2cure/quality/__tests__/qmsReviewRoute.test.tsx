@@ -21,6 +21,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   apiRequest: vi.fn(),
@@ -163,6 +170,7 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     const row = rowOf('SOP-021');
     expect(within(row).getByTestId('qms-route-line').textContent).toBe('Waiting for Rae Reviewer.');
     expect(within(row).queryByRole('button', { name: /^.*Approve$/ })).toBeNull();
+    openMore(row);
     fireEvent.click(within(row).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-member-5').textContent).toContain('Rae Reviewer · reviewer · Waiting for their review');
@@ -211,6 +219,7 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     renderRegister();
     const row = rowOf('SOP-021');
     expect(within(row).getByTestId('qms-route-line').textContent).toBe('Your turn: approve.');
+    openMore(row);
     fireEvent.click(within(row).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-member-5').textContent).toMatch(/Rae Reviewer · reviewer · Reviewed · meaning: reviewed · 2026-10-29 10:00:00 UTC/);
@@ -226,6 +235,7 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     expect(legacy.textContent).toContain('Not assigned to one person.');
     expect(within(legacy).getByRole('button', { name: /Approve/ })).toBeTruthy();
     expect(within(rowOf('SOP-022')).getByRole('alert').textContent).toBe('Reviewers could not be read.');
+    openMore(legacy);
     fireEvent.click(within(legacy).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-legacy').textContent).toMatch(/not assigned to one person/);
