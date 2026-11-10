@@ -32,6 +32,12 @@ Nothing was built for this, apart from the two scripts beside this file.
      - its line 14 sources the real `post-create.sh` path;
      - its `c2c_start_postgres || …` line becomes `true` when the container already runs PostgreSQL. A Codespace
        does not need either change.
+   - Outside a Codespace (a cloud sandbox, 2026-11-10), make three more changes. A Codespace needs none of them:
+     - export `devcontainer.json`'s `containerEnv` (`C2C_CODESPACE=1`, `RLS_ENFORCE=on`, `C2C_ENVIRONMENT`,
+       `C2C_AGENT_MODE`) and `NODE_ENV=development`. Without `RLS_ENFORCE=on` the start refuses `RLS_NOT_ENFORCED`;
+     - `unset DATABASE_URL`, and move any `.env` in the checkout aside. `scripts/startup.sh` reads a database URL from
+       either one over the Codespace's own, and the app then reports "missing extensions: vector" on another database;
+     - install `postgresql-16-pgvector` if the image lacks it.
    - Put the CDISC pilot files in `$C2C_CODESPACE_STATE/cdisc-pilot/`, or let `scripts/cre/fetch-cdisc-pilot-adam.mjs`
      fetch them. **Never copy a `csr-demo-state.json` from another database into it.** The CSR preparation reads it as
      its own progress and skips its steps.
