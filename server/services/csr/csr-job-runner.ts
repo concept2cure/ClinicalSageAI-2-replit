@@ -28,6 +28,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { CsrScopeError, resolveCsrBuildContext, resolveCsrScope } from './project-scope';
 import { verifySavedCsrSectionIntegrity } from './csr-output-integrity';
+import { NARRATIVE_COMPOSER } from './csr-narrative-job';
 
 import {
   csrBuildJobs,
@@ -189,9 +190,20 @@ async function verifySavedTargetEvidence(
 ): Promise<void> {
   for (const row of rows) {
     if (!targets.has(row.sectionNumber)) continue;
+    // The narrative run writes its cross-reference heading (§12.3.2) from the ADaM rows, not from this heading's
+    // engine tables, and records its own composer and the study data it read. It is that run's row, checked on
+    // that path; read here as a builder result it has no evidence lineage, and a build on which the narratives
+    // had been built could never be resumed or finished (2026-11-10).
+    if (composedByNarrativeRun(row.lineage, source.runId)) continue;
     const evidence = await loadSectionEvidence(source, row.sectionNumber, job);
     if (evidence) assertSavedCsrJobEvidence(row.lineage, evidence);
   }
+}
+
+/** True for a row the narrative run composed over this build's own study data; a row that only names the composer is not. */
+function composedByNarrativeRun(lineage: unknown, runId: string): boolean {
+  const row = lineage && typeof lineage === 'object' ? lineage as { composer?: unknown; runId?: unknown } : null;
+  return row?.composer === NARRATIVE_COMPOSER && typeof row.runId === 'string' && row.runId.toLowerCase() === runId.toLowerCase();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -903,6 +915,19 @@ export async function runCSRBuildJob(jobId: number): Promise<void> {
     // The live view is of a build in progress; a build that has ended, however it ended, has none.
     liveBuilds.delete(jobId);
   }
+}
+
+/**
+ * Resume a failed build in the background, as the same build (POST /api/csr/jobs/:jobId/resume). runCSRBuildJob
+ * accepts a failed job, keeps every section it saved and drafts the headings that have no saved text. Until
+ * 2026-11-10 nothing called it for one: a stopped build could only be followed by a new build, and a CSR document
+ * takes its imported sections from one build, so the document that held the first build's sections refused the
+ * second's. The run records its own outcome on the job; a rejection here would be a fault outside it.
+ */
+export function resumeCSRBuildInBackground(jobId: number): void {
+  setTimeout(() => {
+    runCSRBuildJob(jobId).catch(() => console.error(`[csr-job-runner] Resumed job ${jobId} failed outside its own handler.`));
+  }, 0);
 }
 
 /**
