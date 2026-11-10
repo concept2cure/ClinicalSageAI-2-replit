@@ -8,8 +8,12 @@
  * there is no new menu component. The next step follows the document's state:
  *   - a draft: Send for review
  *   - under review: Approve, for the person whose turn it is; otherwise Review route
- *   - effective: Read and acknowledge
+ *   - effective: Read and acknowledge, where the document carries read-and-understood training; otherwise Open
  *   - superseded or retired: History
+ * "Open" opens the document in the one editor, on every row (ONE_DESIGN_PLAN §2: every way of opening a document
+ * opens that view). Until 2026-11-10 the row's "Open document" opened the personal training reader instead, an
+ * overlay titled "Read and acknowledge" with an edit path of its own, and an effective Form offered an
+ * acknowledgement the server refuses ("This document type is not controlled read-and-understood training").
  *
  * @module client/src/concept2cure/quality/SopRegisterRow
  */
@@ -99,13 +103,16 @@ function RouteLine({ doc, meId }: { doc: QmsDoc; meId: number | null }) {
   return <span className="qms-route-line" data-testid="qms-route-line">{routeHeadline(view.round, meId)}</span>;
 }
 
-type ActionKey = 'read' | 'training' | 'send' | 'route' | 'approve' | 'revise' | 'review' | 'retire' | 'copy' | 'history' | 'ask';
+type ActionKey = 'open' | 'read' | 'training' | 'send' | 'route' | 'approve' | 'revise' | 'review' | 'retire' | 'copy' | 'history' | 'ask';
+
+/** Whether the document carries read-and-understood training: the server takes an acknowledgement of nothing else. */
+const trainable = (d: QmsDoc) => (QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(d.docType);
 
 /** The document's one next step, by its state (module header). */
 export function nextStepOf(d: QmsDoc, meId: number | null): ActionKey {
   if (d.status === 'draft') return 'send';
   if (d.status === 'in_review') return approvableBy(d, meId) ? 'approve' : 'route';
-  if (d.status === 'effective') return 'read';
+  if (d.status === 'effective') return trainable(d) ? 'read' : 'open';
   return 'history';
 }
 
@@ -114,9 +121,12 @@ function actionsOf(d: QmsDoc, act: RegisterRowActions): { key: ActionKey; node: 
   const out: { key: ActionKey; node: React.ReactNode }[] = [];
   const btn = (key: ActionKey, label: string, onClick: (e: React.MouseEvent<HTMLButtonElement>) => void, extra: Record<string, string | boolean | undefined> = {}) =>
     out.push({ key, node: <button key={key} type="button" className="btn ghost small" onClick={onClick} {...extra}>{label}</button> });
-  btn('read', d.status === 'effective' ? 'Read and acknowledge' : 'Open document', () => act.read(d.id), {
-    disabled: !act.canRead(d), title: 'Read this controlled revision and check your personal acknowledgement' });
-  if (d.status !== 'retired' && (QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(d.docType)) {
+  btn('open', 'Open', () => act.open(d), { title: 'Open the controlled document' });
+  if (d.status === 'effective' && trainable(d)) {
+    btn('read', 'Read and acknowledge', () => act.read(d.id), {
+      disabled: !act.canRead(d), title: 'Read the version in force and record your personal acknowledgement' });
+  }
+  if (d.status !== 'retired' && trainable(d)) {
     btn('training', 'Training', () => act.assign(d), { title: 'Who must read and acknowledge this document: job roles and named people' });
   }
   if (d.status === 'draft') {

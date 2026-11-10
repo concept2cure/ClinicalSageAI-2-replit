@@ -58,9 +58,10 @@ vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   }),
 }));
 
+import { readFileSync } from 'node:fs';
 import { Pool, type PoolClient } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL, PROGRAM_SPINE_PGLITE_DDL } from '../../../db/pglite-harness';
+import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL, PROGRAM_SPINE_PGLITE_DDL, SHADOW_REVIEW_PGLITE_DDL } from '../../../db/pglite-harness';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, upsertLeaf } from '../submission-service';
 import { FREEZE_IDENTITY_SEED_SQL, FREEZE_PROGRAM_ID } from './_freeze-gate-fixture';
@@ -122,11 +123,26 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     holder.db = drizzle(pool);
     await q(IND_PGLITE_DDL);
     await q(SUBMISSION_CORE_PGLITE_DDL);
+    /* The real declaration of sequences filed outside the platform, applied from
+       disk as the IND PGLite harness applies it with the submission core. Every
+       freeze's assembly reads it through the FDA identity
+       (sequence-spine-fda-identity.ts, since 88229a87d5), and without it the
+       freeze is refused before it reaches its row lock. It is read by its
+       qualified name, so it lands in public, not in this run's schema, and it is
+       left there: the file is replay-safe (Rule 1) and the only one defining its
+       objects, so applying it again changes nothing, and a test that dropped a
+       public table could drop real declarations. */
+    await q(readFileSync(new URL('../../../../migrations/20261029g_submission_filed_baselines.sql', import.meta.url), 'utf8'));
     await q(LEAF_SOURCE_PGLITE_DDL);
     await q(PROGRAM_SPINE_PGLITE_DDL);
     await q('ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS applicant_sponsor_id UUID');
     await q(FREEZE_IDENTITY_SEED_SQL);
     await q(AUDIT_LOGS_PGLITE_DDL);
+    /* The Shadow Review tables the freeze re-reads under its lock (since
+       90a6987a67, P-34). A refused freeze never reaches that read, but a freeze
+       that skipped its lock would, and must then fail on the assertion below that
+       it froze an unjudged leaf, not on a table this fixture never had. */
+    await q(SHADOW_REVIEW_PGLITE_DDL);
     await q(`
       CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
       -- verification_date and updated_at: the real table's, which a void of a refused step's signature sets (P-23).

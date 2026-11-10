@@ -1,0 +1,28 @@
+{
+ "apiErrors": [],
+ "pageErrors": [],
+ "steps": [
+  {
+   "name": "more",
+   "buttons": [
+    "Open",
+    "Training",
+    "Revise",
+    "History",
+    "Ask AnA"
+   ]
+  },
+  {
+   "name": "after-open",
+   "workArea": true,
+   "editing": false,
+   "reader": true,
+   "back": false,
+   "text": "Quality\nQuality\n\nControlled documents and their training, change control, CAPA and the other quality records.\n\nGive me a read-out on SOP register\nRun a pre-inspection check\nWhere is training missing?\nSOP register\nChange control\nCAPA\nDeviations\nNonconformances\nSuppliers\nInternal audits\nManagement reviews\nControlled documents\n1 controlled document: 1 in review; none overdue for review.\nAll\nEffective"
+  },
+  {
+   "name": "w7-open",
+   "ok": true
+  }
+ ]
+}
