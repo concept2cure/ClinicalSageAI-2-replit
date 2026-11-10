@@ -118,6 +118,16 @@ it('gives the model room for its reasoning and the heading: the request asks for
   expect(options.maxTokens).toBeGreaterThanOrEqual(16000);
 });
 
+// The gateway cuts a non-streamed call off at 120 seconds whatever the model is doing. A drafting model that reasons
+// and then writes a results heading with a claim for every figure can take longer, and each such heading would then
+// be retried and stop the build. A streamed call is watched for silence instead (stream-stall.ts).
+it('asks for the heading as a stream, so a long heading is not cut off at the gateway\'s fixed limit', async () => {
+  chat.mockResolvedValueOnce(DRAFT);
+  await settled(draftCSRSectionWithProvenance(section(), request));
+  const options = chat.mock.calls[0][1] as { onStream?: unknown };
+  expect(typeof options.onStream).toBe('function');
+});
+
 it.each([
   ['CSR_DRAFTING_KEY_REFUSED', /refused this deployment.s API key/i],
   ['CSR_DRAFTING_ACCOUNT_REFUSED', /no credit|access to the drafting model/i],

@@ -686,12 +686,13 @@ deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/202
 | 1. The catalog across projects | `7a2cfe34` (S2: `data-room-search.ts` reads the person's accessible projects of the open project's sponsor, with facets by project, study, kind, CTD section, Vault folder), `1b4d3c12` (R1: `GET /api/c2c/projects/:id/sources?scope=catalog`) | Vault → **Data catalog** (`cef3d557`, S6); the project page's Data room → **Open the data catalog** (`08927463`, R1); Project files → Data room → All my projects |
 | 2. The grade | `7a2cfe34` (`data-room-grade.ts`: provenance, integrity with the Vault copy's fixity, currency, processing, verification by a person, CDISC conformance for datasets; stored on the capture, `migrations/20261106_data_room_grade.sql`), `c04ba737` (a native record graded by its snapshot and its register) | each item's *Grade A–D · score*, its basis criterion by criterion |
 | 3. Use in this project | `1b4d3c12` (the pinned-evidence routes take `data_room`, checked against the person's catalog, audited), `c04ba737` (the panel) | **Use in this project** / **Remove**; the project's Data room lists **Used in this project** first |
-| 4. AnA over it | not started | — |
+| 3b. Used data feeds the CSR | "S3: the CSR's study-data chooser lists first the data this project uses" (S3: the CSR document's study-data chooser lists the Vault source of a used capture first, "used in this project"; walked on the CDISC pilot CSR) | the CSR editor's "Build from the study's data" chooser |
+| 4. AnA over it | "S4: AnA reads the data catalog with its grades, and files a data-room capture into the Vault" (S4: `list_project_documents` with `catalog: true` reads the catalog, its grades and what the project uses; `file_chat_upload_to_vault` with `source_id` files a capture through the data room's filing; AnA proposes "Use in this project", the person confirms). Not run in a live conversation: no model key where it was built | in AnA's answers |
 
-**Next** (the README's "Not done yet"): the CSR study-data chooser ordering used captures first (`StudyDataSource.tsx`,
-S3); whether a used capture of another project may be assembled into this project's document (a governance
-decision); step 4, AnA, by extending existing tools over the same routes (no new tool names); a sponsor chooser for
-the Data catalog with no project open (S6's open item).
+**Next** (the README's "Not done yet"): AnA's step 4 walked in a conversation with a model key; whether a used
+capture of another project may be assembled into, or filed for, this project's documents (a governance decision for
+the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
+"S2: the walk of the CSR example and AnA's tools, recorded".
 
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 

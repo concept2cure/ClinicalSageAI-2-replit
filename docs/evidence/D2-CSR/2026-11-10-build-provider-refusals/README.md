@@ -44,7 +44,7 @@ Searches run: `csr`, `draft`, `provider`, `rate limit`, `429`, `credit`, `probe`
   requests-per-minute limit (`FAKE_RPM`).
 - **It is not a model.** It proves the path and the request surface. It says nothing about the quality of Claude's
   drafts, or about how many of them the builder's figure checks will accept.
-- No request the app sent was refused by the contract checker: all 233 Messages requests in the retained logs were
+- No request the app sent was refused by the contract checker: all 303 Messages requests in the retained logs were
   well formed for the model they named (`claude-opus-5-5` and its two fallbacks for drafting, `claude-sonnet-5` for
   a conversation turn).
 
@@ -72,12 +72,16 @@ Also changed, for the Codespace:
 - A reply cut off at the token ceiling is not saved as a draft, and the builder asks for 16,000 tokens a heading, not
   4,096. The drafting models reason before they write, and that reasoning counts against the same ceiling. This
   could not be observed with a stand-in; it follows from the API's documented behaviour.
+- **Each heading is asked for as a stream.** The gateway ends a non-streamed call at 120 seconds whatever the model
+  is doing; a stream is watched for silence instead (30 s while writing, 5 minutes while the model reasons). A long
+  results heading would otherwise be cut off, retried and stop the build. Build 7 ran this way: 69 streamed
+  requests, none refused by the contract checker, complete at 100% in 143 s (`build-streamed.json`).
 
 ## Tests (each seen failing first)
 
 | Suite | Red | Green |
 |---|---|---|
-| `server/services/__tests__/csr-builder-provider-refusal.test.ts` (new) | 16 of 16 failed | 16 of 16 |
+| `server/services/__tests__/csr-builder-provider-refusal.test.ts` (new) | 16 of 16 failed; the streaming test, added later, failed alone | 17 of 17 |
 | `server/services/csr/__tests__/csr-job-runner.placeholder-gate.test.ts` | 1 new test failed | 26 of 26 |
 | `server/services/csr/__tests__/unsupplied-statistics.test.ts` | 2 new tests failed | 64 of 64 |
 | `server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts` | 1 new test failed ("expected 'documents' to be 'document_metadata'") | 14 of 14 |

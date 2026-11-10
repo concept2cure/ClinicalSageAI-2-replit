@@ -11,6 +11,8 @@
  *                 with its basis. Shots catalog-*.png.
  *   phase reach   where a person finds it: the project page's "Open the data catalog" and the Vault's "Data catalog"
  *                 tab. Shots reach-*.png.
+ *   phase csr     the founder's CSR example: the study's clinical source captured and used in the CSR project, then
+ *                 listed first in the CSR document's study-data chooser. Env CSR_PROGRAM, CSR_BUNDLE. Shots csr-*.png.
  *   phase use     step 3: "Use in this project" on a capture of the other project, listed under "Used in this
  *                 project" first, then "Remove". Shots use-*.png.
  *
@@ -193,6 +195,48 @@ async function phaseReach(page, width, a) {
   step(`${width}: the Vault's Data catalog tab, from its own tabs`);
 }
 
+/**
+ * The founder's example, a CSR project (2026-11-10). The CDISC pilot study's clinical source (its ADaM bundle
+ * manifest, already approved in the project's Vault) is captured into the project's data room as a person
+ * dropping it there would, used in the project, and the CSR document's study-data chooser lists it first, marked
+ * "used in this project". CSR_PROGRAM and CSR_BUNDLE (the Codespace's local CDISC file; never committed) are env.
+ */
+async function phaseCsr(page, width) {
+  const csr = process.env.CSR_PROGRAM;
+  const bundle = process.env.CSR_BUNDLE;
+  expect(csr && bundle && fs.existsSync(bundle), 'CSR_PROGRAM and CSR_BUNDLE');
+  const name = path.basename(bundle);
+  const up = await upload(page, csr, name, 'application/json', fs.readFileSync(bundle, 'utf8'));
+  expect(up.status < 300 && up.json?.sourceId, `capture ${name} (${up.status})`);
+  step(`${width}: ${name} captured into the CSR project's data room`, { sourceId: up.json.sourceId });
+  const room = await openDataRoom(page, csr);
+  const entry = room.getByTestId('data-room-entry').filter({ hasText: name }).first();
+  await entry.waitFor({ timeout: 30000 });
+  await entry.locator('summary').click();
+  const use = entry.getByRole('button', { name: 'Use in this project' });
+  if (await use.count()) await use.click();
+  await entry.getByText('Used in this project').first().waitFor({ timeout: 15000 });
+  step(`${width}: used in the CSR project`);
+  await page.goto(`${BASE}/concept2cure/project-home?program=${csr}`, { waitUntil: 'networkidle' });
+  await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Author/ }).click();
+  await page.getByRole('button', { name: 'Open CDISCPILOT01 Clinical Study Report' }).click();
+  await page.waitForURL(/document-authoring/);
+  const panel = page.locator('details[aria-label="Build from the study’s data"]');
+  await panel.waitFor({ timeout: 60000 });
+  if (!(await panel.evaluate((d) => d.open))) await panel.locator('summary').click();
+  // With study data already frozen, the chooser is behind "Freeze newer study data".
+  const newer = panel.getByRole('button', { name: 'Freeze newer study data' });
+  if (await newer.count()) await newer.click();
+  const pick = panel.locator('select[aria-label="Clinical source"]');
+  await pick.waitFor({ timeout: 60000 });
+  await panel.getByText(/used in this project/).first().waitFor({ state: 'attached', timeout: 30000 });
+  const options = await pick.evaluate((e) => [...e.options].map((o) => o.textContent));
+  expect(options[1]?.startsWith(name) && /used in this project/.test(options[1]), `the used source is listed first (${JSON.stringify(options)})`);
+  await pick.scrollIntoViewIfNeeded();
+  await shoot(page, `csr-${width}-chooser-used-first`);
+  step(`${width}: the CSR's study-data chooser lists the used source first`, { options });
+}
+
 async function phaseUse(page, width, a, b) {
   const room = await openDataRoom(page, a);
   await room.getByRole('button', { name: 'All my projects' }).click();
@@ -227,6 +271,7 @@ const PHASES = {
   catalog: phaseCatalog,
   use: phaseUse,
   reach: (page, width, a) => phaseReach(page, width, a),
+  csr: (page, width) => phaseCsr(page, width),
 };
 function runPhase(page, width, a, b) {
   const run = PHASES[PHASE];
