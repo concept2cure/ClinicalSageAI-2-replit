@@ -1,0 +1,374 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T06:47:37.962Z",
+  "stops": [
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Library",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Data catalog",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Uploads",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Required documents",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Governed artifacts",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Vault tab Seals & fixity",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/vault?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Submissions",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Planner",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Builder",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Required deliverables",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Sequences",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Validation",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Shadow review",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Submission Center tab Dispatch",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/submission-center?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o CMC / Module 3 tab Overview",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/cmc?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o CMC / Module 3 tab Quality by design",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/cmc?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o CMC / Module 3 tab Module 3 build",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/cmc?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o CMC / Module 3 tab Approvals & audit",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/cmc?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Overview",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Risk review report",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Risk assessment (RACT)",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Key risk indicators",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Quality tolerance limits",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Central monitoring",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Patient profiles",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Site risk",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Site oversight",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Risk-based monitoring tab Monitoring plan",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/rbm?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab SOP register",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Change control",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab CAPA",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Deviations",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Nonconformances",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Suppliers",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Internal audits",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Quality tab Management reviews",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/quality?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Reporting & analytics tab Reports",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/insights?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Reporting & analytics tab Catalog",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/insights?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Reporting & analytics tab Run history",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/insights?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Reporting & analytics tab Schedules",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/insights?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-201-o Reporting & analytics tab Bundles",
+      "errorText": [],
+      "sideways": false,
+      "url": "/concept2cure/insights?program=09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "apiFailures": [],
+      "consoleErrors": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "09c2a7a2-a69b-4272-b14f-5e0d14d0fd92",
+      "name": "[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)"
+    },
+    {
+      "id": "79ab693a-6973-4992-bdd4-8f532228578d",
+      "name": "Xanomeline TTS Phase 2 (CDISCPILOT01)"
+    },
+    {
+      "id": "0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "name": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+    },
+    {
+      "id": "7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "name": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+    },
+    {
+      "id": "41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "name": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)"
+    },
+    {
+      "id": "4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "name": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+    },
+    {
+      "id": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "name": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "id": "792029a1-fcb7-493d-a65b-b5117d11783b",
+      "name": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    }
+  ],
+  "finishedAt": "2026-11-10T06:50:00.043Z",
+  "summary": {
+    "stops": 41,
+    "toLookAt": 0,
+    "serverErrors": 0
+  }
+}

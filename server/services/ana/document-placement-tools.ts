@@ -43,6 +43,7 @@ import {
   withCaughtErrors,
   type RegisterFn,
 } from './document-tools-shared.js';
+import { gatedReason } from './stated-reason-input.js';
 import type { CatalogDocumentRow } from '../vault/document-catalog.service.js';
 import { catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 
@@ -174,20 +175,33 @@ function confirmationRefusal(documentId: unknown): string {
 
 /**
  * The folder a placement goes to: the one named, or one made first (new_folder) through the Vault's own governed
- * writer, with the project's write authority and a chained audit row carrying AnA's provenance and her rationale as
- * the reason (vault-folders.ts).
+ * writer, with the project's write authority and a chained audit row carrying AnA's provenance (her rationale is in
+ * it) and, as its reason for change, the person's stated reason: the one they typed or adopted at confirmation
+ * (stated-reason-input.ts reasonRequiredFor), never her rationale (vault-folders.ts).
  */
 async function folderForPlacement(
-  parsed: PlacementPlan, programId: string, orgId: number, userId: number | undefined, agent: Record<string, unknown>,
+  parsed: PlacementPlan, input: Record<string, unknown>, programId: string,
+  { orgId, userId, agent }: { orgId: number; userId: number | undefined; agent: Record<string, unknown> },
 ): Promise<{ folderId: string | null; made?: { folderId: string; name: string } } | { refusal: string }> {
   if (!parsed.newFolder) return { folderId: parsed.folderId };
+  const reason = gatedReason(input);
   const { createProgramFolder } = await import('../vault/vault-folders.js');
   const created = await createProgramFolder({
     programId, organizationId: orgId, userId: userId ?? null,
-    reason: parsed.rationale, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
+    reason, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
   });
   if (!created.ok) return { refusal: JSON.stringify({ ok: false, error: created.code, message: created.message }) };
   return { folderId: created.folder.folderId, made: { folderId: created.folder.folderId, name: created.folder.name } };
+}
+
+/**
+ * Making a folder is a governed write; its reason is the person's. Checked
+ * before any lookup or write: without one this throws ReasonNotStatedError,
+ * which the registration wrapper answers by asking for it. The reason is bound
+ * where it is written (folderForPlacement).
+ */
+function requireFolderReason(parsed: PlacementPlan, input: Record<string, unknown>): void {
+  if (parsed.newFolder) gatedReason(input);
 }
 
 /** A folder made for a placement that was then refused: said, so AnA does not claim the document is in it. */
@@ -210,6 +224,7 @@ async function handlePlaceProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
   }
+  requireFolderReason(parsed, input);
 
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, ...scope });
@@ -226,7 +241,7 @@ async function handlePlaceProjectDocument(
   }
 
   const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
-  const folder = await folderForPlacement(parsed, doc.programId, orgId, scope.accessibleScope.actor.userId, agent);
+  const folder = await folderForPlacement(parsed, input, doc.programId, { orgId, userId: scope.accessibleScope.actor.userId, agent });
   if ('refusal' in folder) return folder.refusal;
   const { folderId, made } = folder;
 

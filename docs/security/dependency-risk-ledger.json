@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-06T07:49:42.914Z",
+  "generatedAt": "2026-11-10T07:02:49.076Z",
   "scanner": {
     "name": "npm audit",
     "npmVersion": "10.9.9",
@@ -9,75 +9,9 @@
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "f18b36fa7f32fe2be23d51ac3f9266ddbd006756bac7c39479c9bc874f9a9542",
+  "lockfileSha256": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
   "rootPackageVersion": "1.0.0",
   "findings": [
-    {
-      "advisory": "GHSA-w3rx-r6r6-pgpr",
-      "advisoryUrl": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
-      "package": "image-size",
-      "severity": "high",
-      "affectedRange": "<=2.0.2",
-      "installedVersion": "1.2.1",
-      "fixedVersion": null,
-      "dependencyType": "transitive",
-      "disposition": "unreachable",
-      "evidence": {
-        "packagePaths": [
-          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
-        ],
-        "entryPoints": [
-          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
-        ],
-        "runtimeProof": [
-          "The package is present in the lockfile but the resolved pptxgenjs Node runtime bundle does not import image-size.",
-          "The production generator invokes addText/addShape only and the reachability guard fails if an image-capable API is introduced.",
-          "The production-path regression test generates and validates a text-only PPTX archive, then proves image-size was not loaded into the Node module cache."
-        ],
-        "commands": [
-          "npm ls pptxgenjs image-size --all",
-          "npm run ci:pptx-image-reachability",
-          "npx vitest run --config vitest.config.ts server/services/__tests__/pptxGenerator.security.test.ts"
-        ]
-      },
-      "action": "Keep image-size absent from the resolved PPTX runtime bundle and fail CI if image-capable generation is introduced.",
-      "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-08-25",
-      "expiresAt": "2026-11-25T00:00:00.000Z"
-    },
-    {
-      "advisory": "GHSA-5p2g-fcmc-qvqq",
-      "advisoryUrl": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
-      "package": "image-size",
-      "severity": "high",
-      "affectedRange": "<=2.0.2",
-      "installedVersion": "1.2.1",
-      "fixedVersion": null,
-      "dependencyType": "transitive",
-      "disposition": "unreachable",
-      "evidence": {
-        "packagePaths": [
-          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
-        ],
-        "entryPoints": [
-          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
-        ],
-        "runtimeProof": [
-          "The resolved pptxgenjs Node runtime bundle contains no image-size import, so its JXL/HEIF parsers are not loaded.",
-          "No request title/content or separately returned Nano Banana cover image is passed to a pptxgenjs image API.",
-          "CI checks the lockfile versions, resolved bundle, generator API usage, Nano Banana call shape, and live Node module cache after generation."
-        ],
-        "commands": [
-          "npm ls pptxgenjs image-size --all",
-          "npm run ci:pptx-image-reachability",
-          "npx vitest run --config vitest.config.ts server/services/__tests__/pptxGenerator.security.test.ts"
-        ]
-      },
-      "action": "Keep the vulnerable parser outside the runtime module graph; reassess on any PPTX dependency or image-path change.",
-      "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-08-25",
-      "expiresAt": "2026-11-25T00:00:00.000Z"
-    },
     {
       "advisory": "GHSA-mrhx-c7xc-m3w5",
       "advisoryUrl": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
