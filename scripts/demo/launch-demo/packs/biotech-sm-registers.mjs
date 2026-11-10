@@ -79,11 +79,16 @@ export const BIOTECH_SM_REGISTERS = {
   ],
   characterisation: [
     { scope: 'drug_substance', studyType: 'structural', studyTitle: 'C2C-201 structure elucidation', technique: '1H/13C NMR, HRMS, IR, single-crystal X-ray',
-      attribute: 'Structure', result: 'Consistent with the proposed structure; absolute configuration confirmed by single-crystal X-ray',
-      conclusion: 'Structure confirmed (fictional).', studyReference: 'CHAR-201-001', performedDateInDays: -240, status: 'draft' },
+      /* The register reads `result` with its unit as a measurement, so the
+         measured figure goes there and the finding in words goes in the
+         conclusion: a sentence in `result` rendered as "(unit not recorded)". */
+      attribute: 'Molecular ion [M+H]+ (HRMS)', result: '364.1768', resultUnit: 'm/z',
+      conclusion: 'Consistent with C19H21N5O2; structure confirmed by 1H/13C NMR and IR, absolute configuration by single-crystal X-ray (fictional).',
+      studyReference: 'CHAR-201-001', performedDateInDays: -240, status: 'draft' },
     { scope: 'drug_substance', studyType: 'physicochemical', studyTitle: 'C2C-201 solid-form screen', technique: 'XRPD, DSC, TGA, DVS',
-      attribute: 'Polymorphic form', result: 'Form I anhydrate is the stable form at 25 °C; converts to a hemihydrate above 85 % RH',
-      conclusion: 'Form I is manufactured and controlled by XRPD and water content.', studyReference: 'CHAR-201-002', performedDateInDays: -200, status: 'draft',
+      attribute: 'Melting onset, Form I', result: '211', resultUnit: '°C',
+      conclusion: 'Form I anhydrate is the stable form at 25 °C and converts to a hemihydrate above 85 % RH; it is manufactured and controlled by XRPD and water content.',
+      studyReference: 'CHAR-201-002', performedDateInDays: -200, status: 'draft',
       supportingData: [{ label: 'Melting onset', value: '211', unit: '°C', note: 'DSC, 10 °C/min' }, { label: 'Water uptake at 80 % RH', value: '0.4', unit: '% w/w', note: 'DVS, 25 °C' }] },
   ],
   processes: [
