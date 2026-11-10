@@ -94,8 +94,9 @@ was made through the product API on the instance for the item 4 screenshots. Nei
 
 - `node scripts/ci/check-one-design-plan.mjs`: OK.
 - `npm run -s ci:launch-scope-api`: 657 paths, none refused.
-- `npm run -s ci:sql-interpolation`: fails on `server/services/project-rollup-service.ts` ("now 0, baseline 2 —
-  lower the baseline"), an uncommitted change of the other lane; nothing here.
+- `npm run -s ci:sql-interpolation`: OK on the final tree. Mid-work it failed on
+  `server/services/project-rollup-service.ts` ("now 0, baseline 2"), the other lane's uncommitted change, since
+  committed (43920b3e7).
 - Typecheck: the full run was killed for memory in the shared container (exit 137, `typecheck-focused.txt` is the
   focused run instead): no error in a changed file; the 49 lines are the focused config's missing ambient
   augmentations (`Request.dbClient`, the svg module), present at HEAD too.
