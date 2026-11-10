@@ -108,8 +108,9 @@ function envelopeMeta(body: unknown): Record<string, unknown> | undefined {
 export interface DataResult<T> {
   data: T | null;
   error?: string;
-  /** The success envelope's `meta`, where the route sent one. Never synthesized:
-   *  absent means the route said nothing, which is not the same as `{}`. */
+  /** The envelope's `meta`, where the route sent one: a success's, or a refusal's
+   *  own. Never synthesized: absent means the route said nothing, which is not
+   *  the same as `{}`. */
   meta?: Record<string, unknown>;
   /** HTTP status; 0 on a network/parse failure before a response arrived. */
   status: number;
@@ -163,7 +164,10 @@ function failureFrom(e: unknown, path: string): DataResult<never> {
   }
   if (e instanceof Error && typeof status === 'number' && status > 0) {
     const code = (e as { code?: unknown }).code;
-    return { data: null, error: e.message || `HTTP ${status} ${path}`, status, ...(typeof code === 'string' ? { code } : {}) };
+    /* What a refusal says about itself, in its envelope's `meta` (the clients to choose from, when a read is refused
+       until one is chosen). Passed as the route sent it; absent when the route sent none. */
+    const meta = envelopeMeta((e as { payload?: unknown }).payload);
+    return { data: null, error: e.message || `HTTP ${status} ${path}`, status, ...(typeof code === 'string' ? { code } : {}), ...(meta ? { meta } : {}) };
   }
   return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
 }
