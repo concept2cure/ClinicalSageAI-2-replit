@@ -75,7 +75,7 @@ vi.mock('../../services/part11/signature-persistence', async (importOriginal) =>
 });
 
 import mdxQmsRouter from '../mdx-qms';
-import { learningPromotionOf } from '../../services/qms/change-approval-signature';
+import { learningPromotionOf, computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
 import { sha256CanonicalJson } from '../../services/part11/signature-persistence';
 
 const ORG = 9;
@@ -109,7 +109,10 @@ const UNDER_ASSESSMENT = {
   target_implementation_date: '2026-11-01', qms_document_id: null, metadata: {},
 };
 
-const VALID_BODY = { password: 'correct horse', meaning: 'APPROVED', reason: 'Impact assessment reviewed; approved for implementation.' };
+/* The approver signs the content they read: the register's content_digest for the row the dialog showed. */
+const READ_DIGEST = () => computeQmsChangeContentDigest(UNDER_ASSESSMENT);
+const VALID_BODY = { password: 'correct horse', meaning: 'APPROVED', reason: 'Impact assessment reviewed; approved for implementation.',
+  get expectedContentDigest() { return READ_DIGEST(); } };
 
 function app(userId = SIGNER) {
   const a = express();
@@ -204,6 +207,28 @@ describe('POST /api/mdx/qms/changes/:id/approve — the signed door', () => {
     expect(txSql()).toContain('ROLLBACK');
     expect(H.persistSignature).not.toHaveBeenCalled();
     expect(wroteApproval()).toBe(false);
+  });
+
+  /* 2026-11-10: an edit landing between the dialog opening and the signature was signed unseen. */
+  it('409 QMS_CHANGED_SINCE_READ when the change was edited after it was read; rolled back, nothing signed', async () => {
+    const read = computeQmsChangeContentDigest({ ...UNDER_ASSESSMENT, implementation_plan: 'The plan as it was read.' });
+    const res = await request(app()).post('/api/mdx/qms/changes/1/approve').send({ ...VALID_BODY, expectedContentDigest: read });
+    expect(res.status).toBe(409);
+    expect(res.body.details?.code).toBe('QMS_CHANGED_SINCE_READ');
+    expect(res.body.error).toMatch(/Nothing was signed/);
+    expect(txSql()).toContain('ROLLBACK');
+    expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled();
+    expect(wroteApproval()).toBe(false);
+  });
+
+  it('400 without the digest of the content read; nothing verified or written', async () => {
+    const withoutDigest = { password: VALID_BODY.password, meaning: VALID_BODY.meaning, reason: VALID_BODY.reason };
+    const res = await request(app()).post('/api/mdx/qms/changes/1/approve').send(withoutDigest);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/expectedContentDigest/);
+    expect(H.compare).not.toHaveBeenCalled();
+    expect(H.txQuery).not.toHaveBeenCalled();
   });
 
   it('409 when the change is not under assessment; rolled back', async () => {
