@@ -1,0 +1,55 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-substances",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "substanceName": "BX-701",
+      "projectId": "7e941c46-53fc-429d-9843-df0f11b53428",
+      "modality": "small_molecule",
+      "manufacturingProcess": {
+        "route": "Four-step chemical synthesis"
+      },
+      "status": "development"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 23,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 3,
+        "organizationId": 2,
+        "projectId": "7e941c46-53fc-429d-9843-df0f11b53428",
+        "substanceName": "BX-701",
+        "structuralFormula": null,
+        "molecularFormula": null,
+        "molecularWeight": null,
+        "casNumber": null,
+        "inn": null,
+        "manufacturingProcess": {
+          "route": "Four-step chemical synthesis"
+        },
+        "specifications": null,
+        "impuritiesProfile": null,
+        "stability": null,
+        "controlOfMaterials": null,
+        "modality": "small_molecule",
+        "biologicalOrigin": null,
+        "sourceOrganism": null,
+        "cellLine": null,
+        "viralSafetyEvaluation": null,
+        "tseStatus": null,
+        "status": "development",
+        "developmentPhase": null,
+        "createdAt": "2026-11-10T02:07:11.142Z",
+        "updatedAt": "2026-11-10T02:07:11.142Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

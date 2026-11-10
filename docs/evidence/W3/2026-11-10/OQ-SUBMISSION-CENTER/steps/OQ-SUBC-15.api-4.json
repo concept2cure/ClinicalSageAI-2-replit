@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/sequences/2/shadow-review/waive",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "signatureActionId": "oq-not-a-signature",
+      "failedRunId": 1
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "GOVERNED_REQUIRED",
+        "message": "A valid e-signature is required: sign ectd-sequence:2 via POST /api/c2c/actions/sign with intent 'shadow-waiver' and the meaning responsibility or approval, then pass its actionId. Refused: no executed sign action on this sequence by this actor."
+      }
+    }
+  }
+}

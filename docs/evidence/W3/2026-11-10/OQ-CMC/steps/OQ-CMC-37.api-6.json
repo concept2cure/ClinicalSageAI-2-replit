@@ -1,0 +1,76 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+      "productName": "OQE-20261110020703",
+      "batchNumber": "B-1",
+      "dosageForm": "tablet",
+      "scope": "DP",
+      "climaticZone": "II",
+      "studyType": "long_term",
+      "storageConditions": [
+        "25C/60%RH"
+      ],
+      "duration": 24,
+      "testParameters": [
+        "assay"
+      ],
+      "timePoints": [
+        "0",
+        "12"
+      ],
+      "status": "ACTIVE",
+      "startDate": "2026-01-01T00:00:00.000Z"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 4,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "studyTitle": null,
+        "productName": "OQE-20261110020703",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "12"
+        ],
+        "stabilityData": null,
+        "notes": null,
+        "shelfLife": null,
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T02:08:55.526Z",
+        "updatedAt": "2026-11-10T02:08:55.526Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

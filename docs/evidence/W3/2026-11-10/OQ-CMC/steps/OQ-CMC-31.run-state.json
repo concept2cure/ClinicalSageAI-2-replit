@@ -1,0 +1,38 @@
+{
+  "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+  "emptyProjectId": "72fe3b08-9bcd-48d2-a29e-a48d0ed94ae0",
+  "biologicProjectId": "53be45d6-0591-45ec-a571-e6512b00baeb",
+  "sequenceId": null,
+  "sectionKeys": [
+    "3.1",
+    "3.2.A.1",
+    "3.2.A.2",
+    "3.2.A.3",
+    "3.2.P.1",
+    "3.2.P.2",
+    "3.2.P.3",
+    "3.2.P.4",
+    "3.2.P.5",
+    "3.2.P.6",
+    "3.2.P.7",
+    "3.2.P.8",
+    "3.2.R.1.US",
+    "3.2.S.1",
+    "3.2.S.2",
+    "3.2.S.3",
+    "3.2.S.4",
+    "3.2.S.5",
+    "3.2.S.6",
+    "3.2.S.7",
+    "3.3"
+  ],
+  "approvedKey": "3.1",
+  "records": {
+    "drugSubstance": 1,
+    "drugProduct": 1,
+    "analyticalMethod": 1,
+    "specification": "e5002481-63b1-490b-b8ca-570290d92c5a",
+    "batchRecord": "a74d0e94-6c61-43c8-9c85-bf1d818681c9",
+    "stabilityStudy": 1
+  }
+}

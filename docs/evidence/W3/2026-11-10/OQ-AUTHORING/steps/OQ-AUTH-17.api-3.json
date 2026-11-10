@@ -1,0 +1,63 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/documents/aef11e08-e0af-4793-b714-2928902a6322/reviews",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 67,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "reviews": [],
+      "reviewContext": {
+        "documentId": "aef11e08-e0af-4793-b714-2928902a6322",
+        "actorId": "1",
+        "organizationId": 2,
+        "snapshot": {
+          "id": "aef11e08-e0af-4793-b714-2928902a6322",
+          "title": "OQ-003 Clinical Overview 20261110020318",
+          "module": "M2",
+          "locale": "en-US",
+          "productCode": null,
+          "version": null,
+          "sections": [
+            {
+              "id": "ec821497-7f2e-40bd-aa64-d42cb7237fe0",
+              "code": "2.5",
+              "title": "Clinical Overview",
+              "content": "<p>Initial 2.5 text.</p>"
+            },
+            {
+              "id": "a5ae3f81-c4c7-4d55-ac26-d2913bb89552",
+              "code": "2.7",
+              "title": "Clinical Summary",
+              "content": "<p>Initial 2.7 text.</p>"
+            }
+          ]
+        },
+        "snapshotHash": "3141aaa692e66ceff56d695b602089714c5eb2144234e34f59777abcdc9c4edf",
+        "bindingBasis": "authoring-full-visible-v1",
+        "myReview": null,
+        "canReview": false,
+        "unavailableReason": "The original author and recorded contributors cannot review their own document.",
+        "csrScientificReviewRequired": false,
+        "canRunIndependentChecks": true
+      },
+      "stats": {
+        "total": 0,
+        "pending": 0,
+        "approved": 0,
+        "rejected": 0,
+        "changes_requested": 0,
+        "stale": 0,
+        "unbound": 0
+      },
+      "canApprove": false
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/10",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 10,
+      "title": "OQ-005 Readiness program 20261110020625",
+      "productName": "OQ-005 Readiness program 20261110020625",
+      "applicationType": "ind",
+      "clientType": "pharma",
+      "primaryRegion": "fda",
+      "status": "planning",
+      "lifecycleStage": "planning",
+      "organizationId": 2,
+      "createdBy": 1,
+      "createdAt": "2026-11-10T02:06:26.177Z",
+      "updatedAt": "2026-11-10T02:06:26.177Z",
+      "deletedAt": null,
+      "programId": "fc7b2edb-3601-4215-a081-81f3f6730da8"
+    }
+  }
+}

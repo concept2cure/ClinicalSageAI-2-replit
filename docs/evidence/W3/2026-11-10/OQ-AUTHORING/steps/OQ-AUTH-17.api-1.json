@@ -1,0 +1,94 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/documents/aef11e08-e0af-4793-b714-2928902a6322/route-candidates",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 58,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "timeZone": "UTC",
+      "canonicalId": null,
+      "candidates": [
+        {
+          "id": 3,
+          "name": "OQ Approver",
+          "reviewer": null,
+          "approver": null
+        },
+        {
+          "id": 6,
+          "name": "OQ Member",
+          "reviewer": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Member does not hold signing authority, so cannot be named to review or approve."
+          },
+          "approver": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Member does not hold signing authority, so cannot be named to review or approve."
+          }
+        },
+        {
+          "id": 4,
+          "name": "OQ Platform",
+          "reviewer": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Platform does not hold signing authority, so cannot be named to review or approve."
+          },
+          "approver": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Platform does not hold signing authority, so cannot be named to review or approve."
+          }
+        },
+        {
+          "id": 2,
+          "name": "OQ Signer",
+          "reviewer": null,
+          "approver": null
+        },
+        {
+          "id": 5,
+          "name": "OQ Standing",
+          "reviewer": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Standing does not hold signing authority, so cannot be named to review or approve."
+          },
+          "approver": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Standing does not hold signing authority, so cannot be named to review or approve."
+          }
+        },
+        {
+          "id": 7,
+          "name": "OQ Viewer",
+          "reviewer": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Viewer does not hold signing authority, so cannot be named to review or approve."
+          },
+          "approver": {
+            "code": "MEMBER_CANNOT_SIGN",
+            "message": "OQ Viewer does not hold signing authority, so cannot be named to review or approve."
+          }
+        },
+        {
+          "id": 1,
+          "name": "oq-runner@validation.local",
+          "reviewer": {
+            "code": "MEMBER_IS_AUTHOR",
+            "message": "oq-runner@validation.local is an author of this document (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit), so cannot review or approve it."
+          },
+          "approver": {
+            "code": "MEMBER_IS_AUTHOR",
+            "message": "oq-runner@validation.local is an author of this document (Authoring document creator, Authoring revision ledger, Authoring visible mutation audit), so cannot review or approve it."
+          }
+        }
+      ]
+    }
+  }
+}
