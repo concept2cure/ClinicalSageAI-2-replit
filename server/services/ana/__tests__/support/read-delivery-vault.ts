@@ -80,6 +80,11 @@ function rowOf(doc: StoredDocument) {
     programId: '90000000-0000-4000-8000-000000000001',
     fileName: `${doc.id}.txt`,
     documentTitle: `Report ${doc.id}`,
+    // The loader returns the row's classification (document-catalog-document.ts), and the read refuses a tier the
+    // serving model may not receive (catalog-scope.ts readDocumentBoundary). vault.documents.classification
+    // defaults to 'INTERNAL' (migrations/20260821_vault_documents_canonical_shape.sql), so a row stored with the
+    // column's default carries it; without it the row read as unclassified, the highest tier.
+    classification: 'INTERNAL',
     extractedText: doc.text,
     contentHash: doc.contentHash,
     originalFileAvailable: true,
