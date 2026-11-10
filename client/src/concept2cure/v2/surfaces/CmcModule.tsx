@@ -171,7 +171,7 @@ interface CmcNavItem {
   blurb: string;
   /**
    * What to do on this destination. Printed again under the tab row as one
-   * quiet line with its "Next step" (P-122, 2026-11-10): D5-1 had moved it into
+   * quiet line with its "Next: …" (P-122, 2026-11-10): D5-1 had moved it into
    * AnA only, as `facts.whatToDoHere`, which it still reaches. The retired
    * pattern was the grey box above the title, not the sentence.
    */
@@ -261,7 +261,7 @@ interface CmcBoardData {
    The order is the order the work is done (P-122, 2026-11-10, restoring the
    row D5-1 split): Overview first, then the Study records — what is captured
    while the study runs — then the Module 3 destinations composed from them.
-   It is also the order of each tab's "Next step". All nine are one row: D5-1
+   It is also the order of each tab's "Next: …". All nine are one row: D5-1
    showed only the open half's tabs, so the eighteen registers in Study records
    sat behind a toggle and a first-time viewer saw none of them. `half` stays
    the founder's grouping (ONE_DESIGN_PLAN §1a) and draws the row's divider.
@@ -665,7 +665,7 @@ function cmStarters(tab: string, label: string): Array<{ label: string; prompt: 
    One piece of state, the tab, as before: `cmc.open-tab`, `__cmSetTab` and
    this row cannot disagree about what is open. */
 function CmTabs({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
-  /* On a phone the row scrolls sideways; a tab opened by "Next step" or by AnA
+  /* On a phone the row scrolls sideways; a tab opened by "Next: …" or by AnA
      is brought into view so the row never shows a selection off its edge. */
   const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -694,11 +694,12 @@ function CmTabs({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
 }
 
 /* What to do on the open tab, and its next step — one quiet line under the row
-   (P-122). The wording is the band D5-1 removed (`StageBand`, `943b78cb7`):
-   "What to do now:" and the tab's own `now`, then "Next step" to the following
-   destination in the order the work is done. It is a grey line and a link, not
-   the boxed band above the title that ONE_DESIGN_PLAN §2 retires. The last
-   destination has no next step and offers none. */
+   (P-122). The tab's own `now` sentence, then "Next: …" to the following
+   destination in the order the work is done, worded as the project page words
+   its stages (`ProjectStages.tsx`). It is a grey line and a link, not the boxed
+   band above the title that ONE_DESIGN_PLAN §2 retires, and it carries none of
+   that band's retired label. The last destination has no next step and offers
+   none. */
 function CmNow({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
   const at = CMC_NAV.findIndex((n) => n.id === tab);
   const step = CMC_NAV[at];
@@ -706,18 +707,18 @@ function CmNow({ tab, onTab }: { tab: string; onTab: (id: string) => void }) {
   const next = CMC_NAV[at + 1];
   return (
     <p className="sec-sub cm-now" data-testid="cm-now">
-      <strong>What to do now:</strong> {step.now}
+      {step.now}
       {next && (
         <>
           {' '}
           <button
             type="button"
             className="cm-linkish cm-now-next"
-            aria-label={`Next step: ${next.label}`}
+            aria-label={`Next: ${next.label}`}
             title={next.blurb}
             onClick={() => onTab(next.id)}
           >
-            Next step: {next.label} <span aria-hidden="true">→</span>
+            Next: {next.label} <span aria-hidden="true">→</span>
           </button>
         </>
       )}

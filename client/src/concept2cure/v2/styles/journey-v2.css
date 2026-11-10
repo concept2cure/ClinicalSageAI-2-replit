@@ -413,7 +413,8 @@
 .c2c-v2 .cm-fit-svg .ref{stroke:var(--text-300);stroke-width:1;}
 .c2c-v2 .cm-fit-svg .ref-l{font-size:11px;fill:var(--text-200);}
 .c2c-v2 .cm-fit-svg .dot{fill:var(--cm-series);stroke:var(--bg-000);stroke-width:2;}
-.c2c-v2 .cm-fit-cap{margin:6px 0 0;}
+/* The caption is the work area's quiet line (`p.sec-sub`), sat close under its chart. */
+.c2c-v2 [data-work-area] p.sec-sub.cm-fit-cap{margin:6px 0 0;}
 /* A register wider than the page scrolls inside its section, at every width
    (P-122). D5's spec already said it should below 1120 px (D5.md §A.3), and
    the page column is 1,040 px at 1440: with the demo's registers filled,
@@ -427,6 +428,7 @@
 .c2c-v2 .cm-f2-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:8px;}
 .c2c-v2 .cm-f2-pick{display:grid;gap:4px;font-size:var(--fs-small);color:var(--text-200);min-width:220px;}
 .c2c-v2 .cm-f2-out{margin-top:4px;}
+.c2c-v2 .cm-f2-needs{margin:0 0 12px;padding-left:18px;font-size:var(--fs-small);color:var(--text-300);}
 /* auto-fit, not a fixed four: a board with five or six measures must not wrap
    a lone tile onto a row of its own. */
 .c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}

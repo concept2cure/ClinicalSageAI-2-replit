@@ -126,7 +126,7 @@ export function StabilityFitChart({ estimate: e }: { estimate: Q1eChartEstimate 
           </circle>
         ))}
       </svg>
-      <p className="cm-meta cm-fit-cap">
+      <p className="sec-sub cm-fit-cap">
         Drawn from the server’s ICH Q1E fit: {e.regression ? `slope ${fmt(e.regression.slope)} per month, R² ${e.regression.r2}, ${e.regression.n} points. ` : ''}
         {e.cappedByExtrapolationLimit
           ? `The bound stays within the specification past ${fmt(e.extrapolationLimit ?? 0)} months, which is as far as ICH Q1E allows from ${fmt(e.observedPeriod ?? 0)} months of data.`

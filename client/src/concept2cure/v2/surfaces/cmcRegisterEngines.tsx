@@ -91,10 +91,12 @@ export function useImpurityAssessments(projectId: string | undefined) {
 
 /** The "Against the guideline" cell for one impurity. */
 export function ImpurityVerdictCell({ id, read }: { id: number; read: ReturnType<typeof useImpurityAssessments> }) {
-  if (read.loading) return <span className="cm-meta">assessing…</span>;
-  if (read.error) return <span className="cm-meta">{read.error}</span>;
+  /* The cell's own ink for the two plain states; a failed read is an error in
+     the verdicts' own chip, never an empty cell (fail closed). */
+  if (read.loading) return <>assessing…</>;
+  if (read.error) return <span className="rd-chip rd-chip-sentence tone-err">{read.error}</span>;
   const row = read.byId.get(id);
-  if (!row) return <span className="cm-meta">not assessed</span>;
+  if (!row) return <>not assessed</>;
   return (
     <span className="cm-verdicts">
       {row.assessments.map((a) => {
@@ -173,7 +175,7 @@ function F2Result({ answer }: { answer: F2Answer }) {
       <div className="cm-f2-out" data-testid="cm-f2-refused">
         <p className="sec-sub"><span data-tone="warn">Not comparable</span> — {r.message}</p>
         {r.offending.length > 0 && (
-          <ul className="cm-meta">{r.offending.map((o, i) => <li key={i}>{[o.role, o.timepointMin != null ? `${o.timepointMin} min` : null, o.observed ? `recorded ${o.observed}` : null].filter(Boolean).join(', ')}: needs {o.required}</li>)}</ul>
+          <ul className="cm-f2-needs">{r.offending.map((o, i) => <li key={i}>{[o.role, o.timepointMin != null ? `${o.timepointMin} min` : null, o.observed ? `recorded ${o.observed}` : null].filter(Boolean).join(', ')}: needs {o.required}</li>)}</ul>
         )}
       </div>
     );
@@ -185,7 +187,7 @@ function F2Result({ answer }: { answer: F2Answer }) {
         {' '}· f1 {r.f1Reported} · over {r.inputsUsed.includedTimepointsMin.join(', ')} min · {r.inputsUsed.unitsTested.reference} and {r.inputsUsed.unitsTested.test} units
         {!answer.methodsMatch && <> · <span data-tone="warn">run under different conditions</span></>}
       </p>
-      <p className="cm-meta">{r.scope}</p>
+      <p className="sec-sub">{r.scope}</p>
     </div>
   );
 }

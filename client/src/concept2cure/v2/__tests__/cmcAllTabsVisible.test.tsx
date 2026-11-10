@@ -13,8 +13,10 @@
  * ── What must be true ─────────────────────────────────────────────────────────
  *   • all nine tabs are in one tab row, whichever tab is open, and no toggle
  *     stands between a person and a register;
- *   • each tab prints its own "what to do now" as one quiet line, with its
- *     action: the next destination in the order the work is done;
+ *   • each tab prints its own sentence as one quiet line, with its action,
+ *     "Next: …", the next destination in the order the work is done — and
+ *     not the retired band's label (ONE_DESIGN_PLAN §2, the retired-name
+ *     ratchet);
  *   • the last destination offers no next step it does not have.
  *
  * Drives the real surface, as the shell mounts it.
@@ -87,7 +89,8 @@ describe('each tab says what to do now, with its action', () => {
     renderCmc();
     await waitFor(() => expect(nowLine().textContent).toMatch(/Start here\./));
     expect(nowLine().tagName).toBe('P');
-    const next = within(nowLine()).getByRole('button', { name: /Next step: Substance & product/ });
+    expect(nowLine().textContent).not.toMatch(/what to do now/i);
+    const next = within(nowLine()).getByRole('button', { name: /Next: Substance & product/ });
     fireEvent.click(next);
     await waitFor(() => expect(nowLine().textContent).toMatch(/Record the substance and the product/));
     expect(within(tabRow()).getByRole('tab', { name: 'Substance & product' }).getAttribute('aria-selected')).toBe('true');
@@ -97,8 +100,8 @@ describe('each tab says what to do now, with its action', () => {
     renderCmc();
     const order: string[] = [];
     for (let i = 0; i < ALL_NINE.length - 1; i += 1) {
-      const next = within(nowLine()).getByRole('button', { name: /^Next step: / });
-      order.push((next.getAttribute('aria-label') ?? '').replace(/^Next step: /, ''));
+      const next = within(nowLine()).getByRole('button', { name: /^Next: / });
+      order.push((next.getAttribute('aria-label') ?? '').replace(/^Next: /, ''));
       fireEvent.click(next);
     }
     expect(order).toEqual(ALL_NINE.slice(1));
