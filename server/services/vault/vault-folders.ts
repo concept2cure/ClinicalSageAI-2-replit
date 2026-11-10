@@ -39,6 +39,7 @@ import { validateSectionCode } from '../../../shared/regulatory/placement-vocabu
 import { resolveDocumentClass, documentAgencyCandidates, describeUnmappedClass } from '../c2c/document-class.js';
 import { findActiveRulePack } from '../c2c/rule-pack-lookup.js';
 import { cabinetFolderOf } from './vault-filing.service.js';
+import { requireGovernedReason } from '../../routes/governed-reason.js';
 
 /** The query surface node-postgres clients, pools and PGlite all satisfy. */
 export interface FolderQueryable {
@@ -327,6 +328,15 @@ export function folderNameRefusal(raw: unknown): { name: string } | { refusal: F
   return { name };
 }
 
+/**
+ * The reason for a folder change, held to the governed floor here (21 CFR 11.10(e)). The Vault's form applied the
+ * floor and this service only refused an empty string, so a direct call could record "x" as a reason for change.
+ */
+export function folderReasonRefusal(raw: unknown): { reason: string } | { refusal: FolderWriteResult } {
+  const verdict = requireGovernedReason(raw);
+  return verdict.ok ? { reason: verdict.reason } : { refusal: refuse(400, 'REASON_REQUIRED', `${verdict.error} Nothing was saved.`) };
+}
+
 type Tx = FolderQueryable & { release(): void };
 
 /** One transaction: the write authority, the change and its chained audit row, together or not at all. */
@@ -335,8 +345,8 @@ async function inFolderTransaction(
   work: (client: Tx, index: ProgramFolderIndex) => Promise<FolderWriteResult>,
 ): Promise<FolderWriteResult> {
   if (!UUID_RE.test(base.programId)) return refuse(404, 'NOT_FOUND', 'No such project.');
-  const reason = base.reason.trim();
-  if (!reason) return refuse(400, 'REASON_REQUIRED', 'Say why: the reason is recorded with the change. Nothing was saved.');
+  const stated = folderReasonRefusal(base.reason);
+  if ('refusal' in stated) return stated.refusal;
   const { pool } = await import('../../db.js');
   const { requireCurrentVaultProgramWrite } = await import('./vault-write-authority.js');
   const { ProgramReadAccessError } = await import('../c2c/current-program-access.js');
@@ -368,15 +378,12 @@ async function inFolderTransaction(
   }
 }
 
-async function audit(
-  client: FolderQueryable,
-  base: FolderWriteBase,
-  action: 'vault.folder.create' | 'vault.folder.rename' | 'vault.folder.move' | 'vault.folder.remove',
-  folderId: string,
-  details: Record<string, unknown>,
-): Promise<void> {
-  const { writeChainedAuditRow } = await import('../auditService.js');
-  await writeChainedAuditRow(client as never, {
+type FolderAuditAction = 'vault.folder.create' | 'vault.folder.rename' | 'vault.folder.move' | 'vault.folder.remove';
+
+/** The chained audit row of a folder change: who, what, and the person's reason on the row's own column. */
+export function folderAuditEntry(base: FolderWriteBase, action: FolderAuditAction, folderId: string, details: Record<string, unknown>) {
+  const reason = base.reason.trim();
+  return {
     tenantId: base.organizationId,
     userId: base.userId ?? undefined,
     action,
@@ -384,9 +391,19 @@ async function audit(
     resourceId: folderId,
     ipAddress: base.ipAddress,
     userAgent: base.userAgent,
+    // On the row's own column, where the history and the audit export read it (as vault-metadata-edit.service.ts
+    // does), and in the details, which the chain's hash covers.
+    reason,
     // The agent's provenance first, so the write's own facts below are never overwritten by it.
-    details: { ...(base.agent ?? {}), programId: base.programId, ...details, reason: base.reason.trim() },
-  });
+    details: { ...(base.agent ?? {}), programId: base.programId, ...details, reason },
+  };
+}
+
+async function audit(
+  client: FolderQueryable, base: FolderWriteBase, action: FolderAuditAction, folderId: string, details: Record<string, unknown>,
+): Promise<void> {
+  const { writeChainedAuditRow } = await import('../auditService.js');
+  await writeChainedAuditRow(client as never, folderAuditEntry(base, action, folderId, details));
 }
 
 /**

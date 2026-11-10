@@ -268,7 +268,7 @@ const DEVICE_FOLDERS: VaultFolderPreset[] = [
 
 /**
  * TMF zone folders for the service (CRO/CDMO) view — derived from the TMF
- * Reference Model zone mirror (tmf-reference-model.ts) so the vault's folder
+ * Reference Model catalog (tmf-reference-model.ts) so the vault's folder
  * rail and the eTMF (/api/etmf) share one zone structure.
  */
 const TMF_FOLDERS: VaultFolderPreset[] = [

@@ -153,6 +153,10 @@ vi.mock('../artifactVersionStore', async (importOriginal) => ({
   upsertDocumentArtifactVersionTx: h.upsertVersion,
 }));
 vi.mock('../project-readiness-aggregator', () => ({ getProjectReadinessAggregate: async () => ({ score: 64 }) }));
+// commit_document_revision saves in the turn's open project, admitted for the person (2026-11-10: it was the
+// model's `project_id`). The admission reads a database this suite does not have; here the person may open it.
+vi.mock('../project-scope-admission', async (orig) => ({ ...(await orig<Record<string, unknown>>()),
+  admitAnaProjectScope: async (_q: unknown, s: { projectId?: number }) => ({ projectId: s.projectId ?? null, programId: null, projectRef: s.projectId == null ? null : String(s.projectId) }) }));
 
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { REASON_REQUIRED_TOOLS, getRegisteredToolNames } from '../AnaToolExecutor';
@@ -166,10 +170,10 @@ import { UPDATE_PLAN_TOOL_NAME } from '../turn-plan';
    the second thing the record needs, and this suite is about that one. */
 const CTX = { organizationId: 1, userId: 10, humanConfirmed: true };
 
-async function call(name: string, input: Record<string, unknown>) {
+async function call(name: string, input: Record<string, unknown>, turn: Record<string, unknown> = {}) {
   const handler = approvedToolHandler(name);
   expect(handler, `${name} must be registered`).toBeTypeOf('function');
-  return JSON.parse(await handler!(input, CTX as never));
+  return JSON.parse(await handler!(input, { ...CTX, ...turn } as never));
 }
 
 /** Every ledger row written: governed actions and audit rows alike. */
@@ -183,16 +187,15 @@ const ledgerReasons = () =>
   ledgerRows().flatMap((r) => [r.reason, (r.details as Record<string, unknown> | undefined)?.reason].filter((x) => x !== undefined));
 
 type Shape = {
-  shape: string;
-  tool: string;
-  input: Record<string, unknown>;
+  shape: string; tool: string; input: Record<string, unknown>;
   domainWrite: ReturnType<typeof vi.fn> | null;
   /** Which ledger the row lands in. */
   ledger: 'governed action' | 'audit row' | 'canonical service';
   /** The sentence the path used to record when no reason was given, if it had one. */
   invented: string | null;
-  /** The key the domain write receives the reason under, when it receives it. */
-  domainReasonKey?: string;
+  /** The key the domain write receives the reason under, when it receives it; and what the server pinned for the
+   *  turn beyond the actor, for a tool that writes where the turn is. */
+  domainReasonKey?: string; turn?: Record<string, unknown>;
 };
 
 /** One representative per shape that used to invent or under-check a reason, with the domain write it guards. */
@@ -233,7 +236,8 @@ const SHAPES: Shape[] = [
   {
     shape: 'another module (document-spine.ts), reason in reason_for_change',
     tool: 'commit_document_revision',
-    input: { title: 'Clinical Overview', content: 'Section 2.5 body', project_id: 3, ana_thread_id: 'thread-1' },
+    // The project and the conversation are the turn's, not inputs (document-spine.test.ts).
+    input: { title: 'Clinical Overview', content: 'Section 2.5 body' }, turn: { projectId: 3, projectRef: '3', threadId: 'thread-1' },
     domainWrite: h.upsertVersion,
     ledger: 'governed action',
     invented: 'AnA revised "Clinical Overview" (v2)',
@@ -287,7 +291,7 @@ describe('a governed AnA write without the person\'s reason is refused before an
     const field = reasonFieldOf(s.tool);
     describe(`${s.tool} — ${s.shape}`, () => {
       it.each(missing(field))('refuses on %s, and nothing reaches the ledger', async (_label, extra) => {
-        const out = await call(s.tool, { ...s.input, ...extra });
+        const out = await call(s.tool, { ...s.input, ...extra }, s.turn);
 
         expect(out.ok).toBe(false);
         expect(out.reasonRequired).toBe(true);
@@ -305,7 +309,7 @@ describe('a governed AnA write without the person\'s reason is refused before an
       });
 
       it('tells the model to ask the person, where the reason goes, and not to supply one they did not give', async () => {
-        const out = await call(s.tool, { ...s.input });
+        const out = await call(s.tool, { ...s.input }, s.turn);
         expect(out.error).toMatch(/Nothing was recorded or changed/);
         expect(out.error).toMatch(/Ask the person/);
         expect(out.error).toContain(`"${field}"`);
@@ -314,7 +318,7 @@ describe('a governed AnA write without the person\'s reason is refused before an
 
       it(`records exactly the reason the person gave, trimmed, on the ${s.ledger}`, async () => {
         const stated = 'Requested by the study PI at the 9/24 review.';
-        const out = await call(s.tool, { ...s.input, [field]: `  ${stated}  ` });
+        const out = await call(s.tool, { ...s.input, [field]: `  ${stated}  ` }, s.turn);
 
         expect(out.error).toBeUndefined();
         expect(out.ok).toBe(true);

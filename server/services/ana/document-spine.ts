@@ -63,13 +63,22 @@ export interface CanonicalRevisionRequest {
   reasonForChange: string;
   /** eCTD section to place the artifact at (step 7). Omit to leave placement as-is. */
   ctdSection?: string | null;
-  /** Model that authored the revision, recorded on the AI-action ledger. */
-  aiModelUsed?: string | null;
+  /**
+   * The model call that produced the revision, as the gateway reported it
+   * (ToolContext.servingModel), recorded on the AI-action ledger. Never a name
+   * the model gives for itself: until 2026-11-10 this was `aiModelUsed`, a
+   * string the tool read from the model's own input. Absent or null when the
+   * caller was told of no model, and the ledger then says so (null).
+   */
+  servingModel?: ServedModelCall | null;
   /** Flip the artifact into review state (step 6). Default true. */
   triggerReview?: boolean;
   /** Provenance records to persist as lineage (step 3). Opaque to the core. */
   provenance?: unknown[];
 }
+
+/** The model call that served a turn: ToolContext.servingModel, as the gateway reported it. */
+export type ServedModelCall = NonNullable<ToolContext['servingModel']>;
 
 /**
  * The readiness figure recomputed after a revision. 2026-10-15: this was the
@@ -191,7 +200,12 @@ export async function commitCanonicalRevision(
         version: version.version,
         contentHash: version.contentHash,
         documentType: req.documentType ?? null,
-        aiModelUsed: req.aiModelUsed ?? null,
+        // The served model call, in the agent-audit shape (agentAuditDetails,
+        // ana-ri/mdx-tool-policy): provider and model, and the gateway request
+        // that joins this row to its ai.gateway_audit_log row. Null is "not
+        // known"; a model is never named on the model's own word.
+        gatewayRequestId: req.servingModel?.requestId ?? null,
+        servingModel: { provider: req.servingModel?.provider ?? null, model: req.servingModel?.model ?? null },
       },
     });
     steps.push('ai_action', 'audit');
@@ -355,7 +369,8 @@ export function defaultSpineDeps(): SpineDeps {
           targetObjectId: artifactId,
           targetTitle: req.title,
           createdById: req.userId ?? undefined,
-          aiModelUsed: req.aiModelUsed ?? undefined,
+          // The served model's name, as the stream records it on its own lineage rows.
+          aiModelUsed: req.servingModel?.model ?? undefined,
         });
       } catch {
         return 0; // append-only lineage is best-effort; never fail the revision on it
@@ -403,18 +418,15 @@ export function defaultSpineDeps(): SpineDeps {
 export const COMMIT_DOCUMENT_REVISION: AnaTool = {
   name: 'commit_document_revision',
   description:
-    "Commit a governed revision of a regulated document through the ONE canonical document spine — the single atomic flow that creates a new version of the artifact, records the AI action, writes the 21 CFR Part 11 audit event, moves the document into review, refreshes its eCTD dossier placement, records source provenance, and recalculates program readiness, all connected so no step can silently be skipped. Use this to SAVE a draft or revision you have authored (instead of any ad-hoc save), so the version, audit trail, review state and placement always move together over the canonical concept2cure_artifacts identity. Returns the artifact id, new version number, effective status, placement, audit ids and the recalculated readiness. Requires tenant + user context.",
+    "Commit a governed revision of a regulated document through the ONE canonical document spine — the single atomic flow that creates a new version of the artifact, records the AI action, writes the 21 CFR Part 11 audit event, moves the document into review, refreshes its eCTD dossier placement, records source provenance, and recalculates program readiness, all connected so no step can silently be skipped. Use this to SAVE a draft or revision you have authored (instead of any ad-hoc save), so the version, audit trail, review state and placement always move together over the canonical concept2cure_artifacts identity. The revision is saved in the project this conversation is open in and under this conversation, and the ledger records the model the server was answered by: none of the three is an input, so to revise a document in another project the person opens that project and asks there. Returns the artifact id, new version number, effective status, placement, audit ids and the recalculated readiness. Requires tenant + user context, an open project and a saved conversation.",
   input_schema: {
     type: 'object',
     properties: {
       title: { type: 'string', description: 'Document title (stable per thread — successive revisions of the same title append as new versions).' },
       content: { type: 'string', description: 'The full revised content to store as the new canonical version.' },
-      ana_thread_id: { type: 'string', description: 'The AnA thread this document belongs to. Defaults to the current thread when omitted.' },
-      project_id: { type: 'number', description: 'Project id. Defaults to the current project when omitted.' },
       document_type: { type: 'string', description: 'Optional document type (e.g. "clinical_overview", "cover_letter").' },
       reason_for_change: STATED_REASON_INPUT,
       ctd_section: { type: 'string', description: 'Optional eCTD section to place the artifact at (e.g. "2.5", "3.2.S.4.1"). Omit to leave placement unchanged.' },
-      ai_model_used: { type: 'string', description: 'Optional model identifier that authored the revision, recorded on the AI-action ledger.' },
       trigger_review: { type: 'boolean', description: 'Move the document into review state after saving. Default true; pass false to keep it a draft.' },
     },
     required: ['title', 'content'],
@@ -430,12 +442,112 @@ type RegisterFn = (
   handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
 ) => void;
 
+/** A refusal the model reads and relays. Nothing was written. */
+function notSaved(code: string, error: string): string {
+  return JSON.stringify({ ok: false, code, error });
+}
+
+/** A value the model put in an input that is no longer one, as text to compare; '' when it sent none. */
+function namedInInput(value: unknown): string {
+  return value === undefined || value === null ? '' : String(value).trim();
+}
+
+/**
+ * The conversation a revision is saved under: the turn's own (ToolContext.threadId,
+ * set by the stream and carried on the held run), never one the model names.
+ *
+ * The artifact is keyed on organization, project, thread and title, and until
+ * 2026-11-10 `input.ana_thread_id` won over the context, so a chosen thread
+ * added a version to another conversation's document. A call that still sends
+ * one (it was in the schema, and a held call keeps its input) runs only if it
+ * repeats the server's; a different one is refused, not dropped.
+ */
+function revisionThread(input: Record<string, unknown>, ctx: ToolContext): { threadId: string } | { refusal: string } {
+  const threadId = typeof ctx.threadId === 'string' ? ctx.threadId.trim() : '';
+  if (!threadId) {
+    return {
+      refusal: notSaved(
+        'REVISION_CONVERSATION_REQUIRED',
+        'A revision is saved under the conversation it was written in, and this call carries no saved conversation. ' +
+          'Nothing was saved. Ask the person to send their request again.',
+      ),
+    };
+  }
+  const named = namedInInput(input.ana_thread_id);
+  if (named && named !== threadId) {
+    return {
+      refusal: notSaved(
+        'REVISION_CONVERSATION_MISMATCH',
+        'ana_thread_id names a conversation other than this one. A revision is saved under the conversation it ' +
+          'was written in, so nothing was saved. Call commit_document_revision again without ana_thread_id.',
+      ),
+    };
+  }
+  return { threadId };
+}
+
+/**
+ * The project a revision is saved in: the one this conversation is open in, as
+ * the server pinned it (ToolContext.projectId / projectRef), admitted for this
+ * person now (admitAnaProjectScope, the admission the turn itself and AnA's
+ * other project tools use). Never a project the model names.
+ *
+ * Until 2026-11-10 `input.project_id` won over the context and the only check
+ * after it was that the project is the organization's (projectBelongsToTenant,
+ * artifactVersionStore.ts), so a revision could be saved into a project the
+ * person cannot open. The input existed because a project opened as a program
+ * (the v2 shell) has no integer in context: its verified project is resolved
+ * here instead. A call that still sends project_id runs only if it repeats the
+ * admitted project; a different one is refused, not dropped.
+ */
+async function revisionProject(
+  input: Record<string, unknown>,
+  ctx: ToolContext,
+  actor: { organizationId: number; userId: number },
+): Promise<{ projectId: number } | { refusal: string }> {
+  const { admitAnaProjectScope, projectScopeRefusalOf } = await import('./project-scope-admission.js');
+  let admitted: Awaited<ReturnType<typeof admitAnaProjectScope>>;
+  try {
+    const { getPool } = await import('../../db.js');
+    admitted = await admitAnaProjectScope(ctx.sqlClient ?? getPool(), {
+      ...actor,
+      projectId: ctx.projectId,
+      projectRef: ctx.projectRef,
+    });
+  } catch (error) {
+    // In the admission's own words and code (not found, no access, unverifiable).
+    const { code, error: why } = projectScopeRefusalOf(error);
+    return { refusal: notSaved(code, `${why} Nothing was saved.`) };
+  }
+  if (admitted.projectId === null) {
+    return {
+      refusal: notSaved(
+        'REVISION_PROJECT_REQUIRED',
+        'A revision is saved in the project its conversation is open in, and this conversation is not in a project. ' +
+          'Nothing was saved. Ask the person to open the project the document belongs to and ask there.',
+      ),
+    };
+  }
+  const named = namedInInput(input.project_id).toLowerCase();
+  if (named && named !== String(admitted.projectId) && named !== admitted.programId) {
+    return {
+      refusal: notSaved(
+        'REVISION_PROJECT_MISMATCH',
+        'project_id names a project other than the one this conversation is open in. A revision is saved in the ' +
+          'open project, so nothing was saved. To revise a document in another project, the person opens that ' +
+          'project and asks there; otherwise call commit_document_revision again without project_id.',
+      ),
+    };
+  }
+  return { projectId: admitted.projectId };
+}
+
 /** Register the document-spine tool handler on the executor's registry. */
 export function registerDocumentSpineHandlers(register: RegisterFn): void {
   register('commit_document_revision', async (input, ctx) => {
     const organizationId = ctx?.organizationId ?? null;
     const userId = ctx?.userId ?? null;
-    if (organizationId == null || userId == null) {
+    if (!ctx || organizationId == null || userId == null) {
       return JSON.stringify({ error: 'commit_document_revision requires tenant + user context.' });
     }
     const title = typeof input.title === 'string' ? input.title.trim() : '';
@@ -443,40 +555,30 @@ export function registerDocumentSpineHandlers(register: RegisterFn): void {
     if (!title || !content) {
       return JSON.stringify({ error: 'title and non-empty content are required.' });
     }
-    const projectId =
-      typeof input.project_id === 'number'
-        ? input.project_id
-        : typeof (ctx as { projectId?: number } | undefined)?.projectId === 'number'
-          ? (ctx as { projectId?: number }).projectId!
-          : NaN;
-    if (!Number.isFinite(projectId)) {
-      return JSON.stringify({ error: 'project_id is required (no active project in context).' });
-    }
-    const anaThreadId =
-      typeof input.ana_thread_id === 'string' && input.ana_thread_id.trim()
-        ? input.ana_thread_id.trim()
-        : typeof (ctx as { threadId?: string } | undefined)?.threadId === 'string'
-          ? (ctx as { threadId?: string }).threadId!
-          : '';
-    if (!anaThreadId) {
-      return JSON.stringify({ error: 'ana_thread_id is required (no active thread in context).' });
-    }
     // Recorded on the version and the ledger row; refused before anything opens without it.
     const reasonForChange = gatedReason(input, 'reason_for_change');
+    // Where it is saved is the server's to say: the turn's conversation and its
+    // open project, admitted for this person. Refused here, before the spine opens.
+    const thread = revisionThread(input, ctx);
+    if ('refusal' in thread) return thread.refusal;
+    const project = await revisionProject(input, ctx, { organizationId, userId });
+    if ('refusal' in project) return project.refusal;
 
     try {
       const result = await commitCanonicalRevision(
         {
           organizationId,
-          projectId,
+          projectId: project.projectId,
           userId,
-          anaThreadId,
+          anaThreadId: thread.threadId,
           title,
           content,
           documentType: typeof input.document_type === 'string' ? input.document_type : undefined,
           reasonForChange,
           ctdSection: typeof input.ctd_section === 'string' ? input.ctd_section : null,
-          aiModelUsed: typeof input.ai_model_used === 'string' ? input.ai_model_used : null,
+          // The model call the gateway reported for this turn. `input.ai_model_used`
+          // (the model's name for itself) is no longer read.
+          servingModel: ctx.servingModel ?? null,
           triggerReview: input.trigger_review !== false,
         },
         defaultSpineDeps(),
