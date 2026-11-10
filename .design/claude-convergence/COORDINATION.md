@@ -822,7 +822,7 @@ longer exists: a message to it answers "not found", so its hold on `surfaces/Pro
    Asked: list the study's files first; name a native record by its title, not its id; and give a native record no
    file wording and no file actions.
 
-**→ RIM:**
+**→ RIM. Done by this session under F1 (`3abbffb5fe`, `SubmissionCenter.tsx` `pathwayName`; the file was unheld):**
 5. Submission Center's Planner prints the pathway codes "ectd_v322 · ectd_v40 · estar".
 
 **→ the founder (a decision, not a repair):**
