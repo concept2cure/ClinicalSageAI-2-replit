@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/comparability-studies/effad986-6462-4b01-b6de-21402161171a/approve",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/7f1b844f-0ca5-4408-ace9-f366a44687af/approve",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 18,
+    "durationMs": 24,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

@@ -1,0 +1,99 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/manufacturing-processes",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "processType": "drug_product",
+      "processName": "BX-702 tablet manufacture",
+      "processSteps": [
+        {
+          "step": 1,
+          "name": "Blending",
+          "description": "Blend the active with the diluent and binder"
+        },
+        {
+          "step": 2,
+          "name": "Compression",
+          "description": "Compress to 91 mg cores"
+        },
+        {
+          "step": 3,
+          "name": "Coating",
+          "description": "Film coat to a 3% weight gain"
+        }
+      ],
+      "processControls": [
+        {
+          "test": "Blend uniformity",
+          "acceptanceCriteria": "RSD not more than 5.0%"
+        },
+        {
+          "test": "Tablet hardness",
+          "acceptanceCriteria": "60-100 N"
+        }
+      ],
+      "processDevelopment": "Direct compression was chosen over wet granulation after the blend showed adequate flow; coating parameters were set by a three-batch study",
+      "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 38,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "aef08428-bb65-4e8a-aaa8-b7c17843ae1f",
+        "organizationId": 2,
+        "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+        "processName": "BX-702 tablet manufacture",
+        "processType": "drug_product",
+        "processDescription": null,
+        "processSteps": [
+          {
+            "name": "Blending",
+            "step": 1,
+            "description": "Blend the active with the diluent and binder"
+          },
+          {
+            "name": "Compression",
+            "step": 2,
+            "description": "Compress to 91 mg cores"
+          },
+          {
+            "name": "Coating",
+            "step": 3,
+            "description": "Film coat to a 3% weight gain"
+          }
+        ],
+        "criticalProcessParameters": null,
+        "processControls": [
+          {
+            "test": "Blend uniformity",
+            "acceptanceCriteria": "RSD not more than 5.0%"
+          },
+          {
+            "test": "Tablet hardness",
+            "acceptanceCriteria": "60-100 N"
+          }
+        ],
+        "equipmentList": null,
+        "facilityInfo": null,
+        "batchSize": null,
+        "yieldData": null,
+        "scaleUpData": null,
+        "processDevelopment": "Direct compression was chosen over wet granulation after the blend showed adequate flow; coating parameters were set by a three-batch study",
+        "reprocessing": null,
+        "validationStatus": "not-started",
+        "validatedBy": null,
+        "validationDate": null,
+        "createdAt": "2026-11-10T13:06:42.133Z",
+        "updatedAt": "2026-11-10T13:06:42.133Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

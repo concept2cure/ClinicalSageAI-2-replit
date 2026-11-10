@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/drug-substances?projectId=78731580-7719-4562-985d-a412edebff5a",
+    "url": "http://localhost:5200/api/cmc/drug-substances?projectId=6270d978-aff3-43f0-ad87-1e6726350bf8",
     "anonymous": false,
     "identity": "oq-viewer@validation.local",
     "body": null
@@ -9,13 +9,13 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 26,
+    "durationMs": 34,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": [
         {
-          "id": 38,
+          "id": 50,
           "substanceName": "BX-701",
           "casNumber": "1234-56-7",
           "molecularFormula": "C17H19N3O2",
@@ -36,9 +36,9 @@
           "status": "development",
           "developmentPhase": "phase1",
           "organizationId": 2,
-          "projectId": "78731580-7719-4562-985d-a412edebff5a",
-          "createdAt": "2026-11-10T03:39:24.521Z",
-          "updatedAt": "2026-11-10T03:39:24.521Z"
+          "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+          "createdAt": "2026-11-10T13:06:30.225Z",
+          "updatedAt": "2026-11-10T13:06:30.225Z"
         }
       ]
     }

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/808e80f6-2af3-403a-a6de-3f51ea4a163e",
+    "url": "http://localhost:5200/api/cmc/register-history/comparability-studies/cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,17 +9,17 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 16,
+    "durationMs": 27,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
         "register": "comparability_study",
-        "recordId": "808e80f6-2af3-403a-a6de-3f51ea4a163e",
+        "recordId": "cd5f8c8f-d555-4954-bfe2-e84f72f490bf",
         "store": "audit_chain",
         "entries": [
           {
-            "at": "2026-11-10T03:45:41.294Z",
+            "at": "2026-11-10T13:26:12.136Z",
             "act": "cmc.register.create",
             "label": "Recorded",
             "actorId": 1,
@@ -30,11 +30,11 @@
             "changedFields": [],
             "signatureRef": null,
             "signatureMeaning": null,
-            "seq": 1137,
+            "seq": 1492,
             "sealed": true
           },
           {
-            "at": "2026-11-10T03:45:41.562Z",
+            "at": "2026-11-10T13:26:12.425Z",
             "act": "cmc.register.update",
             "label": "Changed",
             "actorId": 1,
@@ -52,7 +52,7 @@
             ],
             "signatureRef": null,
             "signatureMeaning": null,
-            "seq": 1138,
+            "seq": 1493,
             "sealed": true
           }
         ],

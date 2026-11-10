@@ -1,0 +1,74 @@
+{
+  "finding": {
+    "id": "576afa28-6c58-488a-82a8-6b12921fe5c0",
+    "severity": "critical",
+    "contradictionType": "batch_rejected",
+    "details": "At least one batch is rejected while Module 3 composition may include releasable assertions.",
+    "impactedSections": [
+      "3.2.P.3",
+      "3.2.P.5"
+    ],
+    "requiredReviewers": [
+      "QA/Release",
+      "MSAT/Process Engineer"
+    ],
+    "status": "open",
+    "updatedAt": "2026-11-10T13:08:01.020Z"
+  },
+  "member": {
+    "success": false,
+    "error": "ESIGNATURE_NO_AUTHORITY",
+    "message": "A critical finding blocks every section approval, so resolving it needs a role with signing authority. Nothing was changed.",
+    "field": "resolutionNote"
+  },
+  "noReason": {
+    "success": false,
+    "error": "REASON_REQUIRED",
+    "message": "A reason for change of at least 8 characters is required.",
+    "field": "resolutionNote"
+  },
+  "resolved": {
+    "success": true,
+    "data": {
+      "id": "576afa28-6c58-488a-82a8-6b12921fe5c0",
+      "status": "resolved"
+    }
+  },
+  "ledgerRows": [
+    {
+      "id": "AUD-890bb920-2191-4601-b126-2a007cc0c89d",
+      "when": "2026-11-10 13:08",
+      "at": "2026-11-10T13:08:03.103Z",
+      "actor": "OQ Signer",
+      "actorRef": "user:2",
+      "event": "Cmc Contradiction Resolve",
+      "target": "cmc_contradiction:576afa28-6c58-488a-82a8-6b12921fe5c0",
+      "kind": "admin",
+      "sig": false,
+      "hash": "f11c2814e6bf4567ec3fe852cf1527d0cb8e701162d474bc997ab6e121687e87",
+      "prevHash": "420c9dd675998fadf30c19fb53b0996149a5079d71e4512b65dbcf54072182d0",
+      "ip": "127.0.0.1",
+      "reason": null,
+      "meaning": null,
+      "source": "audit_logs",
+      "seq": 1361,
+      "signatureRef": null,
+      "targetRef": null
+    }
+  ],
+  "chain": {
+    "store": "audit_logs",
+    "legacyRows": 0,
+    "sequencedRows": 1340,
+    "ok": true,
+    "rowsChecked": 1340,
+    "head": {
+      "verified": false,
+      "status": "not_configured",
+      "anchorKey": null,
+      "anchoredAt": null,
+      "breaks": [],
+      "reason": "head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only"
+    }
+  }
+}

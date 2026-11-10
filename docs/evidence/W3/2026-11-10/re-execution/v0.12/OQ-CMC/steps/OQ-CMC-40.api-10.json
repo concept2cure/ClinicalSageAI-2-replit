@@ -1,0 +1,90 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/stability-studies/59",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "stabilityData": [
+        {
+          "timePoint": "0",
+          "parameter": "assay",
+          "result": "99.8"
+        },
+        {
+          "timePoint": "12",
+          "parameter": "assay",
+          "result": "99.4"
+        },
+        {
+          "timePoint": "24",
+          "parameter": "assay",
+          "result": "99.1"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 28,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 59,
+        "organizationId": 2,
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
+        "studyTitle": null,
+        "productName": "OQ-CLO-20261110033923",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "12",
+          "24"
+        ],
+        "stabilityData": [
+          {
+            "timePoint": "0",
+            "parameter": "assay",
+            "result": "99.8"
+          },
+          {
+            "timePoint": "12",
+            "parameter": "assay",
+            "result": "99.4"
+          },
+          {
+            "timePoint": "24",
+            "parameter": "assay",
+            "result": "99.1"
+          }
+        ],
+        "notes": null,
+        "shelfLife": "24 months at 25C/60%RH",
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T03:45:51.726Z",
+        "updatedAt": "2026-11-10T03:46:30.906Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

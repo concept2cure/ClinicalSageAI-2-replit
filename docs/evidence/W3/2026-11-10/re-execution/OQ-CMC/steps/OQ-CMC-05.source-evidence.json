@@ -2,45 +2,45 @@
   "success": true,
   "data": [
     {
-      "sourceObjectId": "f0a9893b-4179-4ddf-a7a2-278ae7bcd824",
+      "sourceObjectId": "d51e1417-5a2c-43e9-ae4e-c82e37878ee5",
       "sourceType": "batch",
-      "sourceKey": "batch:071b0795-aa0b-488d-9987-462a3cc025ce",
-      "label": "batch B-20261110033923",
+      "sourceKey": "batch:9d97fa5b-5393-48f1-af3d-aa49e0130536",
+      "label": "batch B-20261110130629",
       "evidence": []
     },
     {
-      "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+      "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
       "sourceType": "drug_product",
-      "sourceKey": "drug_product:11",
+      "sourceKey": "drug_product:15",
       "label": "drug product BX-701 5 mg film-coated tablet",
       "evidence": []
     },
     {
-      "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+      "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
       "sourceType": "drug_substance",
-      "sourceKey": "drug_substance:38",
+      "sourceKey": "drug_substance:50",
       "label": "drug substance BX-701",
       "evidence": []
     },
     {
-      "sourceObjectId": "1dc850cf-747f-4670-8698-58d8caffa2b3",
+      "sourceObjectId": "be564b58-5dfb-4f9a-91da-ff7d72285535",
       "sourceType": "method",
-      "sourceKey": "method:13",
+      "sourceKey": "method:17",
       "label": "method RP-HPLC Assay",
       "evidence": []
     },
     {
-      "sourceObjectId": "5463e23d-6c2c-440c-9bcc-8c4c5baafbd6",
+      "sourceObjectId": "f90535a2-ad9f-458e-9a18-bec9d917d0c1",
       "sourceType": "specification",
-      "sourceKey": "specification:87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+      "sourceKey": "specification:ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
       "label": "specification BX-701",
       "evidence": []
     },
     {
-      "sourceObjectId": "e6a55f7a-06fa-4baf-afd1-e795e8bcbe60",
+      "sourceObjectId": "407d0f6d-2f19-450d-a0b9-a77dd223c7b6",
       "sourceType": "stability",
-      "sourceKey": "stability:48",
-      "label": "stability:48",
+      "sourceKey": "stability:64",
+      "label": "stability:64",
       "evidence": []
     }
   ]

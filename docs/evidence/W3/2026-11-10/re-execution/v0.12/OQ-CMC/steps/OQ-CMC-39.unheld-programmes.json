@@ -1,0 +1,92 @@
+[
+  {
+    "path": "POST /ich-compliance",
+    "programme": "a uuid naming no programme",
+    "status": 404
+  },
+  {
+    "path": "GET /quality/qbd/:projectId",
+    "programme": "a uuid naming no programme",
+    "status": 404
+  },
+  {
+    "path": "POST /control-strategy",
+    "programme": "a uuid naming no programme",
+    "status": 404
+  },
+  {
+    "path": "POST /container-closures",
+    "programme": "a uuid naming no programme",
+    "status": 409
+  },
+  {
+    "path": "POST /comparability-studies",
+    "programme": "a uuid naming no programme",
+    "status": 409
+  },
+  {
+    "path": "POST /material-specs",
+    "programme": "a uuid naming no programme",
+    "status": 409
+  },
+  {
+    "path": "POST /ich-compliance",
+    "programme": "an id that is not a uuid",
+    "status": 404
+  },
+  {
+    "path": "GET /quality/qbd/:projectId",
+    "programme": "an id that is not a uuid",
+    "status": 404
+  },
+  {
+    "path": "POST /control-strategy",
+    "programme": "an id that is not a uuid",
+    "status": 404
+  },
+  {
+    "path": "POST /container-closures",
+    "programme": "an id that is not a uuid",
+    "status": 409
+  },
+  {
+    "path": "POST /comparability-studies",
+    "programme": "an id that is not a uuid",
+    "status": 409
+  },
+  {
+    "path": "POST /material-specs",
+    "programme": "an id that is not a uuid",
+    "status": 409
+  },
+  {
+    "path": "POST /ich-compliance",
+    "programme": "a second tenant's programme",
+    "status": 404
+  },
+  {
+    "path": "GET /quality/qbd/:projectId",
+    "programme": "a second tenant's programme",
+    "status": 404
+  },
+  {
+    "path": "POST /control-strategy",
+    "programme": "a second tenant's programme",
+    "status": 404
+  },
+  {
+    "path": "POST /container-closures",
+    "programme": "a second tenant's programme",
+    "status": 409
+  },
+  {
+    "path": "POST /comparability-studies",
+    "programme": "a second tenant's programme",
+    "status": 409
+  },
+  {
+    "path": "POST /material-specs",
+    "programme": "a second tenant's programme",
+    "status": 409
+  }
+]

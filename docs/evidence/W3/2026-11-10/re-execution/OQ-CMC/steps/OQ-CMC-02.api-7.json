@@ -5,15 +5,15 @@
     "anonymous": false,
     "identity": "oq-viewer@validation.local",
     "body": {
-      "substanceName": "VIEWER-20261110033923",
-      "projectId": "78731580-7719-4562-985d-a412edebff5a",
+      "substanceName": "VIEWER-20261110130629",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
       "modality": "small_molecule"
     }
   },
   "response": {
     "status": 403,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 25,
     "rateLimitRetries": 0,
     "body": {
       "error": "Insufficient permissions"

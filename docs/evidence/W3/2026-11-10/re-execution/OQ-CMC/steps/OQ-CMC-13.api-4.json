@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A78731580-7719-4562-985d-a412edebff5a%2F3.1",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=cmc_module3_section%3A6270d978-aff3-43f0-ad87-1e6726350bf8%2F3.1",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,16 +9,16 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 26,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": [
         {
-          "id": 50,
+          "id": 83,
           "document_id": null,
           "version_id": null,
-          "signed_target": "cmc_module3_section:78731580-7719-4562-985d-a412edebff5a/3.1",
+          "signed_target": "cmc_module3_section:6270d978-aff3-43f0-ad87-1e6726350bf8/3.1",
           "signature_type": "governed-action",
           "signature_purpose": "Reviewed against the executed batch record and the certificate of analysis.",
           "signer_id": 2,
@@ -26,11 +26,11 @@
           "signer_title": null,
           "signer_email": "oq-signer@validation.local",
           "signature_meaning": "approval",
-          "signature_hash": "5e0a74b30c83ec78a47c67f98be105c36252d19c05007e5fa620ca597c09e5db",
+          "signature_hash": "7e1659d275e431d0448ae4d4dff6db0c3a0a77fc14de48ccc6563ec11d3abfaa",
           "binding_basis": "cmc-module3-section-version-sha256",
           "second_factor_verified": true,
           "is_valid": true,
-          "signed_at": "2026-11-10T03:40:00.664Z",
+          "signed_at": "2026-11-10T13:07:00.650Z",
           "ip_address": "127.0.0.1",
           "approvals_recorded": null,
           "approvals_required": null,

@@ -6,7 +6,7 @@
     "identity": null,
     "body": {
       "substanceName": "BX-701",
-      "projectId": "fce058f8-a76d-4c4a-a0b2-24bcca397b69",
+      "projectId": "358aa6c8-630e-48e6-9bcb-43d47e4364bb",
       "modality": "small_molecule",
       "manufacturingProcess": {
         "route": "Four-step chemical synthesis"
@@ -17,14 +17,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 32,
+    "durationMs": 38,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 40,
+        "id": 53,
         "organizationId": 2,
-        "projectId": "fce058f8-a76d-4c4a-a0b2-24bcca397b69",
+        "projectId": "358aa6c8-630e-48e6-9bcb-43d47e4364bb",
         "substanceName": "BX-701",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -46,8 +46,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": null,
-        "createdAt": "2026-11-10T03:39:32.886Z",
-        "updatedAt": "2026-11-10T03:39:32.886Z"
+        "createdAt": "2026-11-10T13:06:47.866Z",
+        "updatedAt": "2026-11-10T13:06:47.866Z"
       },
       "module3Linked": true
     }
