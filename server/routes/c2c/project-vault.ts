@@ -446,6 +446,8 @@ export async function recordVaultDownload(
     fileName: string | null;
     fileSize: string | number | null;
     contentHash: string | null;
+    /** Set when what left was the version's PDF rendition (P-107): its own hash, beside the source's. */
+    renditionSha256?: string;
   },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
@@ -455,7 +457,7 @@ export async function recordVaultDownload(
     await writeChainedAuditRow(client, {
       tenantId: d.orgId,
       userId: governedActorId(req) ?? undefined,
-      action: 'vault.document.download',
+      action: d.renditionSha256 ? 'vault.document.rendition' : 'vault.document.download',
       resourceType: 'vault_document',
       resourceId: d.documentId,
       ipAddress: req.ip,
@@ -469,6 +471,7 @@ export async function recordVaultDownload(
         // caller, so the trail records WHICH edition left rather than only
         // that one did.
         contentHash: d.contentHash,
+        ...(d.renditionSha256 ? { renditionSha256: d.renditionSha256, renditionOf: d.contentHash } : {}),
       },
     });
     await client.query('COMMIT');
@@ -483,6 +486,34 @@ export async function recordVaultDownload(
   } finally {
     client?.release();
   }
+}
+
+/**
+ * Serve a version's PDF rendition (P-107 item 3): made from its verified bytes through the one converter
+ * (vault-rendition.ts), audited as a rendition with both hashes, served under its own name, and never stored. A
+ * rendition is not filed in place of its source.
+ */
+async function sendVaultRendition(req: Request, res: Response, v: {
+  orgId: number; programId: string; documentId: string; bytes: Buffer;
+  doc: { file_name: string | null; document_title: string | null; mime_type: string | null; content_hash: string | null };
+}): Promise<Response> {
+  const { renderVaultRendition, renditionFileName } = await import('../../services/vault/vault-rendition.js');
+  const made = await renderVaultRendition({ bytes: v.bytes, fileName: v.doc.file_name, mimeType: v.doc.mime_type, contentHash: v.doc.content_hash });
+  if (!made.ok) return res.status(made.status).json({ success: false, error: made.code, message: made.message });
+  const noted = await recordVaultDownload(req, {
+    orgId: v.orgId, programId: v.programId, documentId: v.documentId, documentTitle: v.doc.document_title, fileName: v.doc.file_name,
+    fileSize: made.pdf.length, contentHash: made.sourceSha256, renditionSha256: made.sha256,
+  });
+  if (!noted) {
+    return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+      message: 'The rendition was not served because it could not be recorded in the audit trail. Nothing was sent.' });
+  }
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${renditionFileName(v.doc.file_name)}"`);
+  res.setHeader('Content-Length', String(made.pdf.length));
+  res.setHeader('X-Content-SHA256', made.sha256);
+  res.setHeader('X-Rendition-Of-SHA256', made.sourceSha256);
+  return res.send(made.pdf);
 }
 
 /** The prepared archive is bound to the exact current actor and project admitted before building. */
@@ -2533,6 +2564,9 @@ export default function createProjectVaultRoutes(): Router {
         });
       }
       const bytes = read.bytes;
+
+      // ?rendition=pdf (P-107 item 3): the version's PDF rendition, made from the bytes just verified.
+      if (req.query.rendition === 'pdf') return await sendVaultRendition(req, res, { orgId, programId: id, documentId, bytes, doc });
 
       const recorded = await recordVaultDownload(req, {
         orgId,
