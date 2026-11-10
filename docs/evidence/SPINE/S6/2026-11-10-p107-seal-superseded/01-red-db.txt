@@ -1,0 +1,6 @@
+# Red on real PostgreSQL: tests/db/vault-data-room-seal.dbtest.ts with the version chain's read taken out of listSeals (every sealed version said to be current, as the list implied before)
+ × tests/db/vault-data-room-seal.dbtest.ts > a seal says when a version it holds has since been superseded > names the version that superseded it and when, and the seal itself is as it was 157ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { state: 'current' } to deeply equal { state: 'superseded', …(2) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)

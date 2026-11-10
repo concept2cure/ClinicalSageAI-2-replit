@@ -1,0 +1,18 @@
+# Green: the seal list and the Seals view after the change
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal says when a version it holds has since been superseded > names the version that superseded it and when, beside what the seal recorded, and counts them in the heading 13m
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal says when a version it holds has since been superseded > says nothing more when every sealed version is still current 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx > a seal says when a version it holds has since been superseded > never shows a version as current when its standing was not read 20ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > lists each seal's documents from its stored manifest: what was sealed is never read again 3ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > says which sealed versions have since been superseded, by which version and when, from the version chain as it i
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > a successor whose version or date is not recorded is still said to have superseded it 0ms
+ ✓ server/services/vault/__tests__/vault-seal.service.test.ts > the seal list: what each seal holds (S6, binders as a view) > reads no version chain for seals that hold nothing readable, and an id that is not a document id is not asked ab
+
+## Real PostgreSQL (RLS on): tests/db/vault-data-room-seal.dbtest.ts, tests/db/vault-versions.dbtest.ts
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 86ms
+ ✓ tests/db/vault-versions.dbtest.ts > the data room names the version its file became (VR-16) > a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0' 184ms
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal says when a version it holds has since been superseded > names the version that superseded it and when, and the seal itself is as it was 190ms
+ ✓ tests/db/vault-data-room-seal.dbtest.ts > a seal says when a version it holds has since been superseded > another organisation's versions are never read for it 11ms

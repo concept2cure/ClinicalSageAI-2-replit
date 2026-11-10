@@ -243,3 +243,56 @@ describe('what a seal holds (S6, binders as a view)', () => {
     expect(screen.queryByTestId('vault-seals-error')).toBeNull();
   });
 });
+
+/* P-107 item 3 (2026-11-08): "A seal says when its version has been superseded ('superseded by version n on date'),
+   read from the version chain. What was sealed, and whether it is intact, is unchanged." The server half:
+   server/services/vault/__tests__/vault-seal.service.test.ts, tests/db/vault-data-room-seal.dbtest.ts. */
+describe('a seal says when a version it holds has since been superseded', () => {
+  const doc = (n: number, standing?: unknown) => ({
+    id: `${String(n).repeat(8)}-${String(n).repeat(4)}-4${String(n).repeat(3)}-8${String(n).repeat(3)}-${String(n).repeat(12)}`,
+    title: `Document ${n}`, version: '1.0', indexNumber: null, shortHash: 'abcdef012345', lifecycleStage: 'approved',
+    ...(standing === undefined ? {} : { standing }),
+  });
+  const standings = (holds: HTMLElement) => within(holds).getAllByTestId('vault-seal-document')
+    .map((r) => r.querySelector('[data-testid="vault-seal-document-standing"]')?.textContent ?? null);
+
+  it('names the version that superseded it and when, beside what the seal recorded, and counts them in the heading', async () => {
+    seals = [{ ...SEAL, documents: [
+      doc(1, { state: 'superseded', byVersion: '2.0', at: '2026-11-03T09:30:00.000Z' }),
+      doc(2, { state: 'current' }),
+      doc(3, { state: 'superseded', byVersion: null, at: null }),
+    ] }];
+    render(<VaultSeals projectId={PID} />);
+    const holds = await screen.findByTestId('vault-seal-holds');
+    expect(holds.querySelector('summary')?.textContent).toBe('What it holds · 3 documents · 2 since superseded');
+    expect(standings(holds)).toEqual([
+      'Superseded by version 2.0 on 2026-11-03 09:30 UTC.',
+      null,
+      'Superseded by a later version. Its version and date are not recorded.',
+    ]);
+    // The seal's own record is shown as it was: the sealed version, stage and hash.
+    const rows = within(holds).getAllByTestId('vault-seal-document');
+    expect(rows.map((r) => r.querySelector('.vd-ver-v')?.textContent)).toEqual(['Document 1 · v1.0', 'Document 2 · v1.0', 'Document 3 · v1.0']);
+    expect(rows[0].querySelector('.vd-ver-m')?.textContent).toBe('Approved · SHA-256 abcdef012345');
+    expect(within(holds).getByTestId('vault-seal-superseded-note').textContent)
+      .toBe('2 of these 3 versions have since been superseded. The seal is unchanged: it holds the versions that were sealed.');
+  });
+
+  it('says nothing more when every sealed version is still current', async () => {
+    seals = [{ ...SEAL, documents: [doc(1, { state: 'current' }), doc(2, { state: 'current' })] }];
+    render(<VaultSeals projectId={PID} />);
+    const holds = await screen.findByTestId('vault-seal-holds');
+    expect(holds.querySelector('summary')?.textContent).toBe('What it holds · 2 documents');
+    expect(standings(holds)).toEqual([null, null]);
+    expect(within(holds).queryByTestId('vault-seal-superseded-note')).toBeNull();
+  });
+
+  it('never shows a version as current when its standing was not read', async () => {
+    seals = [{ ...SEAL, documents: [doc(1, { state: 'unknown' }), doc(2), doc(3, { state: 'archived' }), doc(4, { state: 'current' })] }];
+    render(<VaultSeals projectId={PID} />);
+    const holds = await screen.findByTestId('vault-seal-holds');
+    const unread = 'Whether a later version has replaced it could not be read.';
+    expect(standings(holds)).toEqual([unread, unread, unread, null]);
+    expect(holds.querySelector('summary')?.textContent).toBe('What it holds · 4 documents');
+  });
+});

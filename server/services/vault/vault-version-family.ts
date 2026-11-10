@@ -68,6 +68,45 @@ export const currentVersionLateral = (alias: string) => `LEFT JOIN LATERAL (
        SELECT version AS current_version FROM fwd ORDER BY n DESC LIMIT 1
      ) cv ON TRUE`;
 
+/**
+ * SQL: each named live version of the program, with the version that superseded it: its immediate valid successor,
+ * and when that successor was recorded. The earliest, where legacy rows hold more than one.
+ */
+const SUPERSESSIONS_SQL = `SELECT d.id::text AS id, sx.id IS NOT NULL AS superseded, sx.version AS by_version, sx.created_at AS superseded_at
+       FROM vault.documents d
+       LEFT JOIN LATERAL (
+         SELECT succ.id, succ.version, succ.created_at
+           FROM vault.documents succ
+          WHERE ${VALID_LINK('succ', 'd')}
+          ORDER BY succ.created_at, succ.id
+          LIMIT 1
+       ) sx ON TRUE
+      WHERE d.organization_id = $1 AND d.program_id = $2::uuid AND d.id = ANY($3::uuid[]) AND d.deleted_at IS NULL`;
+
+/** The version that superseded one, and when it was recorded; either may not be recorded. */
+export interface Supersession { byVersion: string | null; at: string | null }
+
+/**
+ * Whether each of these versions has been superseded, as the version chain says now. For a live version of the
+ * program: the version that superseded it, or null when nothing has. A version that is not in the answer is not a
+ * live version of this program now, so nothing is said of it. One read, by the same rule every other reader of the
+ * family applies (VALID_LINK).
+ */
+export async function readSupersessions(
+  q: FamilyQueryable,
+  p: { organizationId: number; programId: string; documentIds: readonly string[] },
+): Promise<Map<string, Supersession | null>> {
+  const now = new Map<string, Supersession | null>();
+  if (p.documentIds.length === 0) return now;
+  const { rows } = await q.query(SUPERSESSIONS_SQL, [p.organizationId, p.programId, [...p.documentIds]]);
+  for (const r of rows) {
+    now.set(String(r.id), r.superseded === true
+      ? { byVersion: typeof r.by_version === 'string' && r.by_version ? r.by_version : null, at: r.superseded_at ? new Date(r.superseded_at).toISOString() : null }
+      : null);
+  }
+  return now;
+}
+
 /** One version as the version list shows it. */
 export interface FamilyVersion {
   id: string;
