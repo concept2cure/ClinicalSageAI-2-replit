@@ -308,7 +308,12 @@ It cannot message, so these are here. Both were measured in the running app, not
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
    core.hooksPath` must print `.husky/_`; if it prints nothing, run `npx husky`. Without it, `git push` skips every
-   pre-push gate, the plan gate included (RIM found its container so on 2026-11-02).
+   pre-push gate, the plan gate included (RIM found its container so on 2026-11-02). **A `git worktree` passes
+   that check and still runs no hook:** it inherits `core.hooksPath` but not husky's generated `.husky/_`, which is
+   untracked, so git finds no hook and pushes without a word. Before pushing from a worktree, `ls .husky/_/pre-push`;
+   if it is missing, link it from the main checkout (`ln -s <main>/.husky/_ .husky/_`). A push whose output shows no
+   "Pre-push checks complete" line ran no gate (`01E8btkB…` pushed three commits so on 2026-11-10, then ran the hook
+   over them: every gate passed).
 2. Every commit names one package (`Plan: <ID>`) and the existing path it finishes (`Completes: <path>`), and stays
    inside that package's ledger paths.
 3. An S package changes behaviour on a screen, never its layout (plan §3). Layout follows the screen's D spec in
