@@ -62,6 +62,21 @@ change shows the new names on its next read.
 This walk had written the same repair in parallel, after a message to the project-page session answered "not
 found". It was dropped unpushed when the owner's landed: one implementation, the owner's.
 
+## A second walk on the trunk's head, after the others' changes
+
+`tour-rail.cjs` and `tour-lmn201.cjs` were run again once the data-room fix and the Lumen seed's protocol had landed.
+No failed request and no console error, apart from the two Module 3 refusals for a biologic. Two more fixes came out
+of it, each red first:
+
+| What a person saw | Fix |
+|---|---|
+| Submission Center → Planner: "Pathways: ectd_v322 · ectd_v40 · estar" | `SubmissionCenter.tsx` `pathwayName`, from the product's own list: "eCTD v3.2.2 · eCTD v4.0 (RPS) · eSTAR" (`3abbffb5fe`) |
+| The protocol workspace: "· in_development" in the picker, "vital_signs" in the schedule of assessments, "data_integrity" in the risk register, "not_started" spoken to a screen reader | `ProtocolGov.tsx` `inWords`, used in five places (`5bef8ec75b`) |
+
+Left as they are: Submission Center's Validation names each rule by its identifier (`IND_MODULE3_REQUIRED`), which
+is how a validator's findings are cited; the protocol's Design derivation names the records it read
+(`protocol_eligibility_criteria · row 49`), which is its lineage.
+
 ## Clean
 
 Home, Projects, Tasks, Communication, Vault and its five views, Submission Center's eight tabs, Biostatistics,
