@@ -36,6 +36,7 @@ const H = vi.hoisted(() => ({
   regFailure: null as null | { kind: string; status: number; code?: string },
   reviewRows: [] as unknown[] | null,
   reviewError: null as string | null,
+  reviewRefresh: vi.fn(),
   trainRows: [] as unknown[] | null,
   trainError: null as string | null,
   trainRefresh: vi.fn(),
@@ -57,7 +58,7 @@ const EFFECTIVE = {
 vi.mock('../hooks', () => ({
   useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, failure: H.regFailure, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
-  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: H.reviewError, refresh: vi.fn() }),
+  useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: H.reviewError, refresh: H.reviewRefresh }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
   useTrainingExpiring: () => ({ rows: [], failed: false, error: null, refresh: vi.fn() }),
   useTrainingAssignments: () => ({ ...H.assigned, error: H.assigned.failed ? 'unavailable' : null, refresh: vi.fn() }),
@@ -212,7 +213,9 @@ describe('SopRegister — a refused controlled copy is said as a refusal', () =>
     fireEvent.click(screen.getByRole('button', { name: /Download a controlled copy/ }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/Your role cannot issue controlled copies/);
-    expect(document.querySelector('.qms-table .qms-empty')).toBeNull();
+    // It is the toast, not a line inside the register.
+    expect(alert.closest('.de-toast')).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Controlled documents' })).queryByRole('alert')).toBeNull();
   });
 });
 
@@ -289,7 +292,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     );
     expect(screen.getByTestId('sop-review-failed')).toBeTruthy();
     expect(screen.queryByText('All current')).toBeNull();
-    expect(screen.queryByText('No documents due for review.')).toBeNull();
+    expect(screen.queryByText(/none is due for review/i)).toBeNull();
     expect(screen.queryByText(/No controlled documents in the register/)).toBeNull();
     expect(figures(), 'the failure is said once, by the section').toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
@@ -307,6 +310,22 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(refused.textContent).toMatch(/Your role cannot do this/);
     expect(refused.textContent).toMatch(/so the controlled-document register was not read/);
     expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  // C2's headline (review C2-3): a failed review schedule is shown as its own failure, never as rows derived from the
+  // register; its Try again re-reads the schedule, not the register; and the register states no overdue figure.
+  it('shows a failed review schedule as that failure, with no derived rows and no overdue figure', () => {
+    H.docs = [{ ...EFFECTIVE, nextReviewDate: '2020-01-01' }];
+    H.reviewRows = null;
+    H.reviewError = 'HTTP 500';
+    renderRegister();
+    const failed = screen.getByTestId('sop-review-failed');
+    expect(screen.queryAllByTestId('qms-review-row')).toHaveLength(0);
+    expect(screen.queryByTestId('qms-review-figure')).toBeNull();
+    expect(figures()).not.toMatch(/overdue/);
+    fireEvent.click(within(failed).getByRole('button', { name: 'Try again' }));
+    expect(H.reviewRefresh).toHaveBeenCalled();
+    expect(H.refresh).not.toHaveBeenCalled();
   });
 
   it('claims nothing while the register is still loading', () => {

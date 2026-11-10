@@ -43,6 +43,7 @@ const response = (body: unknown) => ({ status: 200, ok: true, json: async () => 
 const mount = () => render(<SopRegister onAsk={H.onAsk} filter="all" onFilterChange={() => {}} />);
 beforeEach(() => {
   H.apiRequest.mockReset(); H.onAsk.mockReset(); H.trainRefresh.mockReset(); H.refresh.mockReset();
+  H.docOverride = null;
   H.user = { id: '7', organizationId: '12', name: 'Current reader', role: 'viewer' };
   H.trainingRows = [{ documentId: 6, doc: 'SOP-015 Supplier controls', assignment: 'assigned', current: 0, of: 2, lastCycle: '—' }];
   H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: 0 };
@@ -135,13 +136,17 @@ describe('the existing Quality register personal training handoff', () => {
   });
 
   // C5: "Open" is the one editor on every row; "Read and acknowledge" only where the server takes an acknowledgement.
-  it('offers no acknowledgement on a document type that carries no read-and-understood training, and opens it in the editor', () => {
-    H.docOverride = { ...documentRow, docType: 'form', docNumber: 'FORM-002', title: 'Change request form' };
+  it('offers no acknowledgement on a document type that carries no read-and-understood training; Open opens it', async () => {
+    H.docOverride = { ...documentRow, docType: 'form', docNumber: 'FORM-002', title: 'Change request form', authoringDocumentId: 'f00d' };
+    H.apiRequest.mockResolvedValue(response({ data: null }));
     mount();
     expect(screen.queryByRole('button', { name: 'Read and acknowledge' })).toBeNull();
     const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
     expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Open', 'More']);
-    H.docOverride = null;
+    // A bound document's Open reads its editing copy for the one editor, not the training reader.
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/6/editor'));
+    expect(screen.queryByRole('dialog', { name: 'Read and acknowledge' })).toBeNull();
   });
 
   it('closes the selected reader immediately when the authenticated organization changes', async () => {

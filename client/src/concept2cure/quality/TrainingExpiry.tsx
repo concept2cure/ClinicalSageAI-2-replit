@@ -24,18 +24,26 @@ export function lapseText(r: Pick<TrainingExpiryRow, 'expiresAt' | 'daysLeft' | 
   return r.daysLeft <= 0 ? `lapses ${on} (today)` : `lapses ${on} (in ${r.daysLeft} day${r.daysLeft === 1 ? '' : 's'})`;
 }
 
+/** What the coverage read said about assignment: its counts, still reading, or null when it was not read. */
+export type ExpiryAssignment = { assigned: number; noActiveAssignees: number } | 'reading' | null;
+
 /**
  * The all-clear is said only of training that exists (C2, finding 112): "no one's training lapses" of an organization
- * where no document is assigned is only vacuously true. `assigned` is the coverage summary's count of documents with
- * people assigned; null when that summary was not read, and then no all-clear is given.
+ * where no document is assigned is only vacuously true. A document whose assignees have all left is assigned, to
+ * nobody active, and is said so, as the coverage figure says it (review C2-2). While the coverage read is in flight
+ * nothing is claimed; when it was not read, no all-clear is given.
  */
-function nothingLapsing(assigned: number | null | undefined): string {
-  if (assigned == null) return 'Whether anyone is assigned to train could not be read, so no all-clear is given.';
-  if (assigned === 0) return 'No document is assigned for training yet.';
+function nothingLapsing(assignment: ExpiryAssignment | undefined): string | null {
+  if (assignment === 'reading') return null;
+  if (assignment == null) return 'Whether anyone is assigned to train could not be read, so no all-clear is given.';
+  if (assignment.assigned === 0) {
+    return assignment.noActiveAssignees > 0 ? 'No one assigned to train is an active member.' : 'No document is assigned for training yet.';
+  }
   return `No one's training has lapsed, and none lapses in the next ${TRAINING_EXPIRY_DAYS} days.`;
 }
 
-export function TrainingExpiry({ assigned }: { assigned?: number | null }) {
+export function TrainingExpiry({ assignment }: { assignment?: ExpiryAssignment }) {
+  const clear = nothingLapsing(assignment);
   const st = useTrainingExpiring(TRAINING_EXPIRY_DAYS);
   return <section className="pj-sec" aria-labelledby="qms-expiry-h" data-testid="training-expiry">
     <div className="pj-sec-h">
@@ -45,7 +53,7 @@ export function TrainingExpiry({ assigned }: { assigned?: number | null }) {
     <div className="qms-train">
       {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} read={st.failure} readWhat="the training expiry list" testId="training-expiry-failed" />}
       {!st.failed && st.rows === null && <EmptyState title="Reading training expiry…" busy />}
-      {st.rows?.length === 0 && <EmptyState title={nothingLapsing(assigned)} />}
+      {st.rows?.length === 0 && (clear === null ? <EmptyState title="Reading who is assigned to train…" busy /> : <EmptyState title={clear} />)}
       {st.rows?.map((r) => (
         <div className="qms-train-row" key={`${r.userId}:${r.documentId}`}>
           <span className="qms-train-doc" title={r.userName ? undefined : `User ${r.userId}`}>{r.userName ?? 'A member whose name is not on record'}</span>

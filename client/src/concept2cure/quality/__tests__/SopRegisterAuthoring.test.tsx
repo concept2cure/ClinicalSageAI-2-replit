@@ -163,7 +163,21 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   // C5, found walking it: a legacy entry past draft has its text inline and no editing copy. "Open" reads that text
   // where it lives; the editor has nothing to open and would answer "no editing copy" with a Try again that cannot help.
-  // (The reader's own read of the text is pinned in SopRegisterPersonalTraining.test.tsx, for a signed-in reader.)
+  // This proves the door (the reader, not the editor). The reader's own read and render of the text is pinned in
+  // PersonalTrainingReader.test.tsx and SopRegisterPersonalTraining.test.tsx, for a signed-in reader.
+  it('says an editor read refused for this role as that, and offers the controlled text in the reader', async () => {
+    H.request.mockImplementation(async (method: string, url: string) => (method === 'GET' && url.endsWith('/editor')
+      ? { ok: false, status: 403, json: async () => ({ error: 'Not permitted', code: 'FORBIDDEN' }) }
+      : response(null)));
+    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
+    const refused = await screen.findByRole('alert');
+    expect(refused.textContent).toMatch(/Your role cannot do this/);
+    expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Read its controlled text' }));
+    expect(screen.getByRole('dialog', { name: 'Read and acknowledge' })).toBeTruthy();
+    // The editor's refusal gave way to the reader (this suite has no signed-in reader, so the reader says so itself).
+    expect(screen.queryByText(/Your role cannot do this/)).toBeNull();
+  });
   it('opens a legacy entry under review to its inline controlled text, not to an editor with no copy', () => {
     H.docs = [{ ...DRAFT, status: 'in_review', authoringDocumentId: null }];
     renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));

@@ -44,7 +44,8 @@ const EMPTY: Record<string, Route> = {
   [DOCS]: { status: 200, body: { data: [], meta: { count: 0 } } },
   [TEMPLATES]: { status: 200, body: { data: [], meta: { count: 0 } } },
   [REVIEW]: { status: 200, body: { data: [], meta: { count: 0, withinDays: 120 } } },
-  [TRAINING]: { status: 200, body: { data: [], meta: { count: 0 } } },
+  [TRAINING]: { status: 200, body: { data: [], meta: { count: 0, summary: { documents: 0, assigned: 0, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: null } } } },
+  ['/api/mdx/qms/training/expiring']: { status: 200, body: { data: [] } },
 };
 function mount() {
   return render(<SopRegister onAsk={() => {}} filter="all" onFilterChange={() => {}} />);
@@ -77,6 +78,8 @@ describe('SopRegister — a register read and empty', () => {
     // C2: and nowhere else on the tab: the review and expiry sections under an empty register claim nothing either.
     expect(document.body.textContent).not.toMatch(/\d+ overdue|none overdue|due within|No one's training has lapsed/i);
     expect(screen.getByText('No controlled documents yet, so none is due for review.')).toBeTruthy();
+    // The expiry section's own line under an empty organization (its all-clear branch actually runs here).
+    expect(await screen.findByText('No document is assigned for training yet.')).toBeTruthy();
   });
 
   it('says the register is empty rather than "none in review"', async () => {
