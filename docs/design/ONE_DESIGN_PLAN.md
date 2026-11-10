@@ -1380,15 +1380,15 @@ Vault features yet … this is a multi tenant environment").
 - **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
   binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
   version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
-  The record pane names a binder or person's folder, not its id. (R1 `3cf74c4b9d`, S6 `05e907d064`.)
-- **Step 3, the pyramid in Vault** (S6 `05e907d064`, R1 `3cf74c4b9d`, S11 `d6e27d9ddd`): a binder folder lists the plan
+  The record pane names a binder or person's folder, not its id. (R1 `844b7de191`, S6 `d208ba8f68`.)
+- **Step 3, the pyramid in Vault** (S6 `d208ba8f68`, R1 `844b7de191`, S11 `a36449dd90`): a binder folder lists the plan
   tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
   CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
-- **Step 4, AnA** (S6 `1ead231890`, S4 `a8af07d238`): `list_project_documents` returns the project's folders;
+- **Step 4, AnA** (S6 `c80d21ae3b`, S4 `7d918fe90e`): `list_project_documents` returns the project's folders;
   `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
   governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
   under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
-- **Multi-tenant repair** (F1 `28650cf42d`): the organization-wide `/api/folders` route listed, renamed and deleted
+- **Multi-tenant repair** (F1 `9d01cdb37b`): the organization-wide `/api/folders` route listed, renamed and deleted
   folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
   sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
   Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
