@@ -1,0 +1,20 @@
+trivy-head: 10 HIGH/CRITICAL (trivy 0.67.2, terraform/ only)
+  AVD-AWS-0011 HIGH modules/cloudfront/main.tf
+  AVD-AWS-0011 HIGH modules/cloudfront/main.tf
+  AVD-AWS-0053 HIGH modules/alb/main.tf
+  AVD-AWS-0053 HIGH modules/alb/main.tf
+  AVD-AWS-0132 HIGH modules/cloudfront/main.tf
+  AVD-AWS-0132 HIGH modules/cloudfront/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/ecs-fargate/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/ecs-fargate/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/embedding-service/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/embedding-service/main.tf
+trivy-new: 8 HIGH/CRITICAL (trivy 0.67.2, terraform/ only)
+  AVD-AWS-0053 HIGH modules/alb/main.tf
+  AVD-AWS-0053 HIGH modules/alb/main.tf
+  AVD-AWS-0132 HIGH modules/cloudfront/main.tf
+  AVD-AWS-0132 HIGH modules/cloudfront/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/ecs-fargate/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/ecs-fargate/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/embedding-service/main.tf
+  aws-vpc-no-public-egress-sgr CRITICAL modules/embedding-service/main.tf
