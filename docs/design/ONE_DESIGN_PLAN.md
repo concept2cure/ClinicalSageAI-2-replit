@@ -1420,6 +1420,18 @@ Vault features yet … this is a multi tenant environment").
   `document_folders`), and the 18 blockers `ga-readiness-report.mjs` reports (8 of 42 ready), none of which this lane
   can close: deploy secrets and switches, licences, model qualification, and the founder's rows D1, D9, D10.
 
+**Continued 2026-11-10, third pass: the Vault decisions of P-107 item 3** (`docs/evidence/SPINE/S6/2026-11-10/`):
+
+- **A seal says when its version has been superseded**: "Superseded by version n on date", read from the version
+  chain beside the seal's signed record, never in place of it. Red first; walked.
+- **With no project open, the Vault asks which sponsor first**; nothing of any sponsor is listed or read until then,
+  and afterwards the server narrows from the verified sponsor. Red first; walked. Found walking: the list's `ws` is
+  the segment, not the sponsor.
+- **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
+- **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
+  with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
+- **Open, not held:** device coverage converged onto the eSTAR mapper; renditions of formats other than Word.
+
 **Open, for the next session:**
 
 1. AnA over folders walked in a conversation, once a model key is present.
@@ -1431,8 +1443,9 @@ Vault features yet … this is a multi tenant environment").
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
-Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. The holds are in COORDINATION.md, in the row "CSR drafting
-with the person in control".
+Design: `docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md`. **Handed off on 2026-11-08.** The note for whoever
+picks this up is `docs/evidence/D2-CSR-DRAFT-CONTROL/HANDOFF.md`: what landed, the open work in order, the blockers, how
+to verify and walk, and what was handed on. Its row in COORDINATION.md holds no file.
 
 **Delivered** (2026-11-06)
 
@@ -1485,11 +1498,24 @@ All were proven by tests. Until this walk, none was opened in the running app.
 - Real drafting needs a model key, and this environment has none.
 - The account's monthly spend limit stopped this session's agents on 2026-11-06.
 
-**Next**
+**Next** (in order; details, files and the binding decisions are in the hand-off note)
 
-1. To D4's holder: slices 3–4 decision 4, in `DocumentWorkbench.tsx` `onReviewSection`.
-2. With a model key: walk the figure gate end to end on an imported CSR's §11.4.1, with revise and passage
-   alternatives.
+1. With a model key, walk the figure gate live on an imported CSR's §11.4.1, with revise and passage alternatives. No
+   cloud environment here has a key; the Codespace lane runs with the founder's.
+2. Slice 4b, adding a paragraph after an existing one: a block-boundary insert in `editor/suggestions.ts`, which is
+   D4's editor.
+3. Slices 5 (review by keyboard, after an accessibility review of the keys), 6 (progressive arrival) and 7 (citations
+   for chosen paragraphs).
+4. P-72 slices 2–7. Before slice 6, the tenant chain verdict must walk in the tenant's own scope.
+5. The purge-residue classification (design only), and the independent re-checks of P-72 slice 1a and CSR slices
+   3–4.
+
+**Handed on, open at hand-off** (re-check first):
+- the seeded C2C-101 QOS drafting hold (`authoring-draft-region-projection.ts`);
+- five workbench suites red since `53b179b99`, 46 tests at `f9631c065`;
+- D4's two layout issues and `onReviewSection`.
+
+At `f9631c065`, every suite of this lane passes.
 
 #### D3 — The project page (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, from 2026-11-06)
 
@@ -1612,6 +1638,63 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
+
+#### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The founder-path walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) is 6 of 15 at head. Its seal hop is
+refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it do not run. Read from the code and run, not
+inferred:
+
+- **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
+  `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
+  machine-written text is signed for review, frozen or approved only with a gateway receipt naming a PQ-passed model
+  pin (`governed-machine-claims.ts` `ordinaryMachineGenesisMayRelease`, RULE 2). Production refuses high-risk
+  drafting for the same reason. This is the gate working, not a defect.
+- **What stands before a PQ run**, from `npx tsx server/eval/pq/run-pq.ts --preflight`:
+  - `PROTOCOL_NOT_APPROVED`: PQ-DRAFT-001 needs the founder's signature (P-31);
+  - the RAG bank holds 18 of 30 positive items, none with reviewed source evidence, and 5 open gold checks;
+  - 18 source versions and 4 publishers' terms are unverified;
+  - a product provider key.
+- **The source review is blocked on network access.** `server/eval/rag/guidance-corpus-manifest.json` verifies a
+  source by downloading the issuer's own file. Every issuer host is refused from a cloud session, by curl (403 on
+  CONNECT) and by web-fetch (seen again 2026-11-10 for `database.ich.org`, `www.ich.org`, `www.fda.gov`,
+  `www.ema.europa.eu`). The hosts are `database.ich.org`, `www.ich.org`, `www.fda.gov`, `www.govinfo.gov`,
+  `www.ecfr.gov`, `uscode.house.gov`, `eur-lex.europa.eu`, `www.ema.europa.eu`, `ema.europa.eu` and `ask.gpo.gov`.
+  The session's environment must allow them, or the review is done from a machine that reaches them.
+
+**Delivered**
+
+- **A registered citation grounds the figure it is cited for** (`eee0aaa0be`,
+  `docs/evidence/F1/2026-11-10-registered-citation-grounds/`). The independent check reads a citation as
+  `[citation: <name>, <locator>]`. No pattern matched it, and the sentence splitter cut the label apart, so the
+  product's own citation grounded nothing while a typed `[1]` did. The figure stayed a hard finding nobody could
+  resolve. Red first (5 cases), then 61 of 61; 686 pass across the 26 suites that use the checker. A citation in
+  another sentence, an empty label, and a citation not registered to its section still ground nothing.
+
+- **A person can replace a machine-written sentence in a section that holds a citation** (`f3567a6f03`,
+  `docs/evidence/F1/2026-11-10-cited-section-rewrite/`). A cited section let no machine sentence be rewritten or
+  deleted, and a sentence could not be rewritten and cited in one save: the lineage gate refused each with
+  "unsupported markup". It now accepts a prior machine span whose words are gone or still the machine's. Red first
+  (4 cases), then 24 of 24; 557 pass across the 30 suites around the gate.
+
+**Found, not fixed here**
+
+- A person still cannot put a citation into a sentence AnA wrote and keep the sentence (422
+  `MACHINE_LINEAGE_FORMATTING_UNVERIFIED`). That is deliberate and is pinned by five tests: the machine's words do
+  not become a person's by a citation.
+- A deletion that leaves an unchanged machine sentence of the same span unmatched is still refused (the pinned limit
+  in the same evidence).
+- The check does not read the figure spans `draft_authoring_document` records from its Vault receipts
+  (`sourceReferences`), so a figure AnA verified against its source still reads as uncited (LX-06's remaining half).
+- `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child tool or check names a path" fails
+  on trunk. **→ Anna runtime (`01KZK3…`).**
+
+**Next, in order**
+
+1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
+2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
+3. The walk follows the path a person can take before a model is qualified: rewrite AnA's text, cite the source,
+   run the check, review, sign, seal, file. That restores the seven cases behind the seal hop.
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
@@ -2191,7 +2274,7 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
     (M7), and the IVD 510(k) outline (M6(a)).
 
-#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
 Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
 
@@ -2255,6 +2338,33 @@ session's brief). Each records its own progress here; as reported to this sessio
 - **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
   D3-4 (`d50c5f07e9`).
 
+**2026-11-10, launch row D2: the Codespace click-through's second run**
+(`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-10/README.md`). The founder's Codespace was rebuilt from an empty
+database with trunk's own `.devcontainer` scripts, then clicked through as Ana Author and as the Lumen lead.
+
+| Commit | What it does |
+|---|---|
+| `8c4a9e5a8a`, `912ec3cf35` | Approving a controlled document no longer makes every project Vault in the organisation answer 500. The Vault checks only its own project's sources and refreshes its captured Quality records first. The data room no longer counts those records as files awaiting a classifier. |
+| `11aa491184`, `ff49ebed77` | The Codespace's demo seed signs its two-person steps: the approver is the second signer, designated QMS approver through the governed route. From an empty database every SOP approval, method validation and the RACT's approval run. |
+| `7aeecfc654`, `c9a3680a24` | The seed re-runs over its own data: a document already frozen or approved is found, and two people's same-titled acknowledgement tasks do not stop it. |
+| `44f25b3fdb` | Biostatistics "Save as a working document" saved nothing (503) on every project: the sign-in token carries the organisation as text. |
+| `1c26e6aed8` | Biostatistics names an unfilled field beside "Assess defensibility", not as a red error. |
+| `cc06768a51` | The CSR study is prepared as an open IND with a clearly fictional sponsor (P-115 item 4), so its package identity is complete. |
+| `a3c57ccdf5` | A refused "Close letter" ends its message with one full stop. |
+| `70ec16da36` (the CSR walk session, from this run's finding) | A fresh Codespace's CSR study preparation finishes. |
+
+- **Coverage:** runs A (projects and authoring, 120 clicks) and C (work areas and administration, 265 clicks) finished
+  with nothing further. B (Communication, Vault, Submission Center, Tasks) and D (the Lumen account) are recorded in
+  the evidence README as they end. The crawler resumes from its log and restarts its browser every 60 clicks.
+- **Found and handed on:** every sign-in mints the token's organisation and user ids as strings (platform owner); a
+  page open reads the session six times and the project five (shell owner); `lumen-vault`'s 24 review, approval and
+  seal steps want a third person in the development organisation (the Codespace session, DATA).
+- **Seen red on trunk, not this lane's:** `section-sources-unverifiable-native.pglite` (3),
+  `tests/routes/chat-governed-upload` (1).
+- **GA readiness** (`scripts/ops/ga-readiness-report.mjs`, 8 of 42 ready, 18 blockers): none is code in this lane.
+  They are production secrets, SMTP for the sign-in code, the PQ protocol's approval and run, a production restore
+  rehearsal and the AWS apply (rows D1, D5, D6, D9, D10).
+
 **Open for the founder:**
 - `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
 - the PQ decision for production drafting (every model is `pending`);
@@ -2304,6 +2414,52 @@ session's brief). Each records its own progress here; as reported to this sessio
 - MR-03 Stage 6 (OPS-17).
 - Stage 7 steps 2–4 and 8.
 - Switch the common rule set to block two weeks after the first apply.
+
+#### D7-B / F1 — Quality on the work-area pattern, its registers as the product's tables, and the change record's signature (session `session_01GyGhjgjrNvxgwH4JhTMRZX`, 2026-11-06 to 2026-11-10)
+
+The founder: "We don't have apps anymore. We just have the core product… The quality is a major part of the product. I
+just don't want separate apps or cards." Quality is one work area: a header, AnA's starters, its registers as tabs,
+quiet sections, no tiles or type cards. The sweep plan is C1–C18, each with its findings. The evidence for each step is
+under `docs/evidence/DESIGN/D7/`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| The work area | `a65f886a7` | Quality: one header, three starters, registers as tabs |
+| Rows: one next step and More | `606a9a302`, `63ff5b495`, `b02be8a1d`, `8a0e2836a` | Each register row |
+| Change control as one log section | `6f651cc23` | The Change control tab: stage filter as one segmented control, procedure in a closed disclosure |
+| C1–C2: the SOP tab's quiet sections, honest dates and all-clears | `0561109d1` | SOP register, Periodic review, Training |
+| C3–C5: toasts; refusals said as refusals; every Open reaches the one editor | `ff2a66369`, `3f2ab6ad1`, `1a69d42a1` | Every Quality write and read |
+| Independent review of C1–C5: 23 confirmed findings repaired | `58bed0a70` | `2026-11-10-review-repairs/` |
+| C6: the SOP register is D0's table | `62c7f0031` | SOP register (the 390 sideways scroll found and fixed) |
+| C8: the change log is D0's table, one next step per change, no Approve for the proposer | `ea1d59957` | Change control log |
+| F1: an approved change's signed content cannot be rewritten (409, not 404) | `c555f4a2a`, `faa4b737e` | `PATCH /api/mdx/qms/changes/:id`; checked first by three independent readers |
+| C9: the change record is read and assessed in its row, and read inside the approval ceremony | `135394180` | A change's row; "Edit assessment"; "What you approve" in the signature dialog |
+| F1: a change's approval signs the content the approver read | `c284f3cb4`, `78e9705ef` | The signature is refused, and nothing signed, when the change was edited after the dialog opened |
+| C10: change-control documents open the one "New controlled document" door | `b61c5b088` | Change control: Change-control documents and forms |
+| C11: the records registers are D0's table, one next step per record | `33682ac65` | CAPA, Deviations, Nonconformances, Suppliers, Internal audits, Management reviews |
+| C12: a capped read says so; the figures keep the facts the tiles carried | `646b855fe` | "The 100 most recently updated CAPAs: …"; "not all read" in a record's CAPA column |
+| C13: CAPA and review action items are a table; their moves are named by the act | `72178e7a2` | A CAPA's or a management review's action items |
+| C14: Quality reads the open project and says whose records it lists | `e39cc0d59` | Quality from a project: "Show the whole organisation"; "Organisation-wide" on the registers kept for the organisation |
+| C15: Quality's dialogs are the product's one drawer | `c9e9fdefd` | New controlled document, Record periodic review, Job roles, Who must train, Version history |
+| C16–C17: the training reader and the review route are the drawer; Reassign is the shared sheet | `91baf7d96` | Read and acknowledge; Review route; Reassign |
+| F1, found walking C17: a QMS document's route reads are record reads, so Reassign is not refused 429; an empty picker says no one can be chosen | `b4129366a` | Reassign right after editing and sending for review |
+| C18a: a register's sentence is the line under its head; dates stay on one line | `e3131458b` | Every register's head at 1440 and 1280 |
+| C18: Quality's root and type are the product's | `df4e7013a` | Quality in dark mode: the product's #262624; no Quality-only buttons |
+| F1: the GA ledger row L97 cites the evidence that now proves it | `e9876d85e` | `docs/GA_COMPLETION_LEDGER_2026-08.md` |
+
+The sweep's C1–C18 are done, except C7.
+
+**Open:**
+- C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
+  Stage 5 and RR4 §2.12 placed them there.
+- dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
+- Outside D7, from the review of F1 (Part 11 review L-2): an edit while a change is still editable records no reason
+  or before-and-after values, and `DELETE /qms/changes/:id` soft-deletes an approved change.
+- Outside D7, found walking:
+  - D0's refusal words name "this project" for every 404 shown through `ErrorState`'s `read`
+    (`describeReadFailure`'s default subject);
+  - the shared reassign sheet keeps the bottom-sheet variant and its eyebrow;
+  - the editor's project-sources read answered 409 and 503 in the walk environment.
 
 ## 4. How everyone works
 

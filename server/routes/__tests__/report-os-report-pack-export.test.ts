@@ -242,7 +242,8 @@ describe('GET /bundles/:bundleId/export.pdf?content=reports', () => {
     expect(result.status).toBe(200);
     const parsed = await parsedPdf(result.body as Buffer);
     for (const page of parsed.pages) expect(page.text).toContain('Packet Sponsor');
-    expect(parsed.text.replace(/\s+/g, ' ')).toContain('Signed by Dana Reyes as approval');
+    // The 11.50 manifestation in words, timed by the canonical formatter (0e5706a308, use walk 2026-11-09).
+    expect(parsed.text.replace(/\s+/g, ' ')).toContain('Final. Signed by Dana Reyes, meaning Approval, 2026-09-30 13:00:01 UTC.');
     expect(parsed.text).toContain('NOT FINAL (PARTIAL)');
     expect(auditEntry()?.details.companyBranding).toMatchObject({ applied: true, revision: 8, profileHash: expect.stringMatching(/^[a-f0-9]{64}$/) });
     expect(auditEntry()?.details.constituents[1].sealHash).toBe(buildSealedRecord(finalBody, '2026-09-30T13:00:00.000Z').contentHash);
@@ -506,7 +507,7 @@ describe('POST /bundles/:bundleId/export.zip — explicit governed report/legal 
     expect(originalBytes).toEqual(original.bytes);
     const text = (await parsedPdf(reportBytes)).text.replace(/\s+/g, ' ');
     expect(text).toContain('SEALED-BODY-41'); expect(text).toContain('PARTIAL-BODY-42');
-    expect(text).toContain('Signed by Dana Reyes as approval'); expect(text).toContain('NOT FINAL (PARTIAL)');
+    expect(text).toContain('Final. Signed by Dana Reyes, meaning Approval, 2026-09-30 13:00:01 UTC.'); expect(text).toContain('NOT FINAL (PARTIAL)');
     expect(text).toContain('Package Sponsor');
     expect(manifest.branding).toMatchObject({ applied: true, revision: 9, presentation: { companyName: 'Package Sponsor', legalDocuments: [] } });
     expect(manifest.legalDocuments).toEqual([original.inventory]);

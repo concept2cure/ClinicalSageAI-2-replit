@@ -1,0 +1,69 @@
+diff --git a/tests/db/estar-audit-admission.dbtest.ts b/tests/db/estar-audit-admission.dbtest.ts
+index c0c01f9652..dd876bc47f 100644
+--- a/tests/db/estar-audit-admission.dbtest.ts
++++ b/tests/db/estar-audit-admission.dbtest.ts
+@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
+ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+ import express from 'express';
+ import request from 'supertest';
+-import { Pool } from 'pg';
++import { Pool, type PoolClient } from 'pg';
+ import bcrypt from 'bcryptjs';
+ import jwt from 'jsonwebtoken';
+ import JSZip from 'jszip';
+@@ -229,7 +229,7 @@ describe('native tracked-filing concurrency', () => {
+     expect(created.status).toBe(201);
+     const id = String(created.body.id);
+     const shared = (await import('../../server/db/runtime')).getPool();
+-    const original = shared.query;
++    const originalConnect = shared.connect;
+     let arrivals = 0;
+     let release: () => void = () => undefined;
+     let timer: ReturnType<typeof setTimeout>;
+@@ -237,19 +237,35 @@ describe('native tracked-filing concurrency', () => {
+       release = resolve;
+       timer = setTimeout(() => reject(new Error('Both real transition UPDATEs did not reach the barrier.')), 5000);
+     });
+-    shared.query = ((...args: unknown[]) => {
+-      const first = args[0];
+-      const text = typeof first === 'string' ? first : first && typeof first === 'object' && 'text' in first ? String(first.text) : '';
+-      const values = Array.isArray(args[1]) ? args[1] : first && typeof first === 'object' && 'values' in first ? first.values : [];
+-      if (/update\s+"?estar_submissions"?/i.test(text) && Array.isArray(values) && values.includes(id)) {
+-        if (++arrivals === 2) release();
+-        return barrier.then(() => Reflect.apply(original, shared, args));
+-      }
+-      return Reflect.apply(original, shared, args);
+-    }) as typeof shared.query;
++    // The transition's UPDATE and its history event commit on one transaction
++    // (776d9da460): drizzle checks a client out with pool.connect and issues the
++    // UPDATE on it, so the barrier holds the UPDATE on that checked-out client.
++    shared.connect = ((...connectArgs: unknown[]) => {
++      const pending = Reflect.apply(originalConnect, shared, connectArgs) as Promise<PoolClient> | undefined;
++      if (typeof connectArgs[connectArgs.length - 1] === 'function' || !pending || typeof pending.then !== 'function') return pending;
++      return pending.then(client => {
++        const clientQuery = client.query;
++        const clientRelease = client.release;
++        client.query = ((...args: unknown[]) => {
++          const first = args[0];
++          const text = typeof first === 'string' ? first : first && typeof first === 'object' && 'text' in first ? String(first.text) : '';
++          const values = Array.isArray(args[1]) ? args[1] : first && typeof first === 'object' && 'values' in first ? first.values : [];
++          if (/update\s+"?estar_submissions"?/i.test(text) && Array.isArray(values) && values.includes(id)) {
++            if (++arrivals === 2) release();
++            return barrier.then(() => Reflect.apply(clientQuery, client, args));
++          }
++          return Reflect.apply(clientQuery, client, args);
++        }) as typeof client.query;
++        client.release = ((...releaseArgs: unknown[]) => {
++          client.query = clientQuery; client.release = clientRelease;
++          return Reflect.apply(clientRelease, client, releaseArgs);
++        }) as typeof client.release;
++        return client;
++      });
++    }) as typeof shared.connect;
+     let responses: request.Response[];
+     try { responses = await Promise.all([patch(id, { status: 'withdrawn' }), patch(id, { status: 'withdrawn' })]); }
+-    finally { shared.query = original; clearTimeout(timer!); }
++    finally { shared.connect = originalConnect; clearTimeout(timer!); }
+     expect(arrivals).toBe(2);
+     expect(responses.map(response => response.status).sort()).toEqual([200, 409]);
+     expect(responses.find(response => response.status === 409)?.body).toMatchObject({ error: 'STATE_CHANGED' });

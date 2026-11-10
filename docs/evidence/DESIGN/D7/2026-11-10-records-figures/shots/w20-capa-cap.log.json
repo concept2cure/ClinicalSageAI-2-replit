@@ -1,0 +1,42 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "setup",
+      "had": 1,
+      "raised": 100,
+      "total": 100
+    },
+    {
+      "name": "CAPA",
+      "line": "The 100 most recently updated CAPAs: Open CAPAs: 100 (0 closed) · Past target close: 0 · High or critical risk, open: 0 · Closed, not effective: 0",
+      "rows": 100,
+      "capaCells": [
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "Nonconformances",
+      "line": "Recorded: 1 · Awaiting disposition: 1 · Dispositioned: 0",
+      "rows": 1,
+      "capaCells": [
+        "not all read"
+      ]
+    },
+    {
+      "name": "Deviations",
+      "line": "Open: 1 (0 closed) · Critical, open: 0 · Past target close: 0",
+      "rows": 1,
+      "capaCells": [
+        "not all read"
+      ]
+    },
+    {
+      "name": "w20-capa-cap",
+      "ok": true
+    }
+  ]
+}

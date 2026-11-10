@@ -35,6 +35,7 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
 import { RegisterBody, RegisterTable } from './SopRegisterRow';
+import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
@@ -46,6 +47,7 @@ import {
   RISK_LABEL,
   ASSESSABLE_STATES,
   deriveStageCounts,
+  summaryOfChanges,
   isImplementationOverdue,
   formatDate,
   type ChangeState,
@@ -135,7 +137,7 @@ function ChangeControlSession({
   const user = useAuthUser(); // display, and who proposed a change; the server resolves the signer and refuses the proposer
   const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   /* P-60: a change may be filed under the open project, which that project's
-     Engineering screen reads; the server admits it before writing. */
+     Quality section counts (ProjectHome.tsx ProjectQuality); the server admits it before writing. */
   const shell = useShellProject();
   const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
@@ -149,16 +151,19 @@ function ChangeControlSession({
       .then(valid => { if (active && valid) setCheckedLearning(learningReview); }).catch(() => undefined);
     return () => { active = false; };
   }, [learningReview]);
-  const learningRefusal = !learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
+  /* The approval signs the content the dialog shows, by its digest; a row that carries none is not signed. */
+  const unreadContent = approving && !approving.contentDigest
+    ? 'This change\'s content could not be read for signing. Reload the change log, then approve.' : null;
+  const learningRefusal = unreadContent ?? (!learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
     ? 'The exact aggregate artifact could not be verified. Reload this change before signing.'
-    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null;
+    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null);
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
   const [drawer, setDrawer] = React.useState<
     | { kind: 'raise' }
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
     | { kind: 'assess'; change: ChangeControlRow }
-    | { kind: 'document'; templateKey: string }
+    | { kind: 'document' }
     | null
   >(null);
   /** The server's refusal of the open drawer's write, shown in the drawer. */
@@ -199,7 +204,10 @@ function ChangeControlSession({
   /* The register read lives in QualityApp, lifted because AnA's open-change
      action resolves free-text names against the same rows this log renders,
      and a handler can only read state its own component holds. */
-  const summary = sum.summary;
+  /* A log scoped to the open project counts its own rows: the summary route has no project (C14). */
+  const scope = useQualityScope();
+  const scopedFigures = scope.programId !== null;
+  const summary = scopedFigures ? (loading && changes.length === 0 ? null : summaryOfChanges(changes)) : sum.summary;
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
@@ -227,17 +235,6 @@ function ChangeControlSession({
       <section className="pj-sec qms-sec" aria-labelledby="qcc-log-h">
         <div className="pj-sec-h">
           <h2 id="qcc-log-h">Change control log</h2>
-          {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
-              (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
-          {/* Nothing here while the log's own panel reports its failure: said once (review C4-1). */}
-          {!(summary && summary.total === 0) && !failed && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
-            {summary === null ? (sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
-              : 'Change-log totals appear once the change register loads.') : <>
-              {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
-              {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
-              {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
-            </>}
-          </span>}
           <div className="pj-sec-acts">
             {/* a2f9264a5: a curator prepares reviewed learning from the open project (moved here from the retired head). */}
             <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
@@ -247,6 +244,17 @@ function ChangeControlSession({
             </button>
           </div>
         </div>
+        {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
+            (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
+        {/* Nothing here while the log's own panel reports its failure: said once (review C4-1). */}
+        {!(summary && summary.total === 0) && !failed && <p className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
+          {summary === null ? (!scopedFigures && sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
+            : 'Change-log totals appear once the change register loads.') : <>
+            {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
+            {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
+            {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
+          </>}
+        </p>}
         {/* The stage filter, with counts, once the log has been read and holds changes: an unread log
             shows no zeroes, and an empty one has nothing to filter. */}
         {!unread && changes.length > 0 && <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} />}
@@ -263,7 +271,9 @@ function ChangeControlSession({
         )}
         {unread && !failed && <EmptyState title="Loading the change log…" busy />}
         {!unread && visible.length === 0 && (
-          <EmptyState title={changes.length === 0 ? 'No changes in the log yet.' : 'No changes at this stage.'} />
+          <EmptyState title={changes.length > 0 ? 'No changes at this stage.'
+            : scope.programId ? `No change is filed under ${scope.projectName}.` : 'No changes in the log yet.'}
+            hint={changes.length === 0 && scope.programId ? "The organisation's other changes are under Show the whole organisation." : undefined} />
         )}
         {visible.length > 0 && (
           <RegisterTable columns={CHANGE_COLUMNS}>
@@ -365,29 +375,27 @@ function ChangeControlSession({
       </section>
 
       <section className="pj-sec qms-sec" aria-labelledby="qcc-forms-h">
+        {/* One door (C10): "New controlled document", the SOP register's own setup, offering the library's change-control
+            templates to choose from. Until 2026-11-10 a button per template stood here, a gallery by another name. */}
         <div className="pj-sec-h">
           <h2 id="qcc-forms-h">Change-control documents and forms</h2>
-          <span className="sec-sub">Created as controlled drafts in the SOP register</span>
-        </div>
-        <div className="qcc-forms">
-            {tpl.templates == null && (tpl.error
-              ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
-                  retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
-              : <EmptyState title="Loading the Quality system library…" busy />)}
-          {/* Each opens "New controlled document" with its template (D7-B: a quiet
-              button per form, not a card per document type). */}
-          {changeForms.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className="btn ghost small"
-              title={`${f.description} Created as a draft with its standard change-control sections.`}
-              onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
-            >
-              {f.numberPrefix ? `${f.label} (${f.numberPrefix})` : f.label}
+          <span className="sec-sub">
+            {changeForms.length > 0
+              ? `From the change-control templates (${changeForms.map((f) => f.label).join(', ')}), created as controlled drafts in the SOP register`
+              : 'Created as controlled drafts in the SOP register'}
+          </span>
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" disabled={tpl.templates == null}
+              title="Create a controlled draft from a change-control template, in the SOP register"
+              onClick={() => openDrawer({ kind: 'document' })}>
+              New controlled document
             </button>
-          ))}
+          </div>
         </div>
+        {tpl.templates == null && (tpl.error
+          ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
+              retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
+          : <EmptyState title="Loading the Quality system library…" busy />)}
       </section>
       <C2CToast msg={toast} />
       {drawer?.kind === 'raise' && (
@@ -411,7 +419,7 @@ function ChangeControlSession({
               { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 3, desc: 'Product, process, validation and filings. It can be completed until the change is approved.' },
               { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 3 },
               ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
-                desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
+                desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
           onCancel={() => setDrawer(null)}
@@ -516,8 +524,7 @@ function ChangeControlSession({
       )}
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
-          templates={allTemplates}
-          initialKey={drawer.templateKey}
+          templates={changeForms}
           onCancel={() => setDrawer(null)}
           onNavigate={onNavigate}
           onCreated={(id) => {
@@ -558,7 +565,7 @@ function ChangeControlSession({
             if (learningRefusal) throw new Error(learningRefusal);
             const review = learningReview && !('unavailable' in learningReview)
               ? { expectedArtifactSha256: learningReview.artifactSha256, invariantAccepted: true as const } : undefined;
-            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review);
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review, approving.contentDigest ?? undefined);
             onRetry?.(); sum.refresh?.();
             return manifest;
           }}

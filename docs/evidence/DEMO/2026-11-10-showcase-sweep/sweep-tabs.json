@@ -1,0 +1,1510 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T06:32:21.340Z",
+  "stops": [
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Library",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Data catalog",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Uploads",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Required documents",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Governed artifacts",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Vault tab Seals & fixity",
+      "url": "/concept2cure/vault?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Submissions",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Planner",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Builder",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Required deliverables",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Sequences",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Validation",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Shadow review",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Submission Center tab Dispatch",
+      "url": "/concept2cure/submission-center?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a CMC / Module 3 tab Overview",
+      "url": "/concept2cure/cmc?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a CMC / Module 3 tab Quality by design",
+      "url": "/concept2cure/cmc?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/quality/qbd/792029a1-fcb7-493d-a65b-b5117d11783b"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a CMC / Module 3 tab Module 3 build",
+      "url": "/concept2cure/cmc?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/module3-os/build-state/792029a1-fcb7-493d-a65b-b5117d11783b"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a CMC / Module 3 tab Approvals & audit",
+      "url": "/concept2cure/cmc?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Overview",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Risk review report",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Risk assessment (RACT)",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Key risk indicators",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Quality tolerance limits",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Central monitoring",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Patient profiles",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Site risk",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Site oversight",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Risk-based monitoring tab Monitoring plan",
+      "url": "/concept2cure/rbm?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab SOP register",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Change control",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab CAPA",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Deviations",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Nonconformances",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Suppliers",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Internal audits",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Quality tab Management reviews",
+      "url": "/concept2cure/quality?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Reporting & analytics tab Reports",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Reporting & analytics tab Catalog",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Reporting & analytics tab Run history",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Reporting & analytics tab Schedules",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a Reporting & analytics tab Bundles",
+      "url": "/concept2cure/insights?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor 2.3 · Quality Overall Summary",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor 1.20 · Introductory Statement and General Investigational Plan",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor 1.14.4.1 · Investigator's Brochure",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor 1.1.1 · Form FDA 1571 — preparation worksheet",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor 1.2 · Cover Letter",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor [Demo · Biotech] IB Summary of Data and Guidance for the Investigator — C2C-101",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor [Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-biotech-c2c-101-a editor [Demo · Biotech] Protocol Synopsis C2C-101-201",
+      "url": "/concept2cure/document-authoring?program=792029a1-fcb7-493d-a65b-b5117d11783b",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Library",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Data catalog",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Uploads",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Required documents",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Governed artifacts",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Vault tab Seals & fixity",
+      "url": "/concept2cure/vault?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Submissions",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Planner",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Builder",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Required deliverables",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Sequences",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Validation",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Shadow review",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Submission Center tab Dispatch",
+      "url": "/concept2cure/submission-center?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora CMC / Module 3 tab Overview",
+      "url": "/concept2cure/cmc?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora CMC / Module 3 tab Quality by design",
+      "url": "/concept2cure/cmc?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/quality/qbd/41b8aa18-664e-48e8-94fd-c46c06314d92"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora CMC / Module 3 tab Module 3 build",
+      "url": "/concept2cure/cmc?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/module3-os/build-state/41b8aa18-664e-48e8-94fd-c46c06314d92"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora CMC / Module 3 tab Approvals & audit",
+      "url": "/concept2cure/cmc?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Overview",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Risk review report",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Risk assessment (RACT)",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Key risk indicators",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Quality tolerance limits",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Central monitoring",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Patient profiles",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Site risk",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Site oversight",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Risk-based monitoring tab Monitoring plan",
+      "url": "/concept2cure/rbm?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab SOP register",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Change control",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab CAPA",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Deviations",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Nonconformances",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Suppliers",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Internal audits",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Quality tab Management reviews",
+      "url": "/concept2cure/quality?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Reporting & analytics tab Reports",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Reporting & analytics tab Catalog",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Reporting & analytics tab Run history",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Reporting & analytics tab Schedules",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-lumen-lmn-801-ora Reporting & analytics tab Bundles",
+      "url": "/concept2cure/insights?program=41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Library",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Data catalog",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Uploads",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Required documents",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Governed artifacts",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Vault tab Seals & fixity",
+      "url": "/concept2cure/vault?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Submissions",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Planner",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Builder",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Required deliverables",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Sequences",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Validation",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Shadow review",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Submission Center tab Dispatch",
+      "url": "/concept2cure/submission-center?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx CMC / Module 3 tab Overview",
+      "url": "/concept2cure/cmc?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx CMC / Module 3 tab Quality by design",
+      "url": "/concept2cure/cmc?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/quality/qbd/9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx CMC / Module 3 tab Module 3 build",
+      "url": "/concept2cure/cmc?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/module3-os/build-state/9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx CMC / Module 3 tab Approvals & audit",
+      "url": "/concept2cure/cmc?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Overview",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Risk review report",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Risk assessment (RACT)",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Key risk indicators",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Quality tolerance limits",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Central monitoring",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Patient profiles",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Site risk",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Site oversight",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Risk-based monitoring tab Monitoring plan",
+      "url": "/concept2cure/rbm?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab SOP register",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Change control",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab CAPA",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Deviations",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Nonconformances",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Suppliers",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Internal audits",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Quality tab Management reviews",
+      "url": "/concept2cure/quality?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Reporting & analytics tab Reports",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Reporting & analytics tab Catalog",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Reporting & analytics tab Run history",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Reporting & analytics tab Schedules",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx Reporting & analytics tab Bundles",
+      "url": "/concept2cure/insights?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] Cybersecurity and Interoperability Summary",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] Substantial Equivalence Discussion",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] 510(k) Summary",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] SOP-104 Software Change Control",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] SOP-103 Complaint Handling and MDR Reporting",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] SOP-102 Corrective and Preventive Action",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "demo-mdx-neuropanel-dx editor [Demo · MDX] SOP-101 Design Controls (21 CFR 820.30)",
+      "url": "/concept2cure/document-authoring?program=9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Library",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Data catalog",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Uploads",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Required documents",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Governed artifacts",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Vault tab Seals & fixity",
+      "url": "/concept2cure/vault?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Submissions",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Planner",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Builder",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Required deliverables",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Sequences",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Validation",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Shadow review",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Submission Center tab Dispatch",
+      "url": "/concept2cure/submission-center?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 CMC / Module 3 tab Overview",
+      "url": "/concept2cure/cmc?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 CMC / Module 3 tab Quality by design",
+      "url": "/concept2cure/cmc?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [
+        "409 GET /api/cmc/quality/qbd/79ab693a-6973-4992-bdd4-8f532228578d"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      ]
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 CMC / Module 3 tab Module 3 build",
+      "url": "/concept2cure/cmc?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 CMC / Module 3 tab Approvals & audit",
+      "url": "/concept2cure/cmc?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Overview",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Risk review report",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Risk assessment (RACT)",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Key risk indicators",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Quality tolerance limits",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Central monitoring",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Patient profiles",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Site risk",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Site oversight",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Risk-based monitoring tab Monitoring plan",
+      "url": "/concept2cure/rbm?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab SOP register",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Change control",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab CAPA",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Deviations",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Nonconformances",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Suppliers",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Internal audits",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Quality tab Management reviews",
+      "url": "/concept2cure/quality?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Reporting & analytics tab Reports",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Reporting & analytics tab Catalog",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Reporting & analytics tab Run history",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Reporting & analytics tab Schedules",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 Reporting & analytics tab Bundles",
+      "url": "/concept2cure/insights?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    },
+    {
+      "stop": "xanomeline-tts-phase-2 editor CDISCPILOT01 Clinical Study Report",
+      "url": "/concept2cure/document-authoring?program=79ab693a-6973-4992-bdd4-8f532228578d",
+      "errorText": [],
+      "sideways": false,
+      "apiFailures": [],
+      "consoleErrors": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "79ab693a-6973-4992-bdd4-8f532228578d",
+      "name": "Xanomeline TTS Phase 2 (CDISCPILOT01)"
+    },
+    {
+      "id": "0d848d40-4cc1-4854-bf25-3147f9c6d35d",
+      "name": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)"
+    },
+    {
+      "id": "7eb2b67f-6d5a-4b05-9e06-1224b597d6b7",
+      "name": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)"
+    },
+    {
+      "id": "41b8aa18-664e-48e8-94fd-c46c06314d92",
+      "name": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)"
+    },
+    {
+      "id": "4b73d26d-370b-460f-becb-20c96b40dd1b",
+      "name": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"
+    },
+    {
+      "id": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+      "name": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+    },
+    {
+      "id": "792029a1-fcb7-493d-a65b-b5117d11783b",
+      "name": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)"
+    }
+  ],
+  "finishedAt": "2026-11-10T06:42:43.125Z",
+  "summary": {
+    "stops": 180,
+    "toLookAt": 7,
+    "serverErrors": 0
+  }
+}

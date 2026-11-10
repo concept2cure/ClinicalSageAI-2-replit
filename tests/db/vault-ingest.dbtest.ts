@@ -222,7 +222,11 @@ describe('POST /api/vault/ingest — the document actually lands', () => {
       file_name: 'dhf-extract.pdf',
       mime_type: 'application/pdf',
       content_hash: PDF_SHA256,
-      classification: 'INTERNAL',
+      /* The upload sent no classification. Since a717cfe4c (S6, 2026-11-06) an
+         unreviewed fresh upload is recorded CONFIDENTIAL, never implicitly
+         INTERNAL (vault-ingest.service.ts admitVaultDocument); a version still
+         inherits its head's. This pinned the old default. */
+      classification: 'CONFIDENTIAL',
       processing_status: 'PENDING',
     });
     /* created_by is an INTEGER matching users.id. As the model's original uuid

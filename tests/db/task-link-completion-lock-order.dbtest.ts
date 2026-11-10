@@ -43,6 +43,10 @@ const DDL = [
     'db/migrations/20260807_task_graph_org_columns.sql',
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
+  // The parent-task column the Drizzle model names (P-111 slice 5); without it every
+  // read of unified_tasks fails before the link takes a lock. Its guards name
+  // `public.unified_tasks`; here the table is in this test's own schema.
+  fs.readFileSync(path.join(REPO_ROOT, 'migrations/20261109_unified_tasks_parent_task.sql'), 'utf8').replaceAll('public.', ''),
   // The review route columns the Drizzle model names (RR1a). That file names
   // its objects `public.`; here they are built in this test's own schema.
   fs.readFileSync(path.join(REPO_ROOT, 'migrations/20261023_review_routes.sql'), 'utf8').replaceAll('public.', ''),

@@ -12,6 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
+import { scopedPath, useQualityScope } from './registerContext';
 import { listOf } from './qmsList';
 import { learningReviewViewOf } from './qmsApproval';
 import type {
@@ -47,6 +48,8 @@ interface ServerChange {
   proposed_by?: number | null;
   impact_assessment?: string | null;
   implementation_plan?: string | null;
+  /** The digest of the content an approval of this change signs (computeQmsChangeContentDigest). */
+  content_digest?: string;
   target_implementation_date: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -93,6 +96,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     proposedBy: typeof r.proposed_by === 'number' ? r.proposed_by : null,
     impactAssessment: typeof r.impact_assessment === 'string' ? r.impact_assessment : null,
     implementationPlan: typeof r.implementation_plan === 'string' ? r.implementation_plan : null,
+    contentDigest: typeof r.content_digest === 'string' && /^[a-f0-9]{64}$/.test(r.content_digest) ? r.content_digest : null,
     learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,
@@ -110,10 +114,12 @@ function adaptChange(r: ServerChange): ChangeControl {
 /** Change-control register — GET /api/mdx/qms/changes. */
 const CHANGES_PATH = '/api/mdx/qms/changes';
 export function useChangeRegister() {
-  const { data, loading, error, refresh, failure } = useFetchJson<unknown>(CHANGES_PATH);
+  /* The open project's changes: those filed under it (C14; mdx-qms.ts GET /qms/changes). */
+  const path = scopedPath(CHANGES_PATH, useQualityScope().programId);
+  const { data, loading, error, refresh, failure } = useFetchJson<unknown>(path);
   const rows = useMemo(() => listOf<ServerChange>(data), [data]);
   const changes = useMemo<ChangeControl[] | null>(() => rows?.map(adaptChange) ?? null, [rows]);
-  const shape = data != null && rows === null ? `unexpected response shape for ${CHANGES_PATH}` : null;
+  const shape = data != null && rows === null ? `unexpected response shape for ${path}` : null;
   return { changes, loading, error: error ?? shape, failure, refresh };
 }
 

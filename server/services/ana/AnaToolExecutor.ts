@@ -241,7 +241,7 @@ import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tool
 import { registerCsrSectionEvidenceHandlers } from './csr-section-evidence-tool.js';
 import { registerCmcKnowledgeHandlers } from './cmc-knowledge-tools.js';
 import { registerCmcQualitySummaryHandler } from './cmc-quality-summary-tool.js';
-import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
+import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS, reasonRequiredFor } from './stated-reason-input.js';
 // Re-exported: the set's home is the pure module, so the tool gate and the
 // confirmation route read it without loading this executor.
 export { REASON_REQUIRED_TOOLS };
@@ -567,12 +567,12 @@ function preHandlerRefusal(
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
   }
   if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
-    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {}, reasonFieldOf(name))) {
+    if (reasonRequiredFor(name, input ?? {}) && !statedReason(input ?? {}, reasonFieldOf(name))) {
       return { code: 'REASON_REQUIRED', result: reasonNotStated(name) };
     }
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
-      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {}, registeredToolTier(name))),
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {}, registeredToolTier(name, input ?? {}))),
     };
   }
   return null;

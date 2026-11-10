@@ -40,6 +40,9 @@
  * ran, and reads and writes a row of organisation A's through the pool, as an
  * RLS-reliant handler does. /api/v1 is outside the boundary; its one write route
  * (pyramid PATCH, routes/pyramid.routes.ts) is mirrored with its own chain.
+ * Since 66bd1d21f6 (R1, 2026-11-04) project home also claims a prefix there,
+ * '/api/v1/pyramids/by-project', whose routes carry the same per-route chain; its
+ * probe sits behind that chain (PUBLIC_API_LAUNCH_CHAINS), not behind the boundary.
  *
  * Isolation: lane "p02b". Every organisation slug, e-mail and row id starts `p02b-`.
  */
@@ -61,6 +64,17 @@ const RUNTIME_PASSWORD = 'p02b-delegated-credential-runtime-password';
 const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `p02b_rt_${RUN}` });
 const WRITES = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
 const PYRAMID_PROBE = '/api/v1/p02b-pyramid/progress/task-1';
+
+/**
+ * Launch-app prefixes on the public API. The /api boundary passes /api/v1
+ * (public-api-allowlist.ts: X-API-Key routes), so production protects these with
+ * their router's own per-route chain, which buildApp mirrors in front of the probe.
+ * Project home's '/api/v1/pyramids/by-project' (66bd1d21f6): every route there is
+ * `authMiddleware, enforceTenantLifecycle` (routes/pyramid.routes.ts). A launch
+ * prefix on the allowlist that is not listed here fails the catalog case below.
+ */
+const PUBLIC_API_LAUNCH_CHAINS = ['/api/v1/pyramids/by-project'] as const;
+const onPublicApi = (path: string) => path === '/api/v1' || path.startsWith('/api/v1/');
 
 interface Account { id: number; email: string; orgId: number; session: string }
 interface Arrival { method: string; path: string; user: string | null; reqTenantId: unknown; scopeTenant: string | null; visible: number; updated: number }
@@ -110,6 +124,9 @@ async function sweep(prefixes: string[], headers: Record<string, string>): Promi
   for (const prefix of prefixes) for (const m of WRITES) out.push(await send(m, `${prefix}/p02b-probe`, headers));
   return out;
 }
+
+const refusal = (o: Outcome) => `${o.method} ${o.path} → ${o.status} ${o.code}`;
+const expectedRefusal = (o: Outcome, code: string | null) => `${o.method} ${o.path} → 401 ${code}`;
 
 const admitted = (outcomes: Outcome[]) =>
   outcomes.filter((o) => o.reached || o.status < 400).map((o) => `${o.method} ${o.path} → ${o.status}${o.reached ? ' (handler ran)' : ''}`);
@@ -225,6 +242,13 @@ async function buildApp(): Promise<void> {
   app.get('/api/v1/p02b-precedents', requireScope('precedent:read'), (_req, res) => res.json({ ok: true }));
   // The /api/v1 pyramid PATCH's chain (routes/pyramid.routes.ts): outside the boundary.
   app.patch(PYRAMID_PROBE, authMiddleware, enforceTenantLifecycle, probe);
+  // A launch app's own prefix under /api/v1: the same chain, every method (PUBLIC_API_LAUNCH_CHAINS).
+  for (const prefix of launchPrefixes().flatMap((a) => a.prefixes).filter(onPublicApi)) {
+    if (!(PUBLIC_API_LAUNCH_CHAINS as readonly string[]).includes(prefix)) {
+      throw new Error(`[p02b] ${prefix} is a launch prefix outside the /api boundary with no mirrored route chain`);
+    }
+    app.all(`${prefix}/*splat`, authMiddleware, enforceTenantLifecycle, probe);
+  }
   app.use('/api', createAuthBoundary()); // applyAuthBoundary
   app.all('/api/*splat', probe);
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -293,13 +317,30 @@ describe('posture and controls (every refusal below is read against these)', () 
     expect(rows[0]).toMatchObject({ role: runtimeRole, rolsuper: false, rolbypassrls: false, rls: 'on' });
   });
 
-  it('the catalog yields API prefixes for all seven launch apps, including CMC, none on the public allowlist', async () => {
+  it('the catalog yields API prefixes for all nine launch apps, including CMC; on the public allowlist only the mirrored /api/v1 ones', async () => {
     const { isPublicApiPath } = await import('../public-api-allowlist');
     const apps = launchPrefixes();
-    expect(apps.map((a) => a.app)).toEqual(['projects', 'vault', 'authoring', 'submission-center', 'qms', 'cmc', 'reporting']);
+    // Risk-based monitoring joined by P-76 (2026-10-30), Biostatistics by P-77
+    // (2026-10-31), both surfaces-only (docs/LAUNCH_DEFINITION_OF_DONE.md;
+    // shared/constants/launch-scope.ts).
+    expect(apps.map((a) => a.app)).toEqual(['projects', 'vault', 'authoring', 'submission-center', 'qms', 'cmc', 'rbm', 'biostatistics', 'reporting']);
     expect(apps.find((entry) => entry.app === 'cmc')?.prefixes).toContain('/api/cmc/drug-substances');
     for (const a of apps) expect(a.prefixes.length, a.app).toBeGreaterThan(0);
-    expect(apps.flatMap((a) => a.prefixes).filter((p) => isPublicApiPath(`${p}/p02b-probe`))).toEqual([]);
+    expect(apps.flatMap((a) => a.prefixes).filter((p) => isPublicApiPath(`${p}/p02b-probe`))).toEqual([...PUBLIC_API_LAUNCH_CHAINS]);
+  });
+
+  it('every production route under a mirrored /api/v1 launch prefix carries the mirrored chain', async () => {
+    // The exception above is checked against the test's own copy of the chain; this reads the real router, so a
+    // route added or changed in pyramid.routes.ts without authMiddleware, enforceTenantLifecycle turns it red.
+    const { default: pyramidRouter } = await import('../../routes/pyramid.routes');
+    const { authMiddleware } = await import('../../auth');
+    const { enforceTenantLifecycle } = await import('../tenantLifecycleGuard');
+    type L = { route?: { path: string; stack: Array<{ handle: unknown }> } };
+    const routes = ((pyramidRouter as unknown as { stack: L[] }).stack)
+      .filter((l) => l.route && PUBLIC_API_LAUNCH_CHAINS.some((p) => `/api/v1${l.route!.path}` === p || `/api/v1${l.route!.path}`.startsWith(`${p}/`)));
+    expect(routes.length).toBeGreaterThan(0);
+    const bare = routes.filter((l) => l.route!.stack[0]?.handle !== authMiddleware || l.route!.stack[1]?.handle !== enforceTenantLifecycle).map((l) => l.route!.path);
+    expect(bare, 'a route on a launch prefix outside the boundary lacks authMiddleware, enforceTenantLifecycle').toEqual([]);
   });
 
   it("A's own session reaches a launch write handler in A's scope and sees A's row", async () => {
@@ -324,7 +365,9 @@ describe('a c2c:read connector token writes nowhere on /api', () => {
     it(`${app}: every write method on every API prefix is refused before a handler runs`, async () => {
       const outcomes = await sweep(prefixes, { Authorization: `Bearer ${connectorToken}` });
       expect(admitted(outcomes)).toEqual([]);
-      expect(new Set(outcomes.map((o) => `${o.status} ${o.code}`))).toEqual(new Set(['401 AUTH_008']));
+      // The boundary refuses it as AUTH_008. On the public API the route's own
+      // authMiddleware refuses it ("Token is not valid for this operation", no code).
+      expect(outcomes.map(refusal)).toEqual(outcomes.map((o) => expectedRefusal(o, onPublicApi(o.path) ? null : 'AUTH_008')));
     });
   }
 
@@ -378,7 +421,8 @@ describe("an API key does not carry a session into the key's organisation", () =
         .map((a) => `${a.method} ${a.path}: B's user, RLS scope ${org(a.scopeTenant)}, req.tenantId ${org(a.reqTenantId)}; A's row visible ${a.visible}, updated ${a.updated}`);
       expect(crossed.slice(0, 4), "B's user ran inside A's tenant scope").toEqual([]);
       expect(admitted(outcomes)).toEqual([]);
-      expect(new Set(outcomes.map((o) => `${o.status} ${o.code}`))).toEqual(new Set(['401 API_KEY_NOT_ACCEPTED']));
+      // Off the public API the key is refused outright; on it, beside a session (one credential).
+      expect(outcomes.map(refusal)).toEqual(outcomes.map((o) => expectedRefusal(o, onPublicApi(o.path) ? 'AMBIGUOUS_CREDENTIALS' : 'API_KEY_NOT_ACCEPTED')));
     });
   }
 

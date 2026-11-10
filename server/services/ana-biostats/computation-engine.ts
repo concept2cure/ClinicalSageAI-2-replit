@@ -101,7 +101,10 @@ export class ComputationEngine {
           // Before 2026-10-05 it was sized as a sensitivity/specificity study instead.
           throw this.kappaRefusal();
         }
-        if (input.studyType === 'diagnostic_accuracy') {
+        // An ROC design is sized on its AUC on this track too (computeStandard routes auc_roc to computeAUC).
+        // Until 2026-11-10 the track sent every diagnostic-accuracy study here to the sensitivity/specificity
+        // method, which refused a complete AUC design for want of `sensitivity`: the page's own ROC example.
+        if (input.studyType === 'diagnostic_accuracy' && input.endpointType !== 'auc_roc') {
           return this.computeDiagnostic(input);
         }
         return this.computeStandard(input);

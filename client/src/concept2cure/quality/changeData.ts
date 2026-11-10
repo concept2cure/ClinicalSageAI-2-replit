@@ -60,6 +60,9 @@ export interface ChangeControl {
    *  description, type, classification, risk, reason and target date they are what the approval signs. */
   impactAssessment?: string | null;
   implementationPlan?: string | null;
+  /** The digest of the content as read (`content_digest`). The approval sends it, and the server signs only that
+   *  content: a change edited since it was read is refused. Null when the row carries none; then it is not signed. */
+  contentDigest?: string | null;
   targetImplementationDate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -86,6 +89,27 @@ export interface ChangeSummary {
   closed: number;
   overdueImplementation: number;
   byStatus: Record<string, number>;
+}
+
+/**
+ * The change log's figures from its rows, by the server's definitions (changeControl.service.ts changeControlSummary):
+ * open is every state but closed, rejected and cancelled. The summary route reads the whole organisation and takes no
+ * project, so a log scoped to a project counts its own rows (C14).
+ */
+export function summaryOfChanges(changes: ChangeControl[]): ChangeSummary {
+  const byStatus: Record<string, number> = {};
+  for (const c of changes) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1;
+  const terminal = (byStatus.closed ?? 0) + (byStatus.rejected ?? 0) + (byStatus.cancelled ?? 0);
+  return {
+    total: changes.length,
+    open: changes.length - terminal,
+    awaitingApproval: byStatus.under_assessment ?? 0,
+    inImplementation: byStatus.in_implementation ?? 0,
+    awaitingVerification: byStatus.verification ?? 0,
+    closed: byStatus.closed ?? 0,
+    overdueImplementation: changes.filter((c) => c.implementationOverdue === true).length,
+    byStatus,
+  };
 }
 
 /* ─── Labels + tone maps ───────────────────────────────────────── */

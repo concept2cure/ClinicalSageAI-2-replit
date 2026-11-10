@@ -16,9 +16,11 @@
  * KEEPS the victim's tenant id: invisible to the attacker, still counted as the
  * victim's record. The write replaces project_type, regulatory_framework, goals,
  * baseline_date, target_date and both summary narratives, bumps `version`, and
- * sets `last_reviewed_by_ana_at = now()` — so the clobbered schedule reads as
+ * (then) set `last_reviewed_by_ana_at = now()` — so the clobbered schedule read as
  * freshly reviewed. A blind write, no data returned: an integrity event on the
- * artifact a program manages its regulatory milestones from.
+ * artifact a program manages its regulatory milestones from. (Since 2026-11-10 a
+ * generation writes that column NULL: it is a human schedule write, and
+ * withHumanScheduleWrite marks the objective monitor dirty before it commits.)
  *
  * ── Why these tests execute SQL ───────────────────────────────────────────────
  * A source grep cannot tell you which row an upsert lands on. That is decided by
@@ -75,13 +77,13 @@ const OLD_INDEX = `
     ON project_schedule_of_events (project_id);
 `;
 
-/** generateProjectSchedule's upsert, verbatim in shape. */
+/** generateProjectSchedule's upsert, in shape (service.ts); the arbiter is the variable. */
 const UPSERT = (arbiter: string) => `
   INSERT INTO project_schedule_of_events
     (organization_id, project_id, status, project_type, regulatory_framework, goals,
      basis_summary, ana_summary, confidence, version, baseline_date, target_date,
      generated_by_ana, last_reviewed_by_ana_at, updated_at)
-  VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, now(), now())
+  VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, NULL, now())
   ON CONFLICT ${arbiter} DO UPDATE SET
      status = 'active',
      project_type = EXCLUDED.project_type,
@@ -94,7 +96,7 @@ const UPSERT = (arbiter: string) => `
      baseline_date = EXCLUDED.baseline_date,
      target_date = EXCLUDED.target_date,
      generated_by_ana = EXCLUDED.generated_by_ana,
-     last_reviewed_by_ana_at = now(),
+     last_reviewed_by_ana_at = NULL,
      updated_at = now()
   RETURNING id, version`;
 
@@ -173,8 +175,8 @@ describe('the org-blind arbiter really was a cross-tenant write (mechanism proof
     expect(row.project_type).toBe('510K');
     expect(row.regulatory_framework).toBe('FDA-CDRH');
     expect(row.basis_summary).toContain('no goals supplied');
-    // Version incremented and last_reviewed_by_ana_at refreshed, so the
-    // clobbered schedule reads as freshly reviewed rather than tampered with.
+    // Version incremented, so the clobbered schedule reads as a new generation
+    // of the victim's own rather than as tampered with.
     expect(row.version).toBe(2);
 
     // And there is exactly ONE row: the attacker's insert did not create its

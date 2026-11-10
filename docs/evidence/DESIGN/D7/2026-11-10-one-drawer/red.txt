@@ -1,0 +1,9 @@
+ × client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > says a notification target that is not there was not found, and offers no Try again 5031ms
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date, saying the document keeps the date its approval set 77ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > opens "New controlled document" in the one drawer, and holds AnA off the screen while it is open 91ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  3 failed | 42 passed (45)
+ × client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says so when the approval set no review date, rather than claiming one is kept 86ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 9 passed (10)

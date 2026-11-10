@@ -90,6 +90,8 @@ function describeProgram(d, row) {
     status: d.status ?? null,
     indication: d.indication ?? INDICATION,
     sponsor: 'Concept2Cure Therapeutics (fictional) — the organisation the founder is signed into',
+    // The client workspace the project is recorded under; null when it has none.
+    clientWorkspaceId: d.client_workspace_id == null ? null : Number(d.client_workspace_id),
   };
 }
 
@@ -126,6 +128,21 @@ async function ensureProgram(ctx, spec = PROGRAMS.mab, recordAs = 'program') {
     return `${created ? 'created' : 'found'} ${row.id} (${program.code ?? '?'})`;
   });
   return program;
+}
+
+/**
+ * The context C2C-201 is created in: C2C-101's own client workspace, when the
+ * run named none. C2C-201 is the same fictional sponsor's programme. Once the
+ * organisation holds a second sponsor (the Lumen pack's, seeded by `--pack all`)
+ * the intake refuses a project that names no client (409
+ * AMBIGUOUS_CLIENT_WORKSPACE), and the pack stopped there: the demo then had no
+ * programme whose Module 3 composes (found 2026-11-10 on a re-seed at head).
+ * A run that named a workspace keeps it; a C2C-101 with no workspace sends none,
+ * as before.
+ */
+export function sameSponsor(ctx, program) {
+  if (ctx.clientWorkspaceId !== undefined || program.clientWorkspaceId == null) return ctx;
+  return { ...ctx, clientWorkspaceId: program.clientWorkspaceId };
 }
 
 /**
@@ -314,7 +331,7 @@ export async function seed(ctx) {
      here so the demo's §3.2 board has content a person can read; C2C-101's
      build is refused by the boundary, which is correct and is the other half
      of what the demo shows. */
-  const smallMolecule = await ensureProgram(c, PROGRAMS.smallMolecule, 'programSmallMolecule');
+  const smallMolecule = await ensureProgram(sameSponsor(c, program), PROGRAMS.smallMolecule, 'programSmallMolecule');
   await ensureCmc(c, smallMolecule, BIOTECH_SM_CMC, BIOTECH_SM.molecule);
   await ensureModule3Build(c, smallMolecule, BIOTECH_SM.molecule);
   await ensureTasks(c, program, BIOTECH_TASKS, 'C2C-101');

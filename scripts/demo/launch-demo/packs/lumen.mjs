@@ -28,6 +28,8 @@ import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
 import { connectApprover, ensureLumenVault } from './lumen-vault.mjs';
 import { ensureLumenCsr } from './lumen-csr.mjs';
+import { ensureLumenProtocol } from './lumen-protocol.mjs';
+import { ensureSubmission } from './biotech-submission.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -153,6 +155,7 @@ export async function seed(ctx) {
     projects[spec.code] = project;
     await ensureOverview(c, project, spec);
     await ensureTasks(c, project, castTasks(TASKS[spec.code] ?? [], cast), spec.code);
+    await ensureProjectTeam(c, project, spec.code);
   }
   run.record('projects', projects);
 
@@ -161,6 +164,8 @@ export async function seed(ctx) {
   await ensureStudyDesign(c, lmn201, null, LMN201_DESIGN);
   await ensureObjective(c, lmn201, LMN201_DESIGN);
   await ensureCmc(c, lmn201, LMN201_CMC, 'LMN-201');
+  // Study & Protocol Design: the RePreve protocol, bound to its design, with deviations and a review (lumen-protocol.mjs).
+  await ensureLumenProtocol(c, lmn201);
   await ensurePlanDocuments(c, lmn201, ['Cover Letter', 'Form FDA 1571', "Investigator's Brochure", 'Introductory Statement and General Investigational Plan'], 'LMN-201');
   // The inbox's "extract commitments" (P-81, P-84) on a fictional approval letter.
   run.record('approvalLetter', await ensureAgencyLetter(c, lmn201, APPROVAL_LETTER, 'LMN-201'));
@@ -174,12 +179,19 @@ export async function seed(ctx) {
   // Risk-based monitoring: RACT, KRIs and QTLs over six monthly extracts, signals, the plan and site actions (lumen-rbm.mjs).
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
   // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
-  await ensureLumenVault({ ...ctx, ...c }, projects);
+  const vault = await ensureLumenVault({ ...ctx, ...c }, projects);
   // The headline scenario: LMN-201's Phase 2 CSR, prepared up to its build (lumen-csr.mjs).
   await ensureLumenCsr({ ...ctx, ...c }, lmn201);
-  await ensureLumenSequence(c, lmn201);
+  /* Submission Center: sequence 0000 on LMN-201's canonical submission, with its approved Vault documents placed as
+     eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
+     Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
+     "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
+  const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
+    .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title }));
+  await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
+  await ensureLumenReportPack(c);
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   run.record('summary', { created: sum(tally.tally.created), found: sum(tally.tally.found) });
@@ -208,6 +220,33 @@ async function ensureObjective({ api, run, tally }, project, design) {
     }), 200, 'record the project objective');
     tally.created('objective');
     return 'created';
+  });
+}
+
+/**
+ * The project's team: the reviewer and the approver are given edit access, through the Team drawer's own route
+ * (PUT /api/concept2cure/projects/:projectId/sharing/members/:userId). Without it the Team card listed the lead
+ * alone and said "16 open items assigned to someone not on this list" (showcase sweep, 2026-11-10), because the
+ * tasks above belong to people the project was never shared with. With no second or third person, nothing is shared.
+ */
+async function ensureProjectTeam({ api, run, tally, signer, approver }, project, code) {
+  await run.step(`Team: ${code} is shared with the reviewer and the approver`, async () => {
+    const people = [signer, approver].filter(Boolean)
+      .map((person) => Number(person.userId ?? person.session?.user?.id)).filter((id) => Number.isSafeInteger(id) && id > 0);
+    if (!people.length) return 'not executed: no second or third person (OQ_SIGNER_* / OQ_APPROVER_*)';
+    const team = must(await api('GET', `/api/c2c/projects/${project.id}/team`), 200, 'read the project team');
+    if (!Number.isSafeInteger(team.project_id)) throw new Error(`${code}: the team read named no project`);
+    const base = `/api/concept2cure/projects/${team.project_id}/sharing`;
+    const query = `?programId=${encodeURIComponent(project.id)}`;
+    const sharing = must(await api('GET', base + query), 200, 'read the project sharing').data;
+    const out = [];
+    for (const userId of people) {
+      if ((sharing?.members ?? []).some((member) => Number(member.userId) === userId)) { tally.found('project-member'); out.push(`#${userId} found`); continue; }
+      must(await api('PUT', `${base}/members/${userId}${query}`, { role: 'edit' }), 200, `share ${code} with user ${userId}`);
+      tally.created('project-member');
+      out.push(`#${userId} can edit`);
+    }
+    return out.join('; ');
   });
 }
 
@@ -244,26 +283,6 @@ async function ensureIbReview({ api, run, tally, signer }, program) {
   });
 }
 
-/**
- * Sequence 0000 (original) on LMN-201's canonical submission, the one intake records for the project (matched as
- * biotech-submission.mjs matches it: productName or title). Without a sequence Submission Center read "0 eCTD
- * sequences tracked yet" and the CSR's "Place into filing" asked for a sequence first (2026-11-06). Through Submission
- * Center's own route; nothing is placed, frozen or dispatched.
- */
-async function ensureLumenSequence({ api, run, tally }, program) {
-  await run.step('Submission Center: LMN-201 sequence 0000 (original)', async () => {
-    const list = asArray(must(await api('GET', '/api/submissions'), 200, 'list submissions'), 'data');
-    const keys = [program.code, program.title].filter(Boolean).map((k) => k.toLowerCase());
-    const sub = list.find((x) => keys.includes(String(x.productName ?? '').toLowerCase()) || keys.includes(String(x.title ?? '').toLowerCase()));
-    if (!sub) throw new Error('LMN-201 has no canonical submission; intake records one with the project');
-    const seqs = asArray(must(await api('GET', `/api/submissions/${sub.id}/sequences`), 200, 'list LMN-201 sequences'), 'data');
-    if (seqs.some((q) => String(q.sequenceNumber ?? q.sequence_number) === '0000')) { tally.found('sequence'); return `found on submission #${sub.id}`; }
-    const seq = must(await api('POST', `/api/submissions/${sub.id}/sequences`, { region: 'fda', sequenceNumber: '0000', type: 'original' }), 201, 'create LMN-201 sequence 0000');
-    tally.created('sequence');
-    return `#${seq.id} on submission #${sub.id} (${seq.status})`;
-  });
-}
-
 /** Reports run for LMN-201, from the governed record, so Reporting's Run history is not empty (2026-11-06). */
 const LMN201_REPORTS = ['readiness.executive_digest', 'ha.commitment_register', 'usa_fda.ind_safety_readiness', 'etmf.completeness_pack'];
 
@@ -286,6 +305,57 @@ async function ensureLumenReports({ api, run, tally, identity }, program) {
       if (!Number.isSafeInteger(r?.id)) throw new Error(`run ${reportTypeId}: no run id returned`);
       tally.created('report-run');
       out.push(`${reportTypeId}: #${r.id} ${r.status}`);
+    }
+    return out.join('; ');
+  });
+}
+
+/**
+ * Reporting's other two tabs for LMN-201 (showcase sweep, 2026-11-10: Schedules and Bundles were empty). A bundle of
+ * the four runs above, and two schedules, through the routes the Reporting screen calls (POST /api/report-os/bundles,
+ * POST /api/insights/subscriptions). The schedules deliver inside the platform only: no recipients, no e-mail.
+ * A plan that does not include scheduled reports is refused by the server (403), and the step says so.
+ */
+const LMN201_BUNDLE = {
+  name: '[Demo · Lumen] LMN-201 monthly governance pack',
+  description: 'DEMO. The four computed reports the LMN-201 team reads each month: executive digest, commitment register, IND safety readiness and eTMF completeness.',
+};
+const LMN201_SCHEDULES = [
+  { reportTypeId: 'readiness.executive_digest', schedule: { cadence: 'weekly', dayOfWeek: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
+  { reportTypeId: 'etmf.completeness_pack', schedule: { cadence: 'monthly', dayOfMonth: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
+];
+
+async function ensureLumenReportPack({ api, run, tally }) {
+  const runs = asArray(must(await api('GET', '/api/report-os/runs?limit=100'), 200, 'list report runs'), 'data')
+    .filter((r) => LMN201_REPORTS.includes(r.reportTypeId) && r.scopeType === 'project');
+  const runOf = (reportTypeId) => runs.find((r) => r.reportTypeId === reportTypeId);
+  await run.step('Reporting: the LMN-201 monthly governance pack (bundle)', async () => {
+    const bundles = asArray(must(await api('GET', '/api/report-os/bundles'), 200, 'list report bundles'), 'data');
+    if (bundles.some((b) => b.name === LMN201_BUNDLE.name)) { tally.found('report-bundle'); return 'found'; }
+    const runIds = LMN201_REPORTS.map((t) => runOf(t)?.id).filter(Number.isSafeInteger);
+    if (runIds.length === 0) { run.note('Reporting: no LMN-201 report run exists, so no bundle was made.'); return 'not executed — no runs'; }
+    must(await api('POST', '/api/report-os/bundles', { ...LMN201_BUNDLE, runIds }), 201, 'bundle the LMN-201 reports');
+    tally.created('report-bundle');
+    return `created from ${runIds.length} runs`;
+  });
+  await run.step(`Reporting: ${LMN201_SCHEDULES.length} schedules for LMN-201 (in the platform, no e-mail)`, async () => {
+    const existing = asArray(must(await api('GET', '/api/insights/subscriptions'), 200, 'list report schedules'), 'data');
+    const out = [];
+    for (const s of LMN201_SCHEDULES) {
+      const prior = runOf(s.reportTypeId);
+      if (!prior) { out.push(`${s.reportTypeId}: not executed — no run to take its scope from`); continue; }
+      const scope = { scopeType: prior.scopeType, scopeId: String(prior.scopeId) };
+      if (existing.some((e) => e.reportTypeId === s.reportTypeId && e.scopeType === scope.scopeType && String(e.scopeId) === scope.scopeId)) {
+        tally.found('report-schedule'); out.push(`${s.reportTypeId}: found`); continue;
+      }
+      const res = await api('POST', '/api/insights/subscriptions', { reportTypeId: s.reportTypeId, ...scope, channel: 'platform', format: 'in_app', schedule: s.schedule });
+      if (res.status === 403) {
+        run.note(`Reporting: the schedule for ${s.reportTypeId} was refused (403): ${String(res.text ?? '').slice(0, 200)}`);
+        out.push(`${s.reportTypeId}: not executed — refused (403)`); continue;
+      }
+      must(res, 201, `schedule ${s.reportTypeId}`);
+      tally.created('report-schedule');
+      out.push(`${s.reportTypeId}: ${s.schedule.cadence}`);
     }
     return out.join('; ');
   });

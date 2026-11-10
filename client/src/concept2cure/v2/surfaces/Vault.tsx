@@ -88,11 +88,12 @@ import {
   isEditorFilingDocumentId,
 } from '../editorTarget';
 import { readShellProject, publishShellProject } from '../shellProject';
-import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
+import { type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
 import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { VaultPlanWork } from './VaultPlanWork';
+import { sponsorGate, useVaultProjects, type SponsorGate, type VaultProjectsRead } from './vaultSponsors';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
 import { DataRoomSourcesPanel, takeVaultCatalogAsk } from '../editor/DataRoomSourcesPanel';
@@ -1310,8 +1311,14 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
  * a project to see its vault" and sent the person to Projects. The list is the one the ⌘K palette and Projects read
  * (GET /api/c2c/projects); a row opens that project and its Vault, as the rail's Vault does inside a project.
  */
-function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
-  const read = usePaletteProjects(true);
+function ProjectVaults({ onNav, read, gate, onChooseSponsor }: {
+  onNav?: (id: string) => void;
+  /** The projects the person can open, read once by the Vault. */
+  read: VaultProjectsRead;
+  /** Which sponsor's projects are listed (P-107: every view is inside one sponsor); null until the list is read. */
+  gate: SponsorGate | null;
+  onChooseSponsor: (key: string | null) => void;
+}) {
   const open = (p: PaletteProject) => {
     publishShellProject({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}), ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) });
     onNav?.('vault');
@@ -1321,17 +1328,42 @@ function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
       ? <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>
       : <p role="status" className="scaf-note">Reading your projects…</p>;
   }
-  if (read.projects.length === 0) {
+  if (read.projects.length === 0 || !gate) {
     return <p className="scaf-note">You have no projects yet. A Vault belongs to a project: create one with New project in Projects.</p>;
   }
+  if (gate.ask) {
+    /* Several sponsors: which one is asked first, and nothing of any sponsor is listed until then. */
+    return (
+      <section className="pj-sec vd-org" aria-labelledby="vault-sponsor-h" data-testid="vault-sponsor-choice">
+        <div className="pj-sec-h">
+          <h2 id="vault-sponsor-h">Which sponsor?</h2>
+          <span className="sec-sub">A Vault view stays inside one sponsor</span>
+        </div>
+        <div className="ctable">
+          {gate.sponsors.map((sp) => (
+            <div key={sp.key} className="ct-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
+              <span className="ct-strong">{sp.name} <span className="vd-sub-part">· {sp.projects.length === 1 ? '1 project' : `${sp.projects.length} projects`}</span></span>
+              <button type="button" className="btn ghost small" onClick={() => onChooseSponsor(sp.key)} aria-label={`Show the Vaults of ${sp.name}`}>
+                Show its Vaults
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+  const sponsor = gate.sponsors.length > 1 ? gate.sponsors.find((sp) => sp.projects === gate.projects) ?? null : null;
   return (
     <section className="pj-sec vd-org" aria-labelledby="vault-project-list-h" data-testid="vault-project-list">
       <div className="pj-sec-h">
-        <h2 id="vault-project-list-h">Your projects' Vaults</h2>
-        <span className="sec-sub">{read.projects.length === 1 ? '1 project' : `${read.projects.length} projects`}</span>
+        <h2 id="vault-project-list-h">{sponsor ? `${sponsor.name}: its projects' Vaults` : "Your projects' Vaults"}</h2>
+        <span className="sec-sub">{gate.projects.length === 1 ? '1 project' : `${gate.projects.length} projects`}</span>
+        {sponsor ? (
+          <button type="button" className="btn ghost small" onClick={() => onChooseSponsor(null)} data-testid="vault-sponsor-change">Change sponsor</button>
+        ) : null}
       </div>
       <div className="ctable">
-        {read.projects.map((p) => (
+        {gate.projects.map((p) => (
           <div key={p.id} className="ct-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
             <span className="ct-strong">{p.title}</span>
             <button type="button" className="btn ghost small" onClick={() => open(p)} aria-label={`Open the Vault of ${p.title}`}>
@@ -1575,9 +1607,14 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      slice C): the Artifacts center's gallery, folded in. Shown with no project
      open; read only when a person opens it while a project is. */
   const [orgOpen, setOrgOpen] = useState(false);
-  const orgActive = !projectId || orgOpen;
+  /* With no project open (P-107 item 3): the projects the person can open, and the sponsor chosen among them. Nothing
+     of the organization is read until the sponsor is known, and then only that sponsor's, by a project of it. */
+  const projectList = useVaultProjects(!projectId);
+  const [sponsorKey, setSponsorKey] = useState<string | null>(null);
+  const gate = useMemo(() => (projectList.state === 'ready' ? sponsorGate(projectList.projects, sponsorKey) : null), [projectList, sponsorKey]);
+  const orgActive = projectId ? orgOpen : Boolean(gate && !gate.ask);
   /* Inside a project, its sponsor's projects only (F1, S6 V4): a CRO's sponsors never mix in one list. */
-  const orgRead = useOrganizationArtifacts(orgActive, projectId);
+  const orgRead = useOrganizationArtifacts(orgActive, projectId ?? gate?.anchorProjectId ?? null);
   const [orgFocusId, setOrgFocusId] = useState<string | null>(null);
   const downloadOrganizationArtifact = async (row: OrganizationArtifactRow) => {
     if (downloading) return;
@@ -3244,8 +3281,8 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
             title="Choose a project's Vault"
             hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
           />
-          <ProjectVaults onNav={onNav} />
-          {organizationView}
+          <ProjectVaults onNav={onNav} read={projectList} gate={gate} onChooseSponsor={setSponsorKey} />
+          {gate && !gate.ask ? organizationView : null}
         </>
       ) : vaultState.loading && !vault ? (
         <div role="status" className="vd-loading">

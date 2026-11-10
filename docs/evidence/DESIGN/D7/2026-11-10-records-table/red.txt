@@ -1,0 +1,9 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > is a table: column headers, one body per record, its first action as its next step and the rest under More 322ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > lists nonconformances and dispositions one only through a signature, its reason the rationale 15ms
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 13 passed (16)
+--- the column-name guard, with management reviews' column named Actions again:
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > every quality register names its columns once > REVIEWS 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
