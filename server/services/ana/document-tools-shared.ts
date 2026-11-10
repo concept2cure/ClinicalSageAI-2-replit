@@ -11,6 +11,7 @@
  * @module server/services/ana/document-tools-shared
  */
 
+import { ReasonNotStatedError } from './stated-reason-input.js';
 import { AnaProjectScopeError } from './project-scope-admission.js';
 import { ProgramReadAccessError } from '../c2c/current-program-access.js';
 import type { ToolContext } from './AnaToolExecutor.js';
@@ -141,6 +142,8 @@ export function withCaughtErrors(
     try {
       return await handler(input, ctx);
     } catch (err) {
+      // The registration wrapper answers this one itself, by asking for the person's reason.
+      if (err instanceof ReasonNotStatedError) throw err;
       if (err instanceof ProgramReadAccessError) {
         return JSON.stringify({ ok: false, status: err.status, code: err.code, error: err.message });
       }

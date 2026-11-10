@@ -694,7 +694,8 @@ export async function isSoleMember(db: AuthorshipReader, orgId: number, userId: 
  * no self-approval.
  */
 export async function organizationReviewPolicy(db: AuthorshipReader, orgId: number): Promise<ReviewPolicy> {
-  const { rows } = await db.query(`SELECT settings FROM organizations WHERE id = $1`, [orgId]);
+  // The row as JSON, then its settings: a row with no settings reads as unset (the defaults), on any schema.
+  const { rows } = await db.query(`SELECT to_jsonb(o) -> 'settings' AS settings FROM organizations o WHERE o.id = $1`, [orgId]);
   if (rows.length !== 1) return { ...reviewPolicyOf(null), soleMemberSelfApproval: false };
   const stored: unknown = rows[0].settings;
   return reviewPolicyOf(typeof stored === 'string' ? JSON.parse(stored) : stored);
