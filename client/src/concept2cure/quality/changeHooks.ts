@@ -45,6 +45,8 @@ interface ServerChange {
   reason: string | null;
   /** Who raised the change: the server refuses their approval (change-approval-signature.ts, the two-person rule). */
   proposed_by?: number | null;
+  impact_assessment?: string | null;
+  implementation_plan?: string | null;
   target_implementation_date: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -89,6 +91,8 @@ function adaptChange(r: ServerChange): ChangeControl {
     status: r.status as ChangeState,
     reason: r.reason,
     proposedBy: typeof r.proposed_by === 'number' ? r.proposed_by : null,
+    impactAssessment: typeof r.impact_assessment === 'string' ? r.impact_assessment : null,
+    implementationPlan: typeof r.implementation_plan === 'string' ? r.implementation_plan : null,
     learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,

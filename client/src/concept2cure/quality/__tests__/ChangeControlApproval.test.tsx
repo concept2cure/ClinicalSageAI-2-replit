@@ -121,6 +121,11 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
     renderLog();
     fireEvent.click(screen.getAllByRole('button', { name: /^Approve$/ })[0]);
     expect(screen.getByRole('dialog', { name: 'Approve change' }).getAttribute('data-meanings')).toBe('approval');
+    // C9: what the signature binds is read inside the ceremony, before signing.
+    const record = screen.getByTestId('change-approval-record');
+    expect(record.textContent).toContain('What you approve');
+    expect(record.textContent).toContain('Filter qualification and an extractables study; no filing change.');
+    expect(record.textContent).toContain('Qualify the second source, then update the aseptic fill batch record.');
     fireEvent.click(screen.getByText('stub-sign'));
 
     await waitFor(() => expect(H.signed).toBeTruthy());

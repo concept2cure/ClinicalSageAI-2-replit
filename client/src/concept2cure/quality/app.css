@@ -229,25 +229,28 @@
 .c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .qcc-detail-title { font-size: var(--fs-small); color: var(--text-300); font-weight: 600; }
-.qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.qcc-link {
-  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
-  border-radius: var(--radius-lg); background: var(--background); text-align: left;
-  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qcc-link-ico { display: inline-flex; color: var(--text-300); flex: 0 0 auto; }
-.qcc-link-ico[data-type="deviation"]  { color: var(--warning); }
-.qcc-link-ico[data-type="capa"]       { color: var(--warning); }
-.qcc-link-ico[data-type="validation"] { color: var(--success); }
-.qcc-link-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.qcc-link-ref { font-size: 12px; font-weight: 600; color: var(--text-100); }
-.qcc-link-label { font-size: 10.5px; color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qcc-link-rel { font-size: 10px; color: var(--text-400); white-space: nowrap; }
-.qcc-link-type {
-  font-size: 11px; color: var(--text-300);
-  font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
-}
+/* A change's record in its row (C9, ChangeRecordDetail.tsx): the fields its approval signs, as a definition list, then
+   its linked records as a plain list. Until 2026-11-10 the links were bordered cards with type-coloured icons and an
+   accent hover, and the assessment could not be read in the log at all. */
+.qcc-facts { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 6px 16px; margin: 4px 0 14px; }
+.qcc-facts > div { display: contents; }
+.qcc-facts dt { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-facts dd { margin: 0; color: var(--text-100); white-space: pre-wrap; overflow-wrap: anywhere; }
+.qcc-facts dd[data-empty] { color: var(--text-300); }
+.qcc-detail h3.qcc-detail-title { margin: 0 0 6px; }
+.qcc-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.qcc-links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.qcc-link { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-100); text-align: left; }
+.qcc-link:hover { text-decoration: underline; }
+.qcc-link-label { color: var(--text-200); }
+.qcc-link-rel, .qcc-link-type { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-link-type::before { content: "·"; margin-right: 10px; }
+/* What the approver signs, inside the signature ceremony (C9). */
+.qcc-sign-record { margin: 0 0 12px; }
+.qcc-sign-lead { margin: 0 0 6px; font-size: var(--fs-small); font-weight: 600; color: var(--text-200); }
+.qcc-sign-record .qcc-facts { grid-template-columns: 1fr; gap: 2px; margin: 0; }
+.qcc-sign-record .qcc-facts dd { margin-bottom: 6px; }
+@media (max-width: 640px) { .qcc-facts { grid-template-columns: 1fr; gap: 2px; } .qcc-facts dd { margin-bottom: 6px; } }
 
 /* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
 .qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
