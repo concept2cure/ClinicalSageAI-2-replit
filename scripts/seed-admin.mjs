@@ -102,6 +102,20 @@ async function run() {
     // The operator's organisation must already exist; none is created for it.
     const named = await pool.query('SELECT id FROM organizations WHERE slug = $1 LIMIT 1', [ADMIN_ORG_SLUG]);
     orgId = named.rows[0]?.id;
+    /* A named demonstration organisation, created here on this machine only (2026-11-06, the founder: "create an
+       account for Lumen … a biotech with multiple users"). ADMIN_ORG_NAME is its display name. Off this machine an
+       unknown slug is still refused below: there, seed-admin creates no organisation. */
+    const ADMIN_ORG_NAME = (process.env.ADMIN_ORG_NAME || '').trim();
+    if (orgId == null && ON_THIS_MACHINE && ADMIN_ORG_NAME) {
+      await pool.query(
+        `INSERT INTO organizations (name, slug, industry_mode, tier, status)
+         VALUES ($1, $2, 'biotech', 'enterprise', 'active')
+         ON CONFLICT (slug) DO NOTHING`,
+        [ADMIN_ORG_NAME, ADMIN_ORG_SLUG],
+      );
+      orgId = (await pool.query('SELECT id FROM organizations WHERE slug = $1 LIMIT 1', [ADMIN_ORG_SLUG])).rows[0]?.id;
+      console.info(`Organisation "${ADMIN_ORG_NAME}" (${ADMIN_ORG_SLUG}) ensured on this machine: ${orgId}`);
+    }
     if (orgId == null) {
       throw new Error(
         `seed-admin: no organisation with slug "${ADMIN_ORG_SLUG}" in this database; nothing was changed. ` +
