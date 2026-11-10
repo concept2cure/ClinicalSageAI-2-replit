@@ -296,8 +296,10 @@ export function rbmBoardHasData(board: RbmBoard | null): boolean {
 }
 
 /** The assessment framework as a reader names it. The record stores a code (`ich_e6r3`, the schema default);
- *  an unknown code is shown as recorded rather than guessed at. */
-const FRAMEWORK_LABEL: Record<string, string> = { ich_e6r3: 'ICH E6(R3)', ich_e6r2: 'ICH E6(R2)' };
+ *  an unknown code is shown as recorded rather than guessed at. There is no R2 entry: no writer admits an
+ *  R2 code (`FRAMEWORK` in server/routes/mdx-rbm.ts), and the platform cites only R3 as in force
+ *  (tests/regulatory/ich-e6r3-citations.test.ts). */
+const FRAMEWORK_LABEL: Record<string, string> = { ich_e6r3: 'ICH E6(R3)' };
 export function frameworkLabel(code: string | null | undefined): string {
   const c = (code ?? '').trim();
   return FRAMEWORK_LABEL[c] ?? c;
