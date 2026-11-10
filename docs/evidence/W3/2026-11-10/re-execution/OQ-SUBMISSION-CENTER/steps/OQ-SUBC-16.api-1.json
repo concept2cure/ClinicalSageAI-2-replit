@@ -21,7 +21,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "error": "invalid_request"

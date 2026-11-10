@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/projects/fb517312-5af8-49de-9d04-2a5dafe99192/dossier",
+    "url": "http://localhost:5200/api/c2c/projects/06f08b30-e632-4499-8374-e9dc4e0fce42/dossier",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,11 +9,11 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 35,
+    "durationMs": 40,
     "rateLimitRetries": 0,
     "body": {
-      "projectId": "fb517312-5af8-49de-9d04-2a5dafe99192",
-      "measuredAt": "2026-11-10T02:50:02.382Z",
+      "projectId": "06f08b30-e632-4499-8374-e9dc4e0fce42",
+      "measuredAt": "2026-11-10T03:54:32.354Z",
       "home": {
         "state": "measured",
         "pct": 0,
@@ -25,7 +25,7 @@
           "scope": "home",
           "agency": "fda",
           "docType": "ind",
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "figure": {
             "state": "measured",
             "pct": 0,
@@ -40,7 +40,7 @@
           "group": "module",
           "module": "1",
           "agency": null,
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "label": "Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3)",
           "counted": 13,
           "complete": 0,
@@ -52,7 +52,7 @@
             "counted": 13,
             "complete": 0
           },
-          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "lastUpdated": "2026-11-10T03:54:13.561Z",
           "sections": [
             {
               "key": "1.1.1",
@@ -125,7 +125,7 @@
           "group": "module",
           "module": "2",
           "agency": null,
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "label": "Module 2 · Summaries",
           "counted": 12,
           "complete": 0,
@@ -137,7 +137,7 @@
             "counted": 12,
             "complete": 0
           },
-          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "lastUpdated": "2026-11-10T03:54:13.561Z",
           "sections": [
             {
               "key": "2.2",
@@ -205,7 +205,7 @@
           "group": "module",
           "module": "3",
           "agency": null,
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "label": "Module 3 · Quality (CMC)",
           "counted": 20,
           "complete": 0,
@@ -217,7 +217,7 @@
             "counted": 20,
             "complete": 0
           },
-          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "lastUpdated": "2026-11-10T03:54:13.561Z",
           "sections": [
             {
               "key": "3.2.S.1",
@@ -325,7 +325,7 @@
           "group": "module",
           "module": "4",
           "agency": null,
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "label": "Module 4 · Nonclinical study reports",
           "counted": 19,
           "complete": 0,
@@ -337,7 +337,7 @@
             "counted": 19,
             "complete": 0
           },
-          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "lastUpdated": "2026-11-10T03:54:13.561Z",
           "sections": [
             {
               "key": "4.2.1.1",
@@ -440,7 +440,7 @@
           "group": "module",
           "module": "5",
           "agency": null,
-          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "documentId": "doc_ec14a92498534c26925c0cba0c23cbad",
           "label": "Module 5 · Clinical study reports",
           "counted": 8,
           "complete": 0,
@@ -452,7 +452,7 @@
             "counted": 8,
             "complete": 0
           },
-          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "lastUpdated": "2026-11-10T03:54:13.561Z",
           "sections": [
             {
               "key": "5.2",

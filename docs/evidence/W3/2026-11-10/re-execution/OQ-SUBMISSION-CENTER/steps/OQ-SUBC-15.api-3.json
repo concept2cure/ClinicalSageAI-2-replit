@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/submissions/sequences/5/dispatch-readiness",
+    "url": "http://localhost:5200/api/submissions/sequences/11/dispatch-readiness",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,10 +9,10 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 56,
+    "durationMs": 73,
     "rateLimitRetries": 0,
     "body": {
-      "sequenceId": 5,
+      "sequenceId": 11,
       "region": "fda",
       "sequenceStatus": "assembling",
       "validatedStage": null,
@@ -41,14 +41,14 @@
       },
       "shadowReviewWaivable": {
         "eligible": false,
-        "failedRunId": 2,
+        "failedRunId": 3,
         "failureCode": "no_provider_configured",
-        "reason": "Run #2 failed because no AI provider is configured on this deployment, which is not an AI provider outage, so Shadow Review cannot be waived for it. Run Shadow Review again."
+        "reason": "Run #3 failed because no AI provider is configured on this deployment, which is not an AI provider outage, so Shadow Review cannot be waived for it. Run Shadow Review again."
       },
       "releaseSignature": {
         "required": true,
         "verdict": "unsigned",
-        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:5",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:11",
         "cleared": false
       },
       "gate": {
@@ -57,7 +57,7 @@
           "8 open error-severity validation finding(s) must be resolved before dispatch.",
           "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
           "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:5)."
+          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:11)."
         ]
       },
       "freezeGate": {
@@ -152,7 +152,7 @@
           },
           "cleared": false,
           "blockers": [
-            "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:5)."
+            "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:11)."
           ]
         }
       ],
@@ -203,7 +203,7 @@
             "code": "DOCUMENT_NOT_APPROVED",
             "sectionCode": "m1.2",
             "blocksRelease": true,
-            "message": "Leaf \"Cover letter\" (m1.2) points at vault_documents badcf964-6e6e-4ce5-a700-b7e6222ccde8, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "message": "Leaf \"Cover letter\" (m1.2) points at vault_documents 66695784-8c30-4f12-9eae-878f9cbba732, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
             "rule": {
               "id": "DOCUMENT_NOT_APPROVED",
               "title": "Every leaf’s source document is approved for transmission",

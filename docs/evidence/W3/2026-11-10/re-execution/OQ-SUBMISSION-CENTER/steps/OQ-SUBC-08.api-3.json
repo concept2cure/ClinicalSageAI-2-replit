@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
-      "target": "ectd-sequence:5",
+      "target": "ectd-sequence:11",
       "reason": "OQ-004 step 08: e-signature to freeze sequence 0000 for validation",
       "payload": {
         "intent": "freeze",
@@ -20,12 +20,12 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 353,
+    "durationMs": 321,
     "rateLimitRetries": 0,
     "body": {
-      "actionId": "act_814512e78f14418d97f4caf943f73c60",
-      "auditId": "38844c0c-9e9b-4f63-8f5d-86d8a71db945",
-      "sha256Chain": "105746184d18246a195fa13ec131dc12acf3529e18b4002a712dc9857899fb84",
+      "actionId": "act_88e251e68223423d9b15f5bec7249ee6",
+      "auditId": "f1ee5345-1f69-40a1-86f4-8f5fbfefd000",
+      "sha256Chain": "68e030666f5227cd42de595467dd1e871fbec9658e19e7cc6d0dbe4ee4cbee95",
       "state": "executed"
     }
   }
