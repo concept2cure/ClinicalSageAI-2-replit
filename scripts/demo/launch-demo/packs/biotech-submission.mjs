@@ -48,7 +48,7 @@ const leafRef = (l) => ({ id: l.id, sectionCode: l.sectionCode ?? l.section_code
 /** A leaf an earlier run placed with no study gets its study id and STF file-tag, against the values it was read with.
  *  One that already names a study is a person's and is left. */
 async function tagStudy(api, seqId, leaf, d) {
-  if (!d.studyId || leaf.studyId) return false;
+  if (!d.studyId || leaf.studyId || leaf.stfFileTag) return false;
   must(await api('PUT', `/api/submissions/sequences/${seqId}/leaves`, {
     leafId: leaf.id, sectionCode: leaf.sectionCode, title: leaf.title,
     studyId: d.studyId, stfFileTag: d.stfFileTag,

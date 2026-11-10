@@ -94,7 +94,7 @@ export function vaultPdf(doc) {
 const LMN201 = [
   { key: 'protocol', code: 'LMN201-CDI02-PROT-v2.0.pdf', name: 'LMN-201-CDI02 (RePreve) clinical protocol v2.0', type: 'PROTOCOL', cls: 'CONFIDENTIAL',
     filing: ['module-5', 'protocol', '5.3.5.1'], stage: 'approved', version: '2.0 (amendment 1)',
-    stf: { studyId: 'LMN-201-CDI02', fileTag: 'protocol-or-amendment' },
+    stf: { studyId: 'lmn-201-cdi-02', fileTag: 'protocol-or-amendment' },
     subtitle: 'A randomized, double-blind, placebo-controlled Phase 2/3 study of LMN-201 with standard-of-care antibiotics',
     sections: [
       p('1. Synopsis',
@@ -141,7 +141,7 @@ const LMN201 = [
     ] },
   { key: 'icf', code: 'LMN201-CDI02-ICF-v2.0.pdf', name: 'LMN-201-CDI02 informed consent form template v2.0', type: 'OTHER', cls: 'INTERNAL',
     filing: ['module-5', 'clinical', '5.3.5.1'], stage: 'approved', version: '2.0',
-    stf: { studyId: 'LMN-201-CDI02', fileTag: 'iec-irb-consent-form-list' },
+    stf: { studyId: 'lmn-201-cdi-02', fileTag: 'iec-irb-consent-form-list' },
     subtitle: 'Master informed consent form for adult participants, English, for local adaptation by each site',
     sections: [
       p('1. Why is this study being done?',
@@ -264,7 +264,7 @@ const LMN201 = [
     ] },
   { key: 'tox', code: 'LMN201-TOX-13WK-RAT.pdf', name: '13-week oral repeat-dose toxicity study of LMN-201 in rats (GLP), report summary', type: 'MODULE_4', cls: 'CONFIDENTIAL',
     filing: ['module-4', 'nonclinical', '4.2.3.2'], stage: 'approved', version: 'Final report summary',
-    stf: { studyId: 'LMN201-TOX-13WK-RAT', fileTag: 'pre-clinical-study-report' },
+    stf: { studyId: 'lmn201-tox-13wk', fileTag: 'pre-clinical-study-report' },
     subtitle: `Summary of a GLP study conducted at ${TOX}`,
     sections: [
       p('1. Design',

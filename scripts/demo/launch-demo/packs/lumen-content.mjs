@@ -41,14 +41,16 @@ const program = (code) => {
 
 /** The projects, one per pipeline program the kit lists as a medicine in clinical or IND-enabling development. */
 /** Who files LMN-201 in the demonstration: the IND number its fictional letters already cite, and a sponsor record
- *  that says it is a demonstration. Every value is invented (a 999… D-U-N-S, a 555-01xx telephone, a .example address). */
+ *  that says it is a demonstration. Every value is invented (a 999… D-U-N-S, a 555-01xx telephone, a .example address),
+ *  and no real person is named: the contact is a role mailbox. The values are those 52d1c629cc first recorded, so a
+ *  database it seeded finds its sponsor by name. */
 export const LMN201_IDENTITY = {
   applicationNumber: '194021',
   sponsorAddress: '1 Fictional Way, Demo City, WA 00000, USA',
   sponsor: {
-    name: CLIENT.name, duns: '999999902',
-    contactName: 'Demo Regulatory Contact (fictional)', contactPhone: '+1 555 0101', contactEmail: 'regulatory@lumen-demo.example',
-    signatoryName: 'Demo Regulatory Contact (fictional)', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
+    name: 'Lumen Bioscience (fictional demo sponsor)', duns: '999999902',
+    contactName: 'Regulatory Affairs (fictional contact)', contactPhone: '+1 555 0102', contactEmail: 'regulatory@lumen-demo.example',
+    signatoryName: 'Regulatory Affairs (fictional contact)', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
   },
 };
 
