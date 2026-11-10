@@ -138,7 +138,7 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
 let fake: ReturnType<typeof makeFakeDb>;
 vi.mock('../../../db', () => ({ get db() { return fake.db; } }));
 
-import { csrBuildFailureText, runCSRBuildJob } from '../csr-job-runner';
+import { csrBuildFailureText, csrLiveBuild, runCSRBuildJob } from '../csr-job-runner';
 
 function makeJob(): Record<string, unknown> {
   return {
@@ -218,6 +218,40 @@ describe('runCSRBuildJob — a heading that ends with no text says why', () => {
     const text = csrBuildFailureText({ reason: 'missing_section_outputs', sections: ['13'],
       refused: { 13: 'DROP TABLE', 'x; y': 'unreconciled_figures', 14: 'some_new_reason' } });
     expect(text).toBe('Not complete: §13 has no saved text. The sections already saved are kept.');
+  });
+});
+
+// What a running build is writing now, for the person watching it (the founder, 2026-11-10). Held in memory while
+// the build runs: the heading, how far the build is, and the prose so far, without the claims block that follows it.
+describe('runCSRBuildJob — what the build is writing now', () => {
+  it('names the heading, counts the headings written, carries the prose as it arrives, and is gone when the build ends', async () => {
+    fake = makeFakeDb(makeJob());
+    const during: unknown[] = [];
+    draftMock.mockImplementationOnce(async (section: { number: string }, _request: unknown, context: { live: { start(): void; text(chunk: string): void } }) => {
+      during.push(csrLiveBuild(42));
+      context.live.start();
+      context.live.text('The benefit and risk are ');
+      context.live.text('discussed here.\n\n```csr-claims\n[{"table":"x"');
+      during.push(csrLiveBuild(42));
+      context.live.start();
+      during.push(csrLiveBuild(42));
+      return sectionDraft(section.number, 'Discussion text with no placeholder.');
+    });
+    await runCSRBuildJob(42);
+    expect(during[0]).toMatchObject({ number: '13', written: 0, total: 1, text: '' });
+    expect((during[0] as { title: string }).title).toMatch(/Discussion/);
+    expect(during[1]).toMatchObject({ number: '13', text: 'The benefit and risk are discussed here.' });
+    expect(during[2]).toMatchObject({ text: '' });
+    expect(csrLiveBuild(42)).toBeNull();
+    expect(fake.job.status).toBe('complete');
+  });
+
+  it('is gone when the build fails, and a build that is not running has none', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('CSR_DRAFTING_KEY_REFUSED'), { code: 'CSR_DRAFTING_KEY_REFUSED' }));
+    await runCSRBuildJob(42);
+    expect(csrLiveBuild(42)).toBeNull();
+    expect(csrLiveBuild(999)).toBeNull();
   });
 });
 

@@ -13,6 +13,9 @@
 //   FAKE_FAIL       'auth' | 'credit' | 'rate' | 'model' | 'overloaded': answer every
 //                   /v1/messages with that documented API error instead
 //   FAKE_RPM        refuse with 429 past this many requests per minute (0 = no limit)
+//   FAKE_DELAY_MS   how long it "reasons" before it answers (default 150)
+//   FAKE_STREAM_MS, FAKE_STREAM_CHARS   a streamed reply is sent FAKE_STREAM_CHARS characters at a time, that many
+//                   milliseconds apart, so a person can watch a heading being written (default: all at once)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -69,6 +72,26 @@ function quotableCells(evidence, limit) {
   return out.slice(0, limit);
 }
 
+/** The study metadata the builder quotes in its brief (data, not instructions); {} when it cannot be read. */
+function studyOf(brief) {
+  const at = brief.lastIndexOf('{"type":"study_metadata"');
+  if (at < 0) return {};
+  try { return JSON.parse(brief.slice(at)).studyInfo ?? {}; } catch { return {}; }
+}
+
+const or = (value, fallback) => value || fallback;
+
+/** Prose for a heading with no retained tables: only what the quoted study metadata says, and no observed result. */
+function planProse(study) {
+  const against = study.comparator ? ` against ${study.comparator}` : '';
+  return [
+    `This section is drafted for study ${or(study.protocolNumber, 'of record')}, ${or(study.title, 'as titled in the study information')}. It describes what the protocol and the recorded plan state, and it reports no observed result.`,
+    `The study is recorded as a ${or(study.phase, 'clinical')} study of ${or(study.investigationalProduct, 'the investigational product')}${against} in ${or(study.indication, 'the indication of record')}. The recorded design is: ${or(study.studyDesign, 'as stated in the protocol')}.`,
+    `The primary endpoint recorded for the study is ${or(study.primaryEndpoint, 'as stated in the protocol')}. The content ICH E3 asks of this heading is to be completed by the medical writer from the governed source documents named in the project, each cited by its version.`,
+    'Statements about how the study was carried out, about ethics review and about consent are not made in this draft, because the records that would support them were not supplied to the drafter.',
+  ];
+}
+
 function draftSection(body) {
   const users = body.messages.filter(m => m.role === 'user').map(m => textOf(m.content));
   const brief = users[0] || '';
@@ -81,14 +104,7 @@ function draftSection(body) {
     try { const j = JSON.parse(u); if (j?.type === 'retained_csr_evidence') evidence = j.evidence; } catch { /* not the evidence message */ }
   }
   const lines = [title, ''];
-  if (!evidence) {
-    lines.push(
-      'This section is drafted from the study information recorded for this report. It describes what the protocol and the recorded plan state, and it does not report an observed result.',
-      'The recorded plan identifies the investigational product, the comparator, the study design and the primary endpoint named in the study information. The source records that describe how the study was carried out are to be cited here by the medical writer from the governed documents.',
-      'Statements about the conduct of the study, about ethics review and about consent are not made in this draft, because the records that would support them were not supplied to the drafter.',
-    );
-    return { number, text: lines.join('\n') };
-  }
+  if (!evidence) return { number, text: [...lines, ...planProse(studyOf(brief))].join('\n\n') };
   const cells = quotableCells(evidence, 6);
   lines.push(
     `This section reports values transcribed from the retained analysis tables for the study. The values are historical retained aggregates and their clinical interpretation is for the reviewing clinician and statistician.`,
@@ -123,7 +139,12 @@ const readBody = req => new Promise((resolve, reject) => {
   req.on('data', c => chunks.push(c)).on('end', () => resolve(Buffer.concat(chunks).toString('utf8'))).on('error', reject);
 });
 
-function streamReply(res, body, text, n) {
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+const STREAM_CHARS = Number(process.env.FAKE_STREAM_CHARS || 400);
+const STREAM_MS = Number(process.env.FAKE_STREAM_MS || 0);
+
+/** A streamed reply: an empty thinking block where the model reasons first, then the text in pieces. */
+async function streamReply(res, body, text, n) {
   res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
   sse(res, 'message_start', { type: 'message_start', message: { id: `msg_fake_${n}`, type: 'message', role: 'assistant', model: body.model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 400, output_tokens: 1 } } });
   let index = 0;
@@ -134,7 +155,10 @@ function streamReply(res, body, text, n) {
     index += 1;
   }
   sse(res, 'content_block_start', { type: 'content_block_start', index, content_block: { type: 'text', text: '' } });
-  for (let i = 0; i < text.length; i += 400) sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'text_delta', text: text.slice(i, i + 400) } });
+  for (let i = 0; i < text.length; i += STREAM_CHARS) {
+    sse(res, 'content_block_delta', { type: 'content_block_delta', index, delta: { type: 'text_delta', text: text.slice(i, i + STREAM_CHARS) } });
+    if (STREAM_MS > 0) await pause(STREAM_MS);
+  }
   sse(res, 'content_block_stop', { type: 'content_block_stop', index });
   sse(res, 'message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: Math.ceil(text.length / 4) } });
   sse(res, 'message_stop', { type: 'message_stop' });
