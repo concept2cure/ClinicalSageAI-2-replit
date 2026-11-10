@@ -1,0 +1,81 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403)
+{
+  "timestamp": "2026-11-10T02:01:22.186Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/metrics"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a tenant user's session is refused (403) 32ms
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401)
+{
+  "timestamp": "2026-11-10T02:01:22.616Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 2,
+    "path": "/api/ai-gateway/health/detail"
+  }
+}
+
+stderr | server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller
+{
+  "timestamp": "2026-11-10T02:01:22.626Z",
+  "level": "warn",
+  "message": "[inline-endpoints] ai-gateway health probe failed",
+  "context": {
+    "error": "provider openai rejected key sk-live-0000 (401)"
+  }
+}
+
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a platform administrator reads them 394ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > the scrape token reads them (the Prometheus path, unchanged) 5ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > an anonymous caller is refused (401) 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > a wrong scrape token of the same length is refused 5ms
+ × server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > compares the scrape token in constant time, never with === 5ms
+   → expected 'export function requireMetricsAuth(re…' not to match /===\s*metricsToken|metricsToken\s*===/
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > answers an anonymous caller with a status word and nothing about the providers 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > gives a platform administrator the provider detail, at /detail 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > the detail refuses a tenant user's session (403) and an anonymous caller (401) 8ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > a tenant user's session gets the same answer as an anonymous caller 3ms
+ ✓ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/ai-gateway/health > never echoes an exception to an anonymous caller 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/diagnostic-endpoints-exposure.test.ts > GET /api/metrics > compares the scrape token in constant time, never with ===
+AssertionError: expected 'export function requireMetricsAuth(re…' not to match /===\s*metricsToken|metricsToken\s*===/
+
+- Expected:
+/===\s*metricsToken|metricsToken\s*===/
+
++ Received:
+"export function requireMetricsAuth(req: Request, res: Response, next: NextFunction): void {
+  const metricsToken = process.env.METRICS_TOKEN;
+  if (metricsToken) {
+    const auth = req.headers.authorization;
+    const match = auth ? /^Bearer\\s+(\\S+)$/i.exec(auth) : null;
+    if (match && match[1] === metricsToken) {
+      "
+
+ ❯ server/startup/__tests__/diagnostic-endpoints-exposure.test.ts:132:23
+    130|     const body = source.slice(source.indexOf('export function requireM…
+    131|     const guard = body.slice(0, body.indexOf('return next();'));
+    132|     expect(guard).not.toMatch(/===\s*metricsToken|metricsToken\s*===/);
+       |                       ^
+    133|     expect(source).toMatch(/timingSafeEqual/);
+    134|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  02:01:21
+   Duration  1.34s (transform 583ms, setup 103ms, import 454ms, tests 470ms, environment 0ms)
+
