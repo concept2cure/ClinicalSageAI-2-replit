@@ -19,7 +19,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
-import { readSupersessions, supersededSql, type Supersession } from './vault-version-family.js';
+import { supersededSql } from './vault-version-family.js';
 import { vaultLifecycleStageSql } from './vault-document-filter.js';
 import { programInOrganization } from '../c2c/program-access.js';
 
@@ -176,17 +176,6 @@ function sealOf(r: Record<string, unknown>): VaultSeal {
   };
 }
 
-/**
- * Whether a sealed version is still its document's current one, read from the version chain as it is now (P-107
- * item 3, 2026-11-08: "A seal says when its version has been superseded ('superseded by version n on date'), read
- * from the version chain. What was sealed, and whether it is intact, is unchanged."). `unknown` is a version that is
- * not a live version of this project now: nothing is said of it, and it is never shown as current.
- */
-export type SealedVersionStanding =
-  | { state: 'current' }
-  | { state: 'superseded'; byVersion: string | null; at: string | null }
-  | { state: 'unknown' };
-
 /** One sealed document as the seal list shows it: the manifest's record of it, never the document as it is now. */
 export interface SealedDocumentSummary {
   /** The sealed version's vault.documents id, which the Vault's download opens. */
@@ -197,18 +186,6 @@ export interface SealedDocumentSummary {
   /** The first 12 hex characters of the content hash the seal recorded. */
   shortHash: string | null;
   lifecycleStage: string | null;
-  /** The one thing here that is read now and not from the seal: whether a later version has replaced this one. */
-  standing: SealedVersionStanding;
-}
-
-/** A sealed version's record, before the version chain is asked about it. */
-type SealedDocumentRecord = Omit<SealedDocumentSummary, 'standing'>;
-
-const VERSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function standingOf(now: Supersession | null | undefined): SealedVersionStanding {
-  if (now === undefined) return { state: 'unknown' };
-  return now === null ? { state: 'current' } : { state: 'superseded', byVersion: now.byVersion, at: now.at };
 }
 
 /** A seal as the list shows it, with what it holds. */
@@ -230,7 +207,7 @@ const textOf = (v: unknown): string | null => (typeof v === 'string' && v ? v : 
  * longer hashes to its recorded value is treated as unreadable, as verifySeal
  * treats it.
  */
-function sealHoldings(manifest: unknown, manifestSha256: string): SealedDocumentRecord[] | null {
+function sealHoldings(manifest: unknown, manifestSha256: string): SealedDocumentSummary[] | null {
   const m = manifest as { schema?: unknown; documents?: unknown } | null;
   const docs = m?.schema === SEAL_MANIFEST_SCHEMA ? m.documents : null;
   if (!Array.isArray(docs) || !docs.every((d) => textOf((d as { id?: unknown } | null)?.id))) return null;
@@ -252,18 +229,10 @@ export async function listSeals(q: Queryable, organizationId: number, programId:
       ORDER BY s.sealed_at DESC, s.id`,
     [organizationId, programId],
   );
-  const held = rows.map((r) => {
+  return rows.map((r) => {
     const seal = sealOf(r);
     return { ...seal, documents: sealHoldings(r.manifest, seal.manifestSha256) };
   });
-  /* The seals' records are shown as signed. One read of the version chain says which of those versions a later one
-     has since replaced; it changes nothing a seal holds. */
-  const sealedIds = [...new Set(held.flatMap((s) => (s.documents ?? []).map((d) => d.id)).filter((id) => VERSION_ID.test(id)))];
-  const now = await readSupersessions(q, { organizationId, programId, documentIds: sealedIds });
-  return held.map((s) => ({
-    ...s,
-    documents: s.documents ? s.documents.map((d) => ({ ...d, standing: standingOf(now.get(d.id)) })) : null,
-  }));
 }
 
 /** The bytes check's reader: the one verified reader, or a refusal in its words. */

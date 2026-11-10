@@ -34,17 +34,6 @@ import { saveVerifiedArchive, type ArchiveOutcome } from './vaultArchiveDownload
 import { stageLabel } from './VaultLifecycle';
 import { VaultVersionViewer, useVaultVersionViewer } from './VaultVersionViewer';
 
-/**
- * Whether a sealed version is still its document's current one, as the version chain says now (P-107 item 3,
- * 2026-11-08: "A seal says when its version has been superseded ('superseded by version n on date'), read from the
- * version chain. What was sealed, and whether it is intact, is unchanged."). It is the one thing in a seal's list that
- * is read now and not from the seal.
- */
-export type SealedStanding =
-  | { state: 'current' }
-  | { state: 'superseded'; byVersion: string | null; at: string | null }
-  | { state: 'unknown' };
-
 /** One sealed document as the seal recorded it (listSeals, vault-seal.service.ts). */
 export interface SealedDocumentShape {
   id: string;
@@ -53,27 +42,6 @@ export interface SealedDocumentShape {
   indexNumber: string | null;
   shortHash: string | null;
   lifecycleStage: string | null;
-  standing?: unknown;
-}
-
-const textOrNull = (v: unknown): string | null => (typeof v === 'string' && v ? v : null);
-
-/** A sealed version's standing as the server said it. Anything else is unknown, never current. */
-function standingOf(d: SealedDocumentShape): SealedStanding {
-  const s = d.standing as { state?: unknown; byVersion?: unknown; at?: unknown } | null | undefined;
-  if (s?.state === 'current') return { state: 'current' };
-  if (s?.state === 'superseded') return { state: 'superseded', byVersion: textOrNull(s.byVersion), at: textOrNull(s.at) };
-  return { state: 'unknown' };
-}
-
-/** What the list says of a sealed version's standing; nothing for one that is still current. */
-function standingWords(standing: SealedStanding): string | null {
-  if (standing.state === 'current') return null;
-  if (standing.state === 'unknown') return 'Whether a later version has replaced it could not be read.';
-  const { byVersion, at } = standing;
-  if (!byVersion && !at) return 'Superseded by a later version. Its version and date are not recorded.';
-  const by = byVersion ? `version ${byVersion}` : 'a later version';
-  return at ? `Superseded by ${by} on ${utc(at)}.` : `Superseded by ${by}. The date is not recorded.`;
 }
 
 export interface VaultSealShape {
@@ -238,18 +206,10 @@ function SealHoldings({ projectId, documents }: { projectId: string; documents: 
   if (docs.length === 0) {
     return <p className="vd-seals-note" data-testid="vault-seal-holds-none">This seal holds no documents. The Vault had no current documents when it was sealed.</p>;
   }
-  const superseded = docs.filter((d) => standingOf(d).state === 'superseded').length;
   return (
     <details className="pj-more" data-testid="vault-seal-holds">
-      <summary>
-        What it holds · {docs.length} {docs.length === 1 ? 'document' : 'documents'}{superseded ? ` · ${superseded} since superseded` : ''}
-      </summary>
+      <summary>What it holds · {docs.length} {docs.length === 1 ? 'document' : 'documents'}</summary>
       <p className="vd-seals-note">Each document as the seal recorded it: the version, review stage and content hash when it was sealed.</p>
-      {superseded ? (
-        <p className="vd-seals-note" data-testid="vault-seal-superseded-note">
-          {superseded} of these {docs.length} versions {superseded === 1 ? 'has' : 'have'} since been superseded. The seal is unchanged: it holds the versions that were sealed.
-        </p>
-      ) : null}
       <div className="vd-vers">
         {docs.map((d) => (
           <div key={d.id} className="vd-ver" data-testid="vault-seal-document">
@@ -264,9 +224,6 @@ function SealHoldings({ projectId, documents }: { projectId: string; documents: 
               onClick={() => void viewer.view(d.id, sealedLabel(d), null)} aria-label={`Open ${sealedLabel(d)}`}>
               {viewer.viewing === d.id ? 'Opening…' : 'Open'}
             </button>
-            {standingWords(standingOf(d)) ? (
-              <span className="vd-find-note" data-testid="vault-seal-document-standing">{standingWords(standingOf(d))}</span>
-            ) : null}
           </div>
         ))}
       </div>

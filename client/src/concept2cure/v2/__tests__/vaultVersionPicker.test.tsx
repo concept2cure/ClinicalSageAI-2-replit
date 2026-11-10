@@ -1,12 +1,11 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { VaultVersionPicker } from '../surfaces/VaultLibraryResults';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
-import { ApiRequestError } from '@/lib/queryClient';
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -97,43 +96,5 @@ describe('Canonical Vault version picker', () => {
     view.rerender(<VaultVersionPicker programId={PROGRAM} includeEarlier disabled={false} label="Search this project's Vault" onChoose={vi.fn()} />);
     search(); expect((await screen.findByRole('button', { name: 'Select document' }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByText(/earlier version/)).toBeTruthy();
-  });
-});
-
-/* P-107 item 3 (2026-11-08): "Search never spans sponsors." With no project to scope it, the library search is
-   refused until a client is chosen when the person's projects belong to more than one; the picker asks which. */
-describe('the picker searches one client at a time', () => {
-  it("asks which client when the library search is refused, then searches that client's Vaults only", async () => {
-    const choose = vi.fn();
-    const refusal = () => new ApiRequestError('Choose a client first.', 409,
-      { success: false, error: 'CLIENT_REQUIRED', meta: { clients: [{ id: 9, name: 'Contoso Pharma' }, { id: 7, name: 'Northwind Bio' }, null] } }, 'CLIENT_REQUIRED');
-    apiRequest.mockImplementation(async (_method, path) => {
-      if (!String(path).includes('client=')) throw refusal();
-      return json({ data: { scope: 'verified-accessible-programs', query: 'original', total: 1, limit: 25, offset: 0, client: { id: 7, name: 'Northwind Bio' },
-        results: [{ ...hit('Northwind stability'), program: { id: PROGRAM, name: 'NW-101' }, client: { id: 7, name: 'Northwind Bio' } }] } });
-    });
-    const library = (text: string) => {
-      fireEvent.change(screen.getByLabelText('Search your accessible Vaults'), { target: { value: text } });
-      fireEvent.click(screen.getByRole('button', { name: 'Search Vault' }));
-    };
-    render(<VaultVersionPicker disabled={false} onChoose={choose} />);
-    library('original');
-    const group = await screen.findByRole('group', { name: 'Choose a client to search' });
-    expect(group.textContent).toMatch(/a search never spans clients/);
-    expect(group.textContent).toMatch(/Contoso Pharma.*Northwind Bio.*Projects with no client/);
-    expect(screen.queryByRole('button', { name: 'Retry Vault search' })).toBeNull();
-    expect(screen.queryByText(/No matching documents|could not be read/)).toBeNull();
-    fireEvent.click(within(group).getAllByRole('button', { name: 'Search its Vaults' })[1]);
-    await screen.findByText('Northwind stability');
-    expect(apiRequest.mock.calls.at(-1)?.[1]).toBe('/api/c2c/project-vault/search?q=original&limit=25&client=7');
-    expect(screen.getByText(/Searching Northwind Bio only\./)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Select document' }));
-    expect(choose).toHaveBeenCalledWith(expect.objectContaining({ id: 'Northwind stability', programId: PROGRAM, programName: 'NW-101' }));
-    // Another search stays inside the chosen client; changing the client asks again.
-    library('renewed'); await screen.findByText('Northwind stability');
-    expect(apiRequest.mock.calls.at(-1)?.[1]).toBe('/api/c2c/project-vault/search?q=renewed&limit=25&client=7');
-    fireEvent.click(screen.getByRole('button', { name: 'Change client' }));
-    await screen.findByRole('group', { name: 'Choose a client to search' });
-    expect(screen.queryByText('Northwind stability')).toBeNull();
   });
 });

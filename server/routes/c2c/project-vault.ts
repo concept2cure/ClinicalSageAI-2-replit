@@ -456,8 +456,6 @@ export async function recordVaultDownload(
     fileName: string | null;
     fileSize: string | number | null;
     contentHash: string | null;
-    /** Set when what left is a rendition made from the version, not the version's own bytes: its format and its own SHA-256. */
-    rendition?: { format: string; sha256: string };
   },
 ): Promise<boolean> {
   let client: PoolClient | undefined;
@@ -479,10 +477,8 @@ export async function recordVaultDownload(
         fileSize: d.fileSize,
         // The hash of the bytes actually served, already verified by the
         // caller, so the trail records WHICH edition left rather than only
-        // that one did. For a rendition it is the hash of the version it was
-        // made from, and `rendition` names the bytes that left.
+        // that one did.
         contentHash: d.contentHash,
-        ...(d.rendition ? { rendition: d.rendition } : {}),
       },
     });
     await client.query('COMMIT');
@@ -497,61 +493,6 @@ export async function recordVaultDownload(
   } finally {
     client?.release();
   }
-}
-
-/**
- * Serve the PDF rendition of one version (P-107 item 3), for the download
- * handler's `?rendition=pdf`. The handler calls it after every check the source
- * download makes, with the bytes the verified reader returned, so a refused
- * source never reaches it. The rendition is made from those bytes
- * (services/vault/vault-pdf-rendition.ts) and kept nowhere. Viewing it is
- * recorded as the source download is, before a byte leaves, and the row says
- * it was the rendition that left, under its own SHA-256. The response names
- * the source's SHA-256 and the rendition's own, and carries no
- * X-Content-SHA256: the bytes sent are not the record's.
- */
-async function sendVaultPdfRendition(
-  req: Request,
-  res: Response,
-  version: {
-    orgId: number; programId: string; documentId: string; bytes: Buffer;
-    doc: { file_name: string | null; document_title: string | null; file_size: string | number | null; content_hash: string | null };
-  },
-): Promise<Response> {
-  const { doc } = version;
-  const { makeVaultPdfRendition, VAULT_RENDITION_FORMAT } = await import('../../services/vault/vault-pdf-rendition.js');
-  let made: Awaited<ReturnType<typeof makeVaultPdfRendition>>;
-  try {
-    made = await makeVaultPdfRendition({
-      format: req.query.rendition, bytes: version.bytes, fileName: doc.file_name, recordedHash: doc.content_hash,
-    });
-  } catch (err) {
-    // A busy converter is answered by its one mapping (503 with Retry-After); any other error is the handler's.
-    const { respondIfConverterBusy } = await import('../../lib/api-response.js');
-    if (respondIfConverterBusy(res, err)) return res;
-    throw err;
-  }
-  if (!made.ok) return res.status(made.status).json({ success: false, error: made.code, message: made.message });
-
-  const recorded = await recordVaultDownload(req, {
-    orgId: version.orgId, programId: version.programId, documentId: version.documentId,
-    documentTitle: doc.document_title, fileName: doc.file_name, fileSize: doc.file_size, contentHash: made.sourceSha256,
-    rendition: { format: VAULT_RENDITION_FORMAT, sha256: made.sha256 },
-  });
-  if (!recorded) {
-    return res.status(500).json({
-      success: false,
-      error: 'AUDIT_WRITE_FAILED',
-      message: 'The rendition was not served because viewing it could not be recorded in the audit trail. Nothing was sent.',
-    });
-  }
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="${made.fileName}"`);
-  res.setHeader('Content-Length', String(made.pdf.length));
-  res.setHeader('X-Vault-Rendition', VAULT_RENDITION_FORMAT);
-  res.setHeader('X-Rendition-Source-SHA256', made.sourceSha256);
-  res.setHeader('X-Rendition-SHA256', made.sha256);
-  return res.send(made.pdf);
 }
 
 /** The prepared archive is bound to the exact current actor and project admitted before building. */
@@ -2655,10 +2596,6 @@ export default function createProjectVaultRoutes(): Router {
         });
       }
       const bytes = read.bytes;
-      // ?rendition=pdf: the PDF rendition of this version, made from the bytes just verified (P-107 item 3).
-      if (req.query.rendition !== undefined) {
-        return await sendVaultPdfRendition(req, res, { orgId, programId: id, documentId, bytes, doc });
-      }
 
       const recorded = await recordVaultDownload(req, {
         orgId,

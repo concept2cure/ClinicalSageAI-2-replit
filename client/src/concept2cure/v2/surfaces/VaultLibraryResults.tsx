@@ -19,36 +19,6 @@ import type { VaultDoc } from '../fixtures/vault-data';
 import { vaultIngestTypeLabel } from '@shared/constants/domain/vault-taxonomy';
 import '../styles/vault-picker.css';
 
-/* One client at a time (P-107 item 3, 2026-11-08: "No cross-sponsor library view for a CRO. With no project open, the
-   Vault first asks which sponsor; every view is inside one sponsor. Search never spans sponsors."). A read with no
-   project to scope it (the library search, the governed-artifacts listing) is refused with CLIENT_REQUIRED when the
-   person's projects belong to more than one client, and the refusal names the clients to choose from. These read
-   that refusal the same way for every screen that asks (the Vault page, this file's picker). */
-
-/** A client a read can be asked for: a client workspace, or the projects that have no client. */
-export type VaultClient = { id: number | 'none'; name: string };
-export const NO_CLIENT: VaultClient = { id: 'none', name: 'No client' };
-
-/** The server refused the read until a client is chosen. */
-export const clientChoiceRequired = (read: { code?: string }) => read.code === 'CLIENT_REQUIRED';
-
-function refusedClient(raw: unknown): VaultClient | null {
-  if (raw === null) return NO_CLIENT;
-  const c = (raw ?? {}) as { id?: unknown; name?: unknown };
-  return typeof c.id === 'number' && typeof c.name === 'string' && c.name.trim() ? { id: c.id, name: c.name } : null;
-}
-
-/**
- * The clients the server named when it refused a read until one is chosen. Null when the read was not refused for
- * that; an empty list when it was and the clients could not be read from the refusal.
- */
-export function clientsToChooseFrom(read: { code?: string; meta?: Record<string, unknown> }): VaultClient[] | null {
-  if (!clientChoiceRequired(read)) return null;
-  const raw = read.meta?.clients;
-  if (!Array.isArray(raw)) return [];
-  return raw.map(refusedClient).filter((c): c is VaultClient => c !== null);
-}
-
 export interface LibraryHit {
   id: string;
   title: string;
@@ -233,16 +203,14 @@ export function VaultLibraryResults({
        person's role) is said as itself through the one read classifier (S6 V1);
        only a failure to answer is an unverified result. */
     const refusal = st.error ? readRefusalOf(st) : null;
-    /* Refused until a client is chosen (P-107): the search never spans clients. From inside a project it is that
-       project's client's, so this is said only where no project scopes it. */
-    const words = clientsToChooseFrom(st) !== null
-      ? 'Your projects belong to more than one client, and a search never spans clients. Open a project to search its client’s Vaults.'
-      : refusal
-        ? describeReadFailure(refusal, 'the library').message
-        : 'The library search could not be verified. This is not a result of zero matches.';
     return (
       <div className="vd-lib" data-testid="vault-library-results">
-        <div className="vd-dr-err" role="alert">{I.alertTriangle}{' '}{words}</div>
+        <div className="vd-dr-err" role="alert">
+          {I.alertTriangle}{' '}
+          {refusal
+            ? describeReadFailure(refusal, 'the library').message
+            : 'The library search could not be verified. This is not a result of zero matches.'}
+        </div>
       </div>
     );
   }
@@ -418,8 +386,7 @@ export interface PickedVaultVersion {
 }
 
 const PICKER_PAGE = 25;
-/** `client` is the client whose Vaults the library is searched in, once the person's projects needed one chosen. */
-type PickerRequest = { query: string; offset: number; attempt: number; pending: boolean; client: VaultClient | null };
+type PickerRequest = { query: string; offset: number; attempt: number; pending: boolean };
 type PickerProps = {
   onChoose: (picked: PickedVaultVersion) => void;
   disabled: boolean;
@@ -431,12 +398,11 @@ type PickerProps = {
 };
 const pickerOwner = () => `${getJwtOrgId()}:${getAuthToken()}`;
 
-function pickerPaths({ query, offset, client }: PickerRequest, programId: string | undefined, includeEarlier: boolean) {
+function pickerPaths({ query, offset }: PickerRequest, programId: string | undefined, includeEarlier: boolean) {
   const earlier = includeEarlier ? '&includeSuperseded=true' : '';
   const q = encodeURIComponent(query);
   const page = offset ? `&offset=${offset}` : '';
-  const within = client ? `&client=${encodeURIComponent(String(client.id))}` : '';
-  const libraryPath = query && !programId ? `/api/c2c/project-vault/search?q=${q}&limit=${PICKER_PAGE}${earlier}${page}${within}` : null;
+  const libraryPath = query && !programId ? `/api/c2c/project-vault/search?q=${q}&limit=${PICKER_PAGE}${earlier}${page}` : null;
   const programPath = query && programId ? `/api/c2c/project-vault/${encodeURIComponent(programId)}/search?q=${q}&limit=${PICKER_PAGE}${earlier}${page}` : null;
   return { libraryPath, programPath };
 }
@@ -451,31 +417,12 @@ function usePickerSearch(request: PickerRequest, programId: string | undefined, 
     const hits: PickedVaultVersion[] = (program.data?.results ?? []).map((h) => ({
       id: h.id, title: h.title, version: h.version ?? null, current: h.current === true, programId, programName: null, contentHash: pinnedSha256(h.contentHash),
     }));
-    return { loading: program.loading, error: program.error, read: program.data !== null, hits, total: program.data?.total ?? 0, clients: null };
+    return { loading: program.loading, error: program.error, read: program.data !== null, hits, total: program.data?.total ?? 0 };
   }
   const hits: PickedVaultVersion[] = (library.data?.results ?? []).map((h) => ({
     id: h.id, title: h.title, version: h.version, current: h.current, programId: h.program.id, programName: h.program.name, contentHash: pinnedSha256(h.contentHash),
   }));
-  /* Refused until a client is chosen (P-107: a search never spans clients): the clients the server named. */
-  return { loading: library.loading, error: library.error, read: library.data !== null, hits, total: library.data?.total ?? 0, clients: clientsToChooseFrom(library) };
-}
-
-/** The library search was refused until a client is chosen: the picker asks which, then searches that client's Vaults. */
-function PickerClientChoice({ clients, disabled, onChoose }: { clients: readonly VaultClient[]; disabled: boolean; onChoose: (c: VaultClient) => void }) {
-  if (clients.length === 0) {
-    return <p role="alert">Your projects belong to more than one client, and the clients could not be listed. Open the document’s project and choose it from there.</p>;
-  }
-  return (
-    <div className="vpick-results" role="group" aria-label="Choose a client to search">
-      <p role="status">Your projects belong to more than one client, and a search never spans clients. Choose whose Vaults to search.</p>
-      {clients.map((c) => (
-        <div key={String(c.id)} className="vpick-hit">
-          <span><strong>{c.id === 'none' ? 'Projects with no client' : c.name}</strong></span>
-          <button type="button" className="btn ghost small" disabled={disabled} onClick={() => onChoose(c)}>Search its Vaults</button>
-        </div>
-      ))}
-    </div>
-  );
+  return { loading: library.loading, error: library.error, read: library.data !== null, hits, total: library.data?.total ?? 0 };
 }
 
 function PickerHit({ hit, inProgram, selectable, onChoose }: { hit: PickedVaultVersion; inProgram: boolean; selectable: boolean; onChoose: (h: PickedVaultVersion) => void }) {
@@ -516,9 +463,8 @@ export function VaultVersionPicker(props: PickerProps) {
 function VaultPickerControls({ onChoose, disabled, includeEarlier = false, programId, label = 'Search your accessible Vaults', autoFocus = false, owner }: PickerProps & { owner: string }) {
   const inputId = React.useId();
   const [text, setText] = React.useState('');
-  const [request, setRequest] = React.useState<PickerRequest>({ query: '', offset: 0, attempt: 0, pending: false, client: null });
-  const search = () => setRequest(previous => ({ ...previous, query: text.trim(), offset: 0, attempt: previous.attempt + 1, pending: true }));
-  const within = (client: VaultClient | null) => setRequest(previous => ({ ...previous, client, offset: 0, attempt: previous.attempt + 1, pending: true }));
+  const [request, setRequest] = React.useState<PickerRequest>({ query: '', offset: 0, attempt: 0, pending: false });
+  const search = () => setRequest(previous => ({ query: text.trim(), offset: 0, attempt: previous.attempt + 1, pending: true }));
   const retry = () => setRequest(previous => ({ ...previous, attempt: previous.attempt + 1, pending: true }));
   const move = (offset: number) => setRequest(previous => ({ ...previous, offset, attempt: previous.attempt + 1, pending: true }));
   const settled = React.useCallback((attempt: number) => setRequest(previous => previous.attempt === attempt ? { ...previous, pending: false } : previous), []);
@@ -533,28 +479,20 @@ function VaultPickerControls({ onChoose, disabled, includeEarlier = false, progr
           Search Vault
         </button>
       </div>
-      {request.client && !programId ? (
-        <p role="status">
-          Searching {request.client.id === 'none' ? 'projects with no client' : request.client.name} only.{' '}
-          <button type="button" className="btn ghost small" disabled={disabled} onClick={() => within(null)}>Change client</button>
-        </p>
-      ) : null}
-      <PickerRead key={`${request.attempt}:${request.query}:${request.offset}`} {...{ request, programId, includeEarlier, owner, disabled, onChoose, retry, move, settled, within }} />
+      <PickerRead key={`${request.attempt}:${request.query}:${request.offset}`} {...{ request, programId, includeEarlier, owner, disabled, onChoose, retry, move, settled }} />
     </div>
   );
 }
 
-function PickerRead({ request, programId, includeEarlier, owner, disabled, onChoose, retry, move, settled, within }: {
+function PickerRead({ request, programId, includeEarlier, owner, disabled, onChoose, retry, move, settled }: {
   request: PickerRequest; programId?: string; includeEarlier: boolean; owner: string; disabled: boolean;
   onChoose: (hit: PickedVaultVersion) => void; retry: () => void; move: (offset: number) => void; settled: (attempt: number) => void;
-  within: (client: VaultClient) => void;
 }) {
   const search = usePickerSearch(request, programId, includeEarlier, owner);
   React.useEffect(() => { if (request.query && !search.loading) settled(request.attempt); }, [request.query, request.attempt, search.loading, settled]);
   if (owner !== pickerOwner() || !request.query) return null;
   const where = programId ? "this project's Vault" : 'your accessible projects';
   if (search.loading) return <p role="status">Searching {where}…</p>;
-  if (search.clients !== null) return <PickerClientChoice clients={search.clients} disabled={disabled} onChoose={within} />;
   if (search.error || !search.read) return <div><p role="alert">The Vault search could not be read. Try another search or open Vault.</p><button type="button" className="btn ghost small" disabled={disabled} onClick={retry}>Retry Vault search</button></div>;
   const choose = (hit: PickedVaultVersion) => { if (owner === pickerOwner()) onChoose(hit); };
   return <PickerResults {...{ search, request, disabled, programId, includeEarlier, where, move }} onChoose={choose} />;

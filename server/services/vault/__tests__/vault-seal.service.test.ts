@@ -106,79 +106,32 @@ describe('the seal list: what each seal holds (S6, binders as a view)', () => {
     id, program_id: PROGRAM, reason: 'Close', manifest, manifest_sha256: manifestSha256, document_count: documentCount,
     sealed_by: 7, sealed_at: '2026-10-29T10:00:00Z', sealed_by_name: 'Sol',
   });
-  /** A client answering the seals read and the version chain's read (`now`), keeping every statement it was sent. */
-  function lister(rows: Array<Record<string, unknown>>, now: Array<Record<string, unknown>> = []) {
-    const sent: Array<{ sql: string; params: unknown[] }> = [];
+  /** A client answering the seals read, keeping every statement it was sent. */
+  function lister(rows: Array<Record<string, unknown>>) {
+    const sent: string[] = [];
     return {
       sent,
-      async query(sql: string, params: unknown[] = []) {
-        sent.push({ sql, params });
-        return /FROM public\.vault_data_room_seals/.test(sql) ? { rows } : { rows: now };
+      async query(sql: string) {
+        sent.push(sql);
+        return /FROM public\.vault_data_room_seals/.test(sql) ? { rows } : { rows: [{ id: 'a', document_title: 'Renamed since' }] };
       },
     };
   }
 
-  const A = '0a000000-0000-4000-8000-00000000000a';
-  const B = '0b000000-0000-4000-8000-00000000000b';
-  const C = '0c000000-0000-4000-8000-00000000000c';
-
-  it("lists each seal's documents from its stored manifest: what was sealed is never read again", async () => {
+  it("lists each seal's documents from its stored manifest, and reads no document as it is now", async () => {
     const sealed = sealManifest(PROGRAM, [
-      row(A, hash('A'), { version: '2.0', lifecycle_stage: 'approved' }),
-      row(B, hash('b'), { document_title: null, file_name: 'b.pdf', content_hash: null }),
-    ], (id) => (id === A ? '3.2.P.8' : null));
-    // The live rows have other titles, versions and hashes now; the list shows the seal's record of them.
-    const q = lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 2)], [
-      { id: A, document_title: 'Renamed since', version: '9.9', content_hash: 'f'.repeat(64), superseded: false, by_version: null, superseded_at: null },
-      { id: B, document_title: 'Renamed since', version: '9.9', content_hash: 'f'.repeat(64), superseded: false, by_version: null, superseded_at: null },
-    ]);
+      row('a', hash('A'), { version: '2.0', lifecycle_stage: 'approved' }),
+      row('b', hash('b'), { document_title: null, file_name: 'b.pdf', content_hash: null }),
+    ], (id) => (id === 'a' ? '3.2.P.8' : null));
+    const q = lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 2)]);
     const [listed] = await listSeals(q, 7, PROGRAM);
     expect(listed).toMatchObject({ id: SEAL, documentCount: 2, manifestSha256: sealManifestSha256(sealed), sealedByName: 'Sol' });
     expect(listed.documents).toEqual([
-      { id: A, title: `Title ${A}`, version: '2.0', indexNumber: '3.2.P.8', shortHash: 'aaaaaaaaaaaa', lifecycleStage: 'approved', standing: { state: 'current' } },
-      { id: B, title: 'b.pdf', version: '1.0', indexNumber: null, shortHash: null, lifecycleStage: null, standing: { state: 'current' } },
+      { id: 'a', title: 'Title a', version: '2.0', indexNumber: '3.2.P.8', shortHash: 'aaaaaaaaaaaa', lifecycleStage: 'approved' },
+      { id: 'b', title: 'b.pdf', version: '1.0', indexNumber: null, shortHash: null, lifecycleStage: null },
     ]);
-  });
-
-  /* P-107 item 3 (2026-11-08): "A seal says when its version has been superseded ('superseded by version n on
-     date'), read from the version chain. What was sealed, and whether it is intact, is unchanged." */
-  it('says which sealed versions have since been superseded, by which version and when, from the version chain as it is now', async () => {
-    const sealed = sealManifest(PROGRAM, [row(A, hash('a')), row(B, hash('b')), row(C, hash('c'))], () => null);
-    const q = lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 3)], [
-      { id: A, superseded: true, by_version: '2.0', superseded_at: new Date('2026-11-03T09:30:00Z') },
-      { id: B, superseded: false, by_version: null, superseded_at: null },
-      // C is not a live version of this project now: nothing is said of it.
-    ]);
-    const [listed] = await listSeals(q, 7, PROGRAM);
-    expect(listed.documents?.map((d) => [d.id, d.standing])).toEqual([
-      [A, { state: 'superseded', byVersion: '2.0', at: '2026-11-03T09:30:00.000Z' }],
-      [B, { state: 'current' }],
-      [C, { state: 'unknown' }],
-    ]);
-    // What was sealed is unchanged: the same record, the same hash, the same versions.
-    expect(listed.manifestSha256).toBe(sealManifestSha256(sealed));
-    expect(listed.documents?.map((d) => d.version)).toEqual(['1.0', '1.0', '1.0']);
-    // One read of the chain, for this organisation's project and the sealed versions only.
-    const chain = q.sent.filter((s) => /vault\.documents/.test(s.sql));
-    expect(chain).toHaveLength(1);
-    expect(chain[0].params).toEqual([7, PROGRAM, [A, B, C]]);
-    expect(chain[0].sql).toMatch(/succ\.supersedes_id = d\.id/);
-  });
-
-  it('a successor whose version or date is not recorded is still said to have superseded it', async () => {
-    const sealed = sealManifest(PROGRAM, [row(A, hash('a'))], () => null);
-    const [listed] = await listSeals(lister([sealRow(SEAL, sealed, sealManifestSha256(sealed), 1)],
-      [{ id: A, superseded: true, by_version: null, superseded_at: null }]), 7, PROGRAM);
-    expect(listed.documents?.[0].standing).toEqual({ state: 'superseded', byVersion: null, at: null });
-  });
-
-  it('reads no version chain for seals that hold nothing readable, and an id that is not a document id is not asked about', async () => {
-    const empty = sealManifest(PROGRAM, [], () => null);
-    const odd = sealManifest(PROGRAM, [row('not-a-uuid', hash('a'))], () => null);
-    const q = lister([sealRow(SEAL, empty, sealManifestSha256(empty), 0), sealRow('s-odd', odd, sealManifestSha256(odd), 1)]);
-    const listed = await listSeals(q, 7, PROGRAM);
-    expect(listed[1].documents?.[0].standing).toEqual({ state: 'unknown' });
-    expect(q.sent.filter((s) => /vault\.documents/.test(s.sql))).toHaveLength(0);
+    expect(q.sent).toHaveLength(1);
+    expect(q.sent.some((s) => /vault\.documents/.test(s))).toBe(false);
   });
 
   it('lists a seal of a Vault with no current documents as holding none', async () => {

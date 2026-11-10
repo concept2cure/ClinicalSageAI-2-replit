@@ -403,10 +403,11 @@ describe('vault.focus-document selects an artifact by its id', () => {
 });
 
 /* F1, S6 V4 (2026-11-05): a CRO's sponsors never mix. Inside a project, the governed artifacts across your projects
-   are that project's sponsor's projects', and the heading says whose. With no project open the page asks which client
-   first (P-107, the next block). The server half: server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
+   are that project's sponsor's projects', and the heading says whose; with no project open, each row names its
+   sponsor. The server half: server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
 describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
   const NORTHWIND = { id: 7, name: 'Northwind Bio' };
+  const CONTOSO = { id: 9, name: 'Contoso Pharma' };
   const WITHIN = `${ORG}?sameClientAs=${PID}`;
 
   it("inside a project, reads its sponsor's projects only, and the heading names the sponsor once", async () => {
@@ -422,106 +423,17 @@ describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
     expect(panel.textContent).toMatch(/1 governed artifact in the Northwind Bio projects you can open/);
     expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).not.toMatch(/Northwind/);
   });
-});
 
-/* P-107 item 3 (2026-11-08): "No cross-sponsor library view for a CRO. With no project open, the Vault first asks
-   which sponsor; every view is inside one sponsor." The server refuses the listing with CLIENT_REQUIRED and names the
-   clients; the page asks which, and lists nothing of any client until one is chosen. The server half:
-   server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts, tests/db/vault-library-search.dbtest.ts. */
-describe("with no project open, a CRO's Vault asks which client first", () => {
-  const NORTHWIND = { id: 7, name: 'Northwind Bio' };
-  const CONTOSO = { id: 9, name: 'Contoso Pharma' };
-  const PROJECTS = '/api/c2c/projects?limit=200';
-  const projects = () => ok({ data: [
-    { id: 'p-n1', title: 'NW-101 assay', client_workspace_id: 7, client_name: 'Northwind Bio' },
-    { id: 'p-c1', title: 'CP-9 tablet', client_workspace_id: 9, client_name: 'Contoso Pharma' },
-    { id: 'p-own', title: 'Internal method work', client_workspace_id: null, client_name: null },
-  ], meta: {} });
-  const refused = () => new ApiRequestError('Your projects belong to more than one client.', 409,
-    { success: false, error: 'CLIENT_REQUIRED', message: 'Your projects belong to more than one client.', meta: { clients: [CONTOSO, NORTHWIND, null] } },
-    'CLIENT_REQUIRED');
-  const cro: Route = (_m, url) => (url === ORG ? refused()
-    : url === PROJECTS ? projects()
-    : url === `${ORG}?client=7` ? ok(orgBody([orgRow({ client: NORTHWIND })], { client: NORTHWIND }))
-    : url === `${ORG}?client=none` ? ok(orgBody([orgRow({ id: 'artifact_12', name: 'Method note', prog: 'INT-1', client: null })], { client: null }))
-    : undefined);
-  const page = () => document.body.textContent ?? '';
-
-  it('asks which client, by name, and lists nothing of any client until one is chosen', async () => {
-    mockApi(cro);
+  it('with no project open, each row says whose project it is', async () => {
+    mockApi((_m, url) => (url === ORG
+      ? ok(orgBody([orgRow({ client: NORTHWIND }), orgRow({ id: 'artifact_10', name: 'Clinical overview', prog: 'BX-301', client: CONTOSO })]))
+      : undefined));
     render(<Vault {...props()} />);
-    const choice = await screen.findByTestId('vault-client-choice');
-    expect(screen.getByText('Choose a client')).toBeTruthy();
-    expect(within(choice).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Show the Vaults of Contoso Pharma', 'Show the Vaults of Northwind Bio', 'Show the Vaults of projects with no client',
-    ]);
-    expect(screen.queryByTestId('vault-project-list')).toBeNull();
-    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
-    expect(page()).not.toMatch(/NW-101 assay|CP-9 tablet|Internal method work|IND cover letter/);
-    expect(page()).not.toMatch(/could not be read/);
-  });
-
-  it("once chosen, the projects and the governed artifacts are that client's only, and the client can be changed", async () => {
-    mockApi(cro);
-    render(<Vault {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Show the Vaults of Northwind Bio' }));
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
-    expect(urls()).toContain(`${ORG}?client=7`);
-    expect(panel.textContent).toMatch(/1 governed artifact in the Northwind Bio projects you can open/);
-    expect(screen.getByTestId('vault-client-chosen').textContent).toMatch(/Showing Northwind Bio only\./);
-    const list = screen.getByTestId('vault-project-list');
-    expect(list.textContent).toMatch(/NW-101 assay/);
-    expect(list.textContent).toMatch(/1 project/);
-    expect(page()).not.toMatch(/CP-9 tablet|Internal method work/);
-    fireEvent.click(screen.getByRole('button', { name: 'Change client' }));
-    await screen.findByTestId('vault-client-choice');
-    expect(screen.queryByTestId('vault-project-list')).toBeNull();
-    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
-  });
-
-  it('the projects with no client are their own choice', async () => {
-    mockApi(cro);
-    render(<Vault {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Show the Vaults of projects with no client' }));
-    await within(await orgPanel()).findByText('Method note');
-    expect(urls()).toContain(`${ORG}?client=none`);
-    expect(screen.getByTestId('vault-project-list').textContent).toMatch(/Internal method work/);
-    expect(page()).not.toMatch(/NW-101 assay|CP-9 tablet/);
-  });
-
-  it("never lists two clients' projects together when the listing could not be read: the projects themselves say a client is needed", async () => {
-    mockApi((_m, url) => (url === ORG ? fail(500) : url === PROJECTS ? projects() : undefined));
-    render(<Vault {...props()} />);
-    const choice = await screen.findByTestId('vault-client-choice');
-    expect(within(choice).getAllByRole('button')).toHaveLength(3);
-    expect(screen.queryByTestId('vault-project-list')).toBeNull();
-    expect(page()).not.toMatch(/NW-101 assay|CP-9 tablet/);
-  });
-
-  it('says so when the clients could not be listed, and offers no choice it cannot name', async () => {
-    mockApi((_m, url) => (url === ORG
-      ? new ApiRequestError('Choose a client first.', 409, { success: false, error: 'CLIENT_REQUIRED' }, 'CLIENT_REQUIRED') : undefined));
-    render(<Vault {...props()} />);
-    expect((await screen.findByRole('alert')).textContent).toMatch(/The clients could not be listed/);
-    expect(screen.queryByTestId('vault-client-choice')).toBeNull();
-    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
-  });
-
-  it('a person whose projects are one client’s is asked nothing', async () => {
-    mockApi((_m, url) => (url === PROJECTS ? ok({ data: [{ id: 'p-n1', title: 'NW-101 assay', client_workspace_id: 7, client_name: 'Northwind Bio' }], meta: {} }) : undefined));
-    render(<Vault {...props()} />);
-    await within(await orgPanel()).findByText('IND cover letter');
-    expect(screen.queryByTestId('vault-client-choice')).toBeNull();
-    expect(screen.getByTestId('vault-project-list').textContent).toMatch(/NW-101 assay/);
-  });
-
-  it('tells AnA the Vault is asking which client, not that a read failed', async () => {
-    mockApi(cro);
-    let latest: SurfaceContext | null = null;
-    render(<><Vault {...props()} /><ContextProbe onContext={(c) => { latest = c; }} /></>);
-    await waitFor(() => expect(String((latest as SurfaceContext | null)?.facts?.organizationArtifacts)).toMatch(/a client must be chosen first/));
-    expect(String((latest as unknown as SurfaceContext).summary)).toMatch(/asking which client first/);
-    expect(String((latest as unknown as SurfaceContext).summary)).not.toMatch(/could not be read/);
+    expect(panel.textContent).toMatch(/2 governed artifacts in the projects you can open/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).toMatch(/BX-204 · Northwind Bio/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_10').textContent).toMatch(/BX-301 · Contoso Pharma/);
   });
 });
+

@@ -29,7 +29,6 @@ import { isRowsWith, useLiveRows, type ListState } from '../dataConnect';
 import { describeReadFailure, readFailureFor } from '../../mdx/hooks/useFetchJson';
 import type { ArtifactManifestRow } from '../artifactManifest';
 import { artifactSignatureLine, fetchGovernedDocx, type GovernedDocx } from './VaultGovernedArtifacts';
-import { clientChoiceRequired } from './VaultLibraryResults';
 
 /** One row of GET /api/artifacts-center (server ArtifactCenterRow). */
 export interface OrganizationArtifactRow {
@@ -66,14 +65,11 @@ const isOrganizationRows = isRowsWith<OrganizationArtifactRow>('id', 'name', 've
 export type OrganizationArtifactsRead = ListState<OrganizationArtifactRow> & { reload: () => void };
 
 /** The listing, read only while `active`: a project's Vault reads it once a person opens it. Inside a project
- *  (`withinSponsorOf`), it is that project's sponsor's projects' artifacts (F1, S6 V4): a CRO's sponsors never mix.
- *  With no project open it is one client's (`client`: a client id, or 'none' for the projects with no client); asked
- *  with neither, the server refuses it when the person's projects belong to more than one client (P-107). */
-export function useOrganizationArtifacts(active: boolean, withinSponsorOf?: string | null, client?: number | 'none' | null): OrganizationArtifactsRead {
+ *  (`withinSponsorOf`), it is that project's sponsor's projects' artifacts (F1, S6 V4): a CRO's sponsors never mix. */
+export function useOrganizationArtifacts(active: boolean, withinSponsorOf?: string | null): OrganizationArtifactsRead {
   const [epoch, setEpoch] = useState(0);
   const path = !active ? null
     : withinSponsorOf ? `${ORGANIZATION_ARTIFACTS_PATH}?sameClientAs=${encodeURIComponent(withinSponsorOf)}`
-    : client != null ? `${ORGANIZATION_ARTIFACTS_PATH}?client=${encodeURIComponent(String(client))}`
     : ORGANIZATION_ARTIFACTS_PATH;
   const read = useLiveRows<OrganizationArtifactRow>(path, [path, epoch], isOrganizationRows);
   return { ...read, reload: () => setEpoch((n) => n + 1) };
@@ -147,9 +143,8 @@ export function findOrganizationArtifact(
  * could not be read. Null while it loads or when it is not open: nothing read
  * is not zero.
  */
-export function organizationArtifactsFacts(read: Pick<OrganizationArtifactsRead, 'rows' | 'loading' | 'error' | 'meta' | 'code'>, active: boolean) {
+export function organizationArtifactsFacts(read: Pick<OrganizationArtifactsRead, 'rows' | 'loading' | 'error' | 'meta'>, active: boolean) {
   if (!active || read.loading) return null;
-  if (clientChoiceRequired(read)) return 'not listed — the projects belong to more than one client, and a client must be chosen first';
   if (read.error) return 'unavailable — counts unknown, not zero';
   const w = organizationWindow(read);
   const count = (state: ArtifactSignatureState) => read.rows.filter((r) => organizationArtifactSignature(r) === state).length;
@@ -175,15 +170,13 @@ type OrganizationFacts = ReturnType<typeof organizationArtifactsFacts>;
 
 /** The Vault's context when no project is open: the organization view is what is on screen. */
 export function organizationViewContext(
-  read: Pick<OrganizationArtifactsRead, 'loading' | 'error' | 'code'>,
+  read: Pick<OrganizationArtifactsRead, 'loading' | 'error'>,
   facts: OrganizationFacts,
   focused: OrganizationArtifactRow | null,
 ) {
   const total = facts && typeof facts === 'object' ? facts.total : 0;
   const state = read.loading
     ? 'The governed artifacts across the projects you can open are still loading.'
-    : clientChoiceRequired(read)
-      ? 'The person’s projects belong to more than one client, so the Vault is asking which client first. Nothing of any client is listed until one is chosen.'
     : read.error
       ? 'The governed artifacts across your projects could not be read, so none are listed because of a failure, not because there are none.'
       : `Governed artifacts across your projects: ${total} in the projects you can open` +
@@ -279,9 +272,6 @@ function OrganizationArtifactsBody({ read, focusId, ...actions }: { read: Organi
     } catch { /* the row is still highlighted */ }
   }, [focusId, read.rows.length]);
   if (read.loading) return <div className="vd-dr-empty" role="status">Reading the governed artifacts across your projects…</div>;
-  if (clientChoiceRequired(read)) {
-    return <div className="vd-dr-empty" role="status">Your projects belong to more than one client. Choose a client first: the governed artifacts are listed one client at a time.</div>;
-  }
   if (read.error) {
     const failure = readFailureFor(read.status, read.code);
     const words = describeReadFailure(failure, 'the listing of governed artifacts across your projects', { subject: 'this listing' });

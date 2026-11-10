@@ -484,42 +484,6 @@ describe('a seal says when the Vault no longer matches it', () => {
   });
 });
 
-/* P-107 item 3 (2026-11-08): "A seal says when its version has been superseded ('superseded by version n on date'),
-   read from the version chain. What was sealed, and whether it is intact, is unchanged." */
-describe('a seal says when a version it holds has since been superseded', () => {
-  it('names the version that superseded it and when, and the seal itself is as it was', async () => {
-    const before = (await seals(mine)).body.data.seals[0];
-    expect(before.documents.map((d: { standing: unknown }) => d.standing)).toEqual([{ state: 'current' }, { state: 'current' }, { state: 'current' }]);
-    const verdictBefore = (await verify(mine, sealId)).body.data.verification;
-    const sealedRow = async () => (await owner.query('SELECT manifest, manifest_sha256 FROM public.vault_data_room_seals WHERE id = $1', [sealId])).rows[0];
-    const recordBefore = await sealedRow();
-
-    // A new version of the Investigator brochure is checked in after the seal.
-    const successor = await ingest(mine, 'Investigator brochure, edition 2.', { supersedesDocumentId: docs[2], documentTitle: 'Investigator brochure' });
-    const next = (await owner.query('SELECT version, created_at FROM vault.documents WHERE id = $1', [successor])).rows[0];
-
-    const after = (await seals(mine)).body.data.seals[0];
-    const standing = new Map(after.documents.map((d: { id: string; standing: unknown }) => [d.id, d.standing]));
-    expect(standing.get(docs[2])).toEqual({ state: 'superseded', byVersion: next.version, at: new Date(next.created_at).toISOString() });
-    expect(standing.get(docs[0])).toEqual({ state: 'current' });
-    expect(standing.get(docs[1])).toEqual({ state: 'current' });
-
-    // What was sealed is unchanged: the same three versions, hashes and record, and the same verdict.
-    const strip = (d: Record<string, unknown>) => ({ ...d, standing: undefined });
-    expect(after.documents.map(strip)).toEqual(before.documents.map(strip));
-    expect(after.documents.map((d: { id: string }) => d.id)).not.toContain(successor);
-    expect(after.manifestSha256).toBe(before.manifestSha256);
-    expect(await sealedRow()).toEqual(recordBefore);
-    expect((await verify(mine, sealId)).body.data.verification).toEqual(verdictBefore);
-  });
-
-  it("another organisation's versions are never read for it", async () => {
-    const res = await seals(theirs);
-    expect(res.status).toBe(200);
-    expect(JSON.stringify(res.body)).not.toContain(docs[2]);
-  });
-});
-
 describe('the tenant purge removes seals through its door', () => {
   it('refuses while the organisation is not pending deletion, then removes them', async () => {
     const purge = (org: number) => owner.query('SELECT seals FROM public.purge_tenant_vault_seals($1)', [org]);

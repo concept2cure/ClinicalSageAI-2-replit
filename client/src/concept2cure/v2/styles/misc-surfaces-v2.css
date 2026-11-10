@@ -585,8 +585,6 @@
   .vd-org .art-row .vn{ flex-wrap:wrap; row-gap:2px; }
   .vd-org .art-row .vn .ct-strong{ flex:1 1 60%; white-space:normal; overflow-wrap:anywhere; }
   .vd-org .art-row .vn .art-kind{ margin-left:0; }
-  /* The client the page is showing, said above its lists. */
-  .vd-client{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:16px; }
 
   /* Phone: one column; the record and the structure are drawers (D6 §C.6 7). */
   @media (max-width:640px){
