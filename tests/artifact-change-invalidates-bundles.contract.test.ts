@@ -98,16 +98,21 @@ const WIRED_FILES = [
  * they are listed rather than swept. The list may shrink, never grow silently.
  */
 const BACKSTOP_ONLY = [
-  // GDPR Art.17 erasure (erasePersonalData, the one erasure path since the
-  // HTTP duplicate in global-compliance.ts was retired to a 410 on 2026-09-28).
-  // It must complete as a legal obligation whatever else is stored, and the
-  // fingerprint gate then refuses every bundle built from an erased artifact —
-  // which is the required outcome, not a degraded one.
-  'server/services/ana-ri/command-executor.ts',
   'server/services/ana/AnaToolExecutor.ts',
   'server/services/ana/artifactVersionStore.ts',
-  'server/services/ana/document-spine.ts',
   'server/services/ana/submission-chat-apply-rewrite.ts',
+  // moveArtifactToSection (P-95 Q2, 7656b4a013): the one statement that moves
+  // an artifact, ctd_section and the version together. Listed because it holds
+  // the statement; the choice not to invalidate is its callers', below.
+  'server/services/artifact-approval-act.ts',
+  // Callers of moveArtifactToSection that do not invalidate packages at the
+  // move: the signed place_in_dossier (ana-ri/command-executor.ts) and AnA's
+  // spine (document-spine.ts setPlacementTx). The census counts a call of the
+  // helper as a write, so a new caller fails here until it is wired or listed.
+  // (command-executor's erasePersonalData no longer writes these columns: since
+  // 2026-09-28 it counts a subject's regulated artifacts and retains them.)
+  'server/services/ana-ri/command-executor.ts',
+  'server/services/ana/document-spine.ts',
   'server/services/artifact-tagger.ts',
   'server/services/module3-convergence-service.ts',
 ];
@@ -125,11 +130,30 @@ function walk(dir: string, out: string[] = []): string[] {
 /** Files that assign a fingerprint-covered column of concept2cure_artifacts. */
 function censusOfWriters(): string[] {
   const found = new Set<string>();
-  const UPDATE_FORMS = /UPDATE\s+concept2cure_artifacts|\.update\((?:schema\.)?concept2cureArtifacts\)/g;
-  // Raw SQL `content = $1`, drizzle `content: value` — version bumps included.
-  const COVERED = /(?:\bcontent\s*=|\btitle\s*=|\bversion\s*=|\bctd_section\s*=|^\s*content\s*:|^\s*title\s*:|^\s*version\s*:|^\s*ctdSection\s*:)/m;
+  // Raw SQL `content = $1`, drizzle `content: value`, and a drizzle sql
+  // template's `${sql.identifier(a.ctdSection.name)} = …` — version bumps included.
+  const COVERED = /(?:\bcontent\s*=|\btitle\s*=|\bversion\s*=|\bctd_section\s*=|^\s*content\s*:|^\s*title\s*:|^\s*version\s*:|^\s*ctdSection\s*:|\$\{\s*sql\.identifier\(\s*(?:\w+\.)*(?:content|title|version|ctdSection)\.name\s*\)\s*\}\s*=)/m;
   for (const file of walk(join(process.cwd(), 'server'))) {
     const src = readFileSync(file, 'utf8');
+    // A call of the shared move primitive writes ctd_section and the version as
+    // surely as an inline UPDATE: before 7656b4a013 each caller held its own.
+    // Counting only statements would let every new caller of the helper pass
+    // unseen, so the call itself is a write.
+    if (/(?<!function\s)\bmoveArtifactToSection\(/.test(src)) {
+      found.add(relative(process.cwd(), file));
+      continue;
+    }
+    // A drizzle sql template names the table by interpolation: `UPDATE ${a}`
+    // with `const a = concept2cureArtifacts` (artifact-approval-act.ts's
+    // moveArtifactToSection). Without this form, a statement moved from raw SQL
+    // into a template leaves the census while still writing the columns.
+    const tables = ['(?:schema\\.)?concept2cureArtifacts', ...[
+      ...src.matchAll(/\b(?:const|let|var)\s+(\w+)\s*=\s*(?:schema\.)?concept2cureArtifacts\s*;/g),
+    ].map((a) => a[1])].join('|');
+    const UPDATE_FORMS = new RegExp(
+      `UPDATE\\s+concept2cure_artifacts|\\.update\\((?:${tables})\\)|UPDATE\\s+\\$\\{\\s*(?:${tables})\\s*\\}`,
+      'g',
+    );
     for (const m of src.matchAll(UPDATE_FORMS)) {
       // The statement body: everything up to the WHERE / .where( that ends it.
       const after = src.slice(m.index!, m.index! + 900);

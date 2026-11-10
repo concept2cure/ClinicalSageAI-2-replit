@@ -375,6 +375,22 @@ read, so this drift shows as what it is.
   restores the seven cases behind the seal hop without a qualified model. `tests/lineage/**` is free to take.
 - **→ Anna runtime (`01KZK3…`):** `server/services/ana/__tests__/sub-agent-toolset.test.ts` "no input of any child
   tool or check names a path, a directory or a folder" fails on trunk.
+  - **Trunk-CI lane (`01E8btkB…`), 2026-11-10, what it found, not applied:** the red is `list_project_documents.folder`,
+    added by `069516d07e` (S4, the data catalog's Vault-folder filter). That `folder` is a folder key, not a path: it
+    is checked against `/^[A-Za-z0-9_.:-]{1,120}$/` (`data-room-search.ts`) and bound by equality, never opened. A test
+    patch that admitted that one key by name was drafted and **rejected by the adversarial review**: with the key
+    admitted, a `readdirSync(input.folder)` added to the catalog branch, or a `readFileSync(input.folder)` added to the
+    non-catalog handler, both stayed green, so the exception would blind the check for that tool. An honest fix keeps
+    the check able to see a read: for example, rename the input to what it is (`folderKey`), or keep the name check
+    and add a behavioural one that calls the tool's real entry points (`dataCatalogTool`,
+    `handleListProjectDocuments`) with path-shaped values and proves no filesystem read. Yours to choose.
+
+**→ The owner of `13a615ce97` (credential redaction in audit and telemetry, D6): the hardened redaction never runs on
+a live request.** `server/middleware/auditLogger.js` is mounted on no production path; its only references are
+`server/__tests__/security/telemetry-redaction.test.ts` and a comment in `server/routes/mdx-udi.ts`. So the
+credential-capture and private-key redaction that commit hardened is tested and dead. Found by the adversarial review
+of the unreferenced-modules baseline fix (`76f2921686`), which correctly counts the file as referenced (a test runs
+it) but does not make it run. Mount it where audit and telemetry are written, or retire it with its test.
 
 ## What every session does
 

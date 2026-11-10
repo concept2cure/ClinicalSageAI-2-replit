@@ -34,7 +34,9 @@ import {
   unstated,
 } from '../immunogenicity-reference';
 
-const SERVICES = fileURLToPath(new URL('../../', import.meta.url));
+// server/services, resolved from path segments rather than a relative-URL string: the unreferenced-module
+// scanner reads such a string as an import of server/services/index.ts, which nothing imports.
+const SERVICES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const HOME = 'immunogenicity/immunogenicity-reference.ts';
 const NAMES = [
   'unstated',
