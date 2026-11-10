@@ -14,8 +14,15 @@ import { createCertificationTx, addLineTx, certifyTx, loadStatement, listCertifi
 import { validateEffort } from '../services/effort-certification/effort-logic';
 import { recordEffortStatementCreated, recordEffortLineAdded, recordEffortCertified } from '../services/effort-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create an effort statement and add its lines (same repair as biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
+
 function uid(req: Request): number | null { const r = req as any; const x = r.userId ?? r.user?.id ?? r.user?.userId; const n = x == null ? NaN : Number(x); return Number.isFinite(n) ? n : null; }
 function oid(req: Request): number | null { const r = req as any; const x = r.tenantId ?? r.organizationId ?? r.user?.organizationId ?? r.user?.tenantId; const n = x == null ? NaN : Number(x); return Number.isFinite(n) ? n : null; }
 const CODE: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };

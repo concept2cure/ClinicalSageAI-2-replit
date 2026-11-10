@@ -26,7 +26,7 @@ the Vault filing below. It runs inside `--pack all`.
 | People on tasks | `lumen.mjs` `castOf` / `castTasks` | The story's personas by name where the organisation has them; otherwise by role: author (who seeds), reviewer (`OQ_SIGNER_*`), approver (`OQ_APPROVER_*`) |
 | Review | `lumen.mjs` `ensureIbReview` | The Investigator's Brochure out for review with the second person (needs `OQ_SIGNER_*`) |
 | Communication and Respond | `lumen-content.mjs` `INFORMATION_REQUEST` | A FICTIONAL FDA information request: "1 agency communication needs a response", 3 questions |
-| Submission Center | `lumen.mjs`, through `biotech-submission.mjs` `ensureSubmission` | Sequence 0000 on LMN-201, assembling, with the approved Vault documents placed as 5 leaves; Validation and Dispatch say what is missing |
+| Submission Center | `lumen.mjs`, through `biotech-submission.mjs` `ensureSubmission`; `ensureApplicantIdentity`, `ensureStudyTags` | Sequence 0000 on LMN-201, assembling, with the approved Vault documents placed as 5 leaves, tagged to their studies; a fictional IND number and sponsor record; Validation and Dispatch say what is missing, and Compile builds the package |
 | Protocol | `lumen-protocol.mjs`, through `biotech-protocol.mjs` `ensureProtocol` | Protocol LMN-201-CDI-02 (synthetic) in the protocol workspace: sections, objectives, its own eligibility criteria, schedule, risks, amendment 2, two deviations with a CAPA, a review |
 | Team | `lumen.mjs` `ensureProjectTeam` | Each Lumen project shared with the reviewer and the approver, so the Team card lists all three with their work |
 | Reporting | `lumen.mjs` `ensureLumenReports`, `ensureLumenReportPack` | 4 computed reports run: executive digest, commitment register, IND safety readiness, eTMF completeness; a bundle of the four; two in-platform schedules |
@@ -120,9 +120,11 @@ The run of show for the Lumen account, by person and scene, with what was found 
 - Completed: the protocol workspace, the sequence's leaves, the project teams, Reporting's bundle and schedules.
 - A defect of this session's own, found by reading the screen and fixed (`34ecd2981`): the Lumen protocol carried
   the psoriasis study's eligibility criteria.
-- The Codespace now installs the fonts report PDFs embed (`4a473cffe`); before, every PDF export in Reporting
-  answered 503.
-- Open: the other system packages a Codespace lacks beside the production image. See that note.
+- The Codespace now installs what the document exports need: the report PDF fonts, LibreOffice and `xmllint`
+  (`4a473cffe`, `01a5f04db`). Before, Reporting's PDF exports and a document's "Download, PDF" answered 503 there.
+- LMN-201 has a fictional applicant identity (IND 194021) and study tagging, so Compile builds its package
+  (`52d1c629c`).
+- Open: that install has not run in a real Codespace; see that note's "Open".
 
 ## Who to ask
 

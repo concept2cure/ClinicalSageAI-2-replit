@@ -223,9 +223,10 @@ if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
   c2c_designate_qms_approver "$(c2c_lumen_person lead)" "$(c2c_lumen_person reviewer)"
   c2c_seed_lumen_org "$C2C_DEMO_VERSION"
 fi
-# After the Lumen account, before the long development-organisation seed: Reporting's PDF exports need their fonts
-# (post-create.sh). An existing Codespace never re-runs post-create, so the check is here too. Never fatal.
-c2c_install_report_fonts
+# After the Lumen account, before the long development-organisation seed: what the document exports need (report
+# PDF fonts, the Word-to-PDF converter, xmllint; post-create.sh). An existing Codespace never re-runs post-create, so
+# the check is here too. Never fatal.
+c2c_install_export_tools
 c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"

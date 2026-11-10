@@ -25,9 +25,16 @@ import {
 } from '../services/nonclinical/nonclinical-service';
 import { evaluateSendReadiness, requiredSendDomains } from '../services/nonclinical/nonclinical-logic';
 import { recordNonclinicalStudyCreated, recordSendValidation } from '../services/nonclinical-metrics';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 const logger = createScopedLogger('nonclinical');
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   register a study and change its status and SEND record (same repair as
+   biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
