@@ -92,10 +92,9 @@
 .qms-thead { font-size: var(--fs-small); color: var(--text-300); font-weight: 500; background: var(--bg-100); border-bottom: 1px solid var(--bg-200); }
 .qms-row { border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
 .qms-row:last-child { border-bottom: 0; }
-.qms-row[data-status="superseded"], .qms-row[data-status="retired"] { opacity: 0.6; }
 .qms-cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-num { color: var(--text-200); font-weight: 600; text-align: left; }
-.qms-num:hover { color: var(--accent-main-100); }
+.qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 .qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
@@ -210,45 +209,48 @@
 /* status pill — extra tone for rejected changes */
 .qms-pill[data-tone="err"] { background: var(--error-muted); color: var(--error); }
 
-/* ─── Change control: classification chip ──────────────────────── */
-.qcc-class { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 5px; }
-.qcc-class[data-tone="ok"]   { background: var(--success-muted); color: var(--success); }
-.qcc-class[data-tone="warn"] { background: var(--warning-muted); color: var(--warning); }
-.qcc-class[data-tone="err"]  { background: var(--error-muted); color: var(--error); }
-
 /* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
 .qcc-stages { margin: 0 0 12px; }
 .qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
 
-/* ─── Change control: register links ───────────────────────────── */
+/* ─── Change control: the log's link count, a quiet button (C8) ─── */
 .qcc-linkcount {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--text-300); font-variant-numeric: tabular-nums; text-align: left;
 }
-.qcc-linkcount:hover { color: var(--accent-main-100); }
+.qcc-linkcount:hover { color: var(--text-100); }
 
 .qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid var(--border-subtle); }
+/* In the log's table the linked records are the change's own row (C8); the cell carries the band, not a second box. */
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail-tr > td { background: var(--bg-050); }
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail { padding: 0 0 4px; background: none; border-bottom: 0; }
+/* A row's More and its linked records stay in view while the table scrolls sideways on a phone (walked at 390, C8):
+   they span every column, so without this their words ran past the section's right edge. */
+.c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .qcc-detail-title { font-size: var(--fs-small); color: var(--text-300); font-weight: 600; }
-.qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.qcc-link {
-  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
-  border-radius: var(--radius-lg); background: var(--background); text-align: left;
-  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qcc-link-ico { display: inline-flex; color: var(--text-300); flex: 0 0 auto; }
-.qcc-link-ico[data-type="deviation"]  { color: var(--warning); }
-.qcc-link-ico[data-type="capa"]       { color: var(--warning); }
-.qcc-link-ico[data-type="validation"] { color: var(--success); }
-.qcc-link-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.qcc-link-ref { font-size: 12px; font-weight: 600; color: var(--text-100); }
-.qcc-link-label { font-size: 10.5px; color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qcc-link-rel { font-size: 10px; color: var(--text-400); white-space: nowrap; }
-.qcc-link-type {
-  font-size: 11px; color: var(--text-300);
-  font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
-}
+/* A change's record in its row (C9, ChangeRecordDetail.tsx): the fields its approval signs, as a definition list, then
+   its linked records as a plain list. Until 2026-11-10 the links were bordered cards with type-coloured icons and an
+   accent hover, and the assessment could not be read in the log at all. */
+.qcc-facts { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 6px 16px; margin: 4px 0 14px; }
+.qcc-facts > div { display: contents; }
+.qcc-facts dt { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-facts dd { margin: 0; color: var(--text-100); white-space: pre-wrap; overflow-wrap: anywhere; }
+.qcc-facts dd[data-empty] { color: var(--text-300); }
+.qcc-detail h3.qcc-detail-title { margin: 0 0 6px; }
+.qcc-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.qcc-links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.qcc-link { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-100); text-align: left; }
+.qcc-link:hover { text-decoration: underline; }
+.qcc-link-label { color: var(--text-200); }
+.qcc-link-rel, .qcc-link-type { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-link-type::before { content: "·"; margin-right: 10px; }
+/* What the approver signs, inside the signature ceremony (C9). */
+.qcc-sign-record { margin: 0 0 12px; }
+.qcc-sign-lead { margin: 0 0 6px; font-size: var(--fs-small); font-weight: 600; color: var(--text-200); }
+.qcc-sign-record .qcc-facts { grid-template-columns: 1fr; gap: 2px; margin: 0; }
+.qcc-sign-record .qcc-facts dd { margin-bottom: 6px; }
+@media (max-width: 640px) { .qcc-facts { grid-template-columns: 1fr; gap: 2px; } .qcc-facts dd { margin-bottom: 6px; } }
 
 /* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
 .qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
@@ -286,4 +288,15 @@
   grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
   padding: 2px 0 4px; border-top: 1px dashed var(--border-subtle);
 }
-.qms-row[data-more] { background: var(--bg-050); }
+/* The SOP register is D0's .reg-tbl (C6): one <tbody> per document, so rows are told apart between bodies too; the
+   number stays mono at 13px (people cite it); the title wraps rather than being cut off. */
+.c2c-v2 .reg-tbl.qms-reg > tbody:not(:last-child) > tr:last-child > td { border-bottom: 1px solid var(--border-subtle); }
+.c2c-v2 .reg-tbl.qms-reg td { vertical-align: top; }
+/* The table contains its own hidden "Actions" header: an absolutely positioned .sr-only escapes a scrolling table that
+   is not its containing block, and at 390 widened the whole page by 323px (walked, C6). */
+.c2c-v2 .reg-tbl.qms-reg { position: relative; }
+.c2c-v2 .reg-tbl.qms-reg .qms-num { font-size: 13px; padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap; }
+.c2c-v2 .reg-tbl.qms-reg td.qms-title { min-width: 180px; color: var(--text-100); }
+.c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
+.c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }

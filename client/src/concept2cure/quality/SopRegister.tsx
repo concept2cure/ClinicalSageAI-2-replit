@@ -61,7 +61,7 @@ import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
-import { SopRegisterRow, GRID, ROW_MIN, type RegisterRowActions } from './SopRegisterRow';
+import { SopRegisterRow, RegisterTable, REGISTER_COLUMNS, type RegisterRowActions } from './SopRegisterRow';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -332,19 +332,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           <EmptyState title={filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'} />
         )}
         {visible.length > 0 && (
-          <div className="qms-table">
-            <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
-              <div>Number</div>
-              <div>Title</div>
-              <div>Type</div>
-              <div>Version</div>
-              <div>Status</div>
-              <div>Effective</div>
-              <div>Next review</div>
-              <div />
-            </div>
+          <RegisterTable columns={REGISTER_COLUMNS}>
             {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
-          </div>
+          </RegisterTable>
         )}
       </section>
 

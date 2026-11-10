@@ -141,7 +141,7 @@ describe('the existing Quality register personal training handoff', () => {
     H.apiRequest.mockResolvedValue(response({ data: null }));
     mount();
     expect(screen.queryByRole('button', { name: 'Read and acknowledge' })).toBeNull();
-    const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Open', 'More']);
     // A bound document's Open reads its editing copy for the one editor, not the training reader.
     fireEvent.click(within(row).getByRole('button', { name: 'Open' }));

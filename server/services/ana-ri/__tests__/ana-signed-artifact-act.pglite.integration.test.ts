@@ -68,7 +68,7 @@ import type { CommandContext } from '../command-executor';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
-  `CREATE TABLE organizations (id serial PRIMARY KEY, name text);`,
+  `CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb);`,
   extractTableDdl(BASELINE, [
     'users', 'organization_users', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
     'concept2cure_signatures', 'concept2cure_submission_snapshots', 'concept2cure_provenance_events',

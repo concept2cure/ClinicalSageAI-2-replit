@@ -1,0 +1,10 @@
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 42ms
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 510ms
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > is a table with column headers, one body per change, and the shared chips 531ms
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > shows each change its one next step and More; the rest are behind More 39ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 19 passed (23)
+ × client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve to anyone but the change's proposer 61ms
+   → expected <button type="button" …(2)></button> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)

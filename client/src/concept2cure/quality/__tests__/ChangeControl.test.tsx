@@ -106,9 +106,53 @@ describe('ChangeControl — the change-control log', () => {
     expect(screen.getByText('CC-2026-014')).toBeTruthy();
   });
 
+  // C8 (2026-11-10): the log is D0's table, as the SOP register (C6), with real column headers.
+  it('is a table with column headers, one body per change, and the shared chips', () => {
+    const { container } = render(<Harness onAsk={() => {}} />);
+    const table = screen.getByRole('table');
+    expect(table.classList.contains('reg-tbl')).toBe(true);
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent))
+      .toEqual(['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 'Links', 'Actions']);
+    expect(container.querySelectorAll('tbody.qcc-change')).toHaveLength(FIXTURE_CHANGES.length);
+    expect(screen.getByText('Critical').className).toBe('rd-chip tone-err');
+    expect(container.querySelector('.qms-row, .qms-thead, .qcc-class, .qms-pill, .qms-tag, .qms-chip')).toBeNull();
+  });
+
+  it('shows each change its one next step and More; the rest are behind More', () => {
+    const onAsk = vi.fn();
+    render(<Harness onAsk={onAsk} />);
+    const names = (row: HTMLElement) => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
+    // Under assessment: Approve (the signed route) is the next step.
+    const assessed = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
+    expect(names(assessed)).toEqual(['CC-2026-014', '3 linked records', 'Approve', 'More actions for CC-2026-014']);
+    fireEvent.click(within(assessed).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    const more = within(assessed).getByRole('group', { name: 'Actions for CC-2026-014' });
+    expect(within(more).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim()))
+      .toEqual(['Advance', 'Edit assessment', 'Link a record', 'Ask AnA about this change']);
+    fireEvent.click(within(more).getByRole('button', { name: 'Ask AnA about this change' }));
+    expect(onAsk).toHaveBeenCalledWith(expect.stringContaining('Summarize change CC-2026-014'));
+    // Proposed: Advance is the next step. Closed, with no move: only More.
+    const proposed = screen.getByText('CC-2026-001').closest('tbody') as HTMLElement;
+    expect(within(proposed).getByRole('button', { name: 'Advance' })).toBeTruthy();
+    expect(within(proposed).queryByRole('button', { name: 'Link a record' })).toBeNull();
+    const closed = screen.getByText('CC-2026-002').closest('tbody') as HTMLElement;
+    expect(within(closed).queryByRole('button', { name: /Advance|Approve/ })).toBeNull();
+    // C9: past assessment the record is what the approval signed, so it offers no edit.
+    fireEvent.click(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' }));
+    expect(within(closed).queryByRole('button', { name: 'Edit assessment' })).toBeNull();
+    expect(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' })).toBeTruthy();
+  });
+
   it('expands a change to its linked deviation / validation records', () => {
     render(<Harness onAsk={() => {}} />);
     fireEvent.click(screen.getByText('CC-2026-014'));
+    // C9: the record an approver signs is read here, before its links.
+    const record = screen.getByText('Impact assessment').closest('dl') as HTMLElement;
+    expect(Array.from(record.querySelectorAll('dt')).map((d) => d.textContent))
+      .toEqual(['Current state → proposed state', 'Reason for the change', 'Risk', 'Impact assessment', 'Implementation plan']);
+    expect(record.textContent).toContain('Filter qualification and an extractables study; no filing change.');
+    expect(record.textContent).toContain('Qualify the second source, then update the aseptic fill batch record.');
+    expect(within(record).getByText('High')).toBeTruthy();
     expect(screen.getByText('Linked records')).toBeTruthy();
     expect(screen.getByText('DEV-2026-041')).toBeTruthy();   // linked deviation
     expect(screen.getByText('VP-7')).toBeTruthy();           // linked validation protocol
