@@ -177,11 +177,46 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 # made earlier gets new demo data on its next start. The approver is the second
 # signer (OQ_SIGNER_*): without one, every two-person step (QMS approvals,
 # method validation, the RACT's approval, review requests) was recorded as not
-# executed. Not the reviewer: QMS approval needs the Approver role, and the
-# packs route a draft to review before approving it (158323d776).
+# executed. The QMS packs route a draft to review with the signer as its
+# approver (158323d776), and in an organisation that has designated no QMS
+# approver only the Approver role approves; every demo person is an
+# administrator. So the approver is first designated as the organisation's QMS
+# approver, once, through the governed route an administrator uses in Admin and
+# access (PUT /api/tenant-users/:org/:user/qms-approver, with a reason, audited).
+c2c_designate_qms_approver() {
+  local admin="$1" approver="$2" marker="$C2C_CODESPACE_STATE/qms-approver.done"
+  grep -qx "$admin=$approver" "$marker" 2>/dev/null && return 0
+  if C2C_BASE="http://127.0.0.1:$C2C_PORT" C2C_ADMIN="$admin" C2C_APPROVER="$approver" node -e '
+    (async () => {
+      const base = process.env.C2C_BASE, approver = process.env.C2C_APPROVER;
+      const l = await (await fetch(base + "/api/auth/dev-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.C2C_ADMIN }) })).json();
+      const org = l?.user?.organizationId, auth = { Authorization: "Bearer " + l?.accessToken };
+      if (!l?.accessToken || !org) process.exit(1);
+      try {
+        const members = await (await fetch(base + "/api/tenant-users/" + org, { headers: auth })).json();
+        const person = Array.isArray(members) ? members.find((m) => m.email === approver) : null;
+        if (!person) process.exit(1);
+        const r = await fetch(base + "/api/tenant-users/" + org + "/" + person.id + "/qms-approver", { method: "PUT",
+          headers: { "Content-Type": "application/json", ...auth },
+          body: JSON.stringify({ designated: true, reason: "Codespace demonstration: the approver approves its controlled documents." }) });
+        const j = await r.json().catch(() => null);
+        process.exitCode = r.status === 200 && j?.designated === true ? 0 : 1;
+      } finally {
+        await fetch(base + "/api/auth/logout", { method: "POST", headers: auth }).catch(() => {});
+      }
+    })().catch(() => process.exit(1));' 2>/dev/null; then
+    echo "$admin=$approver" >>"$marker"
+    c2c_log "QMS approver for $admin's organisation: $approver."
+  else
+    c2c_log "Could not designate $approver as the QMS approver; the demo's QMS approvals are recorded as not executed."
+  fi
+}
+
 C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
 # The Lumen account first: it is where "Demo access" lands.
 if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_seed_lumen_org "$C2C_DEMO_VERSION"; fi
+c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
   if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
