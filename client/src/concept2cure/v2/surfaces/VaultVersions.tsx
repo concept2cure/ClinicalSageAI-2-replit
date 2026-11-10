@@ -378,7 +378,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onView, viewi
   onDownload: Props['onDownload'];
   downloadingId: string;
   /** Show a version in the page (VaultVersionViewer.tsx), through the same audited download. */
-  onView?: (versionId: string, label: string, hash: string | null) => void;
+  onView?: (versionId: string, label: string, hash: string | null, as?: 'rendition') => void;
   viewingId?: string | null;
   onLifecycleChanged?: () => void;
   /** Compare an earlier version with the current one (plan critique 15). */
@@ -525,7 +525,7 @@ export function VaultVersions({
         title={title}
         onDownload={onDownload}
         downloadingId={downloadingId}
-        onView={(id, label, hash) => void viewer.view(id, label, hash)}
+        onView={(id, label, hash, as) => void viewer.view(id, label, hash, as)}
         viewingId={viewer.viewing}
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}

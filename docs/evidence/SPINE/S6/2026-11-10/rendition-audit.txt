@@ -1,0 +1,6 @@
+         created_at         |          action          | rendition_of | rendition_sha |     source_file     
+----------------------------+--------------------------+--------------+---------------+---------------------
+ 2026-11-10 07:10:42.399504 | vault.document.rendition | ab6e8d3ea77c | 6d8fcbe6f2dd  | stability-note.docx
+ 2026-11-10 07:06:02.255624 | vault.document.rendition | 6012a4576b91 | 4262be2e194e  | stability-note.docx
+(2 rows)
+
