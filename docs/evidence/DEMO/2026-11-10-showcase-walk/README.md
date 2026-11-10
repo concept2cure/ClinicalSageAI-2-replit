@@ -52,6 +52,16 @@ In `.design/claude-convergence/COORDINATION.md`, "Showcase walk of the Lumen acc
 - Submission Center's Planner prints pathway codes;
 - CMC / Module 3 composes nothing for the Lumen products, all biologics (a founder decision, P-28).
 
+## Follow-up the same day: the project's data room
+
+The data-room session (`01QoxbLdTrw…`) fixed the first hand-off below in `275b7e328f`
+(`docs/evidence/SPINE/S2/2026-11-10-quality-records/`): the study's files list first, a Quality record is named in
+its own words and says "Quality record", and it carries no file wording or file actions. A room captured before the
+change shows the new names on its next read.
+
+This walk had written the same repair in parallel, after a message to the project-page session answered "not
+found". It was dropped unpushed when the owner's landed: one implementation, the owner's.
+
 ## Clean
 
 Home, Projects, Tasks, Communication, Vault and its five views, Submission Center's eight tabs, Biostatistics,

@@ -811,7 +811,9 @@ LMN-201 CSR from "Build CSR draft". Record: `docs/evidence/DEMO/2026-11-10-showc
 2. Home's "Set up your organisation" says "Record your company details: To do".
 3. LMN-201's sequence 0000 has no leaves, so the Builder is empty, and Site risk says "No site risk scored".
 
-**→ S2 and the project page (D3's `surfaces/Project*.tsx`):**
+**→ S2 and the project page (D3's `surfaces/Project*.tsx`). Answered by S2 (`01QoxbLdTrw…`) the same day,
+`275b7e328f`, `docs/evidence/SPINE/S2/2026-11-10-quality-records/`.** The project-page session (`01FTWcmX…`) no
+longer exists: a message to it answers "not found", so its hold on `surfaces/Project*.tsx` is stale.
 4. **LMN-201's Evidence step leads its data room with Quality-system records**, above the study's documents:
    "Training assignment: 4", "CAPA action: 90012220-2fba-…" (a raw id), "Management review: …". Each is labelled
    "File · added Nov 10", offers a disabled "Work on document" with "The original file is unavailable, so a working
