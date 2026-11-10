@@ -1,0 +1,420 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/submissions/sequences/6/dispatch-readiness",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 60,
+    "rateLimitRetries": 0,
+    "body": {
+      "sequenceId": 6,
+      "region": "fda",
+      "sequenceStatus": "draft",
+      "validatedStage": null,
+      "validationErrors": 9,
+      "unacknowledgedShadowCriticals": 0,
+      "shadowReviewRunCount": 0,
+      "shadowReviewStaleRunCount": 0,
+      "externalValidation": {
+        "configured": false,
+        "ran": false,
+        "errorCount": 0,
+        "errorCountKnown": false,
+        "cleared": true,
+        "blockers": [],
+        "validatorKind": "unavailable",
+        "selectedValidatorName": "noop",
+        "reportedValidatorName": null,
+        "qualifyingRun": false,
+        "assessmentStatus": "not_assessed",
+        "assessmentNote": "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch.",
+        "enforced": false
+      },
+      "shadowReviewMissing": true,
+      "shadowReviewWaiver": {
+        "state": "none"
+      },
+      "shadowReviewWaivable": {
+        "eligible": false,
+        "reason": "No Shadow Review has been attempted for this sequence. A waiver is offered only after a run fails because every AI provider was unavailable or overloaded."
+      },
+      "releaseSignature": {
+        "required": true,
+        "verdict": "unsigned",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6",
+        "cleared": false
+      },
+      "gate": {
+        "cleared": false,
+        "blockers": [
+          "9 open error-severity validation finding(s) must be resolved before dispatch.",
+          "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6)."
+        ]
+      },
+      "freezeGate": {
+        "cleared": false,
+        "blockers": [
+          "9 open error-severity validation finding(s) must be resolved before dispatch.",
+          "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "dispatchGateOnSigning": {
+        "cleared": false,
+        "blockers": [
+          "9 open error-severity validation finding(s) must be resolved before dispatch.",
+          "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "gates": [
+        {
+          "key": "structural",
+          "rule": {
+            "id": "STRUCTURAL_GATE_CLEAR",
+            "title": "No open error-severity finding, no leaf awaiting approval, and no unacknowledged Shadow Review critical",
+            "category": "integrity",
+            "regions": [
+              "ich"
+            ],
+            "severity": "high",
+            "source": "ICH eCTD Specification (v3.2.2 / v4.0) (error findings); Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion (Shadow Review criticals)",
+            "enforcement": "dispatch-readiness",
+            "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+          },
+          "cleared": false,
+          "blockers": [
+            "9 open error-severity validation finding(s) must be resolved before dispatch.",
+            "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved."
+          ]
+        },
+        {
+          "key": "external",
+          "rule": {
+            "id": "EXTERNAL_VALIDATION_CLEAN",
+            "title": "External validation result and dispatch policy are assessed",
+            "category": "integrity",
+            "regions": [
+              "ich"
+            ],
+            "severity": "high",
+            "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+            "enforcement": "external",
+            "enforcementStatement": "Requires the agency validator — its report decides this; the product records the verdict, it does not reproduce the check."
+          },
+          "cleared": true,
+          "blockers": [],
+          "notAssessed": "No agency-grade validator is configured on this installation, so no report exists for this package. It is not required here, so it does not block dispatch — but the package has not been checked against it.",
+          "assessmentStatus": "not_assessed",
+          "assessmentNote": "No configured external-engine assessment is established. External validation is advisory here, so this gate does not block dispatch."
+        },
+        {
+          "key": "shadowPresence",
+          "rule": {
+            "id": "SHADOW_REVIEW_COMPLETED",
+            "title": "At least one Shadow Review has completed for this sequence",
+            "category": "content",
+            "regions": [
+              "ich"
+            ],
+            "severity": "high",
+            "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+            "enforcement": "dispatch-readiness",
+            "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+          },
+          "cleared": false,
+          "blockers": [
+            "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+          ]
+        },
+        {
+          "key": "releaseSignature",
+          "rule": {
+            "id": "RELEASE_SIGNATURE_VALID",
+            "title": "A valid release signature binds this sequence’s package (21 CFR 11.70)",
+            "category": "integrity",
+            "regions": [
+              "ich"
+            ],
+            "severity": "high",
+            "source": "21 CFR Part 11 §11.70 (signature/record linking); EU GMP Annex 11 §14 (electronic signature)",
+            "enforcement": "dispatch-readiness",
+            "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+          },
+          "cleared": false,
+          "blockers": [
+            "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6)."
+          ]
+        }
+      ],
+      "readiness": {
+        "errors": 9,
+        "warnings": 1,
+        "infos": 1,
+        "releaseBlockers": 1,
+        "findings": [
+          {
+            "severity": "error",
+            "code": "IND_MODULE3_REQUIRED",
+            "sectionCode": "3.2.S",
+            "message": "There is no 3.2.S Drug Substance leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.S with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.S, naming 3.2.S among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+            "rule": {
+              "id": "IND_MODULE3_REQUIRED",
+              "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+              "category": "content",
+              "regions": [
+                "fda"
+              ],
+              "severity": "high",
+              "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "IND_MODULE3_REQUIRED",
+            "sectionCode": "3.2.P",
+            "message": "There is no 3.2.P Drug Product leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.P with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.P, naming 3.2.P among its sections, with its Letter of Authorization on file (Module 1.4.1).",
+            "rule": {
+              "id": "IND_MODULE3_REQUIRED",
+              "title": "The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization",
+              "category": "content",
+              "regions": [
+                "fda"
+              ],
+              "severity": "high",
+              "source": "21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "warning",
+            "code": "DOCUMENT_NOT_APPROVED",
+            "sectionCode": "m5.3.5",
+            "blocksRelease": true,
+            "message": "Leaf \"Protocol\" (m5.3.5) points at vault_documents 27d63370-2b0a-4882-bd7b-9a9eab223260, which is not yet approved (not reviewed). Validation does not wait for approval, but only approved documents are released: freeze, dispatch and transmit refuse this sequence until the document is approved.",
+            "rule": {
+              "id": "DOCUMENT_NOT_APPROVED",
+              "title": "Every leaf’s source document is approved for transmission",
+              "category": "integrity",
+              "regions": [
+                "ich"
+              ],
+              "severity": "high",
+              "source": "Concept2Cure dispatch policy (assess-dispatch-readiness) — not an agency criterion",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.1",
+            "message": "Required section 1.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.2",
+            "message": "Required section 1.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.3",
+            "message": "Required section 1.3 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.12.14",
+            "message": "Required section 1.12.14 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14.4.1",
+            "message": "Required section 1.14.4.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14.4.2",
+            "message": "Required section 1.14.4.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "error",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.20",
+            "message": "Required section 1.20 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+            "rule": {
+              "id": "MISSING_REQUIRED_SECTION",
+              "title": "Region-required Module 1 sections are present",
+              "category": "content",
+              "regions": [
+                "fda",
+                "eu",
+                "jp",
+                "ca",
+                "au",
+                "ch"
+              ],
+              "severity": "medium",
+              "source": "FDA eCTD Technical Conformance Guide; Specifications for eCTD Validation Criteria; EU Module 1 eCTD Specification; EU eCTD Validation Criteria",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          },
+          {
+            "severity": "info",
+            "code": "CLINICAL_HOLD_NOT_ASSESSED",
+            "sectionCode": null,
+            "message": "Clinical hold (21 CFR 312.42) is not assessed: nothing on this platform records whether FDA has placed this IND on clinical hold, so this verdict neither clears nor blocks the sequence on that ground. Confirm the IND is not on hold before dispatch; the complete response to a hold (312.42(e)) is filed as a response sequence.",
+            "rule": {
+              "id": "CLINICAL_HOLD_NOT_ASSESSED",
+              "title": "A US IND sequence states that a clinical hold is not assessed",
+              "category": "content",
+              "regions": [
+                "fda"
+              ],
+              "severity": "low",
+              "source": "21 CFR 312.42",
+              "enforcement": "dispatch-readiness",
+              "enforcementStatement": "Enforced here — this assessment checks it every time it runs."
+            }
+          }
+        ]
+      },
+      "leafCount": 1,
+      "indProgram": {
+        "crossReferencesWithoutLoa": 0,
+        "overdueSafetyReports": 0,
+        "carriesSafetyReport": false,
+        "continuingFilingType": null,
+        "clinicalHold": {
+          "assessed": false,
+          "note": "Clinical hold (21 CFR 312.42) is not assessed: nothing on this platform records whether FDA has placed this IND on clinical hold, so this verdict neither clears nor blocks the sequence on that ground. Confirm the IND is not on hold before dispatch; the complete response to a hold (312.42(e)) is filed as a response sequence."
+        }
+      },
+      "signer": {
+        "state": "author"
+      },
+      "dispatchAuthorization": {
+        "reauthorizing": false,
+        "eligible": false,
+        "refusal": "Cannot transition sequence from draft to dispatched."
+      }
+    }
+  }
+}

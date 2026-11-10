@@ -1,0 +1,40 @@
+[
+  {
+    "id": "ba80eae1-788f-48ba-b452-0d703dc034f9",
+    "version": "2.0",
+    "contentHash": "4f494b4d0be4c8dedfc8366ec570387184678f1c2da59b151f8c3581888ee6d0",
+    "fileSize": 622,
+    "fileName": "next-version.pdf",
+    "uploader": "oq-runner@validation.local",
+    "uploaderId": 1,
+    "createdAt": "2026-11-10T03:08:49.446Z",
+    "current": true,
+    "link": "verified",
+    "restoredFrom": null,
+    "lifecycle": null,
+    "placements": [],
+    "estarUses": [],
+    "cmcEvidence": [],
+    "sectionCitations": [],
+    "transmitRefusal": "not reviewed"
+  },
+  {
+    "id": "81e1297e-b6a6-4820-89d2-a7f9587687f0",
+    "version": "1.0",
+    "contentHash": "a4d64939cc4c52beec9aa0eba20ff104860ac608e870032e1b44e83ada02ed26",
+    "fileSize": 611,
+    "fileName": "OQ-002-Protocol-20261110030837.pdf",
+    "uploader": "oq-runner@validation.local",
+    "uploaderId": 1,
+    "createdAt": "2026-11-10T03:08:39.145Z",
+    "current": false,
+    "link": "none",
+    "restoredFrom": null,
+    "lifecycle": null,
+    "placements": [],
+    "estarUses": [],
+    "cmcEvidence": [],
+    "sectionCitations": [],
+    "transmitRefusal": "superseded by a later version"
+  }
+]

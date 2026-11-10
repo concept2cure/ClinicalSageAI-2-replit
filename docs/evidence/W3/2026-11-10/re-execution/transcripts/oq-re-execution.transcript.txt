@@ -1,0 +1,191 @@
+
+=== projects ===
+  OQ-PROJ-01  pass
+  OQ-PROJ-02  pass
+  OQ-PROJ-03  pass
+  OQ-PROJ-04  pass
+  OQ-PROJ-05  pass
+  OQ-PROJ-06  FAIL  (verify-chain expected ok, got 403)
+  OQ-PROJ-06b  pass
+  OQ-PROJ-07  pass
+  OQ-PROJ-08  pass
+  OQ-PROJ-09  pass
+  OQ-PROJ-10  FAIL  (page text does not contain "OQ-001 task 20261110024200")
+  OQ-PROJ-11  pass
+  OQ-PROJ-12  FAIL  (exact filing reference fixture was not created)
+  OQ-PROJ-13  pass
+  OQ-PROJ-14  pass
+  OQ-PROJ-15  pass
+  OQ-PROJ-16  pass
+  OQ-PROJ-17  pass
+  OQ-PROJ-18  pass
+  OQ-PROJ-19  pass
+
+OQ-001 Projects: 17 pass, 3 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-PROJECTS
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  FAIL  (verify-chain expected ok, got 403)
+  OQ-VAULT-08b  pass
+  OQ-VAULT-09  pass
+  OQ-VAULT-10  pass
+  OQ-VAULT-11  pass
+  OQ-VAULT-12  pass
+  OQ-VAULT-13  pass
+  OQ-VAULT-14  pass
+  OQ-VAULT-15  pass
+  OQ-VAULT-16  pass
+  OQ-VAULT-17  pass
+  OQ-VAULT-18  pass
+  OQ-VAULT-19  pass
+  OQ-VAULT-20  pass
+  OQ-VAULT-21  pass
+  OQ-VAULT-22  pass
+
+OQ-002 Vault: 23 pass, 1 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-VAULT
+
+=== authoring ===
+  OQ-AUTH-00  pass
+  OQ-AUTH-01  pass
+  OQ-AUTH-02  pass
+  OQ-AUTH-03  pass
+  OQ-AUTH-04  pass
+  OQ-AUTH-05  pass
+  OQ-AUTH-06  pass
+  OQ-AUTH-07  pass
+  OQ-AUTH-08  pass
+  OQ-AUTH-09  pass
+  OQ-AUTH-10  pass
+  OQ-AUTH-17  pass
+  OQ-AUTH-17b  pass
+  OQ-AUTH-15  pass
+  OQ-AUTH-16  deviation  (AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.)
+  OQ-AUTH-11a  pass
+  OQ-AUTH-11b  pass
+  OQ-AUTH-11  pass
+  OQ-AUTH-12  pass
+  OQ-AUTH-13  pass
+  OQ-AUTH-13b  pass
+  OQ-AUTH-14  pass
+  OQ-AUTH-14b  pass
+  OQ-AUTH-18  pass
+  OQ-AUTH-19  pass
+  OQ-AUTH-20  pass
+
+OQ-003 Authoring: 25 pass, 0 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-AUTHORING
+
+=== submission-center ===
+  OQ-SUBC-00  pass
+  OQ-SUBC-01  pass
+  OQ-SUBC-02  pass
+  OQ-SUBC-03  pass
+  OQ-SUBC-04  pass
+  OQ-SUBC-05  pass
+  OQ-SUBC-06  pass
+  OQ-SUBC-07  pass
+  OQ-SUBC-08  pass
+  OQ-SUBC-09  pass
+  OQ-SUBC-10  pass
+  OQ-SUBC-11  pass
+  OQ-SUBC-12  pass
+  OQ-SUBC-13  pass
+  OQ-SUBC-14  pass
+  OQ-SUBC-15  pass
+  OQ-SUBC-16  deviation  (not executed — this is a development server (its CSP is report-only), which allows inline run inputs by design (it answered 400 invalid_request and 400 invalid_request). The refusal is a production control; observe it on a production build.)
+
+OQ-004 Submission Center: 16 pass, 0 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-SUBMISSION-CENTER
+
+=== submission-readiness ===
+  OQ-SRDY-00  pass
+  OQ-SRDY-01  pass
+  OQ-SRDY-02  pass
+  OQ-SRDY-03  pass
+  OQ-SRDY-04  pass
+  OQ-SRDY-05  pass
+  OQ-SRDY-05b  pass
+  OQ-SRDY-06  pass
+  OQ-SRDY-06b  deviation  (launch scope is enforced, and the contradiction scan belongs to the Inconsistency board, which is not in this release (VSR-001 §16.5; OQ-SRDY-08). The positive half of URS-SRDY-006 is executable only with launch scope off)
+  OQ-SRDY-07  pass
+  OQ-SRDY-08  pass
+
+OQ-005 Submission Readiness: 10 pass, 0 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-SUBMISSION-READINESS
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  pass
+  OQ-QMS-03  pass
+  OQ-QMS-04  pass
+  OQ-QMS-04b  pass
+  OQ-QMS-05  pass
+  OQ-QMS-05b  pass
+  OQ-QMS-06a  pass
+  OQ-QMS-06  pass
+  OQ-QMS-06b  pass
+  OQ-QMS-06c  pass
+  OQ-QMS-06d  pass
+  OQ-QMS-07  pass
+  OQ-QMS-08  pass
+  OQ-QMS-09  pass
+  OQ-QMS-10b  pass
+  OQ-QMS-10  FAIL  (signed retire expected 200, got 400)
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  pass
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 21 pass, 1 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-QMS
+
+=== cmc ===
+  OQ-CMC-01  pass
+  OQ-CMC-03  pass
+  OQ-CMC-02  pass
+  OQ-CMC-04  pass
+  OQ-CMC-05  pass
+  OQ-CMC-06  pass
+  OQ-CMC-07  pass
+  OQ-CMC-08  pass
+  OQ-CMC-09  pass
+  OQ-CMC-10  pass
+  OQ-CMC-11  pass
+  OQ-CMC-12  pass
+  OQ-CMC-13  pass
+  OQ-CMC-14  pass
+  OQ-CMC-15  pass
+  OQ-CMC-16  pass
+  OQ-CMC-17  deviation  (not executed — the reference records raise no critical contradiction, so the credentialed resolve has nothing to act on.)
+  OQ-CMC-18  FAIL  (the refusal does not name the unapproved sections)
+  OQ-CMC-19  deviation  (not executed — the programme has no submission spine to place into; the IND filing path (OQ-SUBC) creates it.)
+  OQ-CMC-20  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-21  pass
+  OQ-CMC-22  pass
+  OQ-CMC-23  pass
+  OQ-CMC-24  pass
+  OQ-CMC-25  pass
+  OQ-CMC-26  deviation  (not executed — the interview and its refusal are both reachable only through an AnA turn, and no AI provider is configured (/readyz reports ana down), so every AnA turn answers 503 GATEWAY_UNAVAILABLE and no interview starts. Observe this under the W3 posture with a provider configured.)
+  OQ-CMC-27  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-28  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-29  deviation  (partly executed — launch scope is enforced and a claimed path is served (200), but the unclaimed path answered 200: this deployment sets LAUNCH_SCOPE_API_UNATTRIBUTED=report, which records an unclaimed path instead of refusing it. Set it to enforce to observe the refusal.)
+  OQ-CMC-30  deviation  (not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered 400 invalid_request), the documented development behaviour. The refusal is a production control; observe it on a production build.)
+  OQ-CMC-32  pass
+  OQ-CMC-33  FAIL  (a self-approval expected 403, got 409)
+  OQ-CMC-31  pass
+  OQ-CMC-34  pass
+  OQ-CMC-35  pass
+  OQ-CMC-36  pass
+  OQ-CMC-37  pass
+  OQ-CMC-38  pass
+  OQ-CMC-39  pass
+  OQ-CMC-40  pass
+  OQ-CMC-41  FAIL  (the close-out expected 200, got 401)
+  OQ-CMC-42  pass
+OQ-008 step modules: steps-access.mjs, steps-access.mjs → steps-compile.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs → steps-correspondence.mjs
+
+OQ-008 CMC / Module 3: 31 pass, 3 fail, 5 deviation, 3 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-CMC

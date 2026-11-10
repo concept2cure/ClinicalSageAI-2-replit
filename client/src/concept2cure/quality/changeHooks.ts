@@ -113,9 +113,11 @@ export function useChangeRegister() {
 /** Register KPIs — GET /api/mdx/qms/changes/summary. */
 const SUMMARY_PATH = '/api/mdx/qms/changes/summary';
 export function useChangeSummary() {
-  const { data, loading, error } = useFetchJson<unknown>(SUMMARY_PATH);
+  const { data, loading, error, refresh } = useFetchJson<unknown>(SUMMARY_PATH);
   const summary = useMemo<ChangeSummary | null>(() => objectOf<ChangeSummary>(data), [data]);
   const shape =
     data != null && summary === null ? `unexpected response shape for ${SUMMARY_PATH}` : null;
-  return { summary, loading, error: error ?? shape };
+  /* `refresh` so a write re-reads the figures with the log: until 2026-11-10 a raised change appeared in the log
+     while the figure line above it still counted the log as it was (walked, C3). */
+  return { summary, loading, error: error ?? shape, refresh };
 }

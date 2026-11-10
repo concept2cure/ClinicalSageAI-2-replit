@@ -1,0 +1,38 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/comparability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+      "title": "OQ comparability 20261110025315b",
+      "type": "process",
+      "product": "Scale",
+      "status": "draft"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 21,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "57e7fcdf-9531-4bbc-a810-143a82b657df",
+        "project_id": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "title": "OQ comparability 20261110025315b",
+        "product": "Scale",
+        "type": "process",
+        "status": "draft",
+        "createdAt": "2026-11-10T02:59:21.033Z",
+        "updatedAt": "2026-11-10T02:59:21.033Z",
+        "methods": [],
+        "outcome": null,
+        "owner": null
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { C2CForm } from '../v2/C2CForm';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import type { ActionState } from '@shared/schema/capa-mdr';
@@ -23,12 +23,11 @@ import {
 
 const TONE: Record<ActionState, string> = { planned: 'draft', in_progress: 'review', done: 'effective', blocked: 'err', cancelled: 'muted' };
 
-export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: () => void }) {
+export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (confirmation?: string) => void }) {
   const read = useFetchJson<{ actions?: unknown }>(`/api/capa-mdr/capa/${encodeURIComponent(capa.id)}`);
   const actions = Array.isArray(read.data?.actions) ? (read.data!.actions as CapaActionRow[]) : null;
   const [moving, setMoving] = React.useState<{ action: CapaActionRow; to: ActionState } | null>(null);
   const [refusal, setRefusal] = React.useState<string | null>(null);
-  const [notice, setNotice] = React.useState<string | null>(null);
   const writing = React.useRef(false);
 
   const record = async (v: Record<string, string>) => {
@@ -44,10 +43,11 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: () 
     setRefusal(null);
     try {
       await transitionCapaAction(moving.action.id, { to: moving.to, reason, evidence });
-      setNotice(`Action ${moving.action.n} is ${ACTION_STATE_LABEL[moving.to].toLowerCase()}.`);
+      // The confirmation is the register's toast (C3): a line here unmounted with the detail when the register re-read.
+      const done = `Action ${moving.action.n} is ${ACTION_STATE_LABEL[moving.to].toLowerCase()}.`;
       setMoving(null);
       read.refresh();
-      onChanged();
+      onChanged(done);
     } catch (err) {
       setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -60,13 +60,13 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: () 
       <div className="qcc-detail-head">
         <span className="qcc-detail-title">Action items</span>
       </div>
-      {notice && <div className="qcc-detail-empty" role="status">{notice}</div>}
       {read.error ? (
         <ErrorState title="The action items could not be read" message={read.error} retry={read.refresh} testId="capa-actions-failed" />
       ) : actions === null ? (
-        <div className="qcc-detail-empty" role="status">{read.loading ? 'Loading the action items…' : 'The server did not return the action items.'}</div>
+        read.loading ? <EmptyState title="Loading the action items…" busy />
+          : <ErrorState title="The action items could not be read" message="The server did not return the action items." retry={read.refresh} testId="capa-actions-failed" />
       ) : actions.length === 0 ? (
-        <div className="qcc-detail-empty">No action items yet. Add one with Add action.</div>
+        <EmptyState title="No action items yet. Add one with Add action." />
       ) : (
         <ol className="qcc-actions">
           {actions.map((a) => (

@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/report-os/runs/23/export.pdf"
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/pdf",
+    "disposition": "attachment; filename=\"report-run-23.pdf\"",
+    "headerSha256": "4309cd159d002a97e3216dcb77a011c7d6f84d3a2f859a2335bb21c119cb9431",
+    "bodySha256": "4309cd159d002a97e3216dcb77a011c7d6f84d3a2f859a2335bb21c119cb9431",
+    "byteLength": 40832,
+    "startsWith": "%PDF-",
+    "json": null
+  }
+}

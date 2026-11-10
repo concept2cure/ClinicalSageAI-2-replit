@@ -21,7 +21,7 @@
  */
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
 import { DialogPanel } from './ControlledDocumentDialogs';
 import { formatDate, type PeriodicReviewSummary, type ReviewDueRow } from './data';
@@ -90,9 +90,9 @@ export function PeriodicReviewPanel({ rows, unread, failed, error, retry, regist
         {figure && <span className="sec-sub" data-testid="qms-review-figure">{figure}</span>}
       </div>
       {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} testId="sop-review-failed" />}
-      {unread && !failed && <div className="qms-empty" role="status">Loading review dates…</div>}
-      {!unread && registerEmpty && <div className="qms-empty">No controlled documents yet, so none is due for review.</div>}
-      {!unread && !registerEmpty && rows.length === 0 && <div className="qms-empty">None is due for review within {REVIEW_WINDOW_DAYS} days.</div>}
+      {unread && !failed && <EmptyState title="Loading review dates…" busy />}
+      {!unread && registerEmpty && <EmptyState title="No controlled documents yet, so none is due for review." />}
+      {!unread && !registerEmpty && rows.length === 0 && <EmptyState title={`None is due for review within ${REVIEW_WINDOW_DAYS} days.`} />}
       {rows.length > 0 && (
         <div className="qms-review" role="list" aria-labelledby={PERIODIC_REVIEW_HEADING_ID}>
           {rows.map((r) => <ReviewRow key={r.id} row={r} canOpen={canOpen(r.id)} onOpen={onOpen} onRecord={onRecord} />)}

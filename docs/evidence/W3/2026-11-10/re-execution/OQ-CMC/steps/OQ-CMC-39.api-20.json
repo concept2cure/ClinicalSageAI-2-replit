@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/quality/qbd/78731580-7719-4562-985d-a412edebff5a",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 29,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "projectId": "78731580-7719-4562-985d-a412edebff5a",
+        "organizationId": 2,
+        "cqas": [
+          {
+            "name": "Assay (stability-indicating)",
+            "source": "stability_indicator",
+            "materialType": "drug_product",
+            "ichBasis": [
+              "ICH Q1A(R2)",
+              "ICH Q6A"
+            ],
+            "methodLinked": true
+          }
+        ],
+        "cpps": [],
+        "inputs": {
+          "specificationCount": 1,
+          "methodCount": 3,
+          "stabilityStudyCount": 2,
+          "drugSubstanceCount": 1,
+          "processCount": 0,
+          "cmcSourceObjectCount": 12
+        },
+        "unevaluatedInputs": [],
+        "partial": false,
+        "gaps": [
+          "No manufacturing processes recorded — CPP list is empty."
+        ],
+        "analyzedAt": "2026-11-10T03:45:49.843Z"
+      }
+    }
+  }
+}

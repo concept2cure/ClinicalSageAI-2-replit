@@ -10,7 +10,7 @@
  * @module client/src/concept2cure/quality/TrainingExpiry
  */
 import * as React from 'react';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { formatDate } from './data';
 import { useTrainingExpiring, type TrainingExpiryRow } from './hooks';
 
@@ -44,8 +44,8 @@ export function TrainingExpiry({ assigned }: { assigned?: number | null }) {
     </div>
     <div className="qms-train">
       {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} testId="training-expiry-failed" />}
-      {!st.failed && st.rows === null && <div className="qms-empty" role="status">Reading training expiry…</div>}
-      {st.rows?.length === 0 && <div className="qms-empty">{nothingLapsing(assigned)}</div>}
+      {!st.failed && st.rows === null && <EmptyState title="Reading training expiry…" busy />}
+      {st.rows?.length === 0 && <EmptyState title={nothingLapsing(assigned)} />}
       {st.rows?.map((r) => (
         <div className="qms-train-row" key={`${r.userId}:${r.documentId}`}>
           <span className="qms-train-doc" title={r.userName ? undefined : `User ${r.userId}`}>{r.userName ?? 'A member whose name is not on record'}</span>

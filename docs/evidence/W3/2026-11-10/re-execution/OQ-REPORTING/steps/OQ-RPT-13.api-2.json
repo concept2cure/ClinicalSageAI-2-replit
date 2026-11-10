@@ -1,0 +1,251 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/audit/reports",
+    "anonymous": false,
+    "identity": "oq-member@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 13,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "canRun": false,
+      "readers": "organisation owners, admins, managers and approvers, and platform administrators",
+      "reports": [
+        {
+          "id": "access-review",
+          "title": "User access review",
+          "purpose": "Lists everyone who holds access to this organisation on the chosen date, with their role, second factor and last sign-in, separates the privileged accounts a periodic review must decide on, and names the latest signed access review.",
+          "basis": [
+            "21 CFR 11.10(d)",
+            "21 CFR 11.10(g)",
+            "EU GMP Annex 11 §12",
+            "HIPAA 45 CFR 164.308(a)(4)",
+            "SOC 2 CC6.2–CC6.3",
+            "POLICY-AC-002 §4a"
+          ],
+          "period": "as-of",
+          "sections": [
+            {
+              "key": "members",
+              "title": "Members"
+            },
+            {
+              "key": "privileged",
+              "title": "Privileged accounts"
+            },
+            {
+              "key": "review",
+              "title": "Access review record"
+            }
+          ],
+          "notRecorded": [
+            "A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded.",
+            "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is listed there too, with no person as actor; those made before the product began recording them were not recorded.",
+            "This report names the latest signed access review, its reviewer and its signature; it does not list the review's decisions. POLICY-AC-002 §4a keeps those in the access-review record, one per account.",
+            "The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only."
+          ]
+        },
+        {
+          "id": "authentication-events",
+          "title": "Sign-in and session events",
+          "purpose": "Lists every sign-in, second-factor, sign-out, password and enrolment event recorded for this organisation in the period, with a count of each by outcome.",
+          "basis": [
+            "21 CFR 11.10(d)",
+            "21 CFR 11.10(e)",
+            "21 CFR 11.300(d)",
+            "HIPAA 45 CFR 164.312(b)",
+            "HIPAA 45 CFR 164.312(d)",
+            "EU GMP Annex 11 §12"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "events",
+              "title": "Events"
+            },
+            {
+              "key": "summary",
+              "title": "Summary by event and outcome"
+            }
+          ],
+          "notRecorded": [
+            "Sessions that end by idle timeout, by reaching their absolute lifetime or by being replaced by a newer session are not recorded.",
+            "A refused session refresh is not recorded.",
+            "A wrong current password entered while changing a password is not recorded.",
+            "Use of a recovery code is recorded as a second-factor verification, not separately.",
+            "A successful resend of the emailed sign-in code is not recorded; a refused resend is.",
+            "Sign-in attempts against an address with no account are recorded outside any organisation, so they do not appear here."
+          ]
+        },
+        {
+          "id": "administrative-changes",
+          "title": "Administrative and privileged changes",
+          "purpose": "Lists the security-relevant changes made to this organisation in the period: API keys, invitations, member role changes and removals, second-factor changes, lifecycle overrides, cross-organisation access attempts, organisation profile, settings and configuration, and SCIM account provisioning and IP allow-list rules.",
+          "basis": [
+            "21 CFR 11.10(d)",
+            "21 CFR 11.10(e)",
+            "21 CFR 11.10(g)",
+            "SOC 2 CC6.2",
+            "SOC 2 CC8.1",
+            "EU GMP Annex 11 §12"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "changes",
+              "title": "Changes"
+            }
+          ],
+          "notRecorded": [
+            "Invitation acceptances and declines made before the product began recording consent transactions were not recorded.",
+            "A role change that arrives through a SCIM group is listed with the role before and after; it has no person as actor, and its reason names the group. Those made before the product began recording them were not recorded.",
+            "Tenant configuration changes and resets are recorded by section and by the names of the fields changed. Values before and after are recorded only for the security settings (the second-factor requirement, password policy, session timeout, concurrent-session limit and IP restrictions) and the audit-trail retention period; other values, which include webhook addresses, are not recorded.",
+            "Member role changes and removals made by an administrator, and tenant configuration changes, made before the product began recording them were not recorded.",
+            "Changes to the organisation settings are recorded by section name only, without the values before or after the change.",
+            "Administration of SCIM tokens is not recorded. IP allow-list changes made before the product began recording them were not recorded.",
+            "SAML single sign-on is configured from the server environment, so its configuration has no change record.",
+            "Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here."
+          ]
+        },
+        {
+          "id": "electronic-signatures",
+          "title": "Electronic signature register",
+          "purpose": "Lists every electronic signature applied in this organisation in the period, with its signer, meaning, the record it is bound to, how the signer was authenticated, and whether it was later revoked or superseded.",
+          "basis": [
+            "21 CFR 11.50",
+            "21 CFR 11.70",
+            "21 CFR 11.100",
+            "21 CFR 11.200",
+            "EU GMP Annex 11 §14"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "signatures",
+              "title": "Signatures"
+            }
+          ],
+          "notRecorded": [
+            "Signatures written before the organisation column existed carry no organisation and cannot be attributed, so they do not appear here."
+          ]
+        },
+        {
+          "id": "audit-trail-integrity",
+          "title": "Audit trail integrity attestation",
+          "purpose": "States what this organisation's audit stores hold and what each integrity check found at the time of the report, saying so plainly when a check could not be run, and names the latest signed audit trail review.",
+          "basis": [
+            "21 CFR 11.10(e)",
+            "EU GMP Annex 11 §9",
+            "PMDA ER/ES guideline (authenticity)"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "stores",
+              "title": "Audit stores"
+            },
+            {
+              "key": "verdicts",
+              "title": "Integrity checks"
+            },
+            {
+              "key": "review",
+              "title": "Audit trail review record"
+            }
+          ],
+          "notRecorded": [
+            "Rows written before hashing was introduced carry no hash; they are counted, but no link through them can be checked.",
+            "Rows written while the seal key was not configured carry no seal; the hash chain still covers them."
+          ]
+        },
+        {
+          "id": "retention-legal-holds",
+          "title": "Retention and legal holds",
+          "purpose": "Shows the retention policies this organisation's documents are kept under, the legal holds in force during the period, and the documents the retention sweep disposed of.",
+          "basis": [
+            "21 CFR 11.10(c)",
+            "EU GMP Annex 11 §17",
+            "GDPR Art. 5(1)(e)",
+            "GDPR Art. 17(3)",
+            "POLICY-DR-007"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "policies",
+              "title": "Retention policies in use"
+            },
+            {
+              "key": "holds",
+              "title": "Legal holds in force during the period"
+            },
+            {
+              "key": "dispositions",
+              "title": "Retention dispositions"
+            }
+          ],
+          "notRecorded": [
+            "Documents the retention sweep skipped because a legal hold covered them, and destructions it refused, are written to the server log and not kept as records, so they do not appear here.",
+            "Retention policies and the documents under them have no recorded history, so the policies section shows them as at generation, not as at the period."
+          ]
+        },
+        {
+          "id": "controlled-documents",
+          "title": "Controlled document register",
+          "purpose": "Lists this organisation's controlled documents as of the chosen date with the electronic signature that approved each current version, and every change control raised by that date with its approval signature.",
+          "basis": [
+            "21 CFR 11.10(k)",
+            "21 CFR 820 (QMSR: ISO 13485:2016 by reference, since 2026-02-02)",
+            "ISO 13485 §4.2.4",
+            "EU GMP Annex 11 §10"
+          ],
+          "period": "as-of",
+          "sections": [
+            {
+              "key": "documents",
+              "title": "Controlled documents"
+            },
+            {
+              "key": "changes",
+              "title": "Change controls raised by the date"
+            }
+          ],
+          "notRecorded": [
+            "A document approval, document retirement or change approval made before these became electronic signatures has no signature, so its signature columns are empty.",
+            "The register does not reconstruct a past status: for a past date it shows each record as it is now, with the signatures applied by that date.",
+            "Documents deleted before the date do not appear.",
+            "Distribution of a controlled document — who received which version, and when — is not recorded.",
+            "Read-and-understood training is recorded per person and document version in the QMS training records, not in this register. Whether the effective version was consulted at the point of use is not recorded."
+          ]
+        },
+        {
+          "id": "audit-trail",
+          "title": "Full audit trail",
+          "purpose": "Exports every row of this organisation's two audit stores for the period as one signed, tamper-evident file.",
+          "basis": [
+            "21 CFR 11.10(b)",
+            "21 CFR 11.10(e)",
+            "EU GMP Annex 11 §9"
+          ],
+          "period": "range",
+          "sections": [
+            {
+              "key": "rows",
+              "title": "Audit records from both stores"
+            }
+          ],
+          "notRecorded": [
+            "One export carries at most 50,000 rows; the export says when it stopped there, and a longer period is exported in parts.",
+            "Sign-in attempts against an address with no account are recorded outside any organisation, so they are not in this export."
+          ],
+          "endpoint": "/api/audit/export/signed"
+        }
+      ]
+    }
+  }
+}

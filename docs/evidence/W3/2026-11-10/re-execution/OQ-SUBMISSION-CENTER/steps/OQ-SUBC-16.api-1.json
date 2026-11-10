@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submission-orchestrator/runs",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "csrInputs": [
+        {
+          "studyId": "OQ-301",
+          "protocolNumber": "OQ-301",
+          "phase": "3",
+          "studyDesign": "randomized",
+          "primaryEndpoint": "ORR",
+          "primaryResult": "ORR 42% (OQ figure)",
+          "sampleSize": 312
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "invalid_request"
+    }
+  }
+}

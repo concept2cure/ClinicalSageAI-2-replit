@@ -1,0 +1,125 @@
+
+=== projects ===
+  OQ-PROJ-01  pass
+  OQ-PROJ-02  pass
+  OQ-PROJ-03  pass
+  OQ-PROJ-04  pass
+  OQ-PROJ-05  pass
+  OQ-PROJ-06  pass
+  OQ-PROJ-06b  pass
+  OQ-PROJ-07  pass
+  OQ-PROJ-08  pass
+  OQ-PROJ-09  pass
+  OQ-PROJ-10  pass
+  OQ-PROJ-11  pass
+  OQ-PROJ-12  pass
+  OQ-PROJ-13  pass
+  OQ-PROJ-14  pass
+  OQ-PROJ-15  pass
+  OQ-PROJ-16  pass
+  OQ-PROJ-17  pass
+  OQ-PROJ-18  pass
+  OQ-PROJ-19  pass
+
+OQ-001 Projects: 20 pass, 0 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-PROJECTS
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  pass
+  OQ-VAULT-08b  pass
+  OQ-VAULT-09  pass
+  OQ-VAULT-10  pass
+  OQ-VAULT-11  pass
+  OQ-VAULT-12  pass
+  OQ-VAULT-13  pass
+  OQ-VAULT-14  pass
+  OQ-VAULT-15  pass
+  OQ-VAULT-16  pass
+  OQ-VAULT-17  pass
+  OQ-VAULT-18  pass
+  OQ-VAULT-19  pass
+  OQ-VAULT-20  pass
+  OQ-VAULT-21  pass
+  OQ-VAULT-22  pass
+
+OQ-002 Vault: 24 pass, 0 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-VAULT
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  pass
+  OQ-QMS-03  pass
+  OQ-QMS-04  pass
+  OQ-QMS-04b  pass
+  OQ-QMS-05  pass
+  OQ-QMS-05b  pass
+  OQ-QMS-06a  pass
+  OQ-QMS-06  pass
+  OQ-QMS-06b  pass
+  OQ-QMS-06c  pass
+  OQ-QMS-06d  pass
+  OQ-QMS-07  pass
+  OQ-QMS-08  pass
+  OQ-QMS-09  pass
+  OQ-QMS-10b  pass
+  OQ-QMS-10  pass
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  pass
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 22 pass, 0 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-QMS
+
+=== cmc ===
+  OQ-CMC-01  pass
+  OQ-CMC-03  pass
+  OQ-CMC-02  pass
+  OQ-CMC-04  pass
+  OQ-CMC-05  pass
+  OQ-CMC-06  pass
+  OQ-CMC-07  pass
+  OQ-CMC-08  pass
+  OQ-CMC-09  pass
+  OQ-CMC-10  pass
+  OQ-CMC-11  pass
+  OQ-CMC-12  pass
+  OQ-CMC-13  pass
+  OQ-CMC-14  pass
+  OQ-CMC-15  pass
+  OQ-CMC-16  pass
+  OQ-CMC-17  deviation  (not executed — the reference records raise no critical contradiction, so the credentialed resolve has nothing to act on.)
+  OQ-CMC-18  pass
+  OQ-CMC-19  FAIL  (the placement expected 200, got 400)
+  OQ-CMC-20  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-21  pass
+  OQ-CMC-22  pass
+  OQ-CMC-23  pass
+  OQ-CMC-24  pass
+  OQ-CMC-25  pass
+  OQ-CMC-26  deviation  (not executed — the interview and its refusal are both reachable only through an AnA turn, and no AI provider is configured (/readyz reports ana down), so every AnA turn answers 503 GATEWAY_UNAVAILABLE and no interview starts. Observe this under the W3 posture with a provider configured.)
+  OQ-CMC-27  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-28  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-29  pass
+  OQ-CMC-30  deviation  (not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered 400 invalid_request), the documented development behaviour. The refusal is a production control; observe it on a production build.)
+  OQ-CMC-32  pass
+  OQ-CMC-33  pass
+  OQ-CMC-31  pass
+  OQ-CMC-34  pass
+  OQ-CMC-35  pass
+  OQ-CMC-36  pass
+  OQ-CMC-37  pass
+  OQ-CMC-38  pass
+  OQ-CMC-39  pass
+  OQ-CMC-40  pass
+  OQ-CMC-41  pass
+  OQ-CMC-42  pass
+OQ-008 step modules: steps-access.mjs, steps-access.mjs → steps-compile.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs → steps-correspondence.mjs
+
+OQ-008 CMC / Module 3: 35 pass, 1 fail, 3 deviation, 3 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-CMC

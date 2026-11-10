@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+    "anonymous": false,
+    "identity": "oq-member@validation.local",
+    "body": {
+      "reason": "OQ-007: the report was read against the register it is drawn from.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "AUTH_004",
+        "message": "Insufficient permissions"
+      }
+    }
+  }
+}

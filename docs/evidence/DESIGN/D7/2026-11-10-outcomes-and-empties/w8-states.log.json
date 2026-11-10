@@ -1,0 +1,95 @@
+{
+ "apiErrors": [],
+ "pageErrors": [],
+ "steps": [
+  {
+   "name": "sop-1440",
+   "empties": [
+    {
+     "text": "None is due for review within 120 days.",
+     "align": "left"
+    },
+    {
+     "text": "No training-controlled documents yet.",
+     "align": "left"
+    },
+    {
+     "text": "No document is assigned for training yet.",
+     "align": "left"
+    }
+   ],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "capa-1440",
+   "empties": [
+    {
+     "text": "No CAPAs recorded yet.",
+     "align": "left"
+    }
+   ],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "change-1440",
+   "empties": [],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "raise-toast",
+   "text": "CC-QS-40663 was raised as a proposed change.",
+   "rowShown": 2,
+   "figures": "3 open of 3 in the log; none awaiting approval; none in implementation; none overdue.",
+   "rows": 3
+  },
+  {
+   "name": "sop-390",
+   "empties": [
+    {
+     "text": "None is due for review within 120 days.",
+     "align": "left"
+    },
+    {
+     "text": "No training-controlled documents yet.",
+     "align": "left"
+    },
+    {
+     "text": "No document is assigned for training yet.",
+     "align": "left"
+    }
+   ],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "capa-390",
+   "empties": [
+    {
+     "text": "No CAPAs recorded yet.",
+     "align": "left"
+    }
+   ],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "change-390",
+   "empties": [],
+   "ownEmpty": 0,
+   "headsOverNothing": 0,
+   "docScroll": 0
+  },
+  {
+   "name": "w8-states",
+   "ok": true
+  }
+ ]
+}

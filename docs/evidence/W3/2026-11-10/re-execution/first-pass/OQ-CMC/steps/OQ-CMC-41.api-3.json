@@ -1,0 +1,45 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/drug-products",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+      "productName": "PRV-running 5 mg tablet",
+      "dosageForm": "Film-coated tablet",
+      "strength": "5 mg",
+      "routeOfAdministration": "oral",
+      "status": "development"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 3,
+        "organizationId": 2,
+        "projectId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+        "productName": "PRV-running 5 mg tablet",
+        "dosageForm": "Film-coated tablet",
+        "strength": "5 mg",
+        "routeOfAdministration": "oral",
+        "composition": null,
+        "manufacturingProcess": null,
+        "batchFormula": null,
+        "processControls": null,
+        "specifications": null,
+        "packagingMaterials": null,
+        "stability": null,
+        "status": "development",
+        "createdAt": "2026-11-10T03:01:01.558Z",
+        "updatedAt": "2026-11-10T03:01:01.558Z"
+      },
+      "module3Linked": true
+    }
+  }
+}
