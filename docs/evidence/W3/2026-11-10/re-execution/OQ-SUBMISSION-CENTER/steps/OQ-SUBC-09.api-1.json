@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 45,
+    "durationMs": 60,
     "rateLimitRetries": 0,
     "body": {
       "environment": "production",

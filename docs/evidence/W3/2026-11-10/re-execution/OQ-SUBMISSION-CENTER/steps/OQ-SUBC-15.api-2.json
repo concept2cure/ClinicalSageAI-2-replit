@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/submissions/sequences/5/shadow-review",
+    "url": "http://localhost:5200/api/submissions/sequences/11/shadow-review",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,12 +9,12 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 19,
+    "durationMs": 20,
     "rateLimitRetries": 0,
     "body": [
       {
-        "id": 2,
-        "sequenceId": 5,
+        "id": 3,
+        "sequenceId": 11,
         "region": "fda",
         "lens": "fda_filing",
         "model": null,
@@ -31,7 +31,7 @@
           "leaves": [
             {
               "chars": 57,
-              "leafId": 5,
+              "leafId": 8,
               "status": "read",
               "sentChars": 57,
               "sectionCode": "m1.2"
@@ -45,8 +45,8 @@
         },
         "organizationId": 2,
         "createdBy": 1,
-        "createdAt": "2026-11-10T02:50:23.992Z",
-        "updatedAt": "2026-11-10T02:50:24.444Z",
+        "createdAt": "2026-11-10T03:54:53.162Z",
+        "updatedAt": "2026-11-10T03:54:53.557Z",
         "deletedAt": null
       }
     ]

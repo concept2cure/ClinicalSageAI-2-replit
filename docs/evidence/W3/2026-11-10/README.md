@@ -106,7 +106,8 @@ The revised package, executed again, with OQ-007 (Reporting & analytics) added. 
 | Folder | Execution |
 |---|---|
 | `re-execution/IQ/` | IQ-001, 2026-11-10T02:41:53Z |
-| `re-execution/OQ-AUTHORING/`, `OQ-SUBMISSION-CENTER/`, `OQ-SUBMISSION-READINESS/` | The whole-package run, 02:41:53Z to 03:01:06Z (`transcripts/oq-re-execution.transcript.txt`). No step failed; not re-run |
+| `re-execution/OQ-AUTHORING/`, `OQ-SUBMISSION-READINESS/` | The whole-package run, 02:41:53Z to 03:01:06Z (`transcripts/oq-re-execution.transcript.txt`). No step failed; not re-run |
+| `re-execution/OQ-SUBMISSION-CENTER/` | Re-run at 03:54:12Z (`transcripts/oq-rerun-4-submission-center.transcript.txt`), 16 / 0 / 1 as in the whole-package run. No step changed. OQ-SUBC-15 had been credited to URS-SUBC-006 and -007 since it was written, where its protocol names URS-SUBC-013; the record now carries that requirement, and TM-001 no longer shows it uncovered. The whole-package run's record of this protocol is in git at `1907e5c241` |
 | `re-execution/first-pass/OQ-PROJECTS/`, `OQ-VAULT/`, `OQ-QMS/`, `OQ-CMC/` | The same whole-package run, for the four protocols that had a failure. Superseded by the folders below; kept as the red record |
 | `re-execution/OQ-PROJECTS/`, `OQ-VAULT/`, `OQ-QMS/` | Re-run after their revision, 03:05:58Z onward (`transcripts/oq-rerun-1-projects-vault-qms-cmc.transcript.txt`) |
 | `re-execution/OQ-REPORTING/` | OQ-007's execution, 03:35:45Z (`transcripts/oq-rerun-3-reporting-cmc.transcript.txt`) |

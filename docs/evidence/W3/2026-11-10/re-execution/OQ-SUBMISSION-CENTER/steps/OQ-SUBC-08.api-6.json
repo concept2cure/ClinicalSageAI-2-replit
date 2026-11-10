@@ -1,17 +1,17 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/submissions/sequences/5/freeze",
+    "url": "http://localhost:5200/api/submissions/sequences/11/freeze",
     "anonymous": false,
     "identity": "oq-signer@validation.local",
     "body": {
-      "signatureActionId": "act_814512e78f14418d97f4caf943f73c60"
+      "signatureActionId": "act_88e251e68223423d9b15f5bec7249ee6"
     }
   },
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 39,
+    "durationMs": 38,
     "rateLimitRetries": 0,
     "body": {
       "error": {
