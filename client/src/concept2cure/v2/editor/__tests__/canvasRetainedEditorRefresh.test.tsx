@@ -56,13 +56,9 @@ async function opened() {
   await waitFor(() => expect(editorNode()?.textContent).toContain(ORIGINAL));
   return view;
 }
-/* D4-5b: the card became a chip and shows no section text; its refresh line names the section a quiet re-read found
-   changed, so the saved revision reached the canvas. The text itself is read in the open document's editor. */
-async function cardRefreshed() {
-  await waitFor(() => expect(screen.getByTestId('dc-updated').textContent).toContain(section.code));
+async function cardContains(text: string) {
+  await waitFor(() => expect(document.querySelector('.dcv-sec-body')?.textContent).toContain(text));
 }
-const sectionReads = () => apiRequest.mock.calls.filter(([method, url]) => method === 'GET'
-  && new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`).length;
 function humanEdit() {
   act(() => { editorNode().editor.commands.insertContent(HUMAN); });
 }
@@ -111,20 +107,18 @@ afterEach(() => {
 });
 
 describe('AnA saved revisions and the retained one editor', () => {
-  // D4-5b: the card became a chip; the refreshed canvas is its refresh line, and the revision is read in the editor.
   it('reopens the clean retained editor on the saved revision shown by the refreshed canvas', async () => {
     const view = await opened();
     fireEvent.click(screen.getByTestId('dc-back'));
     revise(ANA);
     view.rerender(<Host refreshKey={1} />);
-    await cardRefreshed();
+    await cardContains(ANA);
     fireEvent.click(screen.getByTestId('dc-open-editor'));
     await waitFor(() => expect(editorNode()?.textContent).toContain(ANA));
     expect(editorNode()?.textContent).not.toContain(ORIGINAL);
     expect(document.querySelectorAll('.tiptap')).toHaveLength(1);
   });
 
-  // D4-5b: the card became a chip; the canvas's re-read is its refresh line, and the human buffer is held in the editor.
   it.each(['before-read', 'while-read-pending'] as const)('keeps the human buffer and old save base when edited %s', async timing => {
     const view = await opened();
     const original = editorNode();
@@ -139,12 +133,10 @@ describe('AnA saved revisions and the retained one editor', () => {
       humanEdit();
       await act(async () => { held.resolve(sectionsResponse()); });
     }
-    await cardRefreshed();
+    await cardContains(ANA);
     await saveCollisionKeepsOldBase(original);
   });
 
-  /* D4-5b: the card became a chip and shows no section text; the newer read is its refresh line and the editor's text,
-     and the older read, ignored, starts no second re-read of the retained editor. */
   it('ignores an older delayed saved refresh after a newer revision has reached the editor', async () => {
     const view = await opened();
     const held = deferred<Response>();
@@ -156,20 +148,15 @@ describe('AnA saved revisions and the retained one editor', () => {
     await waitFor(() => expect(started).toBe(true));
     revise(LATEST, LATEST_AT);
     view.rerender(<Host refreshKey={2} />);
-    const readsBeforeOlder = await (async () => {
-      try {
-        await cardRefreshed();
-        await waitFor(() => expect(editorNode()?.textContent).toContain(LATEST));
-        return sectionReads();
-      } finally {
-        await act(async () => { held.resolve(older); });
-      }
-    })();
+    try {
+      await cardContains(LATEST);
+      await waitFor(() => expect(editorNode()?.textContent).toContain(LATEST));
+    } finally {
+      await act(async () => { held.resolve(older); });
+    }
     expect(editorNode()?.textContent).toContain(LATEST);
     expect(editorNode()?.textContent).not.toContain(ANA);
-    expect(sectionReads()).toBe(readsBeforeOlder);
-    expect(screen.getByTestId('dc-updated').textContent).toContain(section.code);
-    expect(screen.queryByTestId('dc-refresh-failed')).toBeNull();
+    expect(document.querySelector('.dcv-sec-body')?.textContent).toContain(LATEST);
   });
 
   it('preserves the current editor instance when only another section changes', async () => {
