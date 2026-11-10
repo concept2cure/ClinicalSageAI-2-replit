@@ -81,6 +81,11 @@ import {
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
+import {
+  estarDeviceAnswers, estarFilingType, estarOutlineRequirements,
+  type EstarDeviceAnswers, type EstarOutlineSectionAnswer,
+} from '../../services/pathway-engines/estar/estar-outline-requirements.js';
+import { loadProgramDeviceFlags } from '../../services/pathway-engines/estar/program-device-flags.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
@@ -103,9 +108,14 @@ import {
   artifactCtdSection,
   artifactGovernance,
   artifactRegistryStatus,
+  askedSponsorScope,
+  ClientRequiredError,
   formatContentBytes,
   readArtifactRegistry,
+  sponsorChoices,
+  sponsorRefusal,
   type ArtifactRegistryRow,
+  type SponsorAsk,
 } from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
@@ -617,13 +627,6 @@ function normalizeFolderId(raw: unknown): string | null | undefined {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The library's `sameClientAs`: a project id, none, or a value that is not a project id. */
-function sameClientAsOf(raw: unknown): string | null | 'invalid' {
-  const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value) return null;
-  return UUID_RE.test(value) ? value : 'invalid';
-}
-
 /** Two narrowings of the verified accessible set, applied together; neither ever widens it. */
 function bothNarrowings(byProject: string[] | undefined, bySponsor: string[] | undefined): string[] | undefined {
   if (!byProject || !bySponsor) return bySponsor ?? byProject;
@@ -643,11 +646,17 @@ type LibrarySponsor = { id: number; name: string };
  * narrowing only ever removes projects from the verified accessible set. A project that is not in that set is not
  * found. Every hit names its own sponsor, or none when its project has no client workspace; a sponsor whose name
  * cannot be read fails the search rather than show the hit as having none.
+ *
+ * One sponsor at a time (P-107 item 3, 2026-11-08: "No cross-sponsor library view for a CRO ... Search never spans
+ * sponsors."). Asked with no project open, the search is inside the client asked for (`client`). With none asked for,
+ * the projects searched (those named by `programId`, or every accessible one) must belong to one sponsor; when they
+ * belong to more, nothing is searched and the clients to choose from are named (ClientRequiredError). A client none
+ * of whose projects the caller can open is not found, as one that does not exist is.
  */
 async function librarySponsors(
   identity: { organizationId: number; userId: number | undefined },
   scope: CurrentAccessibleProgramScope,
-  sameClientAs: string | null,
+  ask: SponsorAsk & { programIds: readonly string[] },
 ): Promise<{ allowed?: string[]; client?: LibrarySponsor | null; sponsorOf: (programId: string) => LibrarySponsor | null }> {
   const anchors = verifiedProgramAnchors(pool, identity, scope);
   const workspaceOf = new Map(anchors.map((a) => [a.programId, a.clientWorkspaceId]));
@@ -667,14 +676,30 @@ async function librarySponsors(
     return { id, name };
   };
   const sponsorOf = (programId: string) => named(workspaceOf.get(programId.toLowerCase()));
-  if (!sameClientAs) return { sponsorOf };
-  const own = anchors.find((a) => a.programId === sameClientAs.toLowerCase());
-  if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-  return {
-    allowed: anchors.filter((a) => a.clientWorkspaceId === own.clientWorkspaceId).map((a) => a.programId),
-    client: named(own.clientWorkspaceId),
-    sponsorOf,
-  };
+  const projectsOf = (workspace: number | null) => anchors.filter((a) => a.clientWorkspaceId === workspace).map((a) => a.programId);
+  if (ask.sameClientAs) {
+    const open = ask.sameClientAs.toLowerCase();
+    const own = anchors.find((a) => a.programId === open);
+    if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    return { allowed: projectsOf(own.clientWorkspaceId), client: named(own.clientWorkspaceId), sponsorOf };
+  }
+  if (ask.client !== undefined) {
+    const workspace = ask.client === 'none' ? null : ask.client;
+    const allowed = projectsOf(workspace);
+    if (!allowed.length) throw new ProgramReadAccessError(404, 'CLIENT_NOT_FOUND', 'Client not found.');
+    return { allowed, client: named(workspace), sponsorOf };
+  }
+  const searched = ask.programIds.map((id) => id.toLowerCase());
+  const within = searched.length ? anchors.filter((a) => searched.includes(a.programId)) : anchors;
+  const workspaces = [...new Set(within.map((a) => a.clientWorkspaceId))];
+  if (workspaces.length > 1) throw new ClientRequiredError(sponsorChoices(workspaces.map(named)));
+  return { sponsorOf };
+}
+
+/** The library's refusals. One that names a sponsor is sent as it is: every other 404 is answered as a project not found. */
+function sendLibraryAccessFailure(res: Response, err: ProgramReadAccessError): Response {
+  const sponsor = sponsorRefusal(err);
+  return sponsor ? res.status(sponsor.status).json(sponsor.body) : sendProjectAccessFailure(res, err);
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -1097,24 +1122,36 @@ function liveSectionPresentation(
   };
 }
 
-/** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
-function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
+/**
+ * A rule-pack section spec merged with its live row → a VaultDoc leaf.
+ *
+ * `estar` is given for a filing an eSTAR applies to (510(k), De Novo): the
+ * mark, the reason and the blocker are then the one answer filing readiness
+ * also reads (estar-outline-requirements, P-107 item 3), decided by the device.
+ * For every other filing they are the pack's flag, as before.
+ */
+function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined, estar?: EstarOutlineSectionAnswer): VaultDoc {
   const hasContent = live?.has_content ?? false;
   const mandatory = spec.mandatory ?? false;
   const docTitle = doc.title || doc.doc_type || 'Document';
   const label = spec.label ?? spec.key;
+  const rule = estar ?? {
+    mark: mandatory ? 'Required' : 'Optional',
+    reason: mandatory ? 'mandatory section' : '',
+    blocker: mandatory && !hasContent ? 'Mandatory section — no content yet' : null,
+  };
   const leaf: VaultDoc = {
     id: `sec-${doc.id}-${spec.key}`,
     filingSectionKey: spec.key,
     num: spec.key,
     title: label,
-    type: mandatory ? 'Required' : 'Optional',
+    type: rule.mark,
     ...liveSectionPresentation(live, hasContent),
-    preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
+    preview: `${docTitle} · ${spec.key} · ${label}${rule.reason ? ` · ${rule.reason}` : ''}`,
   };
-  if (mandatory && !hasContent) {
+  if (rule.blocker) {
     leaf.blocker = true;
-    leaf.flag = 'Mandatory section — no content yet';
+    leaf.flag = rule.blocker;
   }
   return leaf;
 }
@@ -1140,11 +1177,13 @@ function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   };
 }
 
-/** Build the nested VaultFolder/VaultDoc tree for one document's sections. */
+/** Build the nested VaultFolder/VaultDoc tree for one document's sections.
+ *  `estar`: each section's answer when an eSTAR applies to the filing (see leafDoc). */
 function sectionsToNodes(
   doc: DocRow,
   specs: SectionSpec[],
   live: Map<string, LiveSection>,
+  estar?: ReadonlyMap<string, EstarOutlineSectionAnswer>,
 ): Array<VaultFolder | VaultDoc> {
   const sorted = [...specs].sort(
     (a, b) => (a.path_order ?? 0) - (b.path_order ?? 0),
@@ -1167,7 +1206,7 @@ function sectionsToNodes(
         children: n.children.map(toNode),
       };
     }
-    return leafDoc(doc, n.spec, live.get(n.spec.key));
+    return leafDoc(doc, n.spec, live.get(n.spec.key), estar?.get(n.spec.key));
   };
   return roots.map(toNode);
 }
@@ -1176,14 +1215,35 @@ function sectionsToNodes(
  *  (F22) holds only its own part of the filing, Module 1 and 3.2.R, so its
  *  folder is that part of its pack; the home filing holds the rest. It was the
  *  whole market pack, which showed every Module 2-5 section of an MAA as
- *  "Mandatory section — no content yet" (F23 7/9). */
-function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolder {
+ *  "Mandatory section — no content yet" (F23 7/9).
+ *
+ *  A 510(k) or De Novo is filed as an eSTAR, and which of its sections a device
+ *  owes turns on the device. For those two the whole outline is put to the one
+ *  rule (estar-outline-requirements, P-107 item 3) with the project's device
+ *  answers; `device` is not read for any other filing. */
+function documentFolder(
+  doc: DocRow,
+  live: Map<string, LiveSection>,
+  device: EstarDeviceAnswers,
+): VaultFolder {
   const pack = Array.isArray(doc.required_sections)
     ? (doc.required_sections as SectionSpec[])
     : [];
   const specs = doc.filing_scope === 'market' ? regionalSubtree<SectionSpec>(pack) : pack;
+  const estarType = estarFilingType(doc.doc_type, doc.agency);
+  const estar = estarType
+    ? estarOutlineRequirements({
+        type: estarType,
+        variant: device.variant,
+        flags: device.flags,
+        sections: pack.map((s) => ({
+          key: s.key, label: s.label, parentKey: s.parent_key, mandatory: s.mandatory,
+          hasContent: live.get(s.key)?.has_content,
+        })),
+      }).byKey
+    : undefined;
   const children = specs.length > 0
-    ? sectionsToNodes(doc, specs, live)
+    ? sectionsToNodes(doc, specs, live, estar)
     : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
@@ -1744,15 +1804,13 @@ export default function createProjectVaultRoutes(): Router {
     if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
     const { filters, programIds } = parsed;
     const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
-    const sameClientAs = sameClientAsOf(req.query.sameClientAs);
-    if (sameClientAs === 'invalid') {
-      return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the library is scoped by must be a project id.' });
-    }
+    const asked = askedSponsorScope(req.query, 'library');
+    if ('refusal' in asked) return res.status(400).json({ success: false, ...asked.refusal });
     try {
       const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
       const currentScope = await getCurrentAccessibleProgramScope(pool, identity);
-      const sponsors = await librarySponsors(identity, currentScope, sameClientAs);
-      const scoped = sameClientAs ? { client: sponsors.client } : {};
+      const sponsors = await librarySponsors(identity, currentScope, { ...asked, programIds });
+      const scoped = sponsors.client === undefined ? {} : { client: sponsors.client };
       if (!q && !hasVaultFilters(filters)) {
         return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs', ...scoped } });
       }
@@ -1770,7 +1828,7 @@ export default function createProjectVaultRoutes(): Router {
         },
       });
     } catch (err) {
-      if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
+      if (err instanceof ProgramReadAccessError) return sendLibraryAccessFailure(res, err);
       logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({
         success: false,
@@ -1866,10 +1924,15 @@ export default function createProjectVaultRoutes(): Router {
           forDoc.set(r.section_key, r);
         }
       }
+      // The device answers a 510(k)'s or De Novo's required sections turn on
+      // (P-107 item 3): read once, and only when the project holds such a
+      // filing. A read that fails fails this read; it is never shown as
+      // "not answered".
+      const estarDevice = await estarDeviceAnswers(docsRes.rows as DocRow[], view, () => loadProgramDeviceFlags(orgId, id));
       for (const doc of docsRes.rows as DocRow[]) {
         // A document with no rows in the result has no live sections — the same
         // empty map the per-document query produced for it.
-        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>()));
+        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>(), estarDevice));
       }
 
       // 5) Derived branches: what the pipelines file for this program. ONE

@@ -1,0 +1,119 @@
+# What the vendored eSTAR template says of the sections where the two rules differed
+#
+# Source: assets/estar-templates/eSTAR-510k-non-ivd.pdf (nIVD v7.1, pinned by assets/estar-templates/checksums.txt)
+#   sha256 d7926c7699dab2e86b45062e228511650419d182f7255b3dee00519a3dfcfc93
+# Read: the XFA `template` packet, through listXfaPackets (server/services/forms/fill-official-pdf),
+#   the reader estar-attachment-slots.ts uses. Offsets are character offsets into that packet.
+# Quoted verbatim; nothing here is transcribed by hand.
+
+## 1. The 510(k) type (exclGroup ATRadioButton115): the "Benefits, Risks, and Mitigation Measures" section
+##    (subform RiskManagement, attachments to /CHAPTER 2/CH2.08/) is hidden for a Traditional or Abbreviated 510(k)
+##    and shown for a Special 510(k), whose PerformanceTesting section is hidden instead.
+
+## Traditional (rawValue 1)
+   @482997
+   | if (this.rawValue == "1"){ //Traditional
+   | 	//set indicator
+   | 	this.ATYesIndicator115.border.fill.color.value = CompleteIndicator.value; //green
+   | 	this.ATNoIndicator115.border.fill.color.value = BlankIndicator.value; //white
+   | 	this.ATYesIndicator115.assist.toolTip.value = QuestionComplete.value;
+   | 	this.ATNoIndicator115.assist.toolTip.value = QuestionComplete.value;
+   | 	//default subform presence
+   | 	RiskManagement.presence = "hidden";
+   | }/
+
+## Abbreviated (rawValue 2)
+   @483434
+   | if (this.rawValue == "2"){ //abbrev
+   | 	//
+
+##   ... its last statement
+   @483993
+   | 	//default subform presence
+   | 	RiskManagement.presence = "hidden";
+   | }/
+
+## Special (rawValue 3)
+   @484068
+   | if (this.rawValue == "3"){ //special
+   | 	/
+
+##   ... its subform presence
+   @487412
+   | PerformanceTesting.presence = "hidden";
+   | 	RiskManagement.presence = "visible";
+   | 	RiskManagement.DesignControl.presence = "visible";
+   | 	RiskManagement.VerificationValidation.presence = "visible";
+   | 	RiskManagement.RiskMitigationTable.presence = "hidden";
+   | 	RiskManagement.SpecialControls.presence = "hidden";
+   | 	RiskManagement.BenefitRisk.presence = "hidden";
+   | 	RiskManagement.BenefitRisk.presence = "hidden";
+   | 	RiskManagement.AlternativePractices.presence = "hidden";
+   | 	//set indicators
+   | 	RiskManagement.variables.Functions.Validat
+
+## 2. De Novo: the form shows the proposed classification, the benefit-risk discussion, the special controls,
+##    the risk mitigation table and alternative practices.
+
+## De Novo
+   @393201
+   | //unhide subforms for De Novo
+   | 		AdministrativeInformation.RelatedSubmissions.NSE510k.presence = "visible";
+   | 		Classification.presence = "visible";
+   | 		Classification.USAProposedClassification.presence = "visible";
+   | 		RiskManagement.presence = "visible";
+   | 		RiskManagement.DesignControl.presence = "hidden";
+   | 		RiskManagement.VerificationValidation.presence = "hidden";
+   | 		RiskManagement.RiskMitigationTable.presence = "visible";
+   | 		RiskManagement.SpecialControls.presence = "visible";
+   | 		RiskManagement.BenefitRisk.presence = "visible";
+   | 		RiskManagement.AlternativePractices.presence = "visible";
+   | 		ReprocSter.Sterility.STYesIndicator105.presence =
+
+## 3. The yes/no questions the form asks, each gating its own section (captions, verbatim)
+
+   | Is the device or a component packaged as sterile?                                        occurrences as a caption: 2, first @2187239
+   | Does your device have a shelf-life?                                                      occurrences as a caption: 2, first @6165265
+   | Are cleaning or disinfection or sterilization instructions included in the labeling?     occurrences as a caption: 2, first @5865516
+   | Does the device use software/firmware?                                                   occurrences as a caption: 2, first @2157940
+   | Is the device/system electrical (battery or wall powered)?                               occurrences as a caption: 2, first @2358305
+   | Are there any direct or indirect tissue contacting components?                           occurrences as a caption: 2, first @2145553
+   | Was Bench Testing used in order to support this submission?                              occurrences as a caption: 2, first @8139500
+   | Was Animal Testing used in order to support this submission?                             occurrences as a caption: 2, first @8143447
+   | Was Clinical Evidence used in order to support this submission?                          occurrences as a caption: 2, first @8147398
+
+## 4. The attachment slots these sections file into (listEstarAttachmentSlots, estar-attachment-slots.ts)
+##    chapter | FDA's description | the control's SOM path
+
+   | /CHAPTER 2/CH2.04/CH2.04.05/	Predicates and Substantial Equivalence | Substantial Equivalence Comparison	root.PredicatesSE.SubstantialEquivalence.ADAddAttachment890
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Design Control Activities	root.RiskManagement.DesignControl.VVAddAttachment110
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Signed Statement for V&V	root.RiskManagement.DesignControl.VVAddAttachment120
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Signed Statement	root.RiskManagement.DesignControl.VVAddAttachment130
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Verification and Validation	root.RiskManagement.VerificationValidation.VVAddAttachment150
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Risk Mitigation Table	root.RiskManagement.RiskMitigationTable.RMAddAttachment100
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Benefit Risk Discussion	root.RiskManagement.BenefitRisk.BRAddAttachment110
+   | /CHAPTER 2/CH2.08/	Benefits, Risks, and Mitigation Measures | Alternative Practices and Procedures	root.RiskManagement.AlternativePractices.APAddAttachment110
+   | /CHAPTER 3/CH3.05/CH3.05.09/CH3.05.09.02/	Sterility | Sterility Documentation	root.ReprocSter.Sterility.STAddAttachment107
+   | /CHAPTER 3/CH3.08/	Reprocessing, Sterility, and Shelf-Life | Reprocessing, Sterility, and Shelf-Life Documents	root.ReprocSter.ReprocSterDocs.AddAttachment
+   | /CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.01/	Software/Firmware | Software Description	root.SoftwareCyber.Software.SoftwareDocLevel.SWAddAttachment118
+   | /CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.01/	Software/Firmware | Software Description	root.SoftwareCyber.Software.SoftwareDocs.SWAddAttachment130
+   | /CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.11/	Cybersecurity | Threat Model	root.SoftwareCyber.Cybersecurity.RMThreatModel.CSAddAttachment430
+   | /CHAPTER 2/CH2.08/	Performance Testing | Abbreviated 510(k) Summary Report	root.PerformanceTesting.PTAddAttachment200
+   | /CHAPTER 3/CH3.08/	Performance Testing | Bench Testing	root.PerformanceTesting.BenchTesting.PTAddAttachment420
+   | /CHAPTER 3/CH3.05/CH3.05.10/	Performance Testing | Animal Testing	root.PerformanceTesting.AnimalTesting.PTAddAttachment520
+   | /CHAPTER 4/CH4.07/	Performance Testing | Clinical Evidence	root.PerformanceTesting.ClinicalTesting.PTAddAttachment620
+   | /CHAPTER 1/CH1.12/CH1.12.03/	Administrative Documentation | Financial Certification and Disclosure Statement (Form FDA-3454 and/or 3455)	root.AdministrativeDocumentation.ADAddAttachment820
+
+## 5. What the form takes as fields, not attachments: the applicant and correspondent (outline A2), the
+##    classification, regulation number and product code (B3), and the predicate (C1).
+##    server/services/pathway-engines/estar/estar-field-map.ts, the nIVD 510(k) map:
+
+   | estar-field-map.ts:266  deviceClassificationName     root.AdministrativeDocumentation.PMNSummary.SSTextField240                     "Classification Name"
+   | estar-field-map.ts:267  regulationNumber             root.AdministrativeDocumentation.PMNSummary.SSTextField250                     "Regulation Number"
+   | estar-field-map.ts:269  associatedProductCodes       root.Classification.USAKnownClassification.DDTextField517a                     "Associated Product Code(s)"
+   | estar-field-map.ts:270  applicantCompanyName         root.AdministrativeInformation.ApplicantInformation.ADTextField210             "Company Name"
+   | estar-field-map.ts:271  applicantContactEmail        root.AdministrativeInformation.ApplicantInformation.ADTextField160             "Email"
+   | estar-field-map.ts:274  correspondentCompanyName     root.AdministrativeInformation.CorrespondentInformation.ADTextField410         "Company Name"
+   | estar-field-map.ts:275  correspondentContactEmail    root.AdministrativeInformation.CorrespondentInformation.ADTextField360         "Email"
+   | estar-field-map.ts:278  predicateSubmissionNumber    root.PredicatesSE.PredicateReference.ADTextField830                            "Predicate Submission Number (e.g., K210001)"
+   | estar-field-map.ts:279  predicateDeviceTradeName     root.PredicatesSE.PredicateReference.ADTextField840                            "Predicate Device Trade Name"
