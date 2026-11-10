@@ -711,6 +711,15 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/ind-lifecycle/annual-report',
       '/api/ind-lifecycle/amendment-plan',
       '/api/ind-lifecycle/amendment',
+      // P-122 (2026-11-10): the registers the IND lifecycle routes keep, shown on this screen
+      // (SubmissionIndRegisters.tsx). Built and never called; each is claimed by a `:param` segment
+      // (api-prefix-map.ts), because the segment above the id would admit the IND safety-report and
+      // ICSR registers beside them, which P-32 keeps shut. The routes admit the submission's project
+      // first (tests/db/p122-ind-registers.dbtest.ts). The cross-reference / LOA register: its list
+      // and recording one, filing the letter beneath it, the LOA-coverage QC, and marking or removing one.
+      '/api/ind-lifecycle/submission/:id/cross-references',
+      '/api/ind-lifecycle/submission/:id/cross-reference-register',
+      '/api/ind-lifecycle/cross-references',
     ],
     anaToolFamilies: [],
     sharedContract: null,

@@ -688,101 +688,45 @@ describe('Module 1 transmittal — the m1.1 Form 1571 leaf', () => {
 });
 
 
+/* P-122 (2026-11-10): the cross-reference register is served in production for the IND screen, so each route admits
+   the submission's project first (getSubmissionForRequest; a change also needs write permission on the project). This
+   harness installs no request scope and files no project, so every route is refused, never answered
+   organisation-wide. The served register end to end (recording one, the LOA-coverage QC, marking the letter on file,
+   filing it as the m1.4.1 leaf of an amendment sequence, removing one, unknown ids 404, another organisation 404, a
+   colleague off a private project 403) is tests/db/p122-ind-registers.dbtest.ts (real PostgreSQL, RLS on). */
 describe('persisted cross-references (eCTD m1.4)', () => {
-  let crossRefId: string;
+  const someId = '00000000-0000-4000-8000-000000000000';
 
-  it('POST /submission/:id/cross-references → 201', async () => {
-    const res = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
-      .send({ referencedFileType: 'DMF', referencedFileNumber: '012345', subjectName: 'C2C-001 drug substance' });
-    expect(res.status).toBe(201);
-    expect(res.body.organizationId).toBe(1); // from session, not body
-    expect(res.body.loaOnFile).toBe(false);
-    crossRefId = res.body.id;
-  });
-
-  it('POST /submission/:id/cross-references → 400 on a bad file type', async () => {
+  it('POST /submission/:id/cross-references → 400 on a bad file type, before anything is read', async () => {
     const res = await request(app)
       .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
       .send({ referencedFileType: 'XYZ', referencedFileNumber: '1', subjectName: 's' });
     expect(res.status).toBe(400);
   });
 
-  it('GET /submission/:id/cross-references → 200 includes the record', async () => {
-    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
-    expect(res.status).toBe(200);
-    expect(res.body.map((r: any) => r.id)).toContain(crossRefId);
-  });
-
-  it('register is NOT ready while the LOA is not on file, then ready after PATCH', async () => {
-    const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-reference-register`);
-    expect(before.status).toBe(200);
-    expect(before.body.ready).toBe(false);
-    expect(before.body.counts.missingLoa).toBeGreaterThanOrEqual(1);
-
-    const patch = await request(app).patch(`/api/ind-lifecycle/cross-references/${crossRefId}`).send({ loaOnFile: true, loaLeafSection: 'm1.4.1' });
-    expect(patch.status).toBe(200);
-    expect(patch.body.loaOnFile).toBe(true);
-
-    const after = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-reference-register`);
-    expect(after.body.ready).toBe(true);
-    expect(after.body.counts.withLoa).toBeGreaterThanOrEqual(1);
-  });
-
-  it('POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it', async () => {
-    // New, unauthorized dependency.
-    const created = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
-      .send({ referencedFileType: 'DMF', referencedFileNumber: '099999', subjectName: 'Excipient X' });
-    const id = created.body.id;
-
-    const filed = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${id}/file-loa`)
-      // Its own number: 0007 and 0009 are safety reports' above, and a sequence number is used once (F1 repair A).
-      .send({ sequenceNumber: '0020', holderName: 'Excipient Co.', authorizedPartyName: 'Acme', signatoryName: 'Dana Holder' });
-    expect(filed.status, JSON.stringify(filed.body)).toBe(201);
-    expect(filed.body.sequence.type).toBe('amendment');
-    const loaLeaf = filed.body.leaves.find((l: any) => l.sectionCode === 'm1.4.1');
-    expect(loaLeaf).toBeTruthy();
-    expect(typeof loaLeaf.checksum).toBe('string');
-    expect(filed.body.crossReference.loaOnFile).toBe(true);
-    expect(filed.body.crossReference.loaLeafSection).toBe('m1.4.1');
-  });
-
-  it('POST …/file-loa → 400 without a 4-digit sequenceNumber', async () => {
-    const created = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`)
-      .send({ referencedFileType: 'DMF', referencedFileNumber: '088888', subjectName: 'Excipient Y' });
+  it('POST …/file-loa → 400 without a 4-digit sequenceNumber, before anything is read', async () => {
     const res = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${created.body.id}/file-loa`)
+      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/${someId}/file-loa`)
       .send({ sequenceNumber: '7', holderName: 'H', authorizedPartyName: 'A', signatoryName: 'S' });
     expect(res.status).toBe(400);
   });
 
-  it('POST …/file-loa → 404 for an unknown cross-reference', async () => {
-    const res = await request(app)
-      .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references/00000000-0000-0000-0000-000000000000/file-loa`)
-      .send({ sequenceNumber: '0008', holderName: 'H', authorizedPartyName: 'A', signatoryName: 'S' });
-    expect(res.status).toBe(404);
+  it.each([
+    ['GET', 'cross-references', undefined],
+    ['GET', 'cross-reference-register', undefined],
+    ['POST', 'cross-references', { referencedFileType: 'DMF', referencedFileNumber: '012345', subjectName: 'C2C-001 drug substance' }],
+    ['POST', `cross-references/${someId}/file-loa`, { sequenceNumber: '0020', holderName: 'H', authorizedPartyName: 'A', signatoryName: 'S' }],
+  ] as const)('%s /submission/:id/%s is refused without the project admitted', async (method, tail, body) => {
+    const path = `/api/ind-lifecycle/submission/${seededSubmissionId}/${tail}`;
+    const res = method === 'GET' ? await request(app).get(path) : await request(app).post(path).send(body);
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.error.code).toBe('REQUEST_DB_CONTEXT_REQUIRED');
   });
 
-  it('does not leak another org\'s cross-references', async () => {
-    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
-    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
-    expect(res.body.map((r: any) => r.id)).not.toContain(crossRefId);
-    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
-  });
-
-  it('PATCH unknown id → 404', async () => {
-    const res = await request(app).patch('/api/ind-lifecycle/cross-references/00000000-0000-0000-0000-000000000000').send({ loaOnFile: true });
-    expect(res.status).toBe(404);
-  });
-
-  it('DELETE /cross-references/:id → 204 then absent', async () => {
-    const del = await request(app).delete(`/api/ind-lifecycle/cross-references/${crossRefId}`);
-    expect(del.status).toBe(204);
-    const list = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/cross-references`);
-    expect(list.body.map((r: any) => r.id)).not.toContain(crossRefId);
+  it('PATCH and DELETE /cross-references/:id are refused without the project admitted', async () => {
+    const patch = await request(app).patch(`/api/ind-lifecycle/cross-references/${someId}`).send({ loaOnFile: true });
+    const del = await request(app).delete(`/api/ind-lifecycle/cross-references/${someId}`);
+    expect([patch.status, del.status]).toEqual([503, 503]);
   });
 });
 
