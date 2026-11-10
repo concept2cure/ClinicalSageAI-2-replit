@@ -2090,10 +2090,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
      saying "0 documents" over an outage would make AnA confidently wrong about
      a customer's repository. Loading says loading for the same reason. */
   // Memoized on the read's own fields (the wrapper is new each render), so the context below changes only when they do.
-  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta } = orgRead;
+  const { rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode } = orgRead;
   const organizationArtifacts = useMemo(
-    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta }, orgActive),
-    [orgRows, orgLoading, orgError, orgMeta, orgActive],
+    () => organizationArtifactsFacts({ rows: orgRows, loading: orgLoading, error: orgError, meta: orgMeta, code: orgCode }, orgActive),
+    [orgRows, orgLoading, orgError, orgMeta, orgCode, orgActive],
   );
   const orgFocused = orgFocusId ? orgRead.rows.find((r) => r.id === orgFocusId) ?? null : null;
   const savedViewFact = useMemo(() => (appliedView
@@ -2102,7 +2102,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const anaContext = useMemo(() => {
     /* No project open: no tree, and the organization view is what is on screen
        (fold F3 slice C). Its failure is published as a failure, never as zero. */
-    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError }, organizationArtifacts, orgFocused);
+    if (!projectId) return organizationViewContext({ loading: orgLoading, error: orgError, code: orgCode }, organizationArtifacts, orgFocused);
     if (vaultState.loading) {
       return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
     }
@@ -2208,7 +2208,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         'Select a named document in the tree, so its detail is shown',
       ],
     };
-  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, organizationArtifacts, orgFocused]);
+  }, [vaultState.loading, vaultState.error, vaultState.status, vaultState.code, libraryMode, searchState.loading, searchUnavailable, results.length, folder, searching, trimmedQ, findLabel, findSubject, filtering, findFilters, savedViewFact, sel, vault, projectId, orgLoading, orgError, orgCode, organizationArtifacts, orgFocused]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
