@@ -57,10 +57,12 @@ describe('existing project doors keep their reachable destination', () => {
 
   /* Vault no longer sends a person with no project open to Projects (the founder, 2026-11-06, 5144702d21): it
      lists the projects whose Vaults they can open, from the same project read Projects and the palette use, and a
-     row opens that project and its Vault. */
+     row opens that project and its Vault. Since P-107 item 3 (47a3067008) the Vault reads that list through
+     useVaultProjects, which keeps each project's sponsor; it is still the palette's read (PALETTE_PROJECTS_URL). */
   it('v2/surfaces/Vault.tsx lists the projects it can open in place of a Projects door', () => {
     const vault = source('v2/surfaces/Vault.tsx');
-    expect(calls(vault).some(call => call.expression.getText() === 'usePaletteProjects')).toBe(true);
+    expect(calls(vault).some(call => call.expression.getText() === 'useVaultProjects')).toBe(true);
+    expect(source('v2/surfaces/vaultSponsors.ts')).toMatch(/useLiveData<unknown\[\]>\(open \? PALETTE_PROJECTS_URL : null/);
     expect(callsDestination(vault, 'vault')).toBe(true);
     expect(vault).toMatch(/data-testid="vault-project-list"/);
   });
