@@ -237,6 +237,8 @@ function prerequisites(): string {
     'notification_preferences',
     // The tasks a review route assigns (RR1a); 20261023_review_routes adds its route columns.
     'unified_tasks',
+    // The quality management plan and its children: Quality registers the Data Room's first page reads (f4c230dfac).
+    'quality_management_plans', 'ctq_factors', 'qmp_section_gating', 'qmp_traceability_matrix',
   ]);
   // extractTableDdl copies a table's body only. The cascade is what PF-08 is
   // about, so the real key comes verbatim from the same file.
