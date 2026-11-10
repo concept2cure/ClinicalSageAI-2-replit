@@ -114,3 +114,17 @@ export function openFolderMatches<F extends { folder: { id: string; label: strin
   const exact = found.filter((f) => f.folder.label.toLowerCase() === wanted);
   return exact.length ? exact : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
 }
+
+/** The folder id ('bn:5.3', 'uf:4') a cabinet folder sits in, from its tree id; '' at the cabinet's top or when not found. */
+export function folderParentOf(cabinet: VaultFolder | null | undefined, treeId: string): string {
+  const walk = (nodes: Array<VaultFolder | VaultDoc>, parent: string): string | null => {
+    for (const n of nodes) {
+      if (isVaultDoc(n)) continue;
+      if (n.id === treeId) return parent;
+      const inside = walk((n as VaultFolder).children, n.id.startsWith('cab-') ? n.id.slice(4) : '');
+      if (inside !== null) return inside;
+    }
+    return null;
+  };
+  return cabinet ? walk(cabinet.children, '') ?? '' : '';
+}

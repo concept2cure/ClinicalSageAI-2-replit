@@ -371,7 +371,7 @@ async function inFolderTransaction(
 async function audit(
   client: FolderQueryable,
   base: FolderWriteBase,
-  action: 'vault.folder.create' | 'vault.folder.rename',
+  action: 'vault.folder.create' | 'vault.folder.rename' | 'vault.folder.move' | 'vault.folder.remove',
   folderId: string,
   details: Record<string, unknown>,
 ): Promise<void> {
@@ -454,6 +454,116 @@ export async function renameProgramFolder(
     );
     await audit(client, args, 'vault.folder.rename', args.folderId, { from: { name: before.name }, to: { name: named.name } });
     return { ok: true, folder: { folderId: args.folderId, name: named.name, parentFolderId, label: named.name } };
+  });
+}
+
+const NOT_A_PERSONS_FOLDER = (act: string) => refuse(409, 'FOLDER_NOT_CHANGEABLE',
+  `This folder is part of the filing’s binder, so it cannot be ${act}. Folders you make can be.`);
+
+/** The folder's row under lock, in this project and organization, or undefined. */
+async function lockPersonFolder(client: FolderQueryable, id: number, programId: string, orgId: number) {
+  const cur = await client.query(
+    `SELECT id, name, parent_id, parent_key FROM public.document_folders
+      WHERE id = $1 AND program_id = $2::uuid AND organization_id = $3
+      FOR UPDATE`,
+    [id, programId, orgId],
+  );
+  return cur.rows[0] as { id: number; name: string; parent_id: number | null; parent_key: string | null } | undefined;
+}
+
+/** Why a folder cannot be moved under `parent`, or null: the parent must exist, and never be the folder or one inside it. */
+function moveTargetRefusal(index: ProgramFolderIndex, folderId: string, parent: string | null): FolderWriteResult | null {
+  if (!parent) return null;
+  if (!index.has(parent)) {
+    return refuse(404, 'PARENT_NOT_FOUND', `There is no folder '${parent}' in this project's Vault to move it into. Nothing was saved.`);
+  }
+  const parentOf = new Map(index.person.map((f) => [f.folderId, f.parentId != null ? personFolderId(f.parentId) : null] as const));
+  for (let p: string | null = parent, guard = 0; p && guard < 64; p = parentOf.get(p) ?? null, guard += 1) {
+    if (p === folderId) return refuse(409, 'FOLDER_INSIDE_ITSELF', 'A folder cannot be moved into itself or a folder inside it. Nothing was saved.');
+  }
+  return null;
+}
+
+/** Move a folder a person made under another folder of the project, or (null) to the cabinet's top level. Its documents and subfolders go with it. */
+export async function moveProgramFolder(
+  args: FolderWriteBase & { folderId: string; parentFolderId: string | null },
+): Promise<FolderWriteResult> {
+  const m = PERSON_FOLDER_ID.exec(args.folderId ?? '');
+  if (!m) return NOT_A_PERSONS_FOLDER('moved');
+  return inFolderTransaction(args, async (client, index) => {
+    const before = await lockPersonFolder(client, Number(m[1]), args.programId, args.organizationId);
+    if (!before) return refuse(404, 'FOLDER_NOT_FOUND', 'There is no such folder in this project’s Vault. Nothing was saved.');
+    const parent = args.parentFolderId?.trim() || null;
+    const refusal = moveTargetRefusal(index, args.folderId, parent);
+    if (refusal) return refusal;
+    const parentPerson = parent ? PERSON_FOLDER_ID.exec(parent) : null;
+    const from = before.parent_id != null ? personFolderId(before.parent_id) : before.parent_key;
+    if (from === parent) return { ok: true, folder: { folderId: args.folderId, name: before.name, parentFolderId: parent, label: before.name } };
+    await client.query(
+      `UPDATE public.document_folders SET parent_id = $1, parent_key = $2, path = $3, updated_at = NOW()
+        WHERE id = $4 AND program_id = $5::uuid AND organization_id = $6`,
+      [parentPerson ? Number(parentPerson[1]) : null, parent && !parentPerson ? parent : null,
+        parent ? `${index.label(parent)} / ${before.name}` : before.name, before.id, args.programId, args.organizationId],
+    );
+    await audit(client, args, 'vault.folder.move', args.folderId, {
+      name: before.name,
+      from: { parentFolderId: from, parentLabel: from ? index.label(from) : null },
+      to: { parentFolderId: parent, parentLabel: parent ? index.label(parent) : null },
+    });
+    return { ok: true, folder: { folderId: args.folderId, name: before.name, parentFolderId: parent, label: before.name } };
+  });
+}
+
+/**
+ * Whether this session's row security lets it read the project's Vault documents. An "empty" count taken by a
+ * session that cannot see the documents is not evidence the folder is empty, so a removal asks first (found live,
+ * 2026-11-10: a count with no person in the database scope read 0 for a folder holding a file). Where the database
+ * has no such policy function, the rows are not hidden by it.
+ */
+async function canSeeProgramDocuments(client: FolderQueryable, programId: string): Promise<boolean> {
+  const has = (await client.query(`SELECT to_regprocedure('core.can_access_program(uuid)') IS NOT NULL AS has`)).rows[0] as { has?: boolean };
+  if (!has?.has) return true;
+  const ok = (await client.query(`SELECT core.can_access_program($1::uuid) AS ok`, [programId])).rows[0] as { ok?: boolean };
+  return ok?.ok === true;
+}
+
+/**
+ * Remove a folder a person made. Only an empty one: a folder holding a document
+ * (any version, filed or suggested) or another folder is refused, so nothing is
+ * ever orphaned or hidden by a removal. The audit row keeps its name and place.
+ */
+export async function removeProgramFolder(args: FolderWriteBase & { folderId: string }): Promise<FolderWriteResult> {
+  const m = PERSON_FOLDER_ID.exec(args.folderId ?? '');
+  if (!m) return NOT_A_PERSONS_FOLDER('removed');
+  return inFolderTransaction(args, async (client, index) => {
+    const before = await lockPersonFolder(client, Number(m[1]), args.programId, args.organizationId);
+    if (!before) return refuse(404, 'FOLDER_NOT_FOUND', 'There is no such folder in this project’s Vault. Nothing was removed.');
+    if (!(await canSeeProgramDocuments(client, args.programId))) {
+      return refuse(409, 'FOLDER_CONTENTS_UNVERIFIED',
+        'The folder’s contents could not be read for this session, so it cannot be shown to be empty. Nothing was removed.');
+    }
+    // tenant-isolation-safe: both counts are bound to this program and organization.
+    const held = (await client.query(
+      `SELECT (SELECT COUNT(*)::int FROM vault.documents d
+                WHERE d.folder_id = $1 AND d.program_id = $2::uuid AND d.organization_id = $3 AND d.deleted_at IS NULL) AS documents,
+              (SELECT COUNT(*)::int FROM public.document_folders f
+                WHERE f.parent_id = $4 AND f.program_id = $2::uuid AND f.organization_id = $3) AS folders`,
+      [args.folderId, args.programId, args.organizationId, before.id],
+    )).rows[0] as { documents: number; folders: number };
+    if (held.documents > 0 || held.folders > 0) {
+      const what = [held.documents ? `${held.documents} document${held.documents === 1 ? '' : 's'}` : null,
+        held.folders ? `${held.folders} folder${held.folders === 1 ? '' : 's'}` : null].filter(Boolean).join(' and ');
+      return refuse(409, 'FOLDER_NOT_EMPTY', `“${before.name}” holds ${what}. Move them out first; nothing was removed.`);
+    }
+    await client.query(
+      `DELETE FROM public.document_folders WHERE id = $1 AND program_id = $2::uuid AND organization_id = $3`,
+      [before.id, args.programId, args.organizationId],
+    );
+    const parent = before.parent_id != null ? personFolderId(before.parent_id) : before.parent_key;
+    await audit(client, args, 'vault.folder.remove', args.folderId, {
+      name: before.name, parentFolderId: parent, parentLabel: parent ? index.label(parent) : null,
+    });
+    return { ok: true, folder: { folderId: args.folderId, name: before.name, parentFolderId: parent, label: before.name } };
   });
 }
 
