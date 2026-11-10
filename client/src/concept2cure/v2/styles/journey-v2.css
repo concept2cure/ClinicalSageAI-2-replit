@@ -421,6 +421,11 @@
    Materials pushed the page 108 px sideways and Stability 120 px. D0's rule
    does this only below 640 px, for every work area; this is CMC's own. */
 .c2c-v2 [data-work-area="cmc"] :is(.pj-sec, .pj-card-b) > .reg-tbl{display:block;overflow-x:auto;}
+/* The same for the per-study tables under a register (the ICH Q1E fit, the
+   trending and close-out detail), which sit in a plain block: since the
+   Stability register estimates on open (P-122), its Q1E table is on screen at
+   once, and at 390 px it pushed the page 241 px sideways. */
+.c2c-v2 [data-work-area="cmc"] .reg-tbl.cm-subtable{display:block;overflow-x:auto;}
 /* The impurity register's guideline verdicts and the dissolution f2 comparison
    (P-122, cmcRegisterEngines.tsx): the engine's words, as chips that wrap. */
 .c2c-v2 .cm-verdicts{display:flex;flex-direction:column;gap:4px;min-width:220px;}
