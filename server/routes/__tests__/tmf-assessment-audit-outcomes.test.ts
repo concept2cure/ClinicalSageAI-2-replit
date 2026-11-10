@@ -1,105 +1,189 @@
-/** Actual durable business rows survive ancillary audit failures. The audit
- * boundary is controlled; the mounted routes and migration-shaped stores run. */
+/** The audit row of a governed act, in its two forms.
+ *
+ * A TMF filing or removal (eTMF convergence E3, 2026-11-10) writes its audit
+ * row in the transaction that makes the change: when the audit row cannot be
+ * written, the change is not made, and a retry makes both. Until then this
+ * suite pinned the opposite for the TMF: the filing committed first, the audit
+ * was attempted after, and a lost row was reported beside a filing that stood
+ * with no record of it.
+ *
+ * A recorded assessment snapshot keeps the ancillary form: the business row
+ * survives an audit failure and the outcome is reported.
+ *
+ * The audit boundary is controlled; the mounted routes and migration-shaped
+ * stores run. For the TMF the audit writer is a double that records on the
+ * client it is handed, so its row commits or rolls back with the change; the
+ * real chain is proved on PostgreSQL (tests/db/etmf-governed-filing.dbtest.ts). */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { expandRoleClaims } from '../../middleware/auth';
+import { createTmfRouteDb, type TmfRouteDb } from './_etmf-pglite-fixture';
 
-const state = vi.hoisted(() => ({ db: null as unknown, logAction: vi.fn() }));
-vi.mock('../../db', () => ({ get db() { return state.db; } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction: state.logAction } }));
+const state = vi.hoisted(() => ({ fixture: null as any, logAction: vi.fn(), tmfAudit: vi.fn() }));
+vi.mock('../../db', () => ({
+  get db() { return state.fixture.harness.db; },
+  get pool() { return state.fixture.pool; },
+  get transaction() { return state.fixture.transaction; },
+}));
+vi.mock('../../services/auditService', () => ({ default: { logAction: state.logAction }, writeChainedAuditRow: state.tmfAudit }));
+vi.mock('../../services/c2c/current-program-access', () => {
+  class ProgramReadAccessError extends Error {}
+  return { ProgramReadAccessError, requireCurrentProgramAccess: vi.fn(async () => ({})) };
+});
+vi.mock('../../services/vault/vault-write-authority', () => ({ requireCurrentVaultProgramWrite: vi.fn(async () => ({})) }));
 vi.mock('../../middleware/rateLimiter', () => ({ createRateLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next() }));
 import tmfRouter from '../etmf.routes';
 import assessmentsRouter from '../regulatory-assessments.routes';
 
 const LOST = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' };
+const RECORDED = { persisted: true, chained: true };
 const SENTINEL = 'SYNTHETIC secret database target and driver detail';
-let harness: IndPgliteDb;
+const WHY = 'Filed for the audit outcome proof.';
+let fixture: TmfRouteDb;
 let app: express.Express;
 let role = 'member';
 let serial = 0;
 
+/** The TMF audit writer's double: one row on the client it is handed, inside that client's transaction. */
+const recordOnTheClient = async (client: { query: (sql: string, params?: unknown[]) => Promise<unknown> }, entry: any) => {
+  await client.query('INSERT INTO tmf_test_audit (action, record_id, reason, details) VALUES ($1, $2, $3, $4)',
+    [entry.action, String(entry.resourceId), entry.reason ?? null, JSON.stringify(entry.details ?? {})]);
+};
+const stored = async (artifactCode: string) =>
+  (await fixture.query("SELECT id, document_ref, removed_at FROM tmf_artifact_filings WHERE trial_id = 'STUDY-A' AND artifact_code = $1", [artifactCode])).rows;
+const audited = async () => (await fixture.query('SELECT action, record_id FROM tmf_test_audit ORDER BY seq')).rows;
+
 beforeAll(async () => {
-  harness = await createIndPgliteDb();
-  state.db = harness.db;
+  fixture = await createTmfRouteDb();
+  state.fixture = fixture;
   app = express();
   app.use(express.json());
   app.use((req, _res, next) => { req.user = { id: 9, organizationId: 1, role, roles: expandRoleClaims(role, undefined) } as typeof req.user; next(); });
   app.use('/api/etmf', tmfRouter);
   app.use('/api/regulatory-assessments', assessmentsRouter);
 });
-beforeEach(() => { state.logAction.mockReset(); state.logAction.mockResolvedValue({ persisted: true, chained: true, tamperProof: true }); role = 'member'; });
-afterAll(async () => { await harness.close(); });
+beforeEach(async () => {
+  state.logAction.mockReset(); state.logAction.mockResolvedValue({ persisted: true, chained: true, tamperProof: true }); role = 'member';
+  state.tmfAudit.mockReset(); state.tmfAudit.mockImplementation(recordOnTheClient);
+  await fixture.query('DELETE FROM tmf_test_audit');
+  await fixture.query('DELETE FROM tmf_artifact_filings');
+});
+afterAll(async () => { await fixture.harness.close(); });
 
-describe('TMF ancillary audit outcome transport', () => {
-  const file = (trial: string, artifactCode = 'protocol') => request(app).post(`/api/etmf/trials/${trial}/artifacts`).send({ artifactCode, documentRef: 'external-archive-reference' });
+const file = (artifactCode = 'protocol', reason: unknown = WHY) => request(app).post('/api/etmf/trials/STUDY-A/artifacts')
+  .send({ artifactCode, documentRef: 'external-archive-reference', reason });
+const list = () => request(app).get('/api/etmf/trials/STUDY-A/artifacts');
 
-  it.each(['lost', 'thrown', 'tamper-only'] as const)('preserves the actual filing and reports %s audit outcome', async mode => {
-    if (mode === 'thrown') state.logAction.mockRejectedValueOnce(new Error(SENTINEL));
-    else state.logAction.mockResolvedValueOnce(mode === 'lost'
-      ? { persisted: false, chained: false, tamperProof: false, error: SENTINEL }
-      : { persisted: true, chained: false, tamperProof: true });
-    const trial = `audit-${++serial}`;
-    const response = await file(trial);
-    expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({ organizationId: 1, trialId: trial, artifactCode: 'protocol',
-      meta: { auditTrail: mode === 'tamper-only' ? { persisted: true, chained: false } : LOST } });
-    expect(JSON.stringify(response.body)).not.toContain(SENTINEL);
-    const stored = await request(app).get(`/api/etmf/trials/${trial}/artifacts`);
-    expect(stored.body).toMatchObject([{ id: response.body.id, documentRef: 'external-archive-reference' }]);
-    expect(stored.body[0]).not.toHaveProperty('auditTrail');
-    // A retry is the same idempotent filing, not a second row or a fake rollback.
-    const retried = await file(trial);
-    expect(retried.body.id).toBe(response.body.id);
-    expect(retried.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
+describe('a TMF filing or removal is not made without its audit row', () => {
+
+  it('files nothing when the audit row cannot be written, says so without the store\'s text, and a retry files both', async () => {
+    state.tmfAudit.mockRejectedValueOnce(new Error(SENTINEL));
+    const refused = await file();
+    expect(refused.status).toBe(500);
+    expect(refused.body).toEqual({ success: false, error: 'INTERNAL', message: 'eTMF request failed.' });
+    expect(JSON.stringify(refused.body)).not.toContain(SENTINEL);
+    // The filing was rolled back with the audit row it could not have.
+    expect(await stored('protocol')).toEqual([]);
+    expect((await list()).body).toEqual([]);
+    expect(await audited()).toEqual([]);
+    const retried = await file();
+    expect(retried.status).toBe(201);
+    expect(retried.body).toMatchObject({ organizationId: 1, trialId: 'STUDY-A', artifactCode: 'protocol', meta: { auditTrail: RECORDED } });
+    expect(await audited()).toEqual([{ action: 'TMF_ARTIFACT_FILED', record_id: retried.body.id }]);
+    const listed = (await list()).body;
+    expect(listed).toMatchObject([{ id: retried.body.id, documentRef: 'external-archive-reference' }]);
+    expect(listed[0]).not.toHaveProperty('auditTrail');
+    // The ancillary, after-commit writer is not used for a filing any more.
+    expect(state.logAction).not.toHaveBeenCalled();
   });
 
-  it('carries removal failure on the 204 headers and the filing remains removed', async () => {
-    const trial = `remove-${++serial}`;
-    const created = await file(trial);
-    state.logAction.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: SENTINEL });
-    const removed = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`);
+  it('keeps a re-filing\'s previous document when the re-filing\'s audit row cannot be written', async () => {
+    const first = await file();
+    state.tmfAudit.mockRejectedValueOnce(new Error(SENTINEL));
+    const refiled = await request(app).post('/api/etmf/trials/STUDY-A/artifacts').send({ artifactCode: 'protocol', documentRef: 'a-second-reference', reason: WHY });
+    expect(refiled.status).toBe(500);
+    expect(await stored('protocol')).toMatchObject([{ id: first.body.id, document_ref: 'external-archive-reference' }]);
+    expect(await audited()).toHaveLength(1);
+  });
+
+  it('removes nothing when the removal\'s audit row cannot be written; a retry removes and records', async () => {
+    const created = await file();
+    state.tmfAudit.mockRejectedValueOnce(new Error(SENTINEL));
+    const refused = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`).send({ reason: 'Filed against the wrong study.' });
+    expect(refused.status).toBe(500);
+    expect(JSON.stringify(refused.body)).not.toContain(SENTINEL);
+    expect(refused.headers['x-audit-row-persisted']).toBeUndefined();
+    expect(await stored('protocol')).toMatchObject([{ id: created.body.id, removed_at: null }]);
+    expect((await list()).body.map((f: { id: string }) => f.id)).toEqual([created.body.id]);
+    const removed = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`).send({ reason: 'Filed against the wrong study.' });
     expect(removed.status).toBe(204);
     expect(removed.text).toBe('');
-    expect(removed.headers['x-audit-row-persisted']).toBe('false');
-    expect(removed.headers['x-audit-row-code']).toBe('AUDIT_ROW_NOT_PERSISTED');
-    expect((await request(app).get(`/api/etmf/trials/${trial}/artifacts`)).body).toEqual([]);
-    const calls = state.logAction.mock.calls.length;
-    const retry = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`);
+    expect(removed.headers['x-audit-row-persisted']).toBe('true');
+    expect(removed.headers['x-audit-row-chained']).toBe('true');
+    expect(removed.headers['x-audit-row-code']).toBeUndefined();
+    expect((await list()).body).toEqual([]);
+    expect((await audited()).map((a) => a.action)).toEqual(['TMF_ARTIFACT_FILED', 'TMF_ARTIFACT_REMOVED']);
+    const calls = state.tmfAudit.mock.calls.length;
+    const retry = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`).send({ reason: 'Filed against the wrong study.' });
     expect(retry.status).toBe(404);
     expect(retry.headers['x-audit-row-persisted']).toBeUndefined();
-    expect(state.logAction.mock.calls).toHaveLength(calls);
+    expect(state.tmfAudit.mock.calls).toHaveLength(calls);
   });
 
-  it('combines only actual successful business writes in a partial bulk result', async () => {
-    state.logAction.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false });
-    const response = await request(app).post(`/api/etmf/trials/bulk-${++serial}/artifacts/bulk`).send({ artifacts: [
+});
+
+describe('a TMF batch records each filing it makes, and makes none it cannot record', () => {
+  it('reports each item of a batch; an invalid item is refused and the rest are filed and recorded', async () => {
+    const response = await request(app).post('/api/etmf/trials/STUDY-A/artifacts/bulk').send({ reason: WHY, artifacts: [
       { artifactCode: 'protocol' }, { artifactCode: 'invalid-artifact' }, { artifactCode: 'investigators_brochure' }, {},
     ] });
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ filed: 2, total: 4, meta: { auditTrail: LOST }, results: [
-      { artifactCode: 'protocol', ok: true, auditTrail: LOST },
+    expect(response.body).toMatchObject({ filed: 2, total: 4, meta: { auditTrail: RECORDED }, results: [
+      { artifactCode: 'protocol', ok: true, auditTrail: RECORDED },
       { artifactCode: 'invalid-artifact', ok: false, error: 'UNKNOWN_ARTIFACT' },
-      { artifactCode: 'investigators_brochure', ok: true, auditTrail: { persisted: true, chained: true } },
+      { artifactCode: 'investigators_brochure', ok: true, auditTrail: RECORDED },
       { artifactCode: '', ok: false },
     ] });
-    expect(state.logAction).toHaveBeenCalledTimes(2);
+    expect(state.tmfAudit).toHaveBeenCalledTimes(2);
+    expect(await audited()).toHaveLength(2);
+  });
+
+  it('stops a batch at an item whose audit row cannot be written: that item is not filed, and the rest are not attempted', async () => {
+    state.tmfAudit.mockImplementationOnce(recordOnTheClient).mockRejectedValueOnce(new Error(SENTINEL));
+    const response = await request(app).post('/api/etmf/trials/STUDY-A/artifacts/bulk').send({ reason: WHY, artifacts: [
+      { artifactCode: 'protocol' }, { artifactCode: 'investigators_brochure' }, { artifactCode: 'sample_crf' },
+    ] });
+    expect(response.status).toBe(207);
+    expect(response.body).toMatchObject({ partial: true, filed: 1, total: 3, meta: { auditTrail: RECORDED }, results: [
+      { artifactCode: 'protocol', ok: true, auditTrail: RECORDED },
+      { artifactCode: 'investigators_brochure', ok: false, error: 'TMF_ARTIFACT_WRITE_UNCONFIRMED', completion: 'unconfirmed' },
+      { artifactCode: 'sample_crf', ok: false, error: 'NOT_ATTEMPTED', completion: 'not-attempted' },
+    ] });
+    expect(JSON.stringify(response.body)).not.toContain(SENTINEL);
+    // What the read-back the response points to shows: one filing, the one that was recorded.
+    expect(response.body.recovery).toMatchObject({ method: 'GET', url: '/api/etmf/trials/STUDY-A/artifacts' });
+    expect((await request(app).get(response.body.recovery.url)).body.map((f: { artifactCode: string }) => f.artifactCode)).toEqual(['protocol']);
+    expect(await audited()).toHaveLength(1);
   });
 
   it('does not fabricate an audit receipt for an all-invalid bulk request', async () => {
-    const response = await request(app).post('/api/etmf/trials/invalid/artifacts/bulk').send({ artifacts: [{ artifactCode: 'unknown' }, {}] });
+    const response = await request(app).post('/api/etmf/trials/STUDY-A/artifacts/bulk').send({ reason: WHY, artifacts: [{ artifactCode: 'unknown' }, {}] });
     expect(response.status).toBe(200);
     expect(response.body.filed).toBe(0);
     expect(response.body).not.toHaveProperty('meta');
-    expect(state.logAction).not.toHaveBeenCalled();
+    expect(state.tmfAudit).not.toHaveBeenCalled();
   });
 
-  it('does not attempt an audit when a filing is refused, or a viewer submits it', async () => {
-    expect((await file('invalid', 'unknown')).status).toBe(400);
+  it('does not attempt an audit when a filing is refused, has no reason, or a viewer submits it', async () => {
+    expect((await file('unknown')).status).toBe(400);
+    expect((await file('protocol', '')).status).toBe(400);
+    expect((await request(app).post('/api/etmf/trials/no-such-study/artifacts').send({ artifactCode: 'protocol', reason: WHY })).status).toBe(404);
     role = 'viewer';
-    expect((await file('viewer-refusal')).status).toBe(403);
+    expect((await file()).status).toBe(403);
+    expect(state.tmfAudit).not.toHaveBeenCalled();
     expect(state.logAction).not.toHaveBeenCalled();
+    expect(await stored('protocol')).toEqual([]);
   });
 });
 

@@ -1,0 +1,69 @@
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers withou
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 7m
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > records the acceptances and the revision shown on the sign-up's a
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > records the acceptances and the revision shown on the sign-up's a
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses a sign-up that says an agreement was not accepted (termsO
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses a sign-up that says an agreement was not accepted (privac
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses a sign-up that says an agreement was not accepted (regula
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses an acceptance it cannot record whole (no revision) 5ms
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses an acceptance it cannot record whole (an empty revision) 
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses an acceptance it cannot record whole (an agreement the pr
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses an acceptance it cannot record whole (one of the three mi
+   → expected 429 to be 400 // Object.is equality
+ × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > a sign-up that sends no acceptance says so on its audit event: no
+   → expected 429 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 11ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 7ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 7ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 11ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 4ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA chall
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 3ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a resend refused at the per-challenge limit 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a sign-out of every session, and a sign-in begun before the sessions were ended 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation 0ms
+ × server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > holds the revision shown and each agreement accepted, and says so in its sentence 7ms
+   → expected undefined to deeply equal { revision: '2026-11-10', …(1) }
+ × server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > says that no acceptance was sent, and records none 1ms
+   → expected undefined to be null
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > adds nothing to an event that is not a sign-up 6ms
+ × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > sign-up sends what the person agreed to > carries the three acceptances, the revision of the text shown, and the job title 469ms
+   → expected undefined to deeply equal { revision: undefined, …(3) }
+ ✓ client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > sign-up sends what the person agreed to > cannot be sent until each agreement is accepted 249ms
+ × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > the revision names one text > pins the agreement text to its revision 148ms
+   → revision undefined has a pinned digest: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+AssertionError: expected 429 to be 400 // Object.is equality
+AssertionError: expected 429 to be 400 // Object.is equality
+AssertionError: expected 429 to be 201 // Object.is equality
+AssertionError: expected undefined to deeply equal { revision: '2026-11-10', …(1) }
+AssertionError: expected undefined to be null
+AssertionError: expected undefined to deeply equal { revision: undefined, …(3) }
+AssertionError: revision undefined has a pinned digest: expected false to be true // Object.is equality
+ Test Files  3 failed (3)
+      Tests  14 failed | 29 passed (43)

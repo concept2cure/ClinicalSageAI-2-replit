@@ -1,0 +1,419 @@
+# 19-mutations: each defect the suites exist to catch, put back one at a time (third change)
+#
+# One edit per entry, to VaultTrialMasterFile.tsx, vaultTmf.ts, VaultTmfFiling.tsx, VaultTmfPackage.tsx or
+# Etmf.tsx. The five suites were run against it (vaultTrialMasterFile, etmfHostsTrialMasterFile, vaultTmfRestored,
+# vaultTmfUploadAndFile, vaultTmfModel); the source was then restored and compared byte for byte.
+# M.., N..: the first two changes' defects (24), against the section as it is now split. R..: this change's (59).
+# CAUGHT: at least one case failed. The cases that failed are listed under each.
+#
+# Result: 83 put back. 82 were caught on the first run. One was not, R07 (the answer of before a write
+# stays on screen while the read after it is in flight): the case meant to catch it looked at the screen after
+# the commit in which the defect shows, and passed. That case now looks at every commit from the write on (a
+# MutationObserver), and R07 is caught: three runs of three, then once more on the final test file. So 83 of
+# 83 are caught by the suites as they now stand. A tightened case can only fail more, so the other 82
+# were not run again.
+#
+# Not put back here: 09-mutations.txt's three edits to Vault.tsx (N12-N14). Vault.tsx is unchanged by this change
+# and its cases (etmfHostsTrialMasterFile.test.tsx, "the Vault's header button") still pass (17-green.txt).
+
+## The first run, 83 mutations
+
+CAUGHT  M01 the server's "not determined" is shown as incomplete
+    3 failed | 95 passed (98)
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+CAUGHT  M02 a read that checked nothing may read complete
+    4 failed | 94 passed (98)
+      × what AnA can see of the page is what the section read > a read that checked nothing is published with no verdict and no figures
+      × whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready
+      × the three figures beside the verdict > no figure is shown where nothing was assessed: a read that checked nothing, a read in flight, a refusal
+      × the inspection package, shown as a document > states no verdict, and no figure, over a read that checked nothing
+CAUGHT  M04 the document reference is made up from the study and the code
+    8 failed | 90 passed (98)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × filing a document against a missing record > keeps what was filed on screen when the read after it fails
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × upload and file in one step > the upload is typed by the record it is filed as (sap is SAP)
+      × upload and file in one step > the upload is typed by the record it is filed as (investigators_brochure is IB)
+      × upload and file in one step > the upload is typed by the record it is filed as (tmf_plan is OTHER)
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+      × the upload and the filing are said apart > a file the Vault already held is filed against the document it holds, and is not said to have been added
+CAUGHT  M05 a filing needs no reason (and an upload is sent without one)
+    2 failed | 96 passed (98)
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+CAUGHT  M06 a removal needs no reason
+    1 failed | 97 passed (98)
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+CAUGHT  M07 the write controls, the upload among them, are offered to every role
+    2 failed | 96 passed (98)
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+      × a role that may not write the Vault > is offered no upload: no filing form, no file control
+CAUGHT  M08 the section reads before its view is opened
+    1 failed | 97 passed (98)
+      × which study the trial master file is of > reads nothing until the view that holds it is first on screen
+CAUGHT  M09 a completeness answer is taken without its shape, its study or its scope being checked
+    4 failed | 94 passed (98)
+      × whether the essential records are all filed > an answer about another study is not shown as this study’s
+      × whether the essential records are all filed > a completeness answer with no stated verdict is a failed read
+      × which records are checked: the essential ones, or all > an answer for another scope is a failed read, never figures under the scope chosen
+      × the three figures beside the verdict > an answer that does not state how many zones are complete is a failed read, not a figure made up
+CAUGHT  M10 every refusal is said as a failed read
+    5 failed | 93 passed (98)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not in this release (403 LAUNCH_SCOPE)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not enabled for the organization (403 MODULE_NOT_LICENSED)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > the person’s role (403, no code)
+      × a refusal is said as itself, and a failed read is never an empty trial master file > not found (404 STUDY_NOT_FOUND)
+      × which records are checked: the essential ones, or all > a refused read of the scope chosen is said as that, and the other scope is read again when asked
+CAUGHT  M12 nothing is read again after a write
+    8 failed | 90 passed (98)
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × filing a document against a missing record > keeps what was filed on screen when the read after it fails
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+      × removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+      × the upload and the filing are said apart > when the filing is not confirmed after the upload, says where the file is and that the filing is not known
+CAUGHT  M13 a filing without a verified document counts as filed
+    3 failed | 95 passed (98)
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+      × whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete
+CAUGHT  M14 a package that does not match its stated SHA-256 is saved
+    1 failed | 97 passed (98)
+      × the inspection package > does not save a file that does not match the SHA-256 the server stated
+CAUGHT  M15 an unconfirmed write is reported as refused
+    2 failed | 96 passed (98)
+      × filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again
+      × the upload and the filing are said apart > when the filing is not confirmed after the upload, says where the file is and that the filing is not known
+CAUGHT  N01 a filed record's document is named from its reference, not from what the server found
+    5 failed | 93 passed (98)
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+      × filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+CAUGHT  N02 a version a later one replaced is not said to be an earlier version
+    1 failed | 97 passed (98)
+      × whether the essential records are all filed > names the document a record is filed against as the server names it
+CAUGHT  N03 a package the server marked not determined is said to have records missing
+    1 failed | 97 passed (98)
+      × the inspection package > says a package the server marked not determined as not determined, never as missing records
+CAUGHT  N04 the host is not told what a study's read came to (AnA sees nothing of it)
+    6 failed | 92 passed (98)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+      × what AnA can see of the page is what the section read > a read that checked nothing is published with no verdict and no figures
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  N05 the host is not told about the project's studies
+    1 failed | 97 passed (98)
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  N06 the section ignores its host's heading (the page is titled twice)
+    1 failed | 97 passed (98)
+      × the page that hosts the trial master file > with a project open: the way back, one title, and the section for that project’s study
+CAUGHT  N07 choosing a study takes the chooser away and puts a new one in its place
+    2 failed | 96 passed (98)
+      × which study the trial master file is of > a study chosen next carries neither the last study’s verdict nor its failed read
+      × the scope and the study > the scope is offered once a study is on screen, and stays as chosen when another study is
+CAUGHT  N08 the page publishes "not determined" to AnA as not ready
+    1 failed | 97 passed (98)
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+CAUGHT  N09 the page publishes a refused read without saying it is not an empty file
+    1 failed | 97 passed (98)
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+CAUGHT  N10 the page reads and shows a section with no project open
+    1 failed | 97 passed (98)
+      × the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing
+CAUGHT  N11 the page publishes nothing to AnA
+    7 failed | 91 passed (98)
+      × the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+      × what AnA can see of the page is what the section read > a read that checked nothing is published with no verdict and no figures
+      × what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+      × what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+CAUGHT  R01 the read ignores the scope chosen: it is always the essential records
+    7 failed | 91 passed (98)
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × which records are checked: the essential ones, or all > while the scope just chosen is being read, nothing of the previous scope is shown under it
+      × which records are checked: the essential ones, or all > a refused read of the scope chosen is said as that, and the other scope is read again when asked
+      × which records are checked: the essential ones, or all > the download is of the scope on screen, and says which
+      × the scope and the study > the scope is offered once a study is on screen, and stays as chosen when another study is
+      × each record’s zone and artifact code on its row > quiet and monospaced, after the record’s name, for every record of the scope
+CAUGHT  R02 an answer for another scope is taken as the scope chosen's
+    1 failed | 97 passed (98)
+      × which records are checked: the essential ones, or all > an answer for another scope is a failed read, never figures under the scope chosen
+CAUGHT  R03 the download ignores the scope on screen
+    1 failed | 97 passed (98)
+      × which records are checked: the essential ones, or all > the download is of the scope on screen, and says which
+CAUGHT  R04 the verdict says "essential records" whatever the scope
+    5 failed | 93 passed (98)
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × which records are checked: the essential ones, or all > while the scope just chosen is being read, nothing of the previous scope is shown under it
+      × the scope and the study > the scope is offered once a study is on screen, and stays as chosen when another study is
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+      × every sentence follows the scope of the answer > names essential records for the essential scope and records for all
+CAUGHT  R05 the package note says "essential records" whatever the scope
+    1 failed | 97 passed (98)
+      × which records are checked: the essential ones, or all > the download is of the scope on screen, and says which
+CAUGHT  R06 the figures say "Essential records filed" whatever the scope
+    1 failed | 97 passed (98)
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+NOT CAUGHT  R07 the answer of before a write stays on screen while the read after it is in flight
+    98 passed (98)
+CAUGHT  R08 the scope is forgotten when another study is chosen
+    1 failed | 97 passed (98)
+      × the scope and the study > the scope is offered once a study is on screen, and stays as chosen when another study is
+CAUGHT  R09 the scope is offered before a study is on screen
+    2 failed | 96 passed (98)
+      × the scope and the study > the scope is offered once a study is on screen, and stays as chosen when another study is
+      × the scope and the study > the scope is not offered where there is no study to check
+CAUGHT  R10 AnA is not told the scope on screen
+    2 failed | 96 passed (98)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+CAUGHT  R11 AnA is told "essential records" whatever the scope
+    1 failed | 97 passed (98)
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+CAUGHT  R12 the figures are not shown
+    6 failed | 92 passed (98)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × the three figures beside the verdict > zones complete, records filed and records open, with how many are filed without a verified document
+      × the three figures beside the verdict > a complete trial master file has no open record, and says nothing about unverified ones
+      × the three figures beside the verdict > a count the server did not report is said as not reported, never as none
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R13 figures are stated over an answer that checked nothing
+    2 failed | 96 passed (98)
+      × the three figures beside the verdict > no figure is shown where nothing was assessed: a read that checked nothing, a read in flight, a refusal
+      × what AnA can see of the page is what the section read > a read that checked nothing is published with no verdict and no figures
+CAUGHT  R14 "all filed" figures are stated over an answer that is not ready and gave no count
+    1 failed | 97 passed (98)
+      × the three figures > an answer with nothing to count has no figures: it checked nothing, or it is not ready and gave no count
+CAUGHT  R15 a count the server did not report is shown as none
+    2 failed | 96 passed (98)
+      × the three figures > a count the server did not report is not reported, never zero
+      × the three figures beside the verdict > a count the server did not report is said as not reported, never as none
+CAUGHT  R16 records filed is the number required, not the number filed
+    5 failed | 93 passed (98)
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × the three figures beside the verdict > zones complete, records filed and records open, with how many are filed without a verified document
+      × the three figures > are the server’s own summary: zones complete, records filed, records open, and how many of those have a filing
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+CAUGHT  R17 an answer that does not state how many zones are complete is taken
+    1 failed | 97 passed (98)
+      × the three figures beside the verdict > an answer that does not state how many zones are complete is a failed read, not a figure made up
+CAUGHT  R18 the line that says timeliness and QC are not assessed is dropped
+    1 failed | 97 passed (98)
+      × the three figures beside the verdict > says in one visible line that timeliness and quality control are not assessed, and why
+CAUGHT  R19 what "filed" rests on is put back behind a closed disclosure
+    2 failed | 96 passed (98)
+      × the three figures beside the verdict > says in one visible line that timeliness and quality control are not assessed, and why
+      × whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name
+CAUGHT  R20 AnA is not told the figures (facts)
+    2 failed | 96 passed (98)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+CAUGHT  R21 AnA is not told the figures (summary)
+    2 failed | 96 passed (98)
+      × what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+      × what AnA can see of the page is what the section read > the scope on screen is the scope AnA is told, with that scope’s figures and never the other’s
+CAUGHT  R22 a record's row drops its artifact code
+    1 failed | 97 passed (98)
+      × each record’s zone and artifact code on its row > quiet and monospaced, after the record’s name, for every record of the scope
+CAUGHT  R23 a record's row states the wrong zone
+    1 failed | 97 passed (98)
+      × each record’s zone and artifact code on its row > quiet and monospaced, after the record’s name, for every record of the scope
+CAUGHT  R24 the upload is not offered: the Vault search is the only way
+    2 failed | 96 passed (98)
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × upload and file in one step > the person can go back to the two ways of choosing before anything is sent
+CAUGHT  R25 the file is uploaded to another project's Vault
+    5 failed | 93 passed (98)
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × upload and file in one step > the upload is typed by the record it is filed as (sap is SAP)
+      × upload and file in one step > the upload is typed by the record it is filed as (investigators_brochure is IB)
+      × upload and file in one step > the upload is typed by the record it is filed as (tmf_plan is OTHER)
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+CAUGHT  R26 every upload is typed OTHER, whatever record it is filed as
+    2 failed | 96 passed (98)
+      × upload and file in one step > the upload is typed by the record it is filed as (sap is SAP)
+      × upload and file in one step > the upload is typed by the record it is filed as (investigators_brochure is IB)
+CAUGHT  R27 the investigator's brochure is not typed IB
+    2 failed | 96 passed (98)
+      × upload and file in one step > the upload is typed by the record it is filed as (investigators_brochure is IB)
+      × the Vault ingest type of a file uploaded against a record > a record code that is an ingest type is that type, not OTHER
+CAUGHT  R28 a record code that is an ingest type is typed OTHER
+    2 failed | 96 passed (98)
+      × upload and file in one step > the upload is typed by the record it is filed as (sap is SAP)
+      × the Vault ingest type of a file uploaded against a record > a record code that is an ingest type is that type, not OTHER
+CAUGHT  R29 an upload that succeeded with a refused filing is said as "Nothing was filed" alone
+    2 failed | 96 passed (98)
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+      × the upload and the filing are said apart > a filing the server refuses because the document is not in the study’s project is said with the server’s reason
+CAUGHT  R30 after a refused filing the form still holds the file, so filing again uploads again
+    1 failed | 97 passed (98)
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+CAUGHT  R31 an upload the Vault did not confirm is said as refused
+    1 failed | 97 passed (98)
+      × the upload and the filing are said apart > an upload the Vault did not confirm is said as not known, nothing is filed, and the same file is not sent again
+CAUGHT  R32 an upload the Vault did not confirm leaves the same file ready to send again
+    1 failed | 97 passed (98)
+      × the upload and the filing are said apart > an upload the Vault did not confirm is said as not known, nothing is filed, and the same file is not sent again
+CAUGHT  R33 a refused upload is followed by a filing anyway
+    2 failed | 96 passed (98)
+      × the upload and the filing are said apart > a file the Vault refuses is not added, and nothing is filed
+      × the upload and the filing are said apart > an upload the Vault did not confirm is said as not known, nothing is filed, and the same file is not sent again
+CAUGHT  R34 a file the Vault already held is said to have been added
+    1 failed | 97 passed (98)
+      × the upload and the filing are said apart > a file the Vault already held is filed against the document it holds, and is not said to have been added
+CAUGHT  R35 a host that lists the Vault is not told it holds a new document
+    2 failed | 96 passed (98)
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+CAUGHT  R36 the filing after an upload names the file, not the id the Vault returned
+    6 failed | 92 passed (98)
+      × upload and file in one step > adds the file to this project’s Vault through the Vault’s upload, then files the record against the document the Vault recorded
+      × upload and file in one step > the upload is typed by the record it is filed as (sap is SAP)
+      × upload and file in one step > the upload is typed by the record it is filed as (investigators_brochure is IB)
+      × upload and file in one step > the upload is typed by the record it is filed as (tmf_plan is OTHER)
+      × the upload and the filing are said apart > when the upload succeeds and the filing is refused, says the document is in the Vault and is not filed, then files it without uploading again
+      × the upload and the filing are said apart > a file the Vault already held is filed against the document it holds, and is not said to have been added
+CAUGHT  R37 an unconfirmed filing after an upload does not say where the file is
+    1 failed | 97 passed (98)
+      × the upload and the filing are said apart > when the filing is not confirmed after the upload, says where the file is and that the filing is not known
+CAUGHT  R38 the package document is not shown
+    18 failed | 80 passed (98)
+      × a role that may not write the Vault > reads the trial master file and is offered no filing or removal
+      × the inspection package > downloads it for the study and says what it is, and its SHA-256 checked on receipt
+      × the inspection package > is also offered under the verdict, above the records, and its outcome is said where it was asked for
+      × the inspection package > says a package the server marked not determined as not determined, never as missing records
+      × the inspection package > does not save a file that does not match the SHA-256 the server stated
+      × the inspection package > a failure (the person’s role) is said with its reason, and nothing is saved
+      × the inspection package > a failure (not in this release) is said with its reason, and nothing is saved
+      × the inspection package > a failure (a server error) is said with its reason, and nothing is saved
+      × the inspection package > a failure (a download the server could not record) is said with its reason, and nothing is saved
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × which records are checked: the essential ones, or all > the download is of the scope on screen, and says which
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+      × the inspection package, shown as a document > states the verdict the verdict line states (complete), and no other
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+      × the inspection package, shown as a document > states the verdict the verdict line states (incomplete), and no other
+      × the inspection package, shown as a document > states no verdict, and no figure, over a read that checked nothing
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+      × the inspection package, shown as a document > a view-only role reads the document and may download it
+CAUGHT  R39 the package document is put behind a closed disclosure
+    2 failed | 96 passed (98)
+      × the three figures beside the verdict > says in one visible line that timeliness and quality control are not assessed, and why
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R40 the cover's label is read from the server's flag, not from the section's one verdict
+    2 failed | 96 passed (98)
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+      × the inspection package, shown as a document > states no verdict, and no figure, over a read that checked nothing
+CAUGHT  R41 the cover is marked with another verdict than the verdict line's
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+CAUGHT  R42 part 1 does not carry the verdict line's sentence
+    7 failed | 91 passed (98)
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+      × the inspection package, shown as a document > states the verdict the verdict line states (complete), and no other
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+      × the inspection package, shown as a document > states the verdict the verdict line states (incomplete), and no other
+      × the inspection package, shown as a document > states no verdict, and no figure, over a read that checked nothing
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+      × the package cover and its first part state the one verdict > the first part opens with the verdict line’s own sentence
+CAUGHT  R43 a not-determined trial master file is called not inspection-ready in part 1
+    2 failed | 96 passed (98)
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+      × the package cover and its first part state the one verdict > the first part opens with the verdict line’s own sentence
+CAUGHT  R44 the document is shown as current while the read after a write is in flight
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+CAUGHT  R45 the document does not say it is not the documents
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R46 an open record with a filing that does not count is listed as plain "Not filed"
+    2 failed | 96 passed (98)
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+      × the inspection package, shown as a document > states the verdict the verdict line states (undetermined), and no other
+CAUGHT  R47 the zone index drops its status
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R48 the download leaves the package's bar
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R49 another try is offered after a refused download
+    2 failed | 96 passed (98)
+      × the inspection package > a failure (the person’s role) is said with its reason, and nothing is saved
+      × the inspection package > a failure (not in this release) is said with its reason, and nothing is saved
+CAUGHT  R50 no other try is offered after a download that failed
+    2 failed | 96 passed (98)
+      × the inspection package > a failure (a server error) is said with its reason, and nothing is saved
+      × the inspection package > a failure (a download the server could not record) is said with its reason, and nothing is saved
+CAUGHT  R57 the download is no longer offered above the records
+    1 failed | 97 passed (98)
+      × the inspection package > is also offered under the verdict, above the records, and its outcome is said where it was asked for
+CAUGHT  R58 a download asked for under the verdict says its outcome in the document below
+    1 failed | 97 passed (98)
+      × the inspection package > is also offered under the verdict, above the records, and its outcome is said where it was asked for
+CAUGHT  R59 the download's outcome is said in both places at once
+    1 failed | 97 passed (98)
+      × the inspection package > is also offered under the verdict, above the records, and its outcome is said where it was asked for
+CAUGHT  R51 the cover does not state the scope
+    2 failed | 96 passed (98)
+      × which records are checked: the essential ones, or all > offers the two scopes in the heading row, essential first, and everything follows the one chosen
+      × the inspection package, shown as a document > is an open part of the section beneath the records: cover, figures and its four parts
+CAUGHT  R52 the question to AnA does not name the study
+    4 failed | 94 passed (98)
+      × asking AnA which gaps an inspector would raise > asks in the host’s conversation, naming the study on screen
+      × asking AnA which gaps an inspector would raise > is offered for the study on screen whatever its read came to, and to a view-only role
+      × the page that hosts the trial master file > the section asks AnA in the page’s conversation
+      × what AnA is asked and told > the question names the study by its title, or by its id when it has none
+CAUGHT  R53 the question is not offered when the study's read failed or is in flight
+    1 failed | 97 passed (98)
+      × asking AnA which gaps an inspector would raise > is offered for the study on screen whatever its read came to, and to a view-only role
+CAUGHT  R54 the question is not offered beside the verdict
+    2 failed | 96 passed (98)
+      × asking AnA which gaps an inspector would raise > asks in the host’s conversation, naming the study on screen
+      × the page that hosts the trial master file > the section asks AnA in the page’s conversation
+CAUGHT  R55 the page does not pass its conversation to the section
+    1 failed | 97 passed (98)
+      × the page that hosts the trial master file > the section asks AnA in the page’s conversation
+CAUGHT  R56 the question is rendered with no conversation to ask in
+    1 failed | 97 passed (98)
+      × asking AnA which gaps an inspector would raise > is not offered without a conversation to ask in, or before a study is on screen
+
+82 of 83 mutations caught. Not caught: ['R07 the answer of before a write stays on screen while the read after it is in flight']
+
+## R07 again, after the case was changed to look at every commit: three runs
+
+CAUGHT  R07 the answer of before a write stays on screen while the read after it is in flight
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+
+1 of 1 mutations caught.
+CAUGHT  R07 the answer of before a write stays on screen while the read after it is in flight
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+
+1 of 1 mutations caught.
+CAUGHT  R07 the answer of before a write stays on screen while the read after it is in flight
+    1 failed | 97 passed (98)
+      × the inspection package, shown as a document > is not shown as current while the trial master file is read again after a write
+
+1 of 1 mutations caught.
+
+## R07 once more, on the final test file (since the three runs: the observer reads the screen directly, so it cannot throw, and the describe that holds the case was split for ESLint's function-length limit)
+
+CAUGHT  R07 the answer of before a write stays on screen while the read after it is in flight
+    1 failed | 97 passed (98)
+      × the inspection package, after a write and for a view-only role > is not shown as current while the trial master file is read again after a write
+
+1 of 1 mutations caught.

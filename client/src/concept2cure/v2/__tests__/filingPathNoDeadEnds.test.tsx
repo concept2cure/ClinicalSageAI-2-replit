@@ -14,7 +14,7 @@
  *      surface (offered only where surfaceAvailable says it can be opened) is
  *      pinned with the verdict a release without it returns.
  *   2. Vault, with a project open: "Inspection readiness" opened `etmf`, also
- *      locked.
+ *      locked. The button is named "Trial master file" since 2026-11-10.
  *   3. Vault, with no project open: each project's Vault is listed (2026-11-06; it read "Open a project to see its vault") and
  *      nothing to click.
  *   4. Submission Center, Builder: with no Co-Author documents it said to
@@ -160,11 +160,12 @@ describe('No dead ends on the filing path (F16)', () => {
     });
   });
 
-  it('Vault, with a project open: no "Inspection readiness" door into the locked eTMF', async () => {
+  it('Vault, with a project open: no "Trial master file" door into the locked eTMF', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={vi.fn()} segment="biotech" />);
     expect(await screen.findByText(/No documents in this project's vault yet/)).toBeTruthy();
-    expect(screen.queryByText(/Inspection readiness/)).toBeNull();
+    // The door's name since 2026-11-10, and the one it had before.
+    expect(screen.queryByText(/Trial master file|Inspection readiness/)).toBeNull();
   });
 
   it('Vault, with no project open: lists each project\'s Vault, and a row opens that project and its Vault', async () => {

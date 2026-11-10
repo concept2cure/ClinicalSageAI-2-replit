@@ -1,0 +1,25 @@
+E3b green. The same two suites on the final source (the filing's document added to the list).
+
+## server/services/etmf/__tests__/tmf-study-binding.test.ts
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > names the document of each Vault reference: id, title, version and whether it is the current version
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > reads the documents once for the whole list, in the organization and the study's project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > gives null, never a guessed title, for a reference that names no live document of the project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > asks the Vault nothing when no filing holds a Vault reference
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > takes the file name when the document has no title, and null when it has neither
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > throws a failed document read: an error is not "no document"
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the list says what each filing's document is (E3b) > names no document for a study the caller cannot open: nothing is read
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+
+## tests/db/etmf-study-binding.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the list says what each filing's document is (E3b) > names each Vault document of the study's project, and gives null for any other reference
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the list says what each filing's document is (E3b) > follows the document: a version added later makes the filed one no longer current
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+
+## The route suite on PGlite, which gained one case (GET artifacts says what each filing's document is)
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > POST file → 201 against the study (org and actor from the session); 400 for an unknown artifact code
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > GET artifacts says what each filing's document is, and null where the reference is not a Vault document of the project
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF removal keeps the record > DELETE needs a reason; with one → 204, the filing is listed no more and stays on record; unknown id → 404
+ Test Files  1 passed (1)
+      Tests  12 passed (12)

@@ -1,0 +1,27 @@
+// S1a-agreements: the agreement routes as a client's own administrator, on 5220 (runtime role, RLS, launch gate on).
+// Signs in through the real form (password read from the scratch file by common.cjs; the code from the server log).
+// Prints statuses and bodies only; no token, password or code is printed.
+const c = require('/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/cadmin/walk2/common.cjs');
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const { page } = await c.newPage(browser, { who: 'client-admin' });
+  await c.signIn(page, 'jm.smith@concept2cure.pro');
+  const me = await c.api(page, 'GET', '/api/users/me');
+  const role = me.body?.role ?? me.body?.user?.role;
+  console.log('signed in as the organisation administrator of the seeded organisation; role =', role);
+  const calls = [
+    ['POST', '/api/licensing/agreements', { agreementKey: 'eula', version: '2026.11-walk', title: 'End-User License Agreement', body: 'Synthetic walk text.', reason: 'Walk check: a client administrator must be refused' }],
+    ['POST', '/api/licensing/agreements', { agreementKey: 'eula', version: '2026.11-walk', title: 'End-User License Agreement', body: 'Synthetic walk text.' }],
+    ['GET', '/api/licensing/entitlements'],
+    ['GET', '/api/licensing/agreements/active'],
+    ['GET', '/api/licensing/agreements/outstanding'],
+    ['GET', '/api/licensing/acceptances'],
+    ['POST', '/api/licensing/agreements/00000000-0000-4000-8000-000000000000/accept', {}],
+  ];
+  for (const [m, u, b] of calls) {
+    const r = await c.api(page, m, u, b);
+    console.log(`${m} ${u}${b && 'reason' in b ? ' (with a reason)' : b && m === 'POST' && u.endsWith('/agreements') ? ' (no reason)' : ''} -> ${r.status} ${JSON.stringify(r.body)}`);
+  }
+  await browser.close();
+})().catch((e) => { console.error('walk failed:', e.message.split('\n')[0]); process.exit(1); });

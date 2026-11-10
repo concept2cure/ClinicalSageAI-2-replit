@@ -16,6 +16,7 @@ import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { authService } from '@/services/portal/authService';
 import { SignupVerifyStep } from './SignupVerifyStep';
+import { SignupInput, SignupSelect } from './SignupFields';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -166,6 +167,14 @@ export async function openWorkspaceAfterSignup(
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The revision of the agreement text on the last step (the Terms of Service, the Privacy Policy and the regulatory
+ * acknowledgement). It is sent with the acceptances and kept on the sign-up's audit record, so an acceptance names
+ * the text that was read. Change a word of that text and this changes with it: `signupAgreements.test.tsx` pins the
+ * text's digest to the revision.
+ */
+export const SIGNUP_AGREEMENTS_REVISION = '2026-11-10';
 
 export const ZenSignup: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -326,6 +335,14 @@ export const ZenSignup: React.FC = () => {
             : {}),
           primaryUseCases: formData.useCase ? [formData.useCase] : [],
           defaultMarkets,
+          jobTitle: formData.jobTitle.trim() || undefined,
+          // What was accepted on this step, and which text it was (W1-02): the server records it on the sign-up.
+          agreements: {
+            revision: SIGNUP_AGREEMENTS_REVISION,
+            termsOfService: formData.acceptedTerms,
+            privacyPolicy: formData.acceptedPrivacy,
+            regulatoryAcknowledgement: formData.acceptedCompliance,
+          },
         }),
       });
 
@@ -450,85 +467,16 @@ export const ZenSignup: React.FC = () => {
   );
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Form input component
+  // What each field is given. The fields themselves are SignupFields.tsx: declared
+  // in here they were remounted on every key press, and typing lost focus.
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const FormInput: React.FC<{
-    label: string;
-    field: keyof FormData;
-    type?: string;
-    placeholder?: string;
-  }> = ({ label, field, type = 'text', placeholder }) => (
-    <div className="space-y-1">
-      <label htmlFor={field} className="block text-sm font-medium text-stone-700">
-        {label}
-      </label>
-      <input
-        id={field}
-        type={type}
-        value={formData[field] as string}
-        onChange={e => updateField(field, e.target.value)}
-        placeholder={placeholder}
-        className={`
-          w-full px-4 py-3 text-base
-          border rounded-xl
-          transition-all duration-150
-          outline-none focus:ring-0
-          ${
-            errors[field]
-              ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-stone-200 bg-white focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
-          }
-        `}
-      />
-      {errors[field] && <p className="text-sm text-red-600">{errors[field]}</p>}
-    </div>
-  );
-
-  const FormSelect: React.FC<{
-    label: string;
-    field: keyof FormData;
-    options: { value: string; label: string }[];
-    placeholder?: string;
-  }> = ({ label, field, options, placeholder }) => (
-    <div className="space-y-1">
-      <label htmlFor={field} className="block text-sm font-medium text-stone-700">
-        {label}
-      </label>
-      <select
-        id={field}
-        value={formData[field] as string}
-        onChange={e => updateField(field, e.target.value)}
-        className={`
-          w-full px-4 py-3 text-base
-          border rounded-xl
-          transition-all duration-150
-          outline-none focus:ring-0
-          appearance-none
-          bg-white
-          ${
-            errors[field]
-              ? 'border-red-300 bg-red-50 focus:border-red-500'
-              : 'border-stone-200 focus:border-stone-400 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
-          }
-        `}
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-          backgroundPosition: 'right 0.75rem center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '1.5em 1.5em',
-        }}
-      >
-        <option value="">{placeholder || 'Select...'}</option>
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      {errors[field] && <p className="text-sm text-red-600">{errors[field]}</p>}
-    </div>
-  );
+  const field = (name: keyof FormData) => ({
+    id: name,
+    value: formData[name] as string,
+    error: errors[name] || undefined,
+    onChange: (value: string) => updateField(name, value),
+  });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Step renders
@@ -544,23 +492,23 @@ export const ZenSignup: React.FC = () => {
       className="space-y-5"
     >
       <div className="grid grid-cols-2 gap-4">
-        <FormInput label={t('signup.fields.firstName')} field="firstName" placeholder="Jane" />
-        <FormInput label={t('signup.fields.lastName')} field="lastName" placeholder="Smith" />
+        <SignupInput label={t('signup.fields.firstName')} {...field('firstName')} autoComplete="given-name" placeholder="Jane" />
+        <SignupInput label={t('signup.fields.lastName')} {...field('lastName')} autoComplete="family-name" placeholder="Smith" />
       </div>
-      <FormInput label={t('signup.fields.email')} field="email" type="email" placeholder="jane@example.com" />
-      <FormInput
+      <SignupInput label={t('signup.fields.email')} {...field('email')} autoComplete="email" type="email" placeholder="jane@example.com" />
+      <SignupInput
         label={t('signup.fields.password')}
-        field="password"
+        {...field('password')} autoComplete="new-password"
         type="password"
         placeholder={t('signup.placeholder.createPassword')}
       />
-      <FormInput
+      <SignupInput
         label={t('signup.fields.confirmPassword')}
-        field="confirmPassword"
+        {...field('confirmPassword')} autoComplete="new-password"
         type="password"
         placeholder={t('signup.placeholder.confirmPassword')}
       />
-      <FormInput label={t('signup.fields.jobTitle')} field="jobTitle" placeholder="Regulatory Affairs Manager" />
+      <SignupInput label={t('signup.fields.jobTitle')} {...field('jobTitle')} autoComplete="organization-title" placeholder="Regulatory Affairs Manager" />
 
       <button
         onClick={handleNext}
@@ -597,17 +545,17 @@ export const ZenSignup: React.FC = () => {
         {t('signup.back')}
       </button>
 
-      <FormInput label={t('signup.fields.organization')} field="organization" placeholder="Acme Pharma Inc." />
-      <FormSelect
+      <SignupInput label={t('signup.fields.organization')} {...field('organization')} autoComplete="organization" placeholder="Acme Pharma Inc." />
+      <SignupSelect
         label={t('signup.fields.organizationType')}
-        field="organizationType"
+        {...field('organizationType')}
         options={ORGANIZATION_TYPES}
         placeholder={t('signup.placeholder.selectOrgType')}
       />
-      <FormInput label={t('signup.fields.country')} field="country" placeholder="United States" />
-      <FormSelect
+      <SignupInput label={t('signup.fields.country')} {...field('country')} autoComplete="country-name" placeholder="United States" />
+      <SignupSelect
         label={t('signup.fields.useCase')}
-        field="useCase"
+        {...field('useCase')}
         options={USE_CASES}
         placeholder={t('signup.placeholder.selectUseCase')}
       />
@@ -734,7 +682,6 @@ export const ZenSignup: React.FC = () => {
   // Track whether user has scrolled to bottom of each legal document
   const [scrolledTerms, setScrolledTerms] = React.useState(false);
   const [scrolledPrivacy, setScrolledPrivacy] = React.useState(false);
-  const [aiLearningOptIn, setAiLearningOptIn] = React.useState(false);
 
   const handleLegalScroll = (e: React.UIEvent<HTMLDivElement>, docType: 'terms' | 'privacy') => {
     const el = e.currentTarget;
@@ -929,27 +876,6 @@ export const ZenSignup: React.FC = () => {
               I accept the Privacy Policy and consent to data processing
             </span>
           </label>
-          {/* AI Learning opt-in toggle */}
-          <div className="flex items-center justify-between p-2 bg-stone-50 rounded-lg">
-            <div>
-              <p className="text-xs font-medium text-stone-700">AI Model Improvement</p>
-              <p className="text-[10px] text-stone-500">
-                Allow anonymized data to improve AI (you can change this anytime in Settings)
-              </p>
-            </div>
-            <button
-              onClick={() => setAiLearningOptIn(!aiLearningOptIn)}
-              className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
-                aiLearningOptIn ? 'bg-stone-800' : 'bg-stone-300'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                  aiLearningOptIn ? 'translate-x-5' : ''
-                }`}
-              />
-            </button>
-          </div>
         </div>
       </div>
 

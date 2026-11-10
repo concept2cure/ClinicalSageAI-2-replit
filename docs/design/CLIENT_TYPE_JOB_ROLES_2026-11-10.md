@@ -57,8 +57,18 @@ One new data module beside the client-type presets, `shared/regulatory/client-ty
 - **Pure helpers.**
   - `standardJobRolesFor({ industryMode, clientType })` gives the list.
   - `suggestedAccessLevel(roleKey)` gives one of `ASSIGNABLE_ORG_ROLES`.
-  - `jobRoleForPlanTaskRole(taskRole)` maps a plan task role to its catalog role.
+  - `jobRoleForPlanTaskRole(taskRole, organisation?)` maps a plan task role to its catalog role. Given the
+    organisation, it answers the role that holds the task there.
   - `matchStandardJobRole(name)` finds a catalog role by an organisation's role name, ignoring case.
+
+**As landed in slice 1** (2026-11-10, `docs/evidence/F1/2026-11-10-client-admin/job-roles/`), the module also carries:
+- `offeredTo` on each role: the kinds of organisation it is offered to. The lists per industry and client type are
+  derived from it, so a role and its lists cannot disagree.
+- `PLAN_TASK_ROLE_HOLDERS_ELSEWHERE`: who holds a plan task in an organisation that does not staff the usual role.
+  An academic sponsor-investigator holds the CMC, nonclinical, safety and writing tasks of its own IND plan.
+- `standardJobRolesByGroup` and `standardJobRole`, for the screen's list by function and for one role by key.
+
+There are 53 roles in the nine groups. The evidence README lists them and what each kind of organisation is offered.
 
 Suggested access levels follow least privilege:
 - a role that approves or releases records takes `approver`;
@@ -85,8 +95,13 @@ exists by name is skipped and said so. Nothing is created without the administra
 - The member's detail lists their job roles. An administrator adds or removes one through the existing
   `POST` and `DELETE …/job-roles/:id/members`, with a reason. When the role carries training assignments, the existing
   writer raises the member's training tasks; the confirmation says so.
-- When the administrator invites a person or changes an access level, the dialog shows, for a chosen job role, "A
-  {role} usually takes {level}: {reason}". It is a suggestion. The select stays the administrator's.
+- When the administrator invites a person or changes an access level, the dialog shows, for a chosen job role,
+  "Usually {level} access: {reason}" under the role's name (the form the wording review chose in slice 1; the
+  catalog's reason is a clause that reads after either form). It is a suggestion. The select stays the
+  administrator's. Where a deployment changes who may sign, the words about signing come from the level's scopes
+  (`roleScopesOf`), not from the catalog.
+- When the administrator adopts standard roles that suggest Approver, the section prompts them to designate QMS
+  approvers. Until an organisation designates them, every Approver approves QMS documents.
 
 ### 4. One vocabulary with the program plan
 
@@ -119,5 +134,5 @@ propose a task's owner from the people who hold the role.
 | 2 | Administration reaches the job roles: the section, adopting the standard set, the member's job roles, the suggestion | `surfaces/AdminAccess.tsx`, `AdminMemberActions.tsx`, a split-out `AdminJobRoles.tsx` in the same folder; `server/routes/mdx-admin.ts` (the `groups` field); the launch-scope claim for the job-role routes on the Administration screen | Red first. Used in the running app at 1440 and 390 as an administrator and as a member. Each write found in the audit ledger |
 | 3 | The member's own job roles in Account | `v2/AccountPanel.tsx` | Used in the running app |
 
-Slices 2 and 3 wait until the client-administration walk that is using the running app has finished, so the screens do
-not change under it.
+Slices 2 and 3 waited until the client-administration walk that used the running app had finished (it did, on
+2026-11-10). Slice 1 landed that day. Its evidence README lists what the reviews left for slice 2.

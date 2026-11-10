@@ -52,7 +52,6 @@
 .c2c-v2 .hf-el-dot svg{ width:12px; height:12px; }
 .c2c-v2 .hf-el-l{ font-size:13px; color:var(--text-100); }
 
-
 /* Design controls (DHF) — traceability matrix */
 .c2c-v2 .dc{ padding:26px 30px 80px; }
 .c2c-v2 .dc-matrix{ border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--bg-000); }
@@ -99,13 +98,11 @@
 .c2c-v2 .dc-820-ref{ font-size:11px; color:var(--text-400); }
 .c2c-v2 .dc-820-fix{ font-size:11.5px; color:var(--accent-200); background:var(--accent-000); border:0; border-radius:var(--radius-md); padding:3px 10px; cursor:pointer; }
 
-
 /* Labeling — translation coverage bar */
 .c2c-v2 .lbl-cov-bar{ height:8px; border-radius:5px; background:var(--bg-200); overflow:hidden; }
 .c2c-v2 .lbl-cov-fill{ height:100%; border-radius:5px; background:var(--success); transition:background var(--dur); }
 .c2c-v2 .ct-row[data-fresh]{ animation:lblFresh 1.4s ease-out; }
 @keyframes lblFresh{ 0%{ background:var(--accent-000); } 100%{ background:transparent; } }
-
 
 /* Risk management — control list (ISO 14971) */
 .c2c-v2 .risk-ctrls{ display:flex; flex-direction:column; gap:6px; }
@@ -113,7 +110,6 @@
 .c2c-v2 .risk-ctrl-t{ display:block; font-size:12.5px; color:var(--text-100); line-height:1.4; }
 .c2c-v2 .risk-ctrl-m{ display:flex; align-items:center; gap:8px; margin-top:5px; }
 .c2c-v2 .risk-ctrl-m .mono{ font-size:10.5px; color:var(--text-400); }
-
 
 /* Apps catalog — license band + admin toggle (module-subscriptions.ts) */
 .c2c-v2 .lic-band{ display:flex; align-items:center; gap:24px; background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-xl,12px); padding:14px 20px; margin:6px 0 20px; }
@@ -136,7 +132,6 @@
 .c2c-v2 .lic-toggle[data-on]{ background:var(--success); }
 .c2c-v2 .lic-toggle-k{ position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform var(--dur); box-shadow:0 1px 2px rgba(0,0,0,.2); }
 .c2c-v2 .lic-toggle[data-on] .lic-toggle-k{ transform:translateX(16px); }
-
 
 /* Review — multi-step approval ladder (approval-workflow.ts) */
 .c2c-v2 .rv-wf{ border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:0 0 14px; background:var(--bg-000); }
@@ -239,7 +234,6 @@
 .c2c-v2 .tl-edit-go{ width:30px; height:30px; border-radius:7px; border:none; background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .c2c-v2 .tl-edit-go:disabled{ opacity:0.5; cursor:default; }
 .c2c-v2 .tl-edit-go svg{ width:15px; height:15px; }
-
 
 /* Precedent — answer-first empathy lead */
 .c2c-v2 .pe-answer{ background:var(--accent-000); border:1px solid var(--accent-muted); border-radius:14px; padding:20px 22px; margin-bottom:16px; }
@@ -855,73 +849,15 @@
 .c2c-v2 .rv-signal{ font-size:12px; font-style:italic; color:var(--text-300); line-height:1.5; margin-top:5px; padding-left:9px; border-left:2px solid var(--border); }
 .c2c-v2 .rv-mit{ font-size:12px; color:var(--text-200); line-height:1.5; margin-top:7px; }
 
-/* ════════ eTMF Inspection Readiness — AnA-generated package ════════ */
-.c2c-v2 .etmf-scope{ display:inline-flex; border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
-.c2c-v2 .etmf-scope button{ font-size:11.5px; padding:6px 11px; background:var(--bg-000); color:var(--text-300); border:none; cursor:pointer; }
-.c2c-v2 .etmf-scope button.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
-.c2c-v2 .etmf-body{ display:grid; grid-template-columns:352px 1fr; gap:18px; margin-top:18px; align-items:start; }
-.c2c-v2 .etmf-left{ display:flex; flex-direction:column; gap:14px; }
-.c2c-v2 .etmf-right{ min-width:0; }
-.c2c-v2 .etmf-trial-input{ padding:7px 10px; border-radius:var(--radius-lg); border:1px solid var(--border-control); background:var(--bg-000); color:inherit; font:inherit; min-width:200px; }
-.c2c-v2 .etmf-trial-input:focus{ border-color:var(--accent-200); outline:none; box-shadow:0 0 0 3px var(--accent-000); }
-.c2c-v2 .etmf-panel{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:13px 14px; }
-.c2c-v2 .etmf-panel-h{ font-size:12px; font-weight:600; color:var(--text-100); display:flex; align-items:center; gap:7px; margin-bottom:10px; }
-.c2c-v2 .etmf-panel-h svg{ width:14px; height:14px; opacity:.8; }
-.c2c-v2 .etmf-panel-h .x{ font-weight:400; color:var(--text-400); }
-.c2c-v2 .etmf-clean{ font-size:12.5px; color:var(--success); display:flex; align-items:center; gap:7px; line-height:1.5; }
-.c2c-v2 .etmf-clean svg{ width:15px; height:15px; }
-.c2c-v2 .etmf-missing{ display:flex; flex-direction:column; gap:8px; }
-.c2c-v2 .etmf-miss{ display:flex; align-items:center; gap:10px; padding:9px 10px; background:var(--bg-000); border:1px solid var(--border); border-radius:9px; }
-.c2c-v2 .etmf-miss-main{ flex:1; min-width:0; }
 .c2c-v2 .vd-filings{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
 .c2c-v2 .vd-filing{ display:inline-flex; align-items:baseline; gap:2px; padding:5px 11px; border-radius:999px;
   background:var(--accent-000); border:1px solid color-mix(in srgb,var(--accent-200) 22%,transparent);
   font-size:11.5px; color:var(--accent-200); }
 .c2c-v2 .vd-filing b{ font-weight:600; }
 .c2c-v2 .vd-filing-ref{ color:var(--text-400); font-family:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace; font-size:10.5px; }
-.c2c-v2 .etmf-miss-name{ font-size:12.5px; font-weight:600; color:var(--text-100); }
-.c2c-v2 .etmf-miss-zone{ font-size:11px; color:var(--text-400); margin-top:2px; }
-.c2c-v2 .etmf-miss-zone .mono{ font-family:ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace; }
-.c2c-v2 .etmf-zones{ display:flex; flex-direction:column; gap:2px; }
-.c2c-v2 .etmf-zone{ display:flex; align-items:center; gap:9px; padding:6px 8px; border-radius:7px; font-size:12px; }
-.c2c-v2 .etmf-zone.ok{ opacity:.62; }
-.c2c-v2 .etmf-zone-n{ width:20px; height:20px; flex:none; display:grid; place-items:center; font-family:ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size:10.5px; border-radius:5px; background:var(--bg-200); color:var(--text-300); }
-.c2c-v2 .etmf-zone-name{ flex:1; color:var(--text-200); }
-.c2c-v2 .etmf-zone-cnt{ font-family:ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size:11px; color:var(--text-400); }
-.c2c-v2 .etmf-zone-dot svg{ width:14px; height:14px; }
-.c2c-v2 .etmf-zone:not(.ok) .etmf-zone-dot svg{ color:var(--warning); }
-.c2c-v2 .etmf-zone.ok .etmf-zone-dot svg{ color:var(--success); }
 
-.c2c-v2 .etmf-sec{ font-size:12px; font-weight:600; color:var(--text-100); margin-bottom:9px; }
-.c2c-v2 .etmf-sec-x{ font-weight:400; color:var(--text-400); }
-.c2c-v2 .etmf-doc{ margin:0; }
-.c2c-v2 .etmf-doc-body{ padding:0; }
-.c2c-v2 .etmf-cover{ padding:26px 30px 20px; border-bottom:1px solid var(--border); background:var(--bg-050); }
-.c2c-v2 .etmf-cover-badge{ display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.06em; padding:4px 10px; border-radius:999px; background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); margin-bottom:12px; }
-.c2c-v2 .etmf-cover-badge[data-ready]{ background:color-mix(in srgb,var(--success) 15%,transparent); color:var(--success); }
-.c2c-v2 .etmf-cover h2{ font-size:19px; font-weight:600; color:var(--text-100); margin:0 0 12px; line-height:1.25; max-width:34ch; }
-.c2c-v2 .etmf-cover-meta{ display:flex; flex-wrap:wrap; gap:5px 16px; font-size:11.5px; color:var(--text-400); }
-.c2c-v2 .etmf-doc-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:18px 30px; }
-.c2c-v2 .etmf-kpi{ text-align:center; padding:12px; background:var(--bg-050); border:1px solid var(--border); border-radius:10px; }
-.c2c-v2 .etmf-kpi .v{ font-size:22px; font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
-.c2c-v2 .etmf-kpi.warn .v{ color:var(--warning); }
-.c2c-v2 .etmf-kpi .k{ font-size:11px; color:var(--text-400); margin-top:3px; }
-.c2c-v2 .etmf-doc-body h3{ font-size:13px; font-weight:600; color:var(--text-100); margin:18px 30px 8px; padding-top:14px; border-top:1px solid var(--border); }
-.c2c-v2 .etmf-doc-body > p, .c2c-v2 .etmf-doc-body .etmf-tbl, .c2c-v2 .etmf-doc-body .etmf-none{ margin-left:30px; margin-right:30px; }
-.c2c-v2 .etmf-doc-body p{ font-size:12.5px; line-height:1.6; color:var(--text-200); }
-.c2c-v2 .etmf-tbl{ width:calc(100% - 60px); border-collapse:collapse; font-size:11.5px; margin-top:6px; margin-bottom:6px; }
-.c2c-v2 .etmf-tbl th{ text-align:left; font-weight:600; color:var(--text-400); padding:5px 8px; border-bottom:1px solid var(--border); font-size:var(--fs-caption); }
-.c2c-v2 .etmf-tbl td{ padding:6px 8px; border-bottom:1px solid var(--border); color:var(--text-200); }
-.c2c-v2 .etmf-tbl .mono{ font-family:ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size:11px; color:var(--text-400); }
-.c2c-v2 .etmf-tag{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:999px; }
-.c2c-v2 .etmf-tag.ok{ background:color-mix(in srgb,var(--success) 13%,transparent); color:var(--success); }
-.c2c-v2 .etmf-tag.warn{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
-.c2c-v2 .etmf-none{ font-size:12.5px; color:var(--success); }
-.c2c-v2 .etmf-readme{ font-size:12px !important; color:var(--text-300) !important; background:var(--bg-050); border:1px solid var(--border); border-radius:9px; padding:11px 13px !important; margin:8px 30px 6px !important; line-height:1.55 !important; }
-.c2c-v2 .etmf-readme.sample{ color:var(--text-400) !important; font-style:italic; }
-.c2c-v2 .etmf-doc-body{ padding-bottom:20px; }
 .c2c-v2 .cm-doc-bar-r{ display:flex; align-items:center; gap:10px; margin-left:auto; }
-/* ════════ Surface header + document frame — shared by eTMF and IND lifecycle ════════
+/* ════════ Surface header + document frame — the IND lifecycle's (the eTMF screen that shared it was retired 2026-11-10) ════════
    .surface-head is the title block every long-form surface opens with:
    kicker (where you are), h1 (what this is), sub (scope), actions on the right. */
 /* eTMF, the IND readiness report and the Vault take the one page frame (D0.md §8.6, 2026-11-09); their 1280px
@@ -934,23 +870,8 @@
 /* document frame: the file name in the bar, the rendered body below it */
 .c2c-v2 .cm-doc-name{ font-family:var(--font-mono,monospace); font-size:12px; font-weight:500; color:var(--text-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .c2c-v2 .cm-doc-body{ padding:24px 28px; background:var(--bg-000); color:var(--text-100); }
-.c2c-v2 .etmf-dl{ font-size:11px; color:var(--text-400); display:inline-flex; align-items:center; gap:4px; }
-.c2c-v2 .etmf-dl.ok{ color:var(--success); }
-.c2c-v2 .etmf-dl svg{ width:12px; height:12px; }
 /* `.etmf-toast` is deleted: its four surfaces render the canonical <C2CToast>, which
    carries an error tone and a live region this rule's pill never could. */
-@media (max-width:1080px){ .c2c-v2 .etmf-body{ grid-template-columns:1fr; } }
-/* AnA's three-lens read — completeness · timeliness · quality */
-.c2c-v2 .etmf-lenses{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
-.c2c-v2 .etmf-lens{ padding:12px 14px; border:1px solid var(--border); border-radius:11px; background:var(--bg-050); border-left:3px solid var(--warning); }
-.c2c-v2 .etmf-lens.ok{ border-left-color:var(--success); }
-.c2c-v2 .etmf-lens-k{ font-size:11.5px; font-weight:600; color:var(--text-200); display:flex; align-items:center; gap:6px; }
-.c2c-v2 .etmf-lens-k svg{ width:13px; height:13px; }
-.c2c-v2 .etmf-lens.ok .etmf-lens-k svg{ color:var(--success); }
-.c2c-v2 .etmf-lens:not(.ok) .etmf-lens-k svg{ color:var(--warning); }
-.c2c-v2 .etmf-lens-v{ font-size:16px; font-weight:600; color:var(--text-100); margin-top:6px; }
-.c2c-v2 .etmf-lens-s{ font-size:11px; color:var(--text-400); margin-top:2px; line-height:1.4; }
-@media (max-width:1080px){ .c2c-v2 .etmf-lenses{ grid-template-columns:1fr; } }
 
 /* ════════ Vault — Explorer details view + external SourceBar ════════ */
 .c2c-v2 .vd-breadcrumb{ display:flex; align-items:center; gap:6px; padding:8px 10px; font-size:12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
@@ -1032,7 +953,6 @@
 .c2c-v2 .vd-sub-x{ font-size:12px; color:var(--text-400); }
 
 /* Reusable File Explorer (Vault + eTMF) — nav-tree · list · detail */
-.c2c-v2 .etmf-explorer{ margin:14px 0 4px; }
 .c2c-v2 .fe{ display:grid; grid-template-columns:248px 1fr 264px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--bg-000); }
 .c2c-v2 .fe-tree{ border-right:1px solid var(--border); padding:8px; overflow:auto; max-height:520px; }
 .c2c-v2 .fe-tree-search{ display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid var(--border-control); border-radius:7px; margin-bottom:8px; }

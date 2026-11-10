@@ -2,8 +2,10 @@
  * The data room's grade (S2, 2026-11-06): a deterministic function of recorded facts,
  * each criterion shown with the fact it read (RULE 2: the engine computes, never a model).
  */
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { gradeCapture, gradeFactsFingerprint, type DataRoomGradeFacts } from '../data-room-grade';
+import { stableStringify } from '../../../../shared/canonical-json';
+import { DATA_ROOM_GRADE_ENGINE, gradeCapture, gradeFactsFingerprint, type DataRoomGradeFacts } from '../data-room-grade';
 
 const SHA = 'a'.repeat(64);
 const facts = (over: Partial<DataRoomGradeFacts> = {}): DataRoomGradeFacts => ({
@@ -65,5 +67,18 @@ describe('gradeCapture', () => {
   it('is deterministic: the same facts give the same grade and fingerprint; a changed fact changes the fingerprint', () => {
     expect(gradeCapture(facts())).toEqual(gradeCapture(facts()));
     expect(gradeFactsFingerprint(facts())).not.toBe(gradeFactsFingerprint(facts({ catalogState: 'suggested' })));
+  });
+
+  it('fingerprints the facts with the one canonical serializer, whatever order a profiled table\'s keys arrive in', () => {
+    // The same table, its keys built in two orders. The earlier serializer sorted the facts' own keys only, so this
+    // held just because one function (profiledTables) builds every table in one order.
+    const columns = [{ name: 'USUBJID', type: 'text' }];
+    const cdisc = { standard: 'SDTM' as const, domain: 'DM' };
+    const a = facts({ datasetTables: [{ name: 'dm', columns, cdisc }] as DataRoomGradeFacts['datasetTables'] });
+    const b = facts({ datasetTables: [{ cdisc: { domain: 'DM', standard: 'SDTM' }, columns: [{ type: 'text', name: 'USUBJID' }], name: 'dm' }] as DataRoomGradeFacts['datasetTables'] });
+    expect(gradeFactsFingerprint(b)).toBe(gradeFactsFingerprint(a));
+    // And it is shared/canonical-json.ts's digest, not a second answer to what these facts hash to.
+    expect(gradeFactsFingerprint(a)).toBe(
+      createHash('sha256').update(stableStringify([DATA_ROOM_GRADE_ENGINE, a]), 'utf8').digest('hex'));
   });
 });
