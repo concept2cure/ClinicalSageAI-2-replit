@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": []
+    }
+  }
+}

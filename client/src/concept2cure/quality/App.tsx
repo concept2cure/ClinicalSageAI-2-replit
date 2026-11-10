@@ -30,7 +30,7 @@ import { SopRegister, STATUS_FILTERS, type StatusFilter } from './SopRegister';
 import { ChangeControl } from './ChangeControl';
 import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
 import type { QmsRecordTab } from './qmsRecordData';
-import type { RecordRegisterContext } from './qmsRegisterKit';
+import { inSentence, type RecordRegisterContext } from './qmsRegisterKit';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -84,10 +84,6 @@ export const PRE_INSPECTION_PROMPT =
   'Run a QMS pre-inspection check — surface every controlled document overdue for periodic ' +
   'review, every training gap, and anything not yet effective, ranked by inspection risk.';
 
-/** A tab's name inside a sentence: lower case, keeping acronyms (SOP, CAPA). */
-function inSentence(label: string): string {
-  return label.split(' ').map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
-}
 
 /**
  * The change-control procedure's explanation, unchanged from the "Explain the procedure" button in the guidance box
@@ -420,6 +416,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
               changes={changes}
               loading={changeReg.loading}
               error={changeReg.error}
+              failure={changeReg.failure}
               onRetry={changeReg.refresh}
             />
           )}

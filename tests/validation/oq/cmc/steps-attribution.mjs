@@ -616,7 +616,8 @@ await step(
     const act = await api('POST', `/api/cmc/stability-studies/${signed.id}/close-out`, {
       reason: 'The 24-month long-term data support a 24-month shelf life at the labelled condition.',
       meaning: 'approval',
-      reauth: { password },
+      /* v0.12: a fresh authenticator code with the password, as OQ-CMC-33, -35 and -40 send since v0.11. */
+      reauth: await runReauth(),
     });
     expect(act.status === 200, `the close-out expected 200, got ${act.status}`, act.json);
 

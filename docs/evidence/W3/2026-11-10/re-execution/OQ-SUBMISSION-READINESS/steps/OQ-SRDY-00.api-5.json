@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/submissions/sequences/6/leaves",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sectionCode": "m5.3.5",
+      "title": "Protocol",
+      "documentTable": "vault_documents",
+      "documentUuid": "27d63370-2b0a-4882-bd7b-9a9eab223260",
+      "lifecycleOp": "new",
+      "reason": "Placed by the validation run for this sequence"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 6,
+      "sequenceId": 6,
+      "sectionCode": "m5.3.5",
+      "title": "Protocol",
+      "granularity": null,
+      "lifecycleOp": "new",
+      "documentTable": "vault_documents",
+      "documentId": null,
+      "documentUuid": "27d63370-2b0a-4882-bd7b-9a9eab223260",
+      "documentType": null,
+      "studyId": null,
+      "stfFileTag": null,
+      "leafGuid": null,
+      "parentLeafId": null,
+      "checksum": null,
+      "documentContentSha256": "492a767871b4cb7b47e6f81098d37ddae9cdfc3c8eca88468c79c26d50e4b528",
+      "documentPinnedAt": "2026-11-10T02:50:28.420Z",
+      "organizationId": 2,
+      "createdBy": 1,
+      "createdAt": "2026-11-10T02:50:28.419Z",
+      "updatedAt": "2026-11-10T02:50:28.419Z",
+      "deletedAt": null,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    }
+  }
+}

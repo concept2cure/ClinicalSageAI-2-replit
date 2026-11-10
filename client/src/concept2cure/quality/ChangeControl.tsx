@@ -53,7 +53,7 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
@@ -88,6 +88,8 @@ export interface ChangeControlProps {
   loading: boolean;
   /** The register read's error, when it failed. A failed read is not an empty log. */
   error?: string | null;
+  /** The log's failed read: a refusal is said as itself, with no retry (C4). */
+  failure?: FailedRead;
   /** Re-run the register read. */
   onRetry?: () => void;
   onNavigate?: (target: string) => void;
@@ -129,6 +131,7 @@ function ChangeControlSession({
   changes,
   loading,
   error,
+  failure,
   onRetry,
   onNavigate,
   onEditorOpenChange,
@@ -230,7 +233,7 @@ function ChangeControlSession({
           {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
               (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
           {!(summary && summary.total === 0) && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
-            {summary === null ? 'Change-log totals appear once the change register loads.' : <>
+            {summary === null ? (sum.error ? 'The change-log totals could not be read.' : 'Change-log totals appear once the change register loads.') : <>
               {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
               {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
               {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
@@ -254,6 +257,8 @@ function ChangeControlSession({
             title="The change log could not be read"
             message={error}
             retry={onRetry}
+            read={failure}
+            readWhat="the change log"
             testId="change-log-failed"
           />
         )}
@@ -407,11 +412,10 @@ function ChangeControlSession({
           <span className="sec-sub">Created as controlled drafts in the SOP register</span>
         </div>
         <div className="qcc-forms">
-          {tpl.templates == null && (
-            <div className="qms-empty" role="status">
-              {tpl.error ? 'The Quality system library could not be read.' : 'Loading the Quality system library…'}
-            </div>
-          )}
+            {tpl.templates == null && (tpl.error
+              ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
+                  retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
+              : <EmptyState title="Loading the Quality system library…" busy />)}
           {/* Each opens "New controlled document" with its template (D7-B: a quiet
               button per form, not a card per document type). */}
           {changeForms.map((f) => (

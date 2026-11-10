@@ -247,8 +247,16 @@ await step(
        which: a gate that opened here would be the defect D2 2026-10-05 fixed. */
     expect(gate.status === 409, `expected 409 with sections unapproved, got ${gate.status}`, gate.json);
     const detail = String(errDetail(gate) || errCode(gate) || JSON.stringify(gate.json));
-    expect(/approv/i.test(detail), 'the refusal does not name the unapproved sections', detail);
-    return `409: ${detail.slice(0, 200)}`;
+    /* v0.12: the gate's sentence names one blocker, the first in its own precedence (final-export-gate.ts, since
+       2026-09-05), and `data` carries every blocker's count. Until v0.11 the step looked for "approv" in the
+       sentence, which names missing approvals only when nothing ahead of them is open. The step now reads the
+       unapproved sections from `data` and requires the sentence to name a blocker `data` confirms. */
+    const d = gate.json?.data ?? {};
+    const unapproved = Number(d.totalSections) - Number(d.approvedSections);
+    expect(unapproved > 0, 'the refusal does not count the unapproved sections', d);
+    const sentenceNames = Number(d.sectionsWithoutProvenance) > 0 ? /source lineage/i : /approv/i;
+    expect(sentenceNames.test(detail), 'the refusal sentence names no blocker its data confirms', detail);
+    return `409: ${unapproved} of ${d.totalSections} sections unapproved, ${d.sectionsWithoutProvenance} without source lineage; sentence: ${detail.slice(0, 160)}`;
   },
 );
 

@@ -124,3 +124,13 @@ export async function createSubmissionWithSequence(api, expect, { title, sequenc
   expect(q.status === 201, `sequence create expected 201, got ${q.status}`, q.json);
   return { submission, sequence: q.json };
 }
+
+/**
+ * The tracking record (`projects.id`) of a program, as GET /api/projects lists it. The Tasks board files a task under
+ * this id, and since 958c213e03 (2026-10-31) it opens filtered to the open project (OQ-PROJ-09, OQ-001 v0.12).
+ */
+export async function trackingProjectId(api, programId) {
+  const r = await api('GET', '/api/projects');
+  const rows = Array.isArray(r.json) ? r.json : (r.json?.data ?? []);
+  return rows.find((p) => p.regulatoryProgramId === programId)?.id ?? null;
+}

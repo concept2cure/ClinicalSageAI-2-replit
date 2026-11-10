@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import type { QmsDoc, TrainingRow } from './data';
 import { I } from '../v2/icons';
 import { DialogPanel } from './ControlledDocumentDialogs';
@@ -12,6 +12,8 @@ interface TrainingCoverageProps {
   unread: boolean;
   failed: boolean;
   error: string | null;
+  /** The failed read: a refusal is said as itself, with no retry (C4). */
+  read?: FailedRead;
   refresh: () => void;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
@@ -34,7 +36,7 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
     </div>
     {rolesOpen && <JobRolesPanel onClose={() => setRolesOpen(false)} />}
     <div className="qms-train">
-      {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
+      {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} read={props.read} readWhat="the training record" testId="sop-training-failed" />}
       {props.unread && !props.failed && <EmptyState title="Loading training records…" busy />}
       {!props.unread && props.rows.length === 0 && <EmptyState title="No training-controlled documents yet." />}
       {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
@@ -131,8 +133,8 @@ export function JobRolesPanel({ onClose }: { onClose: () => void }) {
   const done = async (write: Promise<unknown>) => { await write; setAct(null); jr.refresh(); };
   return <DialogPanel title="Job roles" onClose={onClose} busy={false}>
     <p>A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.</p>
-    {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} testId="qms-job-roles-failed" />}
-    {!jr.failed && !jr.listing && <div className="qms-empty" role="status">Loading job roles…</div>}
+    {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} read={jr.failure} readWhat="the job roles list" testId="qms-job-roles-failed" />}
+    {!jr.failed && !jr.listing && <EmptyState title="Loading job roles…" busy />}
     {jr.listing && <>
       {!jr.listing.canAdminister && <p className="qms-dialog-hint">Only an administrator changes job roles and who holds them.</p>}
       {jr.listing.roles.length === 0 && <div className="qms-empty">No job roles yet.</div>}
@@ -228,8 +230,8 @@ export function TrainingAssignmentsPanel({ doc, onClose }: { doc: QmsDoc; onClos
   const done = async (write: Promise<unknown>) => { await write; setAct(null); ta.refresh(); jr.refresh(); };
   return <DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={false}>
     <p>{doc.docNumber} {doc.title}. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.</p>
-    {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} testId="qms-assignments-failed" />}
-    {!ta.failed && !ta.listing && <div className="qms-empty" role="status">Loading assignments…</div>}
+    {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} read={ta.failure} readWhat="who must train" testId="qms-assignments-failed" />}
+    {!ta.failed && !ta.listing && <EmptyState title="Loading assignments…" busy />}
     {ta.listing && <AssignmentsBody documentId={doc.id} listing={ta.listing} roles={jr.listing} rolesFailed={jr.failed} act={act} onAct={setAct} onDone={done} />}
     <div className="qms-dialog-actions"><button type="button" className="qms-btn ghost" onClick={onClose}>Close</button></div>
   </DialogPanel>;

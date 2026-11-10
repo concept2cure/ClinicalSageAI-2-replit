@@ -33,6 +33,7 @@ function openMore(scope: HTMLElement = document.body) {
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   regError: null as string | null,
+  regFailure: null as null | { kind: string; status: number; code?: string },
   reviewRows: [] as unknown[] | null,
   reviewError: null as string | null,
   trainRows: [] as unknown[] | null,
@@ -54,7 +55,7 @@ const EFFECTIVE = {
 };
 
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, refresh: H.refresh }),
+  useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, failure: H.regFailure, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: H.reviewRows, loading: false, error: H.reviewError, refresh: vi.fn() }),
   useTrainingCompliance: () => ({ rows: H.trainRows, loading: false, error: H.trainError, refresh: H.trainRefresh }),
@@ -100,6 +101,7 @@ const renderRegister = () =>
 beforeEach(() => {
   H.docs = [DRAFT];
   H.regError = null;
+  H.regFailure = null;
   H.reviewRows = [];
   H.reviewError = null;
   H.trainRows = [];
@@ -292,6 +294,19 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(figures(), 'the failure is said once, by the section').toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
     expect(H.refresh).toHaveBeenCalled();
+  });
+
+  // C4: a register read refused for the reader's role is said as that, with no Try again.
+  it('says a register read refused for this role as that, with no Try again', () => {
+    H.docs = null;
+    H.reviewRows = null;
+    H.regError = 'HTTP 403';
+    H.regFailure = { kind: 'role', status: 403, code: 'FORBIDDEN' };
+    renderRegister();
+    const refused = screen.getByTestId('sop-register-failed');
+    expect(refused.textContent).toMatch(/Your role cannot do this/);
+    expect(refused.textContent).toMatch(/so the controlled-document register was not read/);
+    expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
   it('claims nothing while the register is still loading', () => {

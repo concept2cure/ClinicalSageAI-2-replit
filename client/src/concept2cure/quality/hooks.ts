@@ -26,24 +26,24 @@ function shapeError(path: string, payload: unknown, rows: unknown[] | null): str
 /** Controlled-document register — GET /api/mdx/qms/documents. */
 const DOCS_PATH = '/api/mdx/qms/documents';
 export function useSopRegister() {
-  const { data, loading, error, refresh } = useFetchJson<unknown>(DOCS_PATH);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(DOCS_PATH);
   const rows = useMemo(() => listOf<ServerDoc>(data), [data]);
   const docs = useMemo<QmsDoc[] | null>(() => rows?.map(adaptDoc) ?? null, [rows]);
-  return { docs, loading, error: error ?? shapeError(DOCS_PATH, data, rows), refresh };
+  return { docs, loading, error: error ?? shapeError(DOCS_PATH, data, rows), failure, refresh };
 }
 
 /** Quality system template family — GET /api/mdx/qms/templates. */
 const TEMPLATES_PATH = '/api/mdx/qms/templates';
 export function useSopTemplates() {
-  const { data, loading, error } = useFetchJson<unknown>(TEMPLATES_PATH);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(TEMPLATES_PATH);
   const templates = useMemo<SopTemplate[] | null>(() => listOf<SopTemplate>(data), [data]);
-  return { templates, loading, error: error ?? shapeError(TEMPLATES_PATH, data, templates) };
+  return { templates, loading, error: error ?? shapeError(TEMPLATES_PATH, data, templates), failure, refresh };
 }
 
 /** Periodic-review tracking — GET /api/mdx/qms/documents/review-due. */
 export function useReviewDue(within = 120) {
   const path = `/api/mdx/qms/documents/review-due?within=${within}`;
-  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<ServerDoc>(data), [data]);
   const rows = useMemo<ReviewDueRow[] | null>(
     () =>
@@ -61,7 +61,7 @@ export function useReviewDue(within = 120) {
       })) ?? null,
     [raw],
   );
-  return { rows, loading, error: error ?? shapeError(path, data, raw), refresh };
+  return { rows, loading, error: error ?? shapeError(path, data, raw), failure, refresh };
 }
 
 interface ServerTraining {
@@ -111,11 +111,11 @@ function trainingRowOf(r: ServerTraining): TrainingRow {
  *  body carries none: the client computes no percentage. */
 const TRAINING_PATH = '/api/mdx/qms/training/compliance';
 export function useTrainingCompliance() {
-  const { data, loading, error, refresh } = useFetchJson<unknown>(TRAINING_PATH);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(TRAINING_PATH);
   const raw = useMemo(() => listOf<ServerTraining>(data), [data]);
   const rows = useMemo<TrainingRow[] | null>(() => raw?.map(trainingRowOf) ?? null, [raw]);
   const summary = useMemo(() => summaryOf(data), [data]);
-  return { rows, summary, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), refresh };
+  return { rows, summary, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), failure, refresh };
 }
 
 export interface TrainingExpiryRow {
@@ -134,12 +134,12 @@ const isExpiryRow = (r: unknown): r is TrainingExpiryRow => {
  *  GET /api/mdx/qms/training/expiring (G10). A body that is not that list is a failure. */
 export function useTrainingExpiring(withinDays: number) {
   const path = `/api/mdx/qms/training/expiring?within=${withinDays}`;
-  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<unknown>(data), [data]);
   const rows = useMemo(() => (raw && raw.every(isExpiryRow) ? raw : null), [raw]);
   const unreadable = data != null && rows === null ? `unexpected response shape for ${path}` : null;
   const failed = !loading && (error != null || unreadable != null);
-  return { rows: loading || failed ? null : rows, failed, error: error ?? unreadable, refresh };
+  return { rows: loading || failed ? null : rows, failed, error: error ?? unreadable, failure, refresh };
 }
 
 /* ── Job roles and training assignments (P-49; design §3.12) ──
@@ -184,22 +184,22 @@ const isAssignmentListing = (v: unknown): v is TrainingAssignmentListing =>
 
 /** One envelope read, checked by `guard`: loading, failed (an error or a body of the wrong shape), or the value. */
 function useCheckedRead<T>(path: string | null, guard: (v: unknown) => v is T) {
-  const { data, loading, error, refresh } = useFetchJson<unknown>(path);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const body = isObj(data) ? data.data : undefined;
   const value = useMemo(() => (guard(body) ? body : null), [body, guard]);
   const unreadable = data != null && value === null ? `unexpected response shape for ${path}` : null;
   const failed = !loading && (error != null || unreadable != null);
-  return { value: loading || failed ? null : value, failed, error: error ?? unreadable, refresh };
+  return { value: loading || failed ? null : value, failed, error: error ?? unreadable, failure, refresh };
 }
 
 /** The organization's job roles, who holds them and the active roster — GET /api/mdx/qms/job-roles. */
 export function useJobRoles() {
   const r = useCheckedRead('/api/mdx/qms/job-roles', isJobRoleListing);
-  return { listing: r.value, failed: r.failed, error: r.error, refresh: r.refresh };
+  return { listing: r.value, failed: r.failed, error: r.error, failure: r.failure, refresh: r.refresh };
 }
 
 /** Who must train on one controlled document — GET /api/mdx/qms/documents/:id/training-assignments. */
 export function useTrainingAssignments(documentId: number) {
   const r = useCheckedRead(`/api/mdx/qms/documents/${documentId}/training-assignments`, isAssignmentListing);
-  return { listing: r.value, failed: r.failed, error: r.error, refresh: r.refresh };
+  return { listing: r.value, failed: r.failed, error: r.error, failure: r.failure, refresh: r.refresh };
 }

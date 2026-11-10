@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/51d77e85-b3f5-4ed6-ba14-8bd5415ec721/documents/e69a247d-8967-4bcb-8b68-3aae71587824/details",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "documentTitle": "OQ-002 Approval family 20261110030837 renamed",
+      "reason": "OQ-002 step 14: an approved version must not change"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 33,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "APPROVED_VERSION_IMMUTABLE",
+      "message": "This version is approved, so its details cannot be changed. Upload a new version to change them. Nothing was changed."
+    }
+  }
+}

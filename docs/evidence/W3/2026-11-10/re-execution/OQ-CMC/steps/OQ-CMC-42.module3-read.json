@@ -1,0 +1,45 @@
+{
+  "listed": {
+    "id": 5,
+    "questionRef": "Q1",
+    "questionText": "Provide the container closure integrity data for the 100-count bottle.",
+    "discipline": "CMC",
+    "severity": "major",
+    "ctdSection": "3.2.P.7",
+    "section": "3.2.P.7",
+    "sectionSource": "question",
+    "state": "unanswered",
+    "outstanding": true,
+    "overdue": false,
+    "approval": null,
+    "owner": {
+      "userId": 3,
+      "name": "OQ Approver"
+    },
+    "letter": {
+      "id": "ace_1794282483111_3e50d4dc",
+      "communicationType": "OQ-CMC-42 information request",
+      "receivedDate": "2026-11-10T03:48:03.111Z",
+      "dueDate": "2099-12-31T00:00:00.000Z",
+      "closureStatus": "open",
+      "responseRequired": true,
+      "overdue": false
+    }
+  },
+  "summary": {
+    "questions": 1,
+    "outstanding": 1,
+    "questionsOverdue": 0,
+    "lettersOverdue": 0,
+    "lettersWithoutQuestionsOverdue": 0,
+    "lettersOverdueOnOtherQuestions": 0,
+    "byState": {
+      "unanswered": 1,
+      "drafted": 0,
+      "changed-after-approval": 0,
+      "approved": 0,
+      "withdrawn": 0
+    }
+  },
+  "withheld": 0
+}
