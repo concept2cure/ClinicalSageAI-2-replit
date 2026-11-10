@@ -456,3 +456,34 @@ export async function renameProgramFolder(
     return { ok: true, folder: { folderId: args.folderId, name: named.name, parentFolderId, label: named.name } };
   });
 }
+
+/** The project's folders as AnA is given them: every folder a document may be filed to, by id, in tree order. */
+export function folderChoices(index: ProgramFolderIndex): {
+  binder: { label: string; version: string } | null;
+  binderMissing: string | null;
+  folders: Array<{ id: string; label: string; kind: 'binder' | 'preset' | 'person' }>;
+} {
+  const folders: Array<{ id: string; label: string; kind: 'binder' | 'preset' | 'person' }> = [];
+  for (const n of index.binder?.nodes ?? []) folders.push({ id: binderFolderId(n.key), label: index.label(binderFolderId(n.key)), kind: 'binder' });
+  for (const p of index.presets) folders.push({ id: p.id, label: p.label, kind: 'preset' });
+  for (const f of index.person) {
+    const parent = f.parentId != null ? personFolderId(f.parentId) : f.parentKey;
+    folders.push({ id: f.folderId, label: parent ? `${f.name} (in ${index.label(parent) || parent})` : f.name, kind: 'person' });
+  }
+  return {
+    binder: index.binder ? { label: index.binder.label, version: index.binder.version } : null,
+    binderMissing: index.binderMissing,
+    folders,
+  };
+}
+
+/** The project's folders for AnA, read on the actor's executor, or why they could not be read (never an empty list on a failure). */
+export async function projectFolderChoices(q: FolderQueryable, programId: string, orgId: number) {
+  try {
+    const { resolveVaultView } = await import('./vault-filing.service.js');
+    const view = await resolveVaultView(programId, orgId, q as never);
+    return folderChoices(await readProgramFolderIndex(q, programId, orgId, view));
+  } catch {
+    return { error: "The project's folders could not be read, so none are listed here. That is a failed read, not an empty Vault." };
+  }
+}

@@ -964,6 +964,9 @@ function nameLeafFolders(index: ProgramFolderIndex, nodes: Array<VaultFolder | V
   }
 }
 
+/** The device view's presets that are themselves a filing's submission folder; a binder stands in for them. */
+const SUBMISSION_PRESETS = new Set(['k510', 'pma']);
+
 export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?: ProgramFolderIndex): VaultFolder {
   const index = folders ?? buildFolderIndex(view, { binder: null, reason: '' }, []);
   const { unfiled, byFolder, otherView } = sortUploads(index, uploads);
@@ -978,7 +981,10 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[], folders?:
       children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
     },
     ...build.binderRoots(),
-    ...index.presets.map(build.presetNode),
+    // Once the filing has its binder, a submission-type preset of another filing ('510(k) submissions' on an EU
+    // MDR file) is shown only while something is filed in it: its documents are never hidden.
+    ...index.presets.filter((f) => !index.binder || !SUBMISSION_PRESETS.has(f.id) || (byFolder.get(f.id)?.length ?? 0) > 0
+      || index.person.some((pf) => pf.parentKey === f.id)).map(build.presetNode),
     ...build.personNodes(''),
   ];
   if (otherView.length > 0) {
@@ -1934,7 +1940,9 @@ export default function createProjectVaultRoutes(): Router {
         };
         // The project's folders: its filing's binder, the view's presets, the folders people made.
         const folders = await readProgramFolderIndex(pool, id, orgId, view, project);
-        tree.push(filingCabinet(view, uploads, folders));
+        /* First in the tree, as a Veeva binder is: the Vault opens on the filing's binder, not on an
+           authored document's draft outline (S6, 2026-11-10). */
+        tree.unshift(filingCabinet(view, uploads, folders));
       } catch (err) {
         if (!isMissingStore(err)) throw err;
         uploadsStoreMissing = true;
