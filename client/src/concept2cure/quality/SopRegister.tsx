@@ -42,7 +42,7 @@ import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } 
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
 import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
-import { qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
+import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
 import { approvalShare } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { todayUtc, type QmsDoc } from './data';
@@ -181,14 +181,21 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
     // A training notice opens the reader, on the version approved for a later day when one waits (slice 4b).
     if(qmsIntent==='read'){target.clear();setReading({documentId:d.id,scope:readerScope,successor:true});return;}
+    // A reviewer's or approver's notice opens the review route, where their turn is taken; the editor cannot sign (C5).
+    if(d.status==='in_review'&&myTurn(qmsRouteView(d),meId)){target.clear();setRoutePanel(d);return;}
     if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
     else if(d.status==='draft'){target.clear();setSetup({document:d});}
-  },[target.document,target.clear,editingId,qmsIntent,readerScope]);
+  },[target.document,target.clear,editingId,qmsIntent,readerScope,meId]);
   const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
   React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
+  /* Open a controlled document where its text lives. A document with an editing copy opens in the one editor. A
+     legacy register entry has its text inline and no editing copy: a draft is set up (bound) first; past draft, its
+     controlled text is read where it lives, read-only, because the editor has nothing to open and answered "no
+     editing copy" with a Try again that could not help (C5, walked 2026-11-10). */
   const openDocument = (d: QmsDoc) => {
-    if (d.status === 'draft' && !d.authoringDocumentId) setSetup({ document: d });
-    else setEditingId(d.id);
+    if (d.authoringDocumentId) setEditingId(d.id);
+    else if (d.status === 'draft') setSetup({ document: d });
+    else openReader(d.id);
   };
   const openCreated = (id: number) => {
     setSetup(null);
@@ -261,7 +268,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
 
   if (editingId !== null) return <>{targetStatus}<ControlledDocumentWorkbench documentId={editingId}
     onBack={() => { setEditingId(null); reg.refresh?.(); rev.refresh?.(); trainComp.refresh?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} /></>;
+    onNavigate={onNavigate ?? (() => undefined)} /></>;
 
   return (
     <>
@@ -338,7 +345,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
       <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error}
         retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
-        canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
+        canOpen={(id) => docs.some((x) => x.id === id)}
+        onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); }} onRecord={recordReview.start} />
 
       <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
         refresh={trainComp.refresh} figure={coverageFigure}

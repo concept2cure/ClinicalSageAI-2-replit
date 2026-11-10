@@ -211,7 +211,7 @@ function ChangeControlSession({
 
   if (editingId !== null) return <ControlledDocumentWorkbench documentId={editingId}
     onBack={() => { setEditingId(null); onRetry?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} />;
+    onNavigate={onNavigate ?? (() => undefined)} />;
 
   return (
     <>

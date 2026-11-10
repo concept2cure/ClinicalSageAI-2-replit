@@ -207,7 +207,9 @@ describe('SOP register — governed actions reach their routes', () => {
   it('a periodic-review row opens the document instead of asking AnA to "schedule" it', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /periodic review/i }));
-    expect(screen.getByRole('dialog', { name: 'Controlled document' }).getAttribute('data-document-id')).toBe('6');
+    // C5: it opens the one editor, as every other way of opening a document does (it opened the training reader).
+    expect(screen.getByRole('region', { name: 'Controlled editing copy' }).getAttribute('data-document-id')).toBe('6');
+    expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
     expect(asked).toEqual([]);
   });
 
