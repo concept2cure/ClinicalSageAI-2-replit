@@ -264,8 +264,22 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
       folder_id: {
         type: 'string',
         description:
-          'The taxonomy folder to suggest (e.g. "module-4"); a person confirms it in the Vault. It must exist in ' +
-          'this program\u0027s vault view; a folder from another modality\u0027s tree is refused rather than stored.',
+          'The folder to suggest; a person confirms it in the Vault. Any folder list_project_documents returns in ' +
+          'vaultFolders: a binder heading of the filing ("bn:3.2.S.4", which also records that CTD section), a ' +
+          'preset ("module-4", "corresp"), or a folder a person made ("uf:12"). A folder the project does not have ' +
+          'is refused rather than stored.',
+      },
+      new_folder: {
+        type: 'object',
+        description:
+          'Make a folder first and suggest the document into it, when no existing folder fits (e.g. a study\u0027s own ' +
+          'folder under "bn:5.3"). The folder is made under your name in the audit trail, with your rationale as its ' +
+          'reason; the document placed in it is still a suggestion a person confirms. Omit folder_id when you pass this.',
+        properties: {
+          name: { type: 'string', description: 'The folder\u0027s name, at most 120 characters, no / or \\.' },
+          parent_folder_id: { type: 'string', description: 'The folder to make it in (a vaultFolders id); omit for the top of the cabinet.' },
+        },
+        required: ['name'],
       },
       confirm_suggested: {
         type: 'boolean',

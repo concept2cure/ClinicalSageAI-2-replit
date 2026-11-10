@@ -59,8 +59,10 @@ interface PlacementPlan {
   documentId: string;
   /** True only for an explicit unfile, which skips the comprehension gate. */
   unfile: boolean;
-  /** A folder to suggest, or `null` to unfile. */
+  /** A folder to suggest, or `null` to unfile (or to make one first: `newFolder`). */
   folderId: string | null;
+  /** A folder to make first, under AnA's name, and suggest the document into (S6 step 4). */
+  newFolder?: { name: string; parentFolderId: string | null };
   ctdSection: string | null;
   evidenceKind: string | null;
   rationale: string;
@@ -91,6 +93,16 @@ function parsePlacementInput(input: Record<string, unknown>): PlacementPlan | { 
   }
 
   const folderId = str(input.folder_id);
+  const nf = input.new_folder && typeof input.new_folder === 'object' ? input.new_folder as Record<string, unknown> : null;
+  if (nf) {
+    if (folderId) return { error: 'place_project_document takes folder_id or new_folder, not both.' };
+    const name = str(nf.name);
+    if (!name) return { error: 'new_folder needs a name.' };
+    return {
+      documentId, unfile: false, folderId: null, ctdSection: str(input.ctd_section), evidenceKind: str(input.evidence_kind), rationale,
+      newFolder: { name, parentFolderId: str(nf.parent_folder_id) },
+    };
+  }
   if (!folderId) {
     return {
       error:
@@ -190,6 +202,22 @@ async function handlePlaceProjectDocument(
     if (refusal) return refusal;
   }
 
+  const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
+  let folderId = parsed.folderId;
+  let made: { folderId: string; name: string } | null = null;
+  if (parsed.newFolder) {
+    // The folder is made through the Vault's own governed writer: the project's write authority, a chained
+    // audit row carrying AnA's provenance and her rationale as the reason (vault-folders.ts).
+    const { createProgramFolder } = await import('../vault/vault-folders.js');
+    const created = await createProgramFolder({
+      programId: doc.programId, organizationId: orgId, userId: scope.accessibleScope.actor.userId,
+      reason: parsed.rationale, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
+    });
+    if (!created.ok) return JSON.stringify({ ok: false, error: created.code, message: created.message });
+    folderId = created.folder.folderId;
+    made = { folderId, name: created.folder.name };
+  }
+
   const { placeVaultDocument } = await import('../vault/vault-placement.service.js');
   const outcome = await placeVaultDocument({
     programId: doc.programId,
@@ -197,15 +225,16 @@ async function handlePlaceProjectDocument(
     organizationId: orgId,
     // The person on whose behalf she acts; `agent` says who decided.
     userId: scope.accessibleScope.actor.userId,
-    folderId: parsed.folderId,
+    folderId,
     ctdSection: parsed.ctdSection,
     evidenceKind: parsed.evidenceKind,
     note: parsed.rationale,
-    agent: anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document'),
+    agent,
   });
 
   if (!outcome.ok) {
-    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message });
+    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message,
+      ...(made ? { madeFolder: made, note: `The folder "${made.name}" was made; the document was not placed in it.` } : {}) });
   }
   const { filing } = outcome;
   return JSON.stringify({
@@ -214,6 +243,7 @@ async function handlePlaceProjectDocument(
     fileName: doc.fileName,
     from: outcome.before,
     filing,
+    ...(made ? { madeFolder: made } : {}),
     message:
       filing.placementStatus === 'unfiled'
         ? `${doc.fileName} is now in the Unfiled queue with your reason recorded, for a person to decide. ` +

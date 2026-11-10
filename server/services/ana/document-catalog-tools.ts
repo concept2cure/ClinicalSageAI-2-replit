@@ -41,6 +41,8 @@
  * default, fails closed; ANA_DOCUMENT_CATALOG_FORCE_ON overrides).
  */
 
+import { folderChoices, readProgramFolderIndex } from '../vault/vault-folders.js';
+import { resolveVaultView } from '../vault/vault-filing.service.js';
 import { createHash } from 'node:crypto';
 import { recordCurrentRunSource } from '../ai-gateway/model-call-scope.js';
 import { sensitivityTierForClassification } from '../ai-gateway/sensitive-placement-policy.js';
@@ -135,6 +137,16 @@ function chatUploadNote(uploads: { length: number } | null, hasMore: boolean): s
   );
 }
 
+/** The project's Vault folders for AnA (vault-folders.ts), or why they could not be read: never an empty list on a failure. */
+async function projectFolderChoices(executor: Parameters<typeof readProgramFolderIndex>[0], programId: string, orgId: number) {
+  try {
+    const view = await resolveVaultView(programId, orgId, executor as never);
+    return folderChoices(await readProgramFolderIndex(executor, programId, orgId, view));
+  } catch {
+    return { error: "The project's folders could not be read, so none are listed here. That is a failed read, not an empty Vault." };
+  }
+}
+
 async function handleListProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -155,11 +167,15 @@ async function handleListProjectDocuments(
   const actor = sourceReadInput(ctx, orgId, programId);
   const page = await svc.listProjectDocumentsForActor(actor, { limit });
   const chat = await chatUploadsFor(svc, actor, limit);
+  // One project: its Vault's folders (binder headings, presets, people's folders), read on the actor's executor,
+  // so place_project_document can name any of them (S6 step 4).
+  const folders = programId ? await projectFolderChoices(scope.executor, programId, orgId) : null;
   await svc.revalidateActorSourceScope(actor, scope.admittedScope);
   await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId }, scope.accessibleScope);
 
   return JSON.stringify({
     ok: true,
+    ...(folders ? { vaultFolders: folders } : {}),
     scope: programId ? { programId, actorFiltered: true } : scope.admittedScope.projectId !== null
       ? { openProject: true, programId: null, actorFiltered: true } : { accessibleProjects: true, actorFiltered: true },
     // `returned` is the page; `total` is the scope. They were one field named
