@@ -15,6 +15,7 @@
  *     reading the letter's own questions endpoint — no second workflow;
  *   • the earlier CMC question file is not written: nothing is posted to
  *     /api/cmc/agency-questions;
+ *   • the letter's controls name the letter by its type, as in Communication;
  *   • "Open on its letter" still leaves for Communication;
  *   • Done closes the panel.
  */
@@ -53,7 +54,7 @@ const LETTER_QUESTIONS = {
     viewer: { canWrite: true, writeRefusal: null, canSign: true, signAuthorityRefusal: null }, packageReady: false, outstanding: [],
     questions: [{ id: 41, questionRef: 'CMC-3', questionText: 'Provide the batch analyses for the registration batches.', discipline: 'CMC', severity: 'major',
       responseText: '', responseRevision: 0, responseUpdatedByName: null, responseUpdatedAt: null,
-      state: 'no_response', approval: null, supersededApproval: null, signRefusal: null, withdrawal: null, history: [], commitments: [] }] },
+      state: 'unanswered', approval: null, supersededApproval: null, signRefusal: null, withdrawal: null, history: [], commitments: [] }] },
 };
 
 function mount(nav = vi.fn()) {
@@ -81,6 +82,10 @@ describe('a Module 3 question is answered inside CMC, on its letter', () => {
     const panel = await screen.findByTestId('cmc-answer-here');
     expect(panel.textContent).toMatch(/CMC-3 — on its letter, Information request/);
     await screen.findByRole('button', { name: 'Record question' });
+    /* The letter's own controls name the letter, as they do in Communication —
+       not "undefined" (they read the letter's type from the prop). */
+    expect(screen.getByRole('region', { name: 'Questions and responses for Information request' })).toBeTruthy();
+    expect(panel.textContent).not.toMatch(/undefined/);
     const reads = apiRequest.mock.calls.map((c) => String(c[1]));
     expect(reads).toContain(`/api/concept2cure/projects/${PROJECT}/agency-communications/ace_9/questions`);
     expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/cmc/agency-questions') && c[0] !== 'GET')).toBe(false);

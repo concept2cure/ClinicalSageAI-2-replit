@@ -465,7 +465,7 @@ function AnsweringHere({ projectId, working, onClose, nav }: { projectId: string
         <span className="sec-sub">the letter’s own record and approvals, as in Communication</span>
         <span className="pj-sec-acts"><button type="button" className="btn ghost small" onClick={onClose}>Done</button></span>
       </div>
-      <AgencyResponses projectId={projectId} letter={{ id: working.letterId }} fire={fire} focusQuestionId={working.questionId} onNav={nav} />
+      <AgencyResponses projectId={projectId} letter={{ id: working.letterId, communicationType: working.letterType }} fire={fire} focusQuestionId={working.questionId} onNav={nav} />
       <C2CToast msg={toast} />
     </section>
   );

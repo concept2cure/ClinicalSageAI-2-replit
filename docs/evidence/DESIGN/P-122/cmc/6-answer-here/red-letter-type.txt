@@ -1,0 +1,9 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ × client/src/concept2cure/v2/__tests__/cmcAnswerHere.test.tsx > a Module 3 question is answered inside CMC, on its letter > opens the letter’s own controls here, reading the letter’s questions 490ms
+   → Unable to find an accessible element with the role "region" and name "Questions and responses for Information request"
+  Name "Questions and responses for undefined":
+ ✓ client/src/concept2cure/v2/__tests__/cmcAnswerHere.test.tsx > a Module 3 question is answered inside CMC, on its letter > keeps the door to Communication, and Done closes the panel 72ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+  Name "Questions and responses for undefined":
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

@@ -362,11 +362,11 @@ function QuestionCard({
 }
 
 interface AgencyResponsesProps {
-  /* Only the letter's id is read: everything else about the letter is the
-     server's (`data.letter`). Typed as what is used, so CMC / Module 3 can open
-     the same controls on a letter it lists by id (P-122) without inventing the
-     rest of an inbox row. */
-  projectId: string; letter: Pick<CommRow, 'id'>; fire: (m: string, tone?: 'ok' | 'error') => void;
+  /* The letter's id and type are read (the type names the letter in labels and
+     prompts); everything else about it is the server's (`data.letter`). Typed
+     as what is used, so CMC / Module 3 can open the same controls on a letter
+     it lists (P-122) without inventing the rest of an inbox row. */
+  projectId: string; letter: Pick<CommRow, 'id' | 'communicationType'>; fire: (m: string, tone?: 'ok' | 'error') => void;
   /** A question another screen linked to (CMC's "Open on its letter"). */
   focusQuestionId?: number | null; onNav?: (id: string) => void;
   /** A commitment was recorded here (from the letter or a question): the host's register re-reads. */
