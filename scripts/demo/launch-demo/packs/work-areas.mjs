@@ -778,7 +778,35 @@ export async function ensureAgencyLetter({ api, run, tally }, program, letter, l
     out.proposals = { questions: questions.length, commitments: refs, commitmentsRecorded: recorded };
     return `${questions.length} questions, ${refs.length} commitments proposed${refs.length ? ` (${recorded} recorded)` : ''}`;
   });
+  if (letter.record?.length) await recordLetterQuestions({ api, run, tally }, commsPath, out.eventId, letter, label);
   return out;
+}
+
+/**
+ * Record the letter's questions, as a person does from its proposals: each
+ * with the agency's number and words, the CTD section it concerns, and a
+ * reason (POST …/questions, a governed write). P-122: no demo letter carried a
+ * recorded question, so CMC's "Agency questions on Module 3" was always empty
+ * and the questions could not be answered from the Module 3 they are about.
+ * A question already recorded under its number is left alone.
+ */
+async function recordLetterQuestions({ api, run, tally }, commsPath, eventId, letter, label) {
+  await run.step(`Communication: record the questions of "${letter.fileName}" on ${label}`, async () => {
+    const base = `${commsPath}/${encodeURIComponent(eventId)}`;
+    const read = must(await api('GET', `${base}/questions`), 200, 'read the letter\'s recorded questions');
+    const have = new Set((read.data?.questions ?? []).map((q) => q.questionRef));
+    let created = 0;
+    for (const q of letter.record) {
+      if (have.has(q.questionRef)) { tally.found('agency-question'); continue; }
+      must(await api('POST', `${base}/questions`, {
+        ...q,
+        reason: 'Demo seed: record the question as the agency numbered and worded it, with the CTD section it concerns.',
+      }), [200, 201], `record question ${q.questionRef}`);
+      tally.created('agency-question');
+      created += 1;
+    }
+    return `${created} recorded of ${letter.record.length}`;
+  });
 }
 
 export { dateIn };

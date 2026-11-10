@@ -416,6 +416,17 @@ export const BIOTECH_IR_LETTER = {
     responseRequired: true,
   },
   expect: { commitments: [], questions: 3 },
+  /* The three questions, recorded as a person records them from the letter's
+     proposals (P-122): with the CTD section each concerns, so CMC / Module 3
+     lists them and they can be answered there, on this letter's controls. */
+  record: [
+    { questionRef: '1', discipline: 'CMC', ctdSection: '3.2.S.4.4', severity: 'major',
+      questionText: 'Provide the batch analysis data for each drug substance lot used in the 26-week cynomolgus toxicology study, including host cell protein and SEC monomer results.' },
+    { questionRef: '2', discipline: 'CMC', ctdSection: '3.2.P.5.6', severity: 'major',
+      questionText: 'Justify the proposed potency acceptance criterion for drug product release: state the assay\'s intermediate precision, and describe how the criterion relates to the lots used in the toxicology study.' },
+    { questionRef: '3', discipline: 'CMC', ctdSection: '3.2.P.8.3', severity: 'major',
+      questionText: 'Submit the 6-month stability results for drug product lot C2C101-DP-2501 at 5 C and 25 C/60% RH, with the shelf-life trending.' },
+  ],
   text: `DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
 
 Food and Drug Administration

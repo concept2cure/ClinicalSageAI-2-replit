@@ -1,0 +1,5 @@
+Before the re-seed (12:5x): select count(*) from agency_communication_questions -> 0 rows in c2c_rr5_phone_instance; CMC's 'Agency questions on Module 3' listed none on any demo project, so 'Answer here' had nothing to open.
+After the re-seed:
+1|CMC|3.2.S.4.4
+2|CMC|3.2.P.5.6
+3|CMC|3.2.P.8.3
