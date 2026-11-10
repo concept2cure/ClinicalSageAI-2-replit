@@ -209,24 +209,24 @@
 /* status pill — extra tone for rejected changes */
 .qms-pill[data-tone="err"] { background: var(--error-muted); color: var(--error); }
 
-/* ─── Change control: classification chip ──────────────────────── */
-.qcc-class { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 5px; }
-.qcc-class[data-tone="ok"]   { background: var(--success-muted); color: var(--success); }
-.qcc-class[data-tone="warn"] { background: var(--warning-muted); color: var(--warning); }
-.qcc-class[data-tone="err"]  { background: var(--error-muted); color: var(--error); }
-
 /* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
 .qcc-stages { margin: 0 0 12px; }
 .qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
 
-/* ─── Change control: register links ───────────────────────────── */
+/* ─── Change control: the log's link count, a quiet button (C8) ─── */
 .qcc-linkcount {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--text-300); font-variant-numeric: tabular-nums; text-align: left;
 }
-.qcc-linkcount:hover { color: var(--accent-main-100); }
+.qcc-linkcount:hover { color: var(--text-100); }
 
 .qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid var(--border-subtle); }
+/* In the log's table the linked records are the change's own row (C8); the cell carries the band, not a second box. */
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail-tr > td { background: var(--bg-050); }
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail { padding: 0 0 4px; background: none; border-bottom: 0; }
+/* A row's More and its linked records stay in view while the table scrolls sideways on a phone (walked at 390, C8):
+   they span every column, so without this their words ran past the section's right edge. */
+.c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .qcc-detail-title { font-size: var(--fs-small); color: var(--text-300); font-weight: 600; }
 .qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }

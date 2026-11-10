@@ -162,10 +162,74 @@ function actionsOf(d: QmsDoc, act: RegisterRowActions): { key: ActionKey; node: 
   return out;
 }
 
-/** One register row: the document's facts, its next step, and "More" for the rest. */
-export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions: RegisterRowActions }) {
+/**
+ * A Quality register as D0's table: its column headers, then a visually hidden "Actions" header over the row's next
+ * step and More (C6). The SOP register and the change log (C8) render through it.
+ */
+export function RegisterTable({ columns, children }: { columns: readonly string[]; children: React.ReactNode }) {
+  return (
+    <table className="reg-tbl qms-reg">
+      <thead>
+        <tr>
+          {columns.map((c) => <th key={c} scope="col">{c}</th>)}
+          <th scope="col"><span className="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      {children}
+    </table>
+  );
+}
+
+/**
+ * One record of a register table, as one <tbody>: its row of facts with its one next step and "More", the row of its
+ * other actions that More reveals, and any rows of its own after that (the change log's linked records). One body
+ * keeps a record's rows together, for a screen reader and for the eye.
+ */
+export function RegisterBody({ name, className, status, columns, cells, primary, rest, after }: {
+  /** The record's number: it names the More button and the group of actions it reveals. */
+  name: string;
+  className: string;
+  status: string;
+  /** The table's columns, less the actions column. */
+  columns: number;
+  /** The row's facts, as <td>s, before the actions cell. */
+  cells: React.ReactNode;
+  primary: React.ReactNode | null;
+  rest: React.ReactNode[];
+  after?: React.ReactNode;
+}) {
   const [more, setMore] = React.useState(false);
   const moreId = React.useId();
+  return (
+    <tbody className={className} data-status={status} data-more={more || undefined}>
+      <tr>
+        {cells}
+        <td>
+          <div className="qms-rowacts">
+            {primary}
+            {rest.length > 0 && (
+              <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
+                aria-label={`More actions for ${name}`} onClick={() => setMore((m) => !m)}>
+                More
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {more && rest.length > 0 && (
+        <tr className="qms-row-more-tr">
+          <td colSpan={columns + 1}>
+            <div className="qms-row-more" id={moreId} role="group" aria-label={`Actions for ${name}`}>{rest}</div>
+          </td>
+        </tr>
+      )}
+      {after}
+    </tbody>
+  );
+}
+
+/** One register row: the document's facts, its next step, and "More" for the rest. */
+export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions: RegisterRowActions }) {
   const all = actionsOf(d, act);
   const step = nextStepOf(d, act.meId);
   const primary = all.find((a) => a.key === step) ?? null;
@@ -174,11 +238,10 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
      or superseded row past its signed date is not, and saying so contradicted the figure line (review C1-2). */
   const canBeDue = d.status === 'effective' || d.status === 'in_review' || (d.status === 'draft' && !!d.inForce);
   const overdue = canBeDue && isReviewOverdue(d.nextReviewDate);
-  /* One document is one <tbody>: its row and, when "More" is open, the row of its other actions, kept together for
-     a screen reader and for the eye (C6: D0's .reg-tbl, in place of Quality's own boxed div grid). */
+  /* One document is one <tbody> (C6: D0's .reg-tbl, in place of Quality's own boxed div grid). */
   return (
-    <tbody className="qms-doc" data-status={d.status} data-more={more || undefined}>
-      <tr>
+    <RegisterBody name={d.docNumber} className="qms-doc" status={d.status} columns={REGISTER_COLUMNS.length}
+      primary={primary?.node ?? null} rest={rest.map((a) => a.node)} cells={<>
         <td>
           <button type="button" className="qms-num mono" title="Open the controlled document" onClick={() => act.open(d)}>
             {d.docNumber}
@@ -203,25 +266,6 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
           )}
         </td>
         <NextReviewCell doc={d} overdue={overdue} />
-        <td>
-          <div className="qms-rowacts">
-            {primary?.node}
-            <button type="button" className="btn ghost small" aria-expanded={more} aria-controls={moreId}
-              aria-label={`More actions for ${d.docNumber}`} onClick={() => setMore((m) => !m)}>
-              More
-            </button>
-          </div>
-        </td>
-      </tr>
-      {more && (
-        <tr className="qms-row-more-tr">
-          <td colSpan={REGISTER_COLUMNS.length + 1}>
-            <div className="qms-row-more" id={moreId} role="group" aria-label={`Actions for ${d.docNumber}`}>
-              {rest.map((a) => a.node)}
-            </div>
-          </td>
-        </tr>
-      )}
-    </tbody>
+      </>} />
   );
 }
