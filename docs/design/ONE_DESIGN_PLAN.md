@@ -1321,7 +1321,7 @@ like Veeva … templates and folders for the full IND pyramid of potential filin
 and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
 `docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
 
-**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+**Delivered 2026-11-06: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
 
 - **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
   gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
@@ -1338,28 +1338,37 @@ and regions … Anna needs to have autonomous control over all of this, agentica
   (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
   and the cabinet says why (`note`).
 
-**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+**Continued 2026-11-10: steps 2–4 landed, and a multi-tenant repair** (the founder: "the UI doesn't reflect all the
+Vault features yet … this is a multi tenant environment").
 
-1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
-   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
-   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
-   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
-   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
-2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
-   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
-   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
-   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
-   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
-3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
-   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
-   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
-   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
-4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
-   table with no project; retire it onto `project-vault.ts` with its contract test
-   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
-5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
-   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
-   `protocol-dev-editing.css`), not from this work.
+- **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
+  binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
+  version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
+  The record pane names a binder or person's folder, not its id. (R1 `3cf74c4b9d`, S6 `05e907d064`.)
+- **Step 3, the pyramid in Vault** (S6 `05e907d064`, R1 `3cf74c4b9d`, S11 `d6e27d9ddd`): a binder folder lists the plan
+  tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
+  CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
+- **Step 4, AnA** (S6 `1ead231890`, S4 `a8af07d238`): `list_project_documents` returns the project's folders;
+  `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
+  governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
+  under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
+- **Multi-tenant repair** (F1 `28650cf42d`): the organization-wide `/api/folders` route listed, renamed and deleted
+  folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
+  sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
+  Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
+
+**What the survey found** (every Vault route checked for a UI caller): every `/api/c2c/project-vault`,
+`/api/vault/ingest` and legal-hold route has one. Open, for the next session:
+
+1. Search sends one value per filter (`Vault.tsx`, `v ? [v] : null`); the server takes several. The library search's
+   project filter (`programId=`) is never sent.
+2. A project folder cannot be moved or removed (no route); org-level folders (`/api/folders`) have no UI and no
+   caller. Decide with the founder whether org-level folders stay.
+3. AnA over folders walked in a conversation, once a model key is present.
+4. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
+5. Gates: stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
+   `ci:check-css-selector-shadowing` and `server/routes/c2c/__tests__/project-settings.pglite.test.ts` (6 cases) are red
+   on trunk, not from this work.
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
