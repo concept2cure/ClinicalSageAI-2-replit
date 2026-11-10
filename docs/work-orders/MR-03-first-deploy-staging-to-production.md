@@ -133,10 +133,19 @@ The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 faile
    - sign in through the CloudFront alias;
    - file the apply logs, both no-change plans and the run URLs under `docs/evidence/D1/<date>-first-apply/`.
 
+**Landed later the same day, Stage 7 steps 5 and 6:**
+- **OPS-22**, `5e8a7317ce`: `/readyz`'s database query and Vault-store probe run at most once per 5 s (at most 10 s), coalesced; the rest is read per hit. In production the public body
+  is `{ ready }` alone; the detail goes to a `READYZ_TOKEN` holder (`x-readyz-token`) or a loopback peer.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+
+Not yet wired: `READYZ_TOKEN` in the task definition and a GitHub secret for the smoke test. Until then a failed production
+smoke test logs `{ "ready": false }` alone, and the detail is read inside the task (ECS exec, loopback) or in CloudWatch.
+
 **Still open in this order, engineering, no founder input:**
 - Stage 6 (OPS-17: long submission work behind the 60 s edge; SSE heartbeats).
-- Stage 7's code half (OPS-22: an uncached `/readyz` before rate limiting). Its Redis and Sentry halves wait for NEW-2 and
-  NEW-3.
+- Stage 7 steps 2–4 (shared rate-limit counters in Postgres, and no silent memory fallback for sessions) and step 8 (the
+  topology declaration).
+- Stage 7 step 7 waits for NEW-3.
 - Stage 8 (OPS-12: a second NAT and interface endpoints) is a founder budget decision.
 
 ## State at head
