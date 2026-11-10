@@ -2066,6 +2066,7 @@ async function gradeOrUnavailable(
 
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req) ?? undefined;
   if (!orgId) return send403(res);
 
   try {
@@ -2093,14 +2094,14 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     /* scope=catalog (S2, 2026-11-06): the catalog across the person's projects of this
        project's sponsor, from the verified accessible set; never a project the request names. */
     const catalog = req.query.scope === 'catalog';
-    if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: resolveUserId(req) ?? undefined }, programId, catalogProgramIds))) {
+    if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: userId }, programId, catalogProgramIds))) {
       return send404(res);
     }
-    const { total, currentTotal, sources, facets } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
+    const { total, currentTotal, sources, facets } = await searchDataRoom(orgId, query, { userId: userId });
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
-        ? await listClientDocuments(pool, orgId, { userId: resolveUserId(req) ?? undefined, includeUnscoped: true, limit: 50 })
+        ? await listClientDocuments(pool, orgId, { userId: userId, includeUnscoped: true, limit: 50 })
             // `includeUnscoped` with no scope returns ONLY ownerless rows, but
             // filter defensively so a future change to that query can never
             // leak another project's documents into this list.
@@ -2117,7 +2118,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const usage = await summarizeSourceUsage(
       pool, orgId,
       [...sources, ...unscoped].map((s) => s.id),
-      { userId: resolveUserId(req) ?? undefined },
+      { userId: userId },
     );
 
     // Every row's grade: a deterministic engine over recorded facts, stored when they change (S2).
