@@ -26,6 +26,32 @@ const TAB_SEL = '[role="tab"], button.pj-lc-stage';
 const TAB_ON = '[role="tab"][aria-selected="true"], button.pj-lc-stage[aria-current="step"]';
 const CONTROL_SEL = 'button, a[href], [role="tab"], [role="button"], [role="menuitem"], summary, select, input[type="checkbox"], input[type="radio"]';
 let sessionEnded = false;
+
+// Resume (2026-11-10): a run stopped part way (a push needing the memory, a full disk) starts again from its own log.
+// A click already recorded is not clicked again, a stop already recorded is not recorded twice, and the screens the
+// recorded clicks reached are queued as they were.
+const clickKey = (stop, c) => `${JSON.stringify(stop)}|${c.role}|${c.name}`;
+function priorRun() {
+  const done = { stops: new Set(), clicks: new Set(), reached: [], discovered: false };
+  const lines = fs.existsSync(LOG) ? fs.readFileSync(LOG, 'utf8').split('\n').filter(Boolean) : [];
+  for (const line of lines) {
+    let r; try { r = JSON.parse(line); } catch { continue; }
+    if (r.kind === 'stop') done.stops.add(JSON.stringify(r.stop));
+    if (r.kind !== 'click') continue;
+    if ((r.stop?.tabs || [])[0] === '(rail)') done.discovered = true;
+    done.clicks.add(clickKey(r.stop, r.control));
+    if (r.effect === 'navigated' && r.url) done.reached.push(r.url);
+    if (r.control?.href?.startsWith('/concept2cure')) done.reached.push(r.control.href);
+  }
+  return done;
+}
+const DONE = priorRun();
+
+// The app must answer before a stop is crawled: with it down, every click would be recorded as the app's failure.
+async function requireApp(page) {
+  const up = await page.request.get(`${BASE}/healthz`, { timeout: 10_000 }).then((r) => r.ok()).catch(() => false);
+  if (!up) throw new Error('the app did not answer /healthz; stopping so nothing is recorded against an app that is down');
+}
 // The browser storage just after sign-in. Screens remember UI state there (a collapsed folder, a filter, the last
 // step), so every reopen starts from this snapshot and finds the controls it first listed.
 let FRESH = null;
@@ -181,6 +207,7 @@ async function afterClick(page, bt) {
 
 // One control on a freshly opened stop: click it and record what happened.
 async function clickOne(page, ev, add, stop, c) {
+  if (DONE.clicks.has(clickKey(stop, c))) return;
   await openStop(page, stop);
   const b = await snapshot(page).catch(() => null);
   const bt = await bodyText(page).catch(() => '');
@@ -198,11 +225,16 @@ async function clickOne(page, ev, add, stop, c) {
 }
 
 // One stop: open it, record how it loaded, queue its tabs, and click each control (full projects only).
+function logStop(stop, ev, t0) {
+  const rec = { kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] };
+  if (!DONE.stops.has(JSON.stringify(stop))) fs.appendFileSync(LOG, JSON.stringify(rec) + '\n');
+}
+
 async function crawlStop(page, ev, add, stop) {
+  await requireApp(page);
   ev.errors.length = 0; ev.api.length = 0;
   await openStop(page, stop);
-  const t0 = await bodyText(page).catch(() => '');
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'stop', stop, errors: ev.errors.splice(0), api: ev.api.splice(0), fail: t0.match(FAIL_TEXT) || [], loading: t0.match(LOADING_TEXT) || [] }) + '\n');
+  logStop(stop, ev, await bodyText(page).catch(() => ''));
   if ((stop.tabs || []).length < 2) {
     const tabs = await page.$$eval(TAB_SEL, (ts) => ts.filter((t) => t.getBoundingClientRect().width > 2).map((t) => (t.getAttribute('aria-label') || t.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean)).catch(() => []);
     for (const t of tabs) add(stop.url, [...(stop.tabs || []), t]);
@@ -223,7 +255,8 @@ async function crawlStop(page, ev, add, stop) {
   await login(page);
   FRESH = await page.evaluate(() => ({ l: { ...localStorage }, s: { ...sessionStorage } }));
   const { queue, add } = stopQueue();
-  if (process.env.DISCOVER === '1') await discover(page, ev, add);
+  for (const url of DONE.reached) add(url);
+  if (process.env.DISCOVER === '1' && !DONE.discovered) await discover(page, ev, add);
   let clicks = 0;
   for (let qi = 0; qi < queue.length && qi < Number(process.env.MAXSTOPS || 400); qi++) {
     if (sessionEnded) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'fatal', error: 'session ended (401 on the session read); stopping' }) + '\n'); break; }
