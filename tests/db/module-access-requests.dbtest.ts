@@ -231,7 +231,14 @@ beforeAll(async () => {
     ['memberB', ORG_B, 'member'],
     ['adminB', ORG_B, 'admin'],
     ['owner', ORG_OWNER, 'super_admin'],
-    ['support', ORG_OWNER, 'support'],
+    // Platform support staff, as production designates them: a `support`
+    // platform_role_grants row (below) on an ordinary membership. Since
+    // 2026-10-30 organization_users refuses `support` as a membership role on a
+    // database that did not already hold one (organization_users_role_known,
+    // migrations/20260926_organization_users_own_writes.sql, which keeps
+    // admitting values rows already held), and since 78d316062c (D6,
+    // 2026-10-05) no guard reads it as platform standing.
+    ['support', ORG_OWNER, 'member'],
     // An org admin of A whom the owner has ALSO designated platform staff: the
     // console guard admits them, so only the pure rules stand between them
     // and another workspace's requests on the system-scoped mount.
@@ -259,8 +266,13 @@ beforeAll(async () => {
   await owner.query(
     `INSERT INTO platform_role_grants (user_id, role, granted_by, reason)
      VALUES ($1, 'support', 'dbtd-fixture', $2),
-            ($3, 'super_admin', 'dbtd-fixture', $4)`,
-    [people.staffA.id, why('fixture staff designation'), people.owner.id, why('fixture owner designation')],
+            ($3, 'super_admin', 'dbtd-fixture', $4),
+            ($5, 'support', 'dbtd-fixture', $6)`,
+    [
+      people.staffA.id, why('fixture staff designation'),
+      people.owner.id, why('fixture owner designation'),
+      people.support.id, why('fixture support designation'),
+    ],
   );
 
   // Only now load the server.
@@ -834,11 +846,16 @@ describe('platform owner across workspaces (system-scoped mount)', () => {
     const q = await request(app).get(`${MASTER}/access-requests`).set(auth(people.support));
     expect(q.status).toBe(403);
     expect(q.body.requests).toBeUndefined();
+    // Refused by the queue's own rule (denyQueueRead), not by the console guard:
+    // a refusal from requirePlatformAdmin would mean the support grant above
+    // never took effect, and this case would pass without testing anything.
+    expect(q.body.error).toMatch(/every workspace/i);
     const d = await request(app)
       .post(`${MASTER}/access-requests/${requestB4}/decision`)
       .set(auth(people.support))
       .send({ decision: 'approved', reason: why('support tries') });
     expect(d.status).toBe(403);
+    expect(d.body.error).toMatch(/only an administrator/i);
     const [row] = (await rowsFor(ORG_B, M.theta)).filter((r) => r.id === requestB4);
     expect(row.status).toBe('open');
     expect(await grantFor(ORG_B, M.theta)).toBeNull();
