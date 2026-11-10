@@ -35,6 +35,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 import { FilingLifecycleReference } from './FilingLifecycleReference';
+import { PlanStrategy } from './ProjectObjective';
 import { ProducedBy, producingTask, ProjectProgramPlan, useProjectPyramid } from './PyramidProject';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
@@ -136,6 +137,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
     <div className="pj-stagebody" data-testid="pj-plan">
       {/* What is due for the person, first (THE_PROGRAM §8 item 2). Only for a signed-in person: whose tasks they are
           is the session's, never guessed. */}
+      {/* How the project means to reach its objective, first (THE_PROGRAM §8 item 1). The objective itself is under the
+          project's name, in view on every step. */}
+      {prog && <PlanStrategy programId={pid} canEdit={(prog as { canChange?: boolean }).canChange !== false} />}
       {prog && dueForYou}
       {!prog ? (
         /* The project record is still being read: which plan applies is not known yet. */

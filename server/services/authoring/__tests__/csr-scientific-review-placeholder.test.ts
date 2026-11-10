@@ -84,3 +84,31 @@ describe('one placeholder rule', () => {
     expect(review(`<p>In total, 254 patients were randomized. ${long}</p>`)).toThrow(expect.objectContaining({ message: expect.stringContaining('…]. A CSR is approved') }));
   });
 });
+
+/* Showcase walk, 2026-11-10 (Lumen LMN-201). The engine's own demographics table labels two rows with a unit in
+   square brackets, "Age, mean (SD) [yr]" and "Weight, mean (SD) [kg]" (csr-tabulation-builders.ts). A draft of §11.2
+   that quoted the first was accepted (its figure is the table's cell), and the build then ended "not complete: §11.2
+   still holds a data placeholder". The rule read the engine's unit as missing data. Those two labels are not
+   placeholders; every other bracketed span with a letter still is. */
+describe('the engine table\'s own unit labels are not data placeholders', () => {
+  it.each(['Age, mean (SD) [yr]', 'Weight, mean (SD) [kg]', 'The row "Age, mean (SD) [yr]" reads 48.8 (14.0).'])('%s', (text) => {
+    expect(placeholderIn(text)).toBeNull();
+    expect(hasUnresolvedPlaceholders(text)).toBe(false);
+  });
+
+  it.each(['[N]', '[value]', '[DATA TO BE INSERTED FROM SOURCE RECORDS]', '[yr to be confirmed]', '[kg or lb]', '[Yr]', 'Age [yr] was [N].'])('%s is still a placeholder', (text) => {
+    expect(placeholderIn(text)).not.toBeNull();
+    expect(hasUnresolvedPlaceholders(text)).toBe(true);
+  });
+
+  it('the demographics table the engine builds holds no label the rule reads as a placeholder', async () => {
+    const { buildCSRTables } = await import('../../csr-tabulation-builders');
+    const { readFileSync } = await import('node:fs');
+    const source = JSON.parse(readFileSync('data/seeds/lumen-demo/seed-data/lmn201_synthetic_csr_source_v2.json', 'utf8'));
+    const withWeight = { ...source.studyData, demographics: source.studyData.demographics.map((d: object, i: number) => ({ ...d, weight: 60 + i })) };
+    const tables = buildCSRTables(withWeight) as unknown as Record<string, { headers?: string[]; rows?: string[][] } | undefined>;
+    const labels = Object.values(tables).flatMap(t => [...(t?.headers ?? []), ...(t?.rows ?? []).map(row => row[0])]);
+    expect(labels.some(label => /\[kg\]/.test(label))).toBe(true);
+    expect(labels.filter(label => hasUnresolvedPlaceholders(label))).toEqual([]);
+  });
+});

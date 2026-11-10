@@ -1270,19 +1270,19 @@ router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: 
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const parsed = changePatch.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const editReason = governedReason.safeParse(req.body?.editReason);
+  if (!editReason.success) return clientError(res, 422, 'State why this change request is being edited (a reason of at least 8 characters). Nothing was saved.');
   try {
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) }, requestPgClient(req));
     const refused = row ? null : await changeEditRefusal(orgId, id, requestPgClient(req));
     if (!row) return refused ? clientError(res, 409, refused.message, refused.details) : notFoundInTenant(res, 'Change');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `updateChange` has
-       committed the edit and returned the row, so the edit is not undone here;
-       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    const { edits, ...saved } = row;
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.update',
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: editReason.data,
+      action: 'mdx.qms.change.update', details: { reason: editReason.data, edits },
       resourceType: 'qms_change_control', resourceId: id,
     }, requestConnectable(req));
-    return ok(res, row, { auditTrail });
+    return ok(res, saved, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-update', err); }
 });
 
@@ -1406,16 +1406,16 @@ router.delete('/qms/changes/:id', requireEditorAccess, async (req: Request, res:
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const reason = governedReason.safeParse(req.body?.reason);
+  if (!reason.success) return clientError(res, 422, 'State why the change request is removed (a reason of at least 8 characters). Nothing was changed.');
   try {
     const removed = await deleteChange(orgId, id, requestPgClient(req));
-    if (!removed) return notFoundInTenant(res, 'Change');
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `deleteChange` has
-       already stamped `deleted_at`, and it reported that it matched a row, so
-       the soft-delete stands; `meta.auditTrail` now says whether the §11.10(e)
-       record of who retired the change request exists. */
+    const kept = removed ? null : await changeEditRefusal(orgId, id, requestPgClient(req), 'delete');
+    if (!removed) return kept ? clientError(res, 409, kept.message, kept.details) : notFoundInTenant(res, 'Change');
+    /* WO-16C #133; F1 (L-2): removed only before approval; the §11.10(e) record keeps who removed it and why. */
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.delete',
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: reason.data,
+      action: 'mdx.qms.change.delete', details: { reason: reason.data },
       resourceType: 'qms_change_control', resourceId: id,
     }, requestConnectable(req));
     return ok(res, { id, deleted: true }, { auditTrail });

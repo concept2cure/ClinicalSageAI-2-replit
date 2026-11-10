@@ -268,6 +268,69 @@ export async function assignTask(req: Request, input: AssignmentInput): Promise<
   notifyAssigned(result, title);
   return result;
 }
+// ─── A task's due date, changed (S9; S11's "Use the schedule's date") ───────
+//
+// The same admission as a reassignment (a governed writer, the project open for writing, an unfinished task, never a
+// review route's member), a compare-and-set on the due date the caller saw, and a `task.reschedule` ledger row with
+// the stated reason on the same transaction: either the date and its row are both written, or neither.
+
+export const rescheduleSchema = z.object({
+  action: z.literal('reschedule'),
+  dueDate: z.string().datetime({ offset: true }),
+  /** The due date the caller was shown, or null for none: a task rescheduled meanwhile is refused as stale. */
+  expectedDueDate: z.string().datetime({ offset: true }).nullable(),
+  reason: z.string().trim().min(3).max(1000),
+}).strict();
+export type RescheduleInput = { taskId: string; dueDate: string; expectedDueDate: string | null; reason: string };
+export interface TaskRescheduleResult { taskId: string; dueDate: string; previousDueDate: string | null }
+
+const dueMs = (value: unknown): number | null => (value == null ? null : new Date(value as string | Date).getTime());
+
+async function rescheduleInTx(req: Request, q: RequestSqlClient, input: RescheduleInput): Promise<TaskRescheduleResult> {
+  let ctx: Admission;
+  try { ctx = await admission(req, q, input.taskId, true); }
+  catch (error) {
+    if (error instanceof TaskAssignmentError && error.code === 'TASK_NOT_ASSIGNABLE') {
+      throw new TaskAssignmentError(409, 'TASK_NOT_RESCHEDULABLE', 'Only unfinished tasks in an active project can be given a new due date.');
+    }
+    throw error;
+  }
+  const before = dueMs(ctx.task.due_date);
+  const next = new Date(input.dueDate).getTime();
+  if (before !== dueMs(input.expectedDueDate)) throw stale();
+  if (before === next) throw new TaskAssignmentError(409, 'DUE_DATE_UNCHANGED', 'The task is already due on this date. Nothing was changed.');
+  // A new due date is a new deadline: the due-soon and overdue markers are cleared so the assignee is reminded afresh.
+  const result = await q.query(`/* task-reschedule:update */ UPDATE unified_tasks SET due_date=$1,last_modified_by=$2,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$3 AND organization_id=$4 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING task_id,due_date`,
+    [new Date(next), ctx.actor.userId, ctx.task.id, ctx.organizationId]);
+  if (result.rows.length !== 1) throw stale();
+  const previousDueDate = before === null ? null : new Date(before).toISOString();
+  const dueDate = new Date(next).toISOString();
+  await auditTaskActionInTx(q, { orgId: ctx.organizationId, userId: ctx.actor.userId, command: 'task.reschedule', taskId: input.taskId,
+    payload: { previousDueDate, dueDate }, reason: input.reason, summary: 'Task due date changed' });
+  return { taskId: input.taskId, dueDate, previousDueDate };
+}
+
+/** One due-date change on its own transaction; an unconfirmed commit is said as unknown, never as done. */
+export async function rescheduleTask(req: Request, input: RescheduleInput): Promise<TaskRescheduleResult> {
+  const q = requestPgClient(req);
+  const client = await requestConnectable(req).connect();
+  let began = false; let committing = false;
+  try {
+    await client.query('BEGIN'); began = true;
+    const result = await rescheduleInTx(req, q, input);
+    committing = true; await client.query('COMMIT'); committing = false; began = false;
+    return result;
+  } catch (error) {
+    let uncertain = !began || committing;
+    if (began && !committing) { try { await client.query('ROLLBACK'); } catch { uncertain = true; } }
+    if (uncertain) {
+      try { await q.discard?.(error instanceof Error ? error : new Error('Task reschedule unconfirmed')); } catch { /* Retain unknown outcome. */ }
+      throw new TaskAssignmentUnknown();
+    }
+    throw error;
+  } finally { client.release(); }
+}
+
 export function assignmentFailure(res: Response, error: unknown) {
   if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: 'Invalid task assignment request', code: 'VALIDATION_ERROR' });
   if (error instanceof TaskAssignmentUnknown) return outcomeUnknown(res);

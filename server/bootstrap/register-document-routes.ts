@@ -452,14 +452,10 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Cortex Management routes:', error);
   }
 
-  // ── Folder management ──
-  try {
-    const folderManagementRouter = await import('../routes/folder-management.js');
-    app.use('/api', folderManagementRouter.default);
-    console.log('✅ Folder management routes mounted');
-  } catch (error) {
-    console.error('❌ Failed to mount folder management routes:', error);
-  }
+  /* Folder management (/api/folders, routes/folder-management.js) was retired 2026-11-10 (P-123): organisation-wide
+     folders with no project, no client caller, no audit row and a hard delete. Folders are a project's, made, renamed,
+     moved and removed through its Vault (routes/c2c/project-vault.ts POST /:id/folders…, services/vault/vault-folders.ts),
+     each with a reason and a chained audit row. Pinned by __tests__/security/tenant-isolation-folders.contract.test.ts. */
 
   console.log('✅ Document + Knowledge route family registered');
 }

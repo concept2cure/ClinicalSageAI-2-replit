@@ -264,7 +264,9 @@ beforeAll(async () => {
   const secret = await enrolTotp(mfaId, `${TAG}-mfa-signer@example.invalid`);
   signer = { id: signerId, token: await mintToken(signerId) };
   mfaSigner = { id: mfaId, token: await mintToken(mfaId), secret };
-  const viewerId = await upsertSigner('viewer', 'viewer');
+  // A member: a role that may write (so it passes the routers' role gate, requireEditorAccessForWrites) and
+  // carries no signing authority (DEFAULT_SIGNING_ROLES). A viewer is refused by the role gate before either.
+  const viewerId = await upsertSigner('viewer', 'member');
   viewer = { id: viewerId, token: await mintToken(viewerId) };
 
   const meeting = await owner.query(
@@ -375,7 +377,7 @@ describe('the ceremony refuses before it writes', () => {
 
   it('a member whose role carries no signing authority is refused, with the right password, before it is checked (§11.10(g))', async () => {
     const res = await post(route, 'no-authority', { meaning: 'approval', password: PASSWORD }, viewer.token);
-    expect(res.status, `a viewer signed: ${JSON.stringify(res.body)}`).toBe(403);
+    expect(res.status, `a member without signing authority signed: ${JSON.stringify(res.body)}`).toBe(403);
     expect(res.body.error?.code).toBe('ESIGNATURE_NO_AUTHORITY');
     await expectNothingWritten(route, 'no-authority');
     const { rows } = await owner.query('SELECT failed_login_attempts FROM users WHERE id = $1', [viewer.id]);

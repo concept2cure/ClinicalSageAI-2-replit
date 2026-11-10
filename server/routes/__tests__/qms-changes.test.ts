@@ -23,6 +23,7 @@ vi.mock('../../services/auditService', () => ({
   writeChainedAuditRow: async (_client: unknown, entry: unknown) => logAction(entry),
 }));
 const REASON = 'Impact assessment opened by QA';
+const EDIT = 'Impact widened after the supplier audit.';
 
 import mdxQmsRouter from '../mdx-qms';
 import { computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
@@ -198,21 +199,38 @@ describe('POST /api/mdx/qms/changes/:id/transition — controlled lifecycle', ()
 /* An approved change's content is what its approval signed (change-approval-signature.ts). Until 2026-11-10 the
    PATCH route rewrote it in any state but closed, cancelled and rejected, and a refused edit said "not found". */
 describe('PATCH /api/mdx/qms/changes/:id — content is editable until approval', () => {
-  it('edits a change under assessment, guarded in the statement itself, and records the edit', async () => {
-    query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment', impact_assessment: 'Filter qualification only.' })] });
-    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.' });
+  /* F1 (Part 11 review L-2, 2026-11-10): an edit records its reason and each field before and after (21 CFR
+     11.10(e): a record's change must not obscure what it replaced). Until then the audit row named the change only. */
+  it('edits a change under assessment, guarded in the statement itself, and records the reason and each field before and after', async () => {
+    const before = changeRow({ status: 'under_assessment' });
+    const after = changeRow({ status: 'under_assessment', impact_assessment: 'Filter qualification only.', assessed_by: 7 });
+    query.mockResolvedValueOnce({ rows: [{ ...after, previous: before, current: after }] });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.', editReason: EDIT });
     expect(res.status).toBe(200);
     expect(res.body.data.impact_assessment).toBe('Filter qualification only.');
-    expect(String(query.mock.calls[0][0])).toMatch(/status = ANY\(\$3::text\[\]\)/);
+    expect(res.body.data).not.toHaveProperty('previous');
+    expect(res.body.data).not.toHaveProperty('edits');
+    expect(String(query.mock.calls[0][0])).toMatch(/c\.status = ANY\(\$3::text\[\]\)/);
     expect(query.mock.calls[0][1].slice(0, 3)).toEqual([1, 9, ['proposed', 'under_assessment']]);
-    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.update' }));
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.update', reason: EDIT,
+      details: { reason: EDIT, edits: [
+        { field: 'impact_assessment', before: null, after: 'Filter qualification only.' },
+        { field: 'assessed_by', before: null, after: 7 },
+      ] } }));
+  });
+
+  it('422 without a reason for the edit, reading and writing nothing', async () => {
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.', editReason: 'short' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('State why this change request is being edited (a reason of at least 8 characters). Nothing was saved.');
+    expect(query).not.toHaveBeenCalled();
   });
 
   it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('409 for a change that is %s: its content is fixed', async (status) => {
     query
       .mockResolvedValueOnce({ rows: [] })                          // the guarded update matches nothing
       .mockResolvedValueOnce({ rows: [changeRow({ status })] });    // the change exists, in that state
-    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ implementationPlan: 'Rewritten after approval.' });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ implementationPlan: 'Rewritten after approval.', editReason: EDIT });
     expect(res.status).toBe(409);
     expect(res.body.details).toMatchObject({ code: 'QMS_CHANGE_CONTENT_FIXED', status });
     // The refusal is said only after the tenant read finds the change (an absent one is 404, below).
@@ -225,7 +243,44 @@ describe('PATCH /api/mdx/qms/changes/:id — content is editable until approval'
 
   it('404 for a change this organization does not have', async () => {
     query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
-    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ title: 'Anything' });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ title: 'Anything', editReason: EDIT });
+    expect(res.status).toBe(404);
+  });
+});
+
+/* F1 (Part 11 review L-2, 2026-11-10): DELETE soft-deleted a change in any state, an approved one included, with no
+   reason. A change is removed only before its approval, with a reason recorded; after, it is kept, and is cancelled
+   through its lifecycle. No client calls this route. */
+describe('DELETE /api/mdx/qms/changes/:id — only before approval, with a reason', () => {
+  it('removes a proposed change, guarded in the statement itself, and records why', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Raised twice in error; CC-2026-002 stands.' });
+    expect(res.status).toBe(200);
+    expect(String(query.mock.calls[0][0])).toMatch(/status = ANY\(\$3::text\[\]\)/);
+    expect(query.mock.calls[0][1]).toEqual([1, 9, ['proposed', 'under_assessment']]);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.delete',
+      reason: 'Raised twice in error; CC-2026-002 stands.', details: { reason: 'Raised twice in error; CC-2026-002 stands.' } }));
+  });
+
+  it('422 without a reason, reading and writing nothing', async () => {
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({});
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('State why the change request is removed (a reason of at least 8 characters). Nothing was changed.');
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('409 for a change that is %s: it is kept', async (status) => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [changeRow({ status })] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Tidying the register.' });
+    expect(res.status).toBe(409);
+    expect(res.body.details).toMatchObject({ code: 'QMS_CHANGE_KEPT', status });
+    expect(res.body.error).toContain(`This change is ${status.replace(/_/g, ' ')}, so it is kept on the record. Nothing was removed.`);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a change this organization does not have', async () => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).delete('/api/mdx/qms/changes/1').send({ reason: 'Raised twice in error.' });
     expect(res.status).toBe(404);
   });
 });

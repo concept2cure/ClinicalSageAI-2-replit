@@ -1,0 +1,69 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "startedAt": "2026-11-10T11:30:54.378Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "status": 200,
+      "email": "walk.owner@example.com",
+      "id": "1"
+    },
+    {
+      "name": "project",
+      "id": "5a9e8439-be62-4802-a2f0-f9e7e294bc03",
+      "fresh": true,
+      "scheduledDue": "2027-06-03"
+    },
+    {
+      "name": "1. the Plan step opens with the strategy; the objective is under the name",
+      "strategy": "Strategy\nState the strategy\n\nNo regulatory strategy is recorded yet: how this project will reach its objective.",
+      "objective": "Study may proceed on the IND for WALK-501, with the first-in-human protocol as filed."
+    },
+    {
+      "name": "2. stated through the governed form",
+      "status": 200
+    },
+    {
+      "name": "3. after a reload",
+      "strategy": "Strategy\nEdit\n\n505(b)(1) IND for a first-in-human study. Pre-IND meeting first; CMC and nonclinical packages in parallel; file once the 28-day toxicology report is final.\n\nRecorded with the objective, version 2, Nov 10, 2026.",
+      "version": 2,
+      "history": [
+        [
+          2,
+          "Agreed at the program kickoff"
+        ],
+        [
+          1,
+          "Stated when the project was created."
+        ]
+      ]
+    },
+    {
+      "name": "4. the sheet says the dates differ",
+      "sheet": "Schedule and owner\n\nStarts by May 28, 2027, due Jun 3, 2027 · 5 working days, the engine's typical duration.\n\nAssigned to Founder, due May 27, 2027. The schedule now says Jun 3, 2027.\n\nUse the schedule’s date\nAssign another person",
+      "offered": 1
+    },
+    {
+      "name": "5. moved to the schedule's date",
+      "status": 200,
+      "data": {
+        "taskId": "TASK-1794310272099-c554f981",
+        "dueDate": "2027-06-03T17:00:00.000Z",
+        "previousDueDate": "2027-05-27T17:00:00.000Z"
+      }
+    },
+    {
+      "name": "6. tasking has the new date; the move is no longer offered",
+      "myWork": {
+        "dueDate": "2027-06-03T17:00:00.000Z"
+      },
+      "sheet": "Schedule and owner\n\nStarts by May 28, 2027, due Jun 3, 2027 · 5 working days, the engine's typical duration.\n\nAssigned to Founder, due Jun 3, 2027\n\nAssign another person"
+    },
+    {
+      "name": "7. 390 wide, no horizontal scroll",
+      "overflow": 0
+    }
+  ],
+  "apiErrors": [],
+  "finishedAt": "2026-11-10T11:31:25.986Z"
+}

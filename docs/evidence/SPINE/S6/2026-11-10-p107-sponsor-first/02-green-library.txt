@@ -1,0 +1,12 @@
+# Green: the same cases after the change (real PostgreSQL, RLS on)
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with projects of more than one sponsor and none named, searches nothing and says which to choose from 68
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > with a sponsor named, finds matches in each of its projects, each named with its project, and never anot
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > one project named is inside its own sponsor, so nothing is asked 31ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > a sponsor that is not the caller's is not found; a malformed one, or one given with a project, is refuse
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > lists an earlier version only when asked 24ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > an empty query answers no results and says why 12ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > from inside a project, lists only its sponsor's projects, and names the sponsor 26ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > refuses a project that is not the caller's to scope by, and never widens to it 18ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across a sponsor's projects (critique 15; one sponsor at a time, P-107) > the project search still searches its project only 45ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

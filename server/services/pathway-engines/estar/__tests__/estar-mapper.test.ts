@@ -261,3 +261,15 @@ describe('mapToEstar', () => {
     expect(notPresent.sections.find((s) => s.id === 'device-description')?.present).toBe(false);
   });
 });
+
+/* P-123 (2026-11-10): the 510(k) risk management slot follows FDA's template. Red before: the slot was `always`. */
+describe('what a 510(k) owes for risk management', () => {
+  it('an absent risk management section is reported for a person to confirm, never scored missing, on a 510(k)', async () => {
+    const { mapToEstar: map } = await import('../estar-mapper');
+    const r = map({ leaves: [], type: '510k', flags: {} });
+    expect(r.summary.missingRequired).not.toContain('risk-management');
+    expect(r.summary.checkApplicability).toContain('risk-management');
+    expect(map({ leaves: [], type: 'de_novo', flags: {} }).summary.missingRequired).toContain('risk-management');
+  });
+
+});

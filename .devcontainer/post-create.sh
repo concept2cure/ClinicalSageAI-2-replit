@@ -71,6 +71,39 @@ c2c_install_postgres() {
   c2c_pgvector_present || { c2c_log "BLOCKED: pgvector is not installed for PostgreSQL $C2C_PG_VERSION."; return 1; }
 }
 
+# The system packages the document exports need, which the production image (Dockerfile.optimized) installs and a
+# Codespace's base image does not. Each was found failing in front of a person on the 2026-11-10 showcase pass:
+#   - fonts-noto-core, fonts-noto-cjk: report and bundle PDFs embed Noto (server/services/report-os/pdf/writer.ts);
+#     without them every PDF export in Reporting answers 503 REPORT_PDF_FONTS_UNAVAILABLE.
+#   - libreoffice-writer (with libreoffice-common, fonts-liberation): a document's PDF is converted from its Word
+#     file (server/services/pdf-converter.ts); without it "Download, PDF" in the editor, the controlled PDF export and
+#     a QMS controlled copy answer 503 PDF_RENDERER_UNAVAILABLE.
+#   - libxml2-utils: xmllint checks a compiled eCTD backbone against its DTD (server/services/ectd/xml-validator.ts);
+#     without it Compile says "xmllint not available" on every XML file.
+# The app runs without them, so a failed install is logged and never blocks the start. Each is read when an export
+# runs, so the app is not restarted. Ghostscript, veraPDF and ocrmypdf are not installed here: PDF/A conversion is
+# not required in development (ECTD_REQUIRE_PDFA).
+C2C_REPORT_FONT="${C2C_REPORT_FONT:-/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf}"
+c2c_export_tools_missing() {
+  [[ -f "$C2C_REPORT_FONT" ]] || echo "fonts-noto-core fonts-noto-cjk"
+  command -v libreoffice >/dev/null 2>&1 || echo "libreoffice-writer libreoffice-common fonts-liberation"
+  command -v xmllint >/dev/null 2>&1 || echo "libxml2-utils"
+}
+c2c_install_export_tools() {
+  local pkgs
+  pkgs="$(c2c_export_tools_missing | tr '\n' ' ')"
+  [[ -z "${pkgs// /}" ]] && return 0
+  export DEBIAN_FRONTEND=noninteractive
+  c2c_log "Installing what the document exports need: $pkgs(a few minutes the first time)."
+  # shellcheck disable=SC2086 # a list of package names
+  if c2c_sudo apt-get update -qq && c2c_sudo apt-get install -y -qq --no-install-recommends $pkgs >/dev/null && [[ -z "$(c2c_export_tools_missing)" ]]; then
+    c2c_log "Document export tools installed."
+  else
+    c2c_log "Some document export tools could not be installed ($(c2c_export_tools_missing | tr '\n' ' ')); the exports that need them say they are unavailable. Everything else starts."
+  fi
+  return 0
+}
+
 # Start (creating if needed) the cluster, listening on localhost only. The
 # packaged pg_hba.conf (peer for the postgres OS user, scram-sha-256 on
 # 127.0.0.1) is used unchanged.
@@ -336,6 +369,7 @@ c2c_post_create_main() {
   npm run codespaces:doctor:test
 
   c2c_install_postgres
+  c2c_install_export_tools
   c2c_start_postgres
   c2c_write_state
   c2c_ensure_database

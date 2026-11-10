@@ -169,9 +169,16 @@ export const CONDITIONAL_RULES: Readonly<Record<string, Rule>> = {
     isIn(i.market_status, ['approved'])
       ? refuse('An approved registration states that the product holds a marketing authorization. A person records it from the authority’s decision.')
       : CONFIRM,
+  // The decision rationale is the office's decision column too, and with a
+  // review status the service stamps reviewed_by with whoever said yes
+  // (invention-disclosure-service.ts updateDisclosureTx). Any string counts,
+  // an empty one included: the handler passes every string and the UPDATE
+  // keeps the recorded rationale only for a null, so '' would blank it.
   update_invention_disclosure: i =>
-    isIn(i.status, ['elected', 'patent_filed', 'licensed', 'released', 'abandoned']) || given(i.election_date)
-      ? refuse('Election, filing, licensing, release and abandonment are the tech-transfer office’s Bayh-Dole decisions. A person records them.')
+    isIn(i.status, ['elected', 'patent_filed', 'licensed', 'released', 'abandoned']) ||
+    given(i.election_date) ||
+    typeof i.decision_rationale === 'string'
+      ? refuse('Election, filing, licensing, release and abandonment are the tech-transfer office’s Bayh-Dole decisions, and the decision rationale is the office’s own statement of why. A person records them. Update the disclosure’s other fields without a decision status, election_date or decision_rationale.')
       : CONFIRM,
   update_tmf_artifact_status: i =>
     isIn(i.status, ['final'])

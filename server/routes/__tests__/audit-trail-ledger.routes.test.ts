@@ -517,6 +517,19 @@ describe('GET /api/audit-trail/ledger — Vault acts named in words (J2 human te
     const data = await ledger();
     for (const [action, words] of Object.entries(acts)) expect(entryOf(data, ids[action])?.event, action).toBe(words);
   });
+
+  it('a folder made, renamed, moved or removed is named in words (vault-folders.ts writes no description)', async () => {
+    const acts: Record<string, string> = {
+      'vault.folder.create': 'Folder made',
+      'vault.folder.rename': 'Folder renamed',
+      'vault.folder.move': 'Folder moved',
+      'vault.folder.remove': 'Folder removed',
+    };
+    const ids: Record<string, string> = {};
+    for (const action of Object.keys(acts)) ids[action] = await write(action, 'vault_folder', 'uf:4', {});
+    const data = await ledger();
+    for (const [action, words] of Object.entries(acts)) expect(entryOf(data, ids[action])?.event, action).toBe(words);
+  });
 });
 
 /**

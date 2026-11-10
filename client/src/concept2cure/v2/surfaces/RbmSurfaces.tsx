@@ -45,11 +45,13 @@ export function RbmScore({ v }: { v: number }) {
   return <span className="rbm-score" data-band={rbmBand(v)}>{v}</span>;
 }
 
-/* ── RbmFreshness ── */
+/* ── RbmWhen, RbmFreshness ── */
+/** A recorded time reads as a time, not as the raw ISO string (demo walk, 2026-11-09); '—' and other words pass. */
+export function RbmWhen({ at }: { at: string }) {
+  return /^\d{4}-\d\d-\d\dT/.test(at) ? <GovernedTimestamp value={at} layout="inline" /> : <>{at}</>;
+}
 export function RbmFreshness({ at }: { at: string }) {
-  /* A recorded time reads as a time, not as the raw ISO string (demo walk, 2026-11-09); '—' and other words pass. */
-  const when = /^\d{4}-\d\d-\d\dT/.test(at) ? <GovernedTimestamp value={at} layout="inline" /> : at;
-  return <span className="rbm-fresh">{I.clock}scored {when}</span>;
+  return <span className="rbm-fresh">{I.clock}scored <RbmWhen at={at} /></span>;
 }
 
 /* ── RiskMatrix ── */
