@@ -69,3 +69,40 @@ describe('assessGrounding', () => {
     expect(r.ok).toBe(false);
   });
 });
+
+/* A registered citation, as the saved-document reader renders it for a checker:
+   `[citation: <name>, <locator>]` (authoring-read-render.ts runText). Until
+   2026-11-10 it grounded nothing: no citation pattern matched the label, and
+   the sentence splitter cut it apart at "citation:" before a capital and at
+   "p." before a page number. A typed "[1]" grounded the same claim. */
+describe('a registered citation, as the saved-document reader renders it', () => {
+  it('grounds the claim in its own sentence', () => {
+    const r = assessGrounding('Oral bioavailability of C2C-101 was 62% [citation: Study C2C-101-PK-01 report].');
+    expect(r.totalClaims).toBe(1);
+    expect(r.ok).toBe(true);
+    expect(r.referencedClaims[0].sentence).toContain('[citation: Study C2C-101-PK-01 report]');
+  });
+
+  it.each([
+    ['a colon before a capital', '[citation: Biopharmaceutics: Study report, section 4]'],
+    ['a page locator', '[citation: study report, p. 12]'],
+    ['a sentence end inside the name', '[citation: Report no. 7. Final version]'],
+  ])('is one token to the sentence splitter, with %s in its label', (_what, label) => {
+    const r = assessGrounding(`Oral bioavailability of C2C-101 was 62% ${label}. Clearance fell by 30%.`);
+    expect(r.referencedClaims.map(c => c.sentence)).toEqual([
+      `Oral bioavailability of C2C-101 was 62% ${label}.`,
+      'Clearance fell by 30%.',
+    ]);
+    expect(r.referencedClaims.map(c => c.hasCitation)).toEqual([true, false]);
+  });
+
+  it('does not ground a claim in another sentence', () => {
+    const r = assessGrounding('Oral bioavailability of C2C-101 was 62%. The study is described elsewhere [citation: Study report].');
+    expect(r.ungroundedClaims.map(c => c.sentence)).toEqual(['Oral bioavailability of C2C-101 was 62%.']);
+  });
+
+  it('an unclosed or empty label grounds nothing', () => {
+    expect(assessGrounding('Oral bioavailability of C2C-101 was 62% [citation: Study report.').ok).toBe(false);
+    expect(assessGrounding('Oral bioavailability of C2C-101 was 62% [citation: ].').ok).toBe(false);
+  });
+});
