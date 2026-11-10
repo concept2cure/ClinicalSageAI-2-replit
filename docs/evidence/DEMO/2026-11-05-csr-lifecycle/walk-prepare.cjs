@@ -6,6 +6,7 @@ const {
   state, expect, sleep, saveState, shot, toTop, step, api, retrying, waitFor,
   openNewDocument, csrEntries, openCsr, checkCsrCatalog, openVersions,
 } = require('./walk-common.cjs');
+const { prepareIdentity } = require('./walk-identity.cjs');
 
 // ---------------------------------------------------------------- prepare: project
 
@@ -557,6 +558,7 @@ async function prepareCompile() {
 
 async function prepare() {
   await step('project: found or created through New project', prepareProject, { critical: true, page: PEOPLE.author.page });
+  await step('IND: the open IND\'s number and its sponsor, recorded (fictional; P-115)', prepareIdentity, { page: PEOPLE.author.page });
   await step('Vault: upload the study files and the manifest (POST /api/vault/ingest)', prepareUploads, { critical: true, page: PEOPLE.author.page });
   await step('Vault: send, review-sign and approve each of the seven files (three people)', prepareApprovals, { critical: true, page: PEOPLE.author.page });
   await step('Editor: New document → M5 lists the CSR once (F1)', checkCsrCatalog, { page: PEOPLE.author.page });

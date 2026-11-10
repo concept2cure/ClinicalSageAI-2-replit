@@ -29,7 +29,7 @@ import { must, findDemo, sha256, connectSigner, makeMultiPagePdfBuffer } from '.
 import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, rowsOf, latin1, probe, finding } from './mdx-shared.mjs';
 import { qmsDocs, seedQms } from './mdx-qms.mjs';
-import { makeTally } from './biotech-shared.mjs';
+import { makeTally, pastReview } from './biotech-shared.mjs';
 import { ensureTasks } from './work-areas.mjs';
 
 /** NeuroPanel-Dx's 510(k) work on the task board (fictional device; planning values). */
@@ -198,10 +198,12 @@ const reviewerOf = (signer, identity) =>
     ? { id: Number(signer.userId), name: signer.session.user?.displayName ?? signer.email, email: signer.email }
     : { id: Number(identity.userId), name: identity.email, email: identity.email };
 
-async function ensureReviewRequested({ api }, docId, reviewer) {
-  const reviews = must(await api('GET', `/api/authoring/documents/${docId}/reviews`), 200, 'list reviews').reviews ?? [];
+export async function ensureReviewRequested({ api }, doc, reviewer) {
+  const reviews = must(await api('GET', `/api/authoring/documents/${doc.id}/reviews`), 200, 'list reviews').reviews ?? [];
   if (reviews.some((x) => x.reviewer_email === reviewer.email)) return false;
-  must(await api('POST', `/api/authoring/documents/${docId}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
+  // A previous run took it past review; the server refuses a request on it (AUTHORING_DOCUMENT_IMMUTABLE).
+  if (pastReview(doc.status)) return false;
+  must(await api('POST', `/api/authoring/documents/${doc.id}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
   return true;
 }
 
@@ -233,7 +235,7 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   // Independent review: the server refuses the author as their own reviewer
   // (REVIEWER_IS_AUTHOR), so without a second person review and freeze wait.
   if (!signer) return `review and freeze not executed — ${SIGNER_ABSENT}`;
-  const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
+  const requested = await ensureReviewRequested({ api }, doc, reviewer);
   const review = await signReview({ run }, doc, signer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
@@ -340,7 +342,7 @@ async function seedAuthoring(ctx, programId, signer) {
   await run.step('Authoring: Cybersecurity and Interoperability Summary (review requested)', async () => {
     out.cyber = await ensureAuthoringDoc(ctx, AUTHORING.cyber, programId);
     // Independent review needs a second person (REVIEWER_IS_AUTHOR otherwise).
-    if (signer) await ensureReviewRequested(ctx, out.cyber.id, reviewer);
+    if (signer) await ensureReviewRequested(ctx, out.cyber, reviewer);
     run.record('authoring.cyber', { id: out.cyber.id, title: out.cyber.title, status: out.cyber.status || 'DRAFT', created: out.cyber.created, boundToProgram: out.cyber.bound, sections: out.cyber.sections.map((s) => s.code), reviewRequestedFrom: signer ? reviewer.email : null });
     return `${out.cyber.id} (${out.cyber.sections.length} sections), ${signer ? `review → ${reviewer.email}` : `review ${SIGNER_ABSENT}`}`;
   });

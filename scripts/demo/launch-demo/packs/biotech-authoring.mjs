@@ -9,7 +9,7 @@
  */
 import { must } from '../lib.mjs';
 import { AUTHORING_DOCS, STUDY, T, findDemoByTitle, inDays } from './biotech-content.mjs';
-import { NOT_EXECUTED_NO_SIGNER, asArray, uuidRe } from './biotech-shared.mjs';
+import { NOT_EXECUTED_NO_SIGNER, asArray, pastReview, uuidRe } from './biotech-shared.mjs';
 
 /** Create the document in the program. A document belongs to a project (PF-07): it is never created org-wide. */
 async function createDoc({ api }, program, spec) {
@@ -93,7 +93,7 @@ function reviewerFor({ me, signer }) {
     : { id: Number(me.id), name: me.displayName ?? me.email, email: me.email };
 }
 
-async function ensureReview(ctx, spec, docRec) {
+export async function ensureReview(ctx, spec, docRec) {
   const { api, tally } = ctx;
   // Independent review: the server refuses the author as their own reviewer
   // (REVIEWER_IS_AUTHOR). Without a second person nothing is requested.
@@ -102,7 +102,12 @@ async function ensureReview(ctx, spec, docRec) {
   const rows = asArray(must(await api('GET', `/api/authoring/documents/${docRec.id}/reviews`), 200, `reviews ${spec.key}`), 'reviews', 'data');
   let pending = rows.find((x) => x.reviewer_email === reviewer.email) || null;
   if (pending) tally.found('authoring-review-request');
-  else {
+  else if (pastReview(docRec.status)) {
+    // A previous run took it past review; the server refuses a request on it (AUTHORING_DOCUMENT_IMMUTABLE).
+    tally.found('authoring-review-request');
+    docRec.review = { reviewer: null, status: docRec.status };
+    return `already ${String(docRec.status).toLowerCase()} on a previous run; no review requested`;
+  } else {
     const j = must(await api('POST', `/api/authoring/documents/${docRec.id}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the synopsis for scientific review' }), [200, 201], `request-review ${spec.key}`);
     pending = (j.reviews ?? []).find((x) => x.reviewer_email === reviewer.email) || null;
     if (!pending) throw new Error(`request-review ${spec.key}: reviewer not recorded — ${JSON.stringify(j).slice(0, 200)}`);

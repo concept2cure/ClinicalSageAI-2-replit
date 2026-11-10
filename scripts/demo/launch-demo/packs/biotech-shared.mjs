@@ -8,6 +8,11 @@ import { MANIFEST_ROOT } from '../lib.mjs';
 import { PACK } from './biotech-content.mjs';
 
 export const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Document statuses the server neither edits nor sends for review (server/services/authoring/authoring-permissions.ts
+ *  IMMUTABLE_DOCUMENT_STATUSES). A document a previous run left in one is past review: a re-run finds it. */
+const PAST_REVIEW = new Set(['APPROVED', 'FROZEN', 'LOCKED', 'SUBMITTED', 'EFFECTIVE', 'SUPERSEDED', 'OBSOLETE', 'ARCHIVED']);
+export const pastReview = (status) => PAST_REVIEW.has(String(status ?? '').trim().toUpperCase());
+
 export const NOT_EXECUTED_NO_SIGNER = 'not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)';
 
 /** The array a list route answered with, whatever key it used. */
