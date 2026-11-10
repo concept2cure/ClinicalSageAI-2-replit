@@ -75,7 +75,7 @@ const ASK_STARTER: Record<QualityTab, string> = {
     'and where current-release personal acknowledgements are missing.',
   change:
     'Give me a read-out on change control — what is awaiting approval, what is overdue for implementation, ' +
-    'and which linked deviations or CAPAs are still open.',
+    'and which linked deviations or CAPAs are still open, ranked by risk.',
   ...QMS_RECORD_ASK,
 };
 
@@ -89,22 +89,28 @@ function inSentence(label: string): string {
   return label.split(' ').map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
 }
 
-/** The change-control health check, unchanged from the Change control head's button it replaces. */
-export const HEALTH_CHECK_PROMPT =
-  'Run a change-control health check — show every change overdue for implementation, every one ' +
-  'awaiting approval, and any linked deviation or CAPA that is still open, ranked by risk.';
+/**
+ * The change-control procedure's explanation, unchanged from the "Explain the procedure" button in the guidance box
+ * under the change log, which D7-B retired (2026-11-10). AnA explains the procedure; a person's read-and-understood
+ * acknowledgement is theirs, in the SOP register.
+ */
+export const CHANGE_PROCEDURE_PROMPT =
+  'Explain how to raise a change request in this quality system. Explain each step of the ' +
+  'change-control procedure, what makes a change minor, major or critical, and what a good impact ' +
+  'assessment looks like. Personal read-and-understood acknowledgements are recorded by the signed-in reader in the SOP register.';
 
 /**
  * AnA's three starters (D7-B step 3): the tab's read-out, the pre-inspection
- * check, and the training gaps. On Change control the third is its health
- * check, which was that tab's own "Ask AnA" button.
+ * check, and the training gaps. On Change control the third explains the
+ * change procedure: its read-out already asks what the retired health check
+ * asked (awaiting approval, overdue, open links, ranked by risk).
  */
 export function qualityStarters(tab: QualityTab): { label: string; prompt: string }[] {
   return [
     { label: `Give me a read-out on ${inSentence(HERE[tab])}`, prompt: ASK_STARTER[tab] },
     { label: 'Run a pre-inspection check', prompt: PRE_INSPECTION_PROMPT },
     tab === 'change'
-      ? { label: 'Run a change-control health check', prompt: HEALTH_CHECK_PROMPT }
+      ? { label: 'Explain the change procedure', prompt: CHANGE_PROCEDURE_PROMPT }
       : { label: 'Where is training missing?', prompt: 'Which controlled documents have missing read-and-understood acknowledgements, and for whom?' },
   ];
 }

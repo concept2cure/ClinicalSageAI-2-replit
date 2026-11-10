@@ -37,7 +37,7 @@
 
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, within } from '@testing-library/react';
 
 vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY: FIXTURE_SUMMARY } = await import('./changeRows');
@@ -78,11 +78,18 @@ describe('ChangeControl — the change-control log', () => {
     expect(screen.getByText('Critical')).toBeTruthy();
   });
 
-  it('renders the lifecycle flowchart with a node per stage', () => {
-    render(<Harness onAsk={() => {}} />);
-    // Each flow node is a button whose accessible name carries the stage + count.
-    expect(screen.getByRole('button', { name: /Proposed: 1 change/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Verification: 1 change/ })).toBeTruthy();
+  // D7-B (2026-11-10): the lifecycle is the log's stage filter, one .seg, not a box of six count tiles.
+  it('filters by lifecycle stage with one segmented control whose items carry the stage and its count', () => {
+    const { container } = render(<Harness onAsk={() => {}} />);
+    const stages = screen.getByRole('group', { name: 'Lifecycle stage' });
+    expect(stages.classList.contains('seg')).toBe(true);
+    expect(within(stages).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true');
+    // Each stage is a button whose accessible name carries the stage + count.
+    expect(within(stages).getByRole('button', { name: /Proposed: 1 change/ })).toBeTruthy();
+    expect(within(stages).getByRole('button', { name: /Verification: 1 change/ })).toBeTruthy();
+    expect(within(stages).getByRole('button', { name: /Rejected: 0 changes/ })).toBeTruthy();
+    expect(container.querySelector('.qcc-node, .qcc-flow, .qcc-offramp')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Explain the pipeline|Clear filter/ })).toBeNull();
   });
 
   it('filters the log when a flowchart stage is selected', () => {
@@ -94,6 +101,9 @@ describe('ChangeControl — the change-control log', () => {
     // Now only the proposed change remains in the log.
     expect(screen.getByText('CC-2026-001')).toBeTruthy();
     expect(screen.queryByText('CC-2026-014')).toBeNull();
+    // "All" is the clear.
+    fireEvent.click(within(screen.getByRole('group', { name: 'Lifecycle stage' })).getByRole('button', { name: 'All' }));
+    expect(screen.getByText('CC-2026-014')).toBeTruthy();
   });
 
   it('expands a change to its linked deviation / validation records', () => {
@@ -113,13 +123,17 @@ describe('ChangeControl — the change-control log', () => {
     expect(onAsk).not.toHaveBeenCalled();
   });
 
-  it('explains raising changes without asking AnA to attest for a person', () => {
+  // D7-B: the procedure is a closed disclosure at the foot of the log, not a box with its own AnA buttons;
+  // "Explain the procedure" is the Change control tab's third starter (QualityWorkArea.test.tsx).
+  it('keeps how a change is raised in a closed disclosure under the log, with no AnA button of its own', () => {
     const onAsk = vi.fn();
-    render(<Harness onAsk={onAsk} />);
-    fireEvent.click(screen.getByRole('button', { name: /Explain the procedure/ }));
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(onAsk.mock.calls[0][0]).toMatch(/how to raise a change request/i);
-    expect(onAsk.mock.calls[0][0]).not.toMatch(/quiz me|record read-and-understood training/i);
+    const { container } = render(<Harness onAsk={onAsk} />);
+    const how = screen.getByText('How a change is raised').closest('details') as HTMLDetailsElement;
+    expect(how.open).toBe(false);
+    expect(how.textContent).toMatch(/Route for independent approval, implement, then verify/);
+    expect(screen.queryByRole('button', { name: /Explain the procedure|Find the controlled procedure/ })).toBeNull();
+    expect(container.querySelector('.qcc-train')).toBeNull();
+    expect(onAsk).not.toHaveBeenCalled();
   });
 
   /* "opens a change-control form in the editor via AnA" pinned the defect the
