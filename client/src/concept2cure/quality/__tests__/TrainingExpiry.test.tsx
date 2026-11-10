@@ -90,4 +90,24 @@ describe('Training lapsing soon', () => {
     render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
     expect(screen.getByText('Training expiry could not be read')).toBeTruthy();
   });
+
+  /* Quality review, 2026-11-10: a member who sees only their own rows was told "No one assigned has…"; a document the
+     server could not assess, or the document cap, still allowed the all-clear. */
+  it('speaks for the reader alone when the read was their own rows', () => {
+    H.reads[PATH] = { data: { data: [], meta: { scope: 'own', unassessed: 0, documentsCapped: false } }, loading: false, error: null };
+    const { container } = render(<TrainingExpiry assignment={{ assigned: 1, noActiveAssignees: 0 }} />);
+    expect(container.textContent).toContain('You have no training overdue, due or lapsing in the next 60 days.');
+    expect(container.textContent).toContain('Your training: overdue, or due or lapsing in the next 60 days');
+    expect(container.textContent).not.toContain('No one assigned');
+  });
+
+  it('gives no all-clear over documents it could not assess, and says so', () => {
+    H.reads[PATH] = { data: { data: [], meta: { scope: 'everyone', unassessed: 2, documentsCapped: true } }, loading: false, error: null };
+    const { container } = render(<TrainingExpiry assignment={{ assigned: 3, noActiveAssignees: 0 }} />);
+    expect(screen.getByTestId('training-expiry-unassessed').textContent)
+      .toBe('2 assigned documents were not assessed: their released text cannot be read.');
+    expect(screen.getByTestId('training-expiry-capped').textContent).toBe('Only the first 200 trainable documents were read.');
+    expect(container.textContent).not.toMatch(/No one assigned has training/);
+  });
 });
+

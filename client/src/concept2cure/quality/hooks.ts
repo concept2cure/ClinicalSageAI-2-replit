@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { scopedPath, useQualityScope } from './registerContext';
+import { scopedPath, useAnswerOf, useQualityScope } from './registerContext';
 import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow, TrainingSummary } from './data';
 import {adaptDoc,adaptPeriodicReview,nextReviewDueOf,type ServerDoc} from './qmsDocumentRecord';
 import { listOf } from './qmsList';
@@ -29,10 +29,11 @@ const DOCS_PATH = '/api/mdx/qms/documents';
 export function useSopRegister() {
   /* The open project's controlled documents: those authored in it (C14; mdx-qms.ts GET /qms/documents). */
   const path = scopedPath(DOCS_PATH, useQualityScope().programId);
-  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
+  const { data: raw, loading, error, failure, refresh } = useFetchJson<unknown>(path);
+  const data = useAnswerOf(path, raw);
   const rows = useMemo(() => listOf<ServerDoc>(data), [data]);
   const docs = useMemo<QmsDoc[] | null>(() => rows?.map(adaptDoc) ?? null, [rows]);
-  return { docs, loading, error: error ?? shapeError(path, data, rows), failure, refresh };
+  return { docs, loading: loading || (raw != null && data == null), error: error ?? shapeError(path, data, rows), failure, refresh };
 }
 
 /** Quality system template family — GET /api/mdx/qms/templates. */
@@ -155,10 +156,15 @@ export function useTrainingExpiring(withinDays: number) {
   const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<unknown>(data), [data]);
   const rows = useMemo(() => (raw && raw.every(isExpiryRow) ? raw : null), [raw]);
-  const truncated = (data as { meta?: { truncated?: unknown } } | null)?.meta?.truncated === true;
+  const meta = (data as { meta?: { truncated?: unknown; scope?: unknown; unassessed?: unknown; documentsCapped?: unknown } } | null)?.meta;
+  const truncated = meta?.truncated === true;
+  /* Whose rows these are, and what the server could not assess, so the view's all-clear says only what was read. */
+  const scope: 'everyone' | 'own' = meta?.scope === 'own' ? 'own' : 'everyone';
+  const unassessed = typeof meta?.unassessed === 'number' ? meta.unassessed : 0;
+  const documentsCapped = meta?.documentsCapped === true;
   const unreadable = data != null && rows === null ? `unexpected response shape for ${path}` : null;
   const failed = !loading && (error != null || unreadable != null);
-  return { rows: loading || failed ? null : rows, truncated, failed, error: error ?? unreadable, failure, refresh };
+  return { rows: loading || failed ? null : rows, truncated, scope, unassessed, documentsCapped, failed, error: error ?? unreadable, failure, refresh };
 }
 
 /* ── Job roles and training assignments (P-49; design §3.12) ──

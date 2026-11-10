@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/cmc/module3-os/sections/78731580-7719-4562-985d-a412edebff5a/3.2.A.1",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/6270d978-aff3-43f0-ad87-1e6726350bf8/3.2.A.1",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 22,
+    "durationMs": 43,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -22,7 +22,7 @@
         "stale": false,
         "staleReason": null,
         "compiledHash": "d39b3b669f0dddcae73fbb0ec25d16056958b8e21ad93225af94310f138b3037",
-        "updatedAt": "2026-11-10T03:39:29.718Z",
+        "updatedAt": "2026-11-10T13:06:44.033Z",
         "completeness": 50,
         "missingInputs": [
           "containerDescription"
@@ -60,13 +60,13 @@
         "lineage": [
           {
             "sourceType": "drug_product",
-            "sourceKey": "drug_product:11",
+            "sourceKey": "drug_product:15",
             "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8",
             "changedSinceCompile": false
           },
           {
             "sourceType": "drug_substance",
-            "sourceKey": "drug_substance:38",
+            "sourceKey": "drug_substance:50",
             "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e",
             "changedSinceCompile": false
           }

@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "901df78c-e7af-45d0-ab6f-fa02598aca4a",
+      "projectId": "5b75821d-5851-4f0f-99c4-ca7f7a3de3af",
       "substanceName": "Q1E-unreadable-DS",
       "modality": "small_molecule",
       "status": "development",
@@ -18,14 +18,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 30,
+    "durationMs": 35,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 45,
+        "id": 58,
         "organizationId": 2,
-        "projectId": "901df78c-e7af-45d0-ab6f-fa02598aca4a",
+        "projectId": "5b75821d-5851-4f0f-99c4-ca7f7a3de3af",
         "substanceName": "Q1E-unreadable-DS",
         "structuralFormula": null,
         "molecularFormula": null,
@@ -47,8 +47,8 @@
         "tseStatus": null,
         "status": "development",
         "developmentPhase": "phase1",
-        "createdAt": "2026-11-10T03:45:35.950Z",
-        "updatedAt": "2026-11-10T03:45:35.950Z"
+        "createdAt": "2026-11-10T13:26:06.567Z",
+        "updatedAt": "2026-11-10T13:26:06.567Z"
       },
       "module3Linked": true
     }

@@ -35,11 +35,8 @@ export function useControlledDocumentTarget(id?:string,requestKey?:number) {
    again that cannot change it; the notices are the product's panels, and the record opens in the one drawer. */
 export function ControlledDocumentTargetStatus({target,editing,onRevise}:{target:ReturnType<typeof useControlledDocumentTarget>;editing:boolean;onRevise:(d:QmsDoc)=>void}) {
   if(target.error){
-    // A 404 is said here in the document's words: the shared refusal words name "this project" as what was not found.
-    const missing=target.read?.status===404;
-    return <ErrorState title={missing?'Not found in your organization':'The selected controlled document could not be opened'}
-      message={missing?'This controlled document was not found in your organization, so it was not opened.':target.error}
-      read={missing?undefined:target.read} readWhat="this controlled document" retry={missing?undefined:target.retry} onDismiss={target.clear} testId="qms-target-failed" />;
+    return <ErrorState title="The selected controlled document could not be opened" message={target.error} read={target.read}
+      readWhat="this controlled document" readSubject="this controlled document" retry={target.retry} onDismiss={target.clear} testId="qms-target-failed" />;
   }
   if(target.loading)return <EmptyState title="Opening the selected controlled document…" busy />;
   const d=target.document;if(!d)return null;

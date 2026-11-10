@@ -48,7 +48,7 @@ export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate, on
       {/* A refusal (a role, no editing copy) is said without a Try again that cannot change it; its text can still be read. */}
       <ErrorState title="The controlled document could not be opened" message={error}
         retry={failure && (failure.status === 403 || failure.status === 409) ? undefined : () => void load()}
-        read={failure ?? undefined} readWhat="this controlled document's editing copy" />
+        read={failure ?? undefined} readWhat="its editing copy" readSubject="this controlled document" />
       {onReadText && failure && (failure.status === 403 || failure.status === 409) && (
         <button type="button" className="btn ghost small" onClick={onReadText}>Read its controlled text</button>
       )}

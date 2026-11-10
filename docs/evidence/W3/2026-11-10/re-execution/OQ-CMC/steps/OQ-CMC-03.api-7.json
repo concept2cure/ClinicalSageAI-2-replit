@@ -6,7 +6,7 @@
     "identity": null,
     "body": {
       "productName": "BX-701",
-      "batchNumber": "B-20261110033923",
+      "batchNumber": "B-20261110130629",
       "dosageForm": "solution",
       "scope": "DS",
       "climaticZone": "II",
@@ -28,23 +28,23 @@
       ],
       "status": "ACTIVE",
       "startDate": "2026-01-01T00:00:00.000Z",
-      "projectId": "78731580-7719-4562-985d-a412edebff5a"
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 33,
+    "durationMs": 49,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 48,
+        "id": 64,
         "organizationId": 2,
-        "projectId": "78731580-7719-4562-985d-a412edebff5a",
+        "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
         "studyTitle": null,
         "productName": "BX-701",
-        "batchNumber": "B-20261110033923",
+        "batchNumber": "B-20261110130629",
         "dosageForm": "solution",
         "strength": null,
         "scope": "DS",
@@ -75,8 +75,8 @@
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T03:39:25.920Z",
-        "updatedAt": "2026-11-10T03:39:25.920Z"
+        "createdAt": "2026-11-10T13:06:31.681Z",
+        "updatedAt": "2026-11-10T13:06:31.681Z"
       },
       "module3Linked": true
     }

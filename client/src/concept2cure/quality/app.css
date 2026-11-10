@@ -89,7 +89,11 @@
 /* C15: an act inside a drawer (Rename, Add a person, Withdraw) ends in its own actions, as the drawer's footer does,
    and they are 44px on a phone, as the footer's are (journey-v2.css). */
 .qms-train-act .ph-acts { justify-content: flex-end; margin-top: var(--space-1); }
-@media (max-width: 640px) { .qms-train-act .de-btn { min-height: 44px; } }
+@media (max-width: 640px) {
+  .qms-train-act .de-btn { min-height: 44px; }
+  /* A small button or a single choice inside a drawer is a touch target too (Quality review, 2026-11-10). */
+  .qms-shell :is(.de-body .btn.small, .vr-member .btn.small, .de-seg-opt) { min-height: 44px; }
+}
 
 /* Native controlled-text reader; shared dialog behaviour owns focus/Escape. */
 .qms-training-content section + section { margin-top: var(--space-6); }

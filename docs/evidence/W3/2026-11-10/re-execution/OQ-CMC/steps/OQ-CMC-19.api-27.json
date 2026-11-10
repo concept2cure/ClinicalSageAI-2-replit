@@ -1,0 +1,295 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/guard/final-export/7f94ec32-9a96-4b06-a9f2-409507e041dc",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 79,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "message": "Final export gate passed",
+      "canonicalGovernedState": {
+        "context": {
+          "organizationId": "2",
+          "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "documentType": "cmc_module3",
+          "ctdSection": "3",
+          "intendedAction": "export",
+          "actorId": "1",
+          "requestId": "fe33a4d3-7146-4e49-aae9-eb7ad76dbffb",
+          "timestamp": "2026-11-10T13:19:01.026Z"
+        },
+        "decision": {
+          "decisionId": "",
+          "outcome": "review",
+          "intent": "export",
+          "rationale": "Export gate has insufficient context — manual review recommended",
+          "blockerCount": 0,
+          "warningCount": 3,
+          "consequenceCount": 3,
+          "timestamp": "2026-11-10T13:19:01.027Z",
+          "decisionReference": {
+            "decisionId": "cdad6e5d-764d-4218-8513-fa2528d1362c",
+            "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "intent": "export",
+            "outcome": "review",
+            "actorId": "1",
+            "timestamp": "2026-11-10T13:19:01.027Z"
+          }
+        },
+        "readinessState": {
+          "level": "publish_ready",
+          "score": 60,
+          "blockers": [],
+          "warnings": [
+            {
+              "id": "wrn_36892131-e590-4d27-a05d-9eade689cd07",
+              "category": "evidence_incomplete",
+              "severity": "warning",
+              "message": "Evidence is missing or incomplete",
+              "source": "readiness-gates"
+            },
+            {
+              "id": "wrn_879df3c2-793d-4292-8ddb-6709614c390b",
+              "category": "low_completeness",
+              "severity": "warning",
+              "message": "Completeness score is 1% — below recommended threshold",
+              "source": "readiness-gates"
+            },
+            {
+              "id": "wrn_bf08ea02-bd9d-4cfd-a3fb-2d1c98a83cb9",
+              "category": "incomplete_reviews",
+              "severity": "warning",
+              "message": "0/1 required reviews completed",
+              "source": "readiness-gates"
+            }
+          ],
+          "evaluatedAt": "2026-11-10T13:19:01.026Z",
+          "evaluatedBy": "readiness-gates@1.0.0",
+          "confidence": "high"
+        },
+        "blockers": [],
+        "warnings": [
+          {
+            "id": "wrn_36892131-e590-4d27-a05d-9eade689cd07",
+            "category": "evidence_incomplete",
+            "severity": "warning",
+            "message": "Evidence is missing or incomplete",
+            "source": "readiness-gates"
+          },
+          {
+            "id": "wrn_879df3c2-793d-4292-8ddb-6709614c390b",
+            "category": "low_completeness",
+            "severity": "warning",
+            "message": "Completeness score is 1% — below recommended threshold",
+            "source": "readiness-gates"
+          },
+          {
+            "id": "wrn_bf08ea02-bd9d-4cfd-a3fb-2d1c98a83cb9",
+            "category": "incomplete_reviews",
+            "severity": "warning",
+            "message": "0/1 required reviews completed",
+            "source": "readiness-gates"
+          }
+        ],
+        "placementDecision": {
+          "outcome": "allowed",
+          "canonicalDestination": "3",
+          "allowedDestinations": [
+            "3"
+          ],
+          "missingMetadata": [
+            "regulatorBody",
+            "submissionType"
+          ],
+          "fallbackAcceptable": true
+        },
+        "exportDecision": {
+          "outcome": "insufficient_context",
+          "gateChecks": [
+            {
+              "checkId": "export_content_present",
+              "checkName": "Content Present",
+              "passed": true,
+              "detail": "Document has content",
+              "required": true
+            },
+            {
+              "checkId": "export_placement_present",
+              "checkName": "CTD Placement",
+              "passed": true,
+              "detail": "Placed at 3",
+              "required": true
+            },
+            {
+              "checkId": "export_approval_status",
+              "checkName": "Approval Status",
+              "passed": true,
+              "detail": "Approved",
+              "required": true
+            },
+            {
+              "checkId": "export_provenance_complete",
+              "checkName": "Provenance Chain",
+              "passed": true,
+              "detail": "Provenance chain is complete",
+              "required": true
+            },
+            {
+              "checkId": "export_no_contradictions",
+              "checkName": "No Unresolved Contradictions",
+              "passed": true,
+              "detail": "No unresolved contradictions",
+              "required": true
+            },
+            {
+              "checkId": "export_not_stale",
+              "checkName": "Not Stale",
+              "passed": true,
+              "detail": "Document is current",
+              "required": true
+            },
+            {
+              "checkId": "export_human_review",
+              "checkName": "Human Review (AI Content)",
+              "passed": true,
+              "detail": "Recorded as not AI-generated — human review of AI content does not apply",
+              "required": true
+            },
+            {
+              "checkId": "export_regulatory_context",
+              "checkName": "Regulatory Context",
+              "passed": false,
+              "detail": "No regulatory body specified",
+              "required": false
+            }
+          ],
+          "blockingReasons": [],
+          "remediationSteps": []
+        },
+        "publishDecision": {
+          "outcome": "insufficient_context",
+          "gateChecks": [],
+          "blockingReasons": [],
+          "remediationSteps": [],
+          "dispatchReady": false
+        },
+        "nextRecommendedAction": "Document is ready for publishing",
+        "downstreamConsequences": [
+          {
+            "consequenceType": "update_readiness_score",
+            "description": "Readiness evaluated: publish_ready (score: 60/100, confidence: high)",
+            "targetObjectType": "project",
+            "targetObjectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+            "severity": "info",
+            "actionRequired": false,
+            "autoExecutable": true,
+            "executed": false
+          },
+          {
+            "consequenceType": "mark_submission_item_not_dispatch_ready",
+            "description": "Submission item is not dispatch-ready",
+            "targetObjectType": "submission_item",
+            "severity": "major",
+            "actionRequired": true,
+            "autoExecutable": true,
+            "executed": false
+          },
+          {
+            "consequenceType": "create_audit_reference",
+            "description": "Governed decision recorded for export on new document",
+            "targetObjectType": "artifact",
+            "severity": "info",
+            "actionRequired": false,
+            "autoExecutable": true,
+            "executed": false
+          }
+        ],
+        "decisionReference": {
+          "decisionId": "cdad6e5d-764d-4218-8513-fa2528d1362c",
+          "projectId": "7f94ec32-9a96-4b06-a9f2-409507e041dc",
+          "intent": "export",
+          "outcome": "review",
+          "actorId": "1",
+          "timestamp": "2026-11-10T13:19:01.027Z"
+        },
+        "uiPresentationHints": {
+          "readinessBadge": {
+            "label": "Publish Ready",
+            "tone": "green"
+          },
+          "exportBadge": {
+            "label": "insufficient_context",
+            "tone": "stone"
+          },
+          "publishBadge": {
+            "label": "insufficient_context",
+            "tone": "stone"
+          },
+          "topBlockerMessages": [],
+          "topWarningMessages": [
+            "Evidence is missing or incomplete",
+            "Completeness score is 1% — below recommended threshold",
+            "0/1 required reviews completed"
+          ],
+          "nextRecommendedAction": "Document is ready for publishing",
+          "placementLabel": "allowed (3)",
+          "decisionOutcomeLabel": "review"
+        },
+        "rimContextHints": {
+          "readinessLevel": "publish_ready",
+          "blockerCategories": [],
+          "warningCategories": [
+            "evidence_incomplete",
+            "low_completeness",
+            "incomplete_reviews"
+          ],
+          "exportGateOutcome": "insufficient_context",
+          "publishGateOutcome": "insufficient_context",
+          "consequenceTypes": [
+            "update_readiness_score",
+            "mark_submission_item_not_dispatch_ready",
+            "create_audit_reference"
+          ],
+          "placementOutcome": "allowed",
+          "documentClass": "cmc_module3"
+        },
+        "decisionLifecycle": {
+          "hasUnresolved": false,
+          "unresolvedCount": 0,
+          "escalatedCount": 0,
+          "states": {
+            "under_review": 0,
+            "escalated": 0,
+            "deferred": 0,
+            "rejected": 0
+          }
+        },
+        "artifactBinding": {},
+        "stateFreshness": {
+          "evaluatedAt": "2026-11-10T13:19:01.026Z",
+          "generatedAt": "2026-11-10T13:19:01.032Z"
+        },
+        "derivedFlags": {
+          "isBlocked": false,
+          "isReviewRequired": true,
+          "isExportReady": false,
+          "isPublishReady": false,
+          "hasUnresolvedGovernedDecisions": false,
+          "hasCriticalContradictions": false,
+          "hasPlacementGap": false,
+          "hasEvidenceGap": false,
+          "requiresHumanApproval": false,
+          "isDegraded": false
+        },
+        "decisionPersisted": true
+      }
+    }
+  }
+}

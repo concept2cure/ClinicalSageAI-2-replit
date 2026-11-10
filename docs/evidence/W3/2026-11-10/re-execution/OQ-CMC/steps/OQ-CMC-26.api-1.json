@@ -9,7 +9,7 @@
   "response": {
     "status": 503,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 3,
+    "durationMs": 5,
     "rateLimitRetries": 0,
     "body": {
       "ready": false,

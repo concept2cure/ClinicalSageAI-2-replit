@@ -6,6 +6,7 @@
 import { step, state, IND, stamp, FOREIGN_PROJECT_ID } from './context.mjs';
 import { dataOf, errCode, idOf, isFiledUnder, sectionKeys } from './signed-acts.mjs';
 import { requireIdentity } from '../../lib/credentials.mjs';
+import { completeInd, completeRecords, isComplete, sectionsOf } from './complete-programme.mjs';
 
 await step(
   {
@@ -221,4 +222,38 @@ await step(
  * before it begins, so each step module imports the previous one's name, which
  * both serialises them and reads out as the execution order.
  */
+await step(
+  {
+    id: 'OQ-CMC-03b',
+    urs: ['URS-CMC-002'],
+    kind: 'prerequisite',
+    title: 'A second programme whose records compose a complete Module 3',
+    action: 'POST /api/c2c/projects for a second small-molecule US IND; enter, through the register routes, every record a complete Module 3 needs; compile',
+    expected: 'each record created under the programme; the compile composes 21 sections, each complete with nothing missing',
+    note: 'v0.13: new. OQ-CMC-03\'s six records compose sections that cannot be approved, so no run reached the final-export gate\'s pass or the placement. This programme is the fixture OQ-CMC-17, -19, -20, -27 and -28 act on. The first programme is unchanged.',
+  },
+  async ({ api, expect, attach }) => {
+    const prog = await api('POST', '/api/c2c/projects', completeInd(stamp));
+    expect(prog.status === 201, `programme create expected 201, got ${prog.status}`, prog.json);
+    const projectId = dataOf(prog).id;
+    expect(Boolean(projectId), 'the programme create returned no id', prog.json);
+    const records = {};
+    for (const [key, path, body] of completeRecords(stamp)) {
+      const r = await api('POST', path, { ...body, projectId });
+      expect([200, 201].includes(r.status), `${key} expected 200/201, got ${r.status}`, r.json);
+      expect(isFiledUnder(dataOf(r), projectId), `${key} was not filed under the programme`, r.json);
+      records[key] = idOf(r);
+    }
+    const compile = await api('POST', `/api/cmc/module3-os/compile/${projectId}`, {});
+    expect(compile.status === 200, `the compile expected 200, got ${compile.status}`, compile.json);
+    const sections = await sectionsOf(api, projectId);
+    const incomplete = sections.filter((x) => !isComplete(x)).map((x) => ({ sectionKey: x.sectionKey, completeness: x.completeness, missingInputs: x.missingInputs }));
+    attach('complete-programme.json', { projectId, records, sections: sections.map((x) => ({ sectionKey: x.sectionKey, completeness: x.completeness })), incomplete });
+    expect(sections.length === 21, `the compile composed ${sections.length} sections, expected 21`, sectionKeys(sections));
+    expect(incomplete.length === 0, `${incomplete.length} section(s) are not complete`, incomplete);
+    state.complete = { projectId, records };
+    return `programme ${projectId} with ${Object.keys(records).length} records; ${sections.length} of ${sections.length} sections complete`;
+  },
+);
+
 export const ACCESS_STEPS = 'steps-access.mjs';

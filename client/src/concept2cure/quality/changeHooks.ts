@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { scopedPath, useQualityScope } from './registerContext';
+import { scopedPath, useAnswerOf, useQualityScope } from './registerContext';
 import { listOf } from './qmsList';
 import { learningReviewViewOf } from './qmsApproval';
 import type {
@@ -116,11 +116,12 @@ const CHANGES_PATH = '/api/mdx/qms/changes';
 export function useChangeRegister() {
   /* The open project's changes: those filed under it (C14; mdx-qms.ts GET /qms/changes). */
   const path = scopedPath(CHANGES_PATH, useQualityScope().programId);
-  const { data, loading, error, refresh, failure } = useFetchJson<unknown>(path);
+  const { data: raw, loading, error, refresh, failure } = useFetchJson<unknown>(path);
+  const data = useAnswerOf(path, raw);
   const rows = useMemo(() => listOf<ServerChange>(data), [data]);
   const changes = useMemo<ChangeControl[] | null>(() => rows?.map(adaptChange) ?? null, [rows]);
   const shape = data != null && rows === null ? `unexpected response shape for ${path}` : null;
-  return { changes, loading, error: error ?? shape, failure, refresh };
+  return { changes, loading: loading || (raw != null && data == null), error: error ?? shape, failure, refresh };
 }
 
 /** Register KPIs — GET /api/mdx/qms/changes/summary. */

@@ -1,14 +1,14 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-11-10T03:55:09.642Z",
+  "generatedAt": "2026-11-10T13:29:13.810Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-11-10",
   "summary": {
     "requirements": 132,
-    "pass": 120,
-    "partial": 4,
+    "pass": 124,
+    "partial": 2,
     "fail": 0,
-    "open": 6,
+    "open": 4,
     "uncovered": 2
   },
   "byApp": {
@@ -62,10 +62,10 @@
     },
     "CMC / Module 3 (the eighth launch app, decision P-28, 2026-10-12)": {
       "requirements": 30,
-      "pass": 24,
-      "partial": 2,
+      "pass": 28,
+      "partial": 0,
       "fail": 0,
-      "open": 4,
+      "open": 2,
       "uncovered": 0
     },
     "Reporting & analytics (the seventh launch app; it joined the catalog by the founder's decision of 2026-09-26, `docs/LAUNCH_DEFINITION_OF_DONE.md`). Two surfaces: `insights` (Reporting & analytics) and `compliance-reports` (Audit & compliance reports), `shared/constants/ui-surface-registry.ui-v2.ts`.": {
@@ -78,11 +78,11 @@
     }
   },
   "stepTotals": {
-    "pass": 170,
+    "pass": 175,
     "fail": 0,
-    "deviation": 8,
-    "not-executed": 2,
-    "steps": 180
+    "deviation": 6,
+    "not-executed": 0,
+    "steps": 181
   },
   "protocols": [
     {
@@ -100,12 +100,12 @@
     {
       "protocolId": "OQ-008",
       "app": "CMC / Module 3",
-      "executedAt": "2026-11-10T03:39:23.120Z",
+      "executedAt": "2026-11-10T13:06:27.451Z",
       "counts": {
-        "pass": 36,
+        "pass": 41,
         "fail": 0,
-        "deviation": 4,
-        "not-executed": 2
+        "deviation": 2,
+        "not-executed": 0
       },
       "evidence": "docs/evidence/W3/2026-11-10/OQ-CMC/"
     },
@@ -2617,6 +2617,13 @@
           "status": "pass",
           "evidenceDir": "OQ-CMC",
           "title": "A programme of another organisation is not found"
+        },
+        {
+          "protocol": "OQ-008",
+          "step": "OQ-CMC-03b",
+          "status": "pass",
+          "evidenceDir": "OQ-CMC",
+          "title": "A second programme whose records compose a complete Module 3"
         }
       ],
       "ra": {
@@ -2824,7 +2831,7 @@
         {
           "protocol": "OQ-008",
           "step": "OQ-CMC-17",
-          "status": "deviation",
+          "status": "pass",
           "evidenceDir": "OQ-CMC",
           "title": "Resolving a critical finding needs signing authority and a reason"
         }
@@ -2835,7 +2842,7 @@
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-16, OQ-CMC-17. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "partial"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-010",
@@ -2872,7 +2879,7 @@
         {
           "protocol": "OQ-008",
           "step": "OQ-CMC-19",
-          "status": "deviation",
+          "status": "pass",
           "evidenceDir": "OQ-CMC",
           "title": "Placement writes the approved sections into the programme’s own sequence"
         },
@@ -2890,7 +2897,7 @@
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-19, OQ-CMC-20. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "partial"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-012",
@@ -3030,7 +3037,7 @@
         {
           "protocol": "OQ-008",
           "step": "OQ-CMC-27",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-CMC",
           "title": "A release signature covers the manifest that would be transmitted"
         }
@@ -3041,7 +3048,7 @@
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-27. Credentialed signer/role setup remains required. No execution or admission is claimed."
       },
-      "verdict": "open"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-018",
@@ -3054,7 +3061,7 @@
         {
           "protocol": "OQ-008",
           "step": "OQ-CMC-28",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-CMC",
           "title": "An original IND carrying no 3.2.S and no 3.2.P is not dispatch-ready"
         }
@@ -3065,7 +3072,7 @@
         "assurance": "scripted",
         "rationale": "Transcribed from URS-007 and OQ-008: OQ-CMC-28. No execution or admission is claimed."
       },
-      "verdict": "open"
+      "verdict": "pass"
     },
     {
       "id": "URS-CMC-019",

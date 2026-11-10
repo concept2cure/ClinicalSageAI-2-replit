@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/drug-substances?projectId=00000000-0000-4000-8000-0000000000ff",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 15,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": []
+    }
+  }
+}

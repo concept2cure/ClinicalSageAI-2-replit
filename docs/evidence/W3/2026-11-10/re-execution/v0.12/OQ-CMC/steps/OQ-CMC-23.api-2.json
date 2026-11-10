@@ -1,0 +1,53 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "Limits justified by the batch history in the development report.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 312,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+        "project_id": "78731580-7719-4562-985d-a412edebff5a",
+        "tenant_id": 2,
+        "material_type": "drug_substance",
+        "material_name": "BX-701",
+        "test_parameters": null,
+        "acceptance_criteria": {
+          "shelf": "95.0-105.0%",
+          "release": "98.0-102.0%"
+        },
+        "test_methods": {
+          "method": "RP-HPLC Assay"
+        },
+        "justification": "Batch history n=12 supports the limits",
+        "regulatory_basis": {
+          "ich": "ICH Q6A"
+        },
+        "approval_status": "approved",
+        "created_at": "2026-11-10T03:39:25.353Z",
+        "updated_at": "2026-11-10T03:42:30.623Z"
+      },
+      "governance": {
+        "actionId": "act_203a723c45f040ac86f086d5d0666abb",
+        "sha256Chain": "bec37ba0874f74edbf1869b5c400e4406ac77b67d64690955a410ff2c2216b65"
+      },
+      "timestamp": "2026-11-10T03:42:30.636Z",
+      "module3Linked": true
+    }
+  }
+}

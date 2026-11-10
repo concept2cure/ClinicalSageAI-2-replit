@@ -1448,19 +1448,19 @@ router.post('/qms/changes/:id/links', requireEditorAccess, async (req: Request, 
   try {
     const change = await getChange(orgId, id, requestPgClient(req));
     if (!change) return notFoundInTenant(res, 'Change');
+    if (change.status !== 'proposed' && !governedReason.safeParse(parsed.data.note).success) {
+      return clientError(res, 422, `This change is ${String(change.status).replace(/_/g, ' ')}, so a link states why it is added (a reason of at least 8 characters). Nothing was linked.`);
+    }
     let row;
     try { row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) }, requestPgClient(req)); } catch (err) {
       if (err instanceof ChangeLinkRefusedError) return clientError(res, 422, err.message, { code: err.code });
       throw err;
     }
-    /* WO-16C #133. Was `void auditService.logAction({…})`. `addLink` has
-       inserted the cross-reference and returned it, so the link stands;
-       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    // WO-16C #133: the link stands once addLink returns; `meta.auditTrail` says whether its §11.10(e) record exists.
     const auditTrail = await recordAuditRow({
-      tenantId: orgId, userId: getUserId(req) ?? undefined,
-      action: 'mdx.qms.change.link',
-      resourceType: 'qms_change_control', resourceId: id,
-      details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef },
+      tenantId: orgId, userId: getUserId(req) ?? undefined, reason: parsed.data.note || undefined,
+      action: 'mdx.qms.change.link', resourceType: 'qms_change_control', resourceId: id,
+      details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef, relationship: row.relationship ?? null, note: parsed.data.note ?? null },
     }, requestConnectable(req));
     return created(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-add', err); }

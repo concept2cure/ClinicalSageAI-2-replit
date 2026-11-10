@@ -313,6 +313,42 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
       .send({ linkType: 'nonsense', linkedRef: 'X' });
     expect(res.status).toBe(422);
   });
+
+  /* Quality review, 2026-11-10: a link changes the record of a change under assessment or approved, and nothing said
+     why; its audit row kept the type and reference only. Past proposal a link states why, and the row keeps it. */
+  it('422 for a link to a change past proposal that does not say why; nothing is read further or inserted', async () => {
+    query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment' })] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
+      .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', note: 'short' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('This change is under assessment, so a link states why it is added (a reason of at least 8 characters). Nothing was linked.');
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('records how the linked record relates and why it was linked', async () => {
+    const WHY = 'The deviation this approved change addresses, found at the audit.';
+    query
+      .mockResolvedValueOnce({ rows: [changeRow({ status: 'approved' })] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 11, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-2026-014', relationship: 'addresses', note: WHY }] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
+      .send({ linkType: 'deviation', linkedRef: 'DEV-2026-014', relationship: 'addresses', note: WHY });
+    expect(res.status).toBe(201);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.link', reason: WHY,
+      details: { linkType: 'deviation', linkedRef: 'DEV-2026-014', relationship: 'addresses', note: WHY } }));
+  });
+
+  it('a link to a proposed change may say why, and needs not', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [changeRow()] })
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 12, change_id: 1, link_type: 'deviation', linked_ref: 'DEV-1', relationship: 'references', note: null }] });
+    const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links').send({ linkType: 'deviation', linkedRef: 'DEV-1' });
+    expect(res.status).toBe(201);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({
+      details: { linkType: 'deviation', linkedRef: 'DEV-1', relationship: 'references', note: null } }));
+  });
 });
 
 

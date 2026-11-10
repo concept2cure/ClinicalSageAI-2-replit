@@ -5,7 +5,7 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "BX-902 IND 20261110033923",
+      "name": "BX-902 IND 20261110130629",
       "productName": "BX-902",
       "programType": "ind",
       "productType": "biologic",
@@ -17,15 +17,15 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 111,
+    "durationMs": 175,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "1fae3511-9127-4bbf-ba87-a3d1bff918d2",
-        "title": "BX-902 IND 20261110033923",
+        "id": "84914360-8fb5-48f7-b167-54a2a092efb2",
+        "title": "BX-902 IND 20261110130629",
         "ws": "Biotech",
         "pathway": "ind",
-        "code": "BX-902-5PRH",
+        "code": "BX-902-F77C",
         "stage": "Planning",
         "status": "active",
         "lead": "oq-runner@validation.local",
@@ -42,9 +42,9 @@
         "readinessState": "measured"
       },
       "program": {
-        "id": "1fae3511-9127-4bbf-ba87-a3d1bff918d2",
-        "code": "BX-902-5PRH",
-        "name": "BX-902 IND 20261110033923",
+        "id": "84914360-8fb5-48f7-b167-54a2a092efb2",
+        "code": "BX-902-F77C",
+        "name": "BX-902 IND 20261110130629",
         "program_type": "ind",
         "status": "active",
         "phase": "planning",
@@ -62,8 +62,8 @@
         "approval_date": null,
         "lead_user_id": 1,
         "team_members": [],
-        "created_at": "2026-11-10T03:39:31.372Z",
-        "updated_at": "2026-11-10T03:39:31.372Z",
+        "created_at": "2026-11-10T13:06:46.198Z",
+        "updated_at": "2026-11-10T13:06:46.198Z",
         "application_number": null,
         "product_type": "biologic",
         "device_class": null,
@@ -81,7 +81,7 @@
         "device_flags": null,
         "readiness": 0,
         "readinessState": "measured",
-        "readinessAsOf": "2026-11-10T03:39:31.458Z"
+        "readinessAsOf": "2026-11-10T13:06:46.334Z"
       },
       "meta": {
         "created": true,
@@ -89,7 +89,7 @@
         "actorUserId": 1,
         "clientWorkspaceId": 2,
         "clientWorkspaceName": "Concept2Cure Therapeutics",
-        "documentId": "doc_65dba0574c6544b1ba9aa4b1ea05d042",
+        "documentId": "doc_6f47ea0d0a874e8cbed9b2f39ffe264c",
         "scaffoldedSections": 92,
         "marketSupport": {
           "tier": "build_and_sequence",
@@ -100,9 +100,9 @@
             "US_IND_AMENDMENT"
           ]
         },
-        "submissionId": 71,
+        "submissionId": 88,
         "submissionCreated": true,
-        "projectAnchorId": 67,
+        "projectAnchorId": 83,
         "projectAnchorCreated": true
       }
     }

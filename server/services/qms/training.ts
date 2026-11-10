@@ -14,7 +14,7 @@ import { isPendingEffective, resolveInForceRelease } from './in-force-release';
 import { authorizeQmsTrainingRead } from './training-assignment';
 
 export {
-  readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance, QMS_TRAINING_EXPIRY_ROW_CAP,
+  readQmsTrainingCompliance, readQmsTrainingExpiring, readQmsTrainingView, summarizeQmsTrainingCompliance, QMS_TRAINING_EXPIRY_ROW_CAP,
   type QmsTrainingComplianceRow, type QmsTrainingExpiry,
 } from './training-compliance';
 export interface TrainingSqlClient {

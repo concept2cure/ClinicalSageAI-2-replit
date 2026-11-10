@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+    "url": "http://localhost:5200/api/cmc/specifications/ea65fc5a-0987-4a4b-8053-ac7cf6d27b2e",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -13,7 +13,7 @@
   "response": {
     "status": 422,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 24,
+    "durationMs": 36,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
