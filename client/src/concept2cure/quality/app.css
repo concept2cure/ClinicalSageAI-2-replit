@@ -46,8 +46,11 @@
 .qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 
-/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. */
+/* One line: the actions that fit the row's state, Ask AnA and "More" (D7-B item 6; P-122); the rest open in .qms-row-more. */
 .qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
+.qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
+.qms-ask-ico svg { width: 16px; height: 16px; }
 
 /* The review schedule's rows: a plain list under its section head, no box (C1). */
 .qms-review { border-top: 1px solid var(--border-subtle); }

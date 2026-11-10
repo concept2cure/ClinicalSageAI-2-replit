@@ -118,29 +118,29 @@ describe('ChangeControl — the change-control log', () => {
     expect(container.querySelector('.qms-row, .qms-thead, .qcc-class, .qms-pill, .qms-tag, .qms-chip')).toBeNull();
   });
 
-  it('shows each change its one next step and More; the rest are behind More', () => {
+  // P-122: a change shows the moves that fit its state inline, and Ask AnA as an icon; More keeps the rest.
+  it('shows each change the moves that fit its state inline; the rest are behind More', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
-    const names = (row: HTMLElement) => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
-    // Under assessment: Approve (the signed route) is the next step.
+    const names = (row: HTMLElement) => within(row.querySelector('tr') as HTMLElement).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
+    // Under assessment: Approve (the signed route) and Advance are inline.
     const assessed = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
-    expect(names(assessed)).toEqual(['CC-2026-014', '3 linked records', 'Approve', 'More actions for CC-2026-014']);
+    expect(names(assessed)).toEqual(['CC-2026-014', '3 linked records', 'Approve', 'Advance', 'Ask AnA about this change', 'More actions for CC-2026-014']);
     fireEvent.click(within(assessed).getByRole('button', { name: 'More actions for CC-2026-014' }));
     const more = within(assessed).getByRole('group', { name: 'Actions for CC-2026-014' });
     expect(within(more).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim()))
-      .toEqual(['Advance', 'Edit assessment', 'Link a record', 'Ask AnA about this change']);
-    fireEvent.click(within(more).getByRole('button', { name: 'Ask AnA about this change' }));
+      .toEqual(['Edit assessment', 'Link a record']);
+    fireEvent.click(within(assessed).getByRole('button', { name: 'Ask AnA about this change' }));
     expect(onAsk).toHaveBeenCalledWith(expect.stringContaining('Summarize change CC-2026-014'));
-    // Proposed: Advance is the next step. Closed, with no move: only More.
+    // Proposed: Advance is inline.
     const proposed = screen.getByText('CC-2026-001').closest('tbody') as HTMLElement;
     expect(within(proposed).getByRole('button', { name: 'Advance' })).toBeTruthy();
-    expect(within(proposed).queryByRole('button', { name: 'Link a record' })).toBeNull();
+    // Closed, with no move: Link a record is all it takes, inline, and there is no More.
     const closed = screen.getByText('CC-2026-002').closest('tbody') as HTMLElement;
     expect(within(closed).queryByRole('button', { name: /Advance|Approve/ })).toBeNull();
     // C9: past assessment the record is what the approval signed, so it offers no edit.
-    fireEvent.click(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' }));
     expect(within(closed).queryByRole('button', { name: 'Edit assessment' })).toBeNull();
-    expect(within(closed).getByRole('button', { name: 'More actions for CC-2026-002' })).toBeTruthy();
+    expect(names(closed)).toEqual(['CC-2026-002', expect.stringMatching(/linked record/), 'Link a record', 'Ask AnA about this change']);
   });
 
   it('expands a change to its linked deviation / validation records', () => {

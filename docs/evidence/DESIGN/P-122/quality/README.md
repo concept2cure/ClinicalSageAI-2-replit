@@ -41,3 +41,30 @@ admission is unchanged and still the only door to `program_id`; a new nonconform
 - Red (`item1-red.txt`): 2 of 19 fail at HEAD — the new default reads `program_id` and the header names the project.
 - Green (`item1-green.txt`): Quality's 28 suites and AnA's wave-4 suite, 29 files, 374 tests. Five existing cases that
   encoded the project default now narrow first (`?quality=project`); their assertions are otherwise unchanged.
+
+## Item 2 — each row's governed actions are inline
+
+**What changed.** A row shows, inline, the two governed actions that fit its state, then Ask AnA as a quiet 16 px spark
+icon (its name, "Ask AnA about this document/change/record", for assistive technology), then "More" for the rest. All
+are §2 ghost buttons (`btn ghost small`: 8 px radius, 32 px). The handlers are the register's own, unchanged; More
+still reveals the rest in the row, not in a menu.
+
+| Register | State | Inline | Under More |
+|---|---|---|---|
+| Controlled documents (`SopRegisterRow.tsx` `inlineOf`) | Draft | Send for review, Open | Training, History |
+| | Under review, the approver's turn | Approve, Review route | Open, Training, Revise, History |
+| | Under review, its author | Review route, Open | Training, Revise, History |
+| | Effective, review overdue | Record review, then Read and acknowledge (or Revise) | the rest |
+| | Effective, with training | Read and acknowledge, Revise | Open, Training, Record review, Retire, Controlled copy, History |
+| | Effective, no training (a form) | Revise, Controlled copy | Open, Record review, Retire, History |
+| | Superseded or retired | History, then Controlled copy of a version in force, or Revise | Open |
+| Change log (`ChangeControl.tsx`) | any | the first two of Approve, Advance, Edit assessment, Link a record that apply | the others |
+| CAPA and the record registers (`QmsRecords.tsx`) | any | the first two acts the configuration shows for the row's state | the others (no More when none) |
+
+Retire stays under More on purpose: it is the terminal state, signed, and rare; a row's inline actions are the ones a
+person takes in that state.
+
+- Red (`item2-red.txt`): 11 of 61 fail at HEAD (the new `registerRowInline.test.tsx`, 8, and the three register
+  contract tests, rewritten to the new contract).
+- Green (`item2-green.txt`): Quality's suites, AnA wave-4 and the SOP read-honesty suite, 31 files, 385 tests. Three
+  cases that clicked an action through More were scoped to their row or opened More first.

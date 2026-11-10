@@ -188,21 +188,21 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  // D7-B item 6: a row is one line, its next step and "More"; the rest open in the row, same names, no menu.
-  it('a register row shows its next step and More, and More reveals every other action in the row', () => {
+  // P-122: a row shows the actions that fit its state inline, and Ask AnA as an icon; More reveals the rest in the row.
+  it('a register row shows its state\'s actions inline, and More reveals every other action in the row', () => {
     mount();
     const row = screen.getByText('Handling of customer complaints', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
     const shown = () => within(row).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
-    expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'More actions for QS-SOP-001']);
+    expect(shown()).toEqual(['QS-SOP-001', 'Approve', 'Review route', 'Ask AnA about this document', 'More actions for QS-SOP-001']);
     const more = within(row).getByRole('button', { name: 'More actions for QS-SOP-001' });
     expect(more.getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(more);
     expect(more.getAttribute('aria-expanded')).toBe('true');
     const group = within(row).getByRole('group', { name: 'Actions for QS-SOP-001' });
     expect(within(group).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
-      'Open', 'Training', 'Review route', 'Revise', 'View version history of QS-SOP-001', 'Ask AnA about this document',
+      'Open', 'Training', 'Revise', 'View version history of QS-SOP-001',
     ]);
-    fireEvent.click(within(group).getByRole('button', { name: 'Ask AnA about this document' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Ask AnA about this document' }));
     expect(H.asked).toEqual(['Summarize QS-SOP-001 Handling of customer complaints and tell me what it needs next.']);
   });
 

@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { RegisterBody, RegisterTable } from './SopRegisterRow';
+import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
 import { listOf } from './qmsList';
 import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
@@ -157,9 +157,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         {loaded && rows.length === 0 && (scopeOf && 'project' in scopeOf
           ? <EmptyState title={`No ${config.noun[1]} filed under ${scopeOf.project}.`} hint={`The organisation's other ${config.noun[1]} are under Show the whole organisation.`} />
           : <EmptyState title={`No ${config.noun[1]} recorded yet.`} />)}
-        {/* D0's table (C11), as the SOP register and the change log: a row shows its first action as its next step,
-            and More holds the rest and Ask AnA. Until 2026-11-10 each row carried every action as an arrow chip and a
-            sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}
+        {/* D0's table (C11), as the SOP register and the change log: a row shows the acts that fit its state (each
+            configuration's `show`), the first two inline with Ask AnA as an icon, and More holds the rest (P-122; from
+            C11 until P-122 only the first act showed). Until 2026-11-10 each row carried every action as an arrow chip
+            and a sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}
         {loaded && rows.length > 0 && (
           <RegisterTable columns={columns.map((c) => c.label)}>
             {rows.map((r) => {
@@ -169,15 +170,10 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
                   {a.label}
                 </button>
               ));
-              const ask = (
-                <button key="ask" type="button" className="btn ghost small" aria-label="Ask AnA about this record" title="Ask AnA about this record"
-                  onClick={() => onAsk(config.askRow(r))}>
-                  Ask AnA
-                </button>
-              );
+              const ask = <AskAnaButton key="ask" label="Ask AnA about this record" onAsk={() => onAsk(config.askRow(r))} />;
               return (
                 <RegisterBody key={r.id} name={config.name(r)} className="qms-rec" columns={columns.length}
-                  primary={acts[0] ?? null} rest={[...acts.slice(1), ask]}
+                  primary={acts.length ? <>{acts.slice(0, INLINE_ACTIONS)}</> : null} ask={ask} rest={acts.slice(INLINE_ACTIONS)}
                   cells={columns.map((c, n) => (
                     <td key={c.label} className={c.text ? 'qms-title' : undefined}>
                       {n === 0 && config.detail ? (

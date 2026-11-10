@@ -84,7 +84,7 @@ describe('every quality register names its columns once', () => {
 });
 
 describe('Quality records', () => {
-  it('is a table: column headers, one body per record, its first action as its next step and the rest under More', () => {
+  it('is a table: column headers, one body per record, its state\'s actions inline with Ask AnA, and no More with nothing left', () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
     const { container } = render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
     const table = screen.getByRole('table');
@@ -95,10 +95,10 @@ describe('Quality records', () => {
     expect(heads.at(-1)).toBe('Actions');
     expect(container.querySelectorAll('tbody.qms-rec')).toHaveLength(1);
     const body = container.querySelector('tbody.qms-rec') as HTMLElement;
-    const more = within(body).getByRole('button', { name: 'More actions for NC-2026-004' });
-    expect(within(body).queryByRole('button', { name: 'Ask AnA about this record' })).toBeNull();
-    fireEvent.click(more);
-    expect(within(within(body).getByRole('group', { name: 'Actions for NC-2026-004' })).getByRole('button', { name: 'Ask AnA about this record' })).toBeTruthy();
+    // P-122: an undispositioned nonconformance's two acts are inline, and Ask AnA beside them; nothing is left for More.
+    expect(within(body).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim()))
+      .toEqual(['Disposition', 'Raise CAPA', 'Ask AnA about this record']);
+    expect(within(body).queryByRole('button', { name: /^More actions for / })).toBeNull();
     expect(container.querySelector('.qms-row, .qms-thead, .qms-pill, .qms-tag, .qms-table')).toBeNull();
   });
 

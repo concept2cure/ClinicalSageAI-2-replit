@@ -267,8 +267,10 @@ describe('Change control — governed actions reach their routes', () => {
   // C9: the assessment is edited while the change is under assessment, through the existing PATCH route.
   it('edits the assessment through PATCH /changes/:id, starting from the recorded one', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    // P-122: other changes show Edit assessment inline; CC-2026-014 keeps it under its More.
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit assessment' }));
     const d = drawer(/Assess CC-2026-014/);
     expect((within(d).getByLabelText(/Impact assessment/) as HTMLTextAreaElement).value)
       .toBe('Filter qualification and an extractables study; no filing change.');
@@ -288,8 +290,9 @@ describe('Change control — governed actions reach their routes', () => {
 
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
-    fireEvent.click(screen.getByRole('button', { name: /Link a record/ }));
+    const row = screen.getByRole('button', { name: 'More actions for CC-2026-014' }).closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(within(row).getByRole('button', { name: /Link a record/ }));
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');
     fill(d, /Reference/, 'CAPA-91');
