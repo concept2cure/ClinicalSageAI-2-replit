@@ -42,12 +42,12 @@ import {
   CmFormulationRecords,
   CmManufacturingProcesses,
   CmCharacterizationStudies,
-  CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
   CmDrugSubstances,
   CmDrugProducts,
 } from './cmcRegisters';
+import { CmChangeRegister } from './cmcChangeRegister';
 /* Each of these two tabs carries its own ask list. They are imported, not
    restated here, so the page's starter row offers the same words the tab
    has always offered and there is one copy of each prompt (RULE 3). */
