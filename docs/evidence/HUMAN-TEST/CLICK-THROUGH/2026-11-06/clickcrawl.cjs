@@ -10,6 +10,10 @@
 //                      are load-checked only
 //   env DISCOVER=1     also click each rail button and each account-menu item from Home, record where it lands
 //   env MAXSTOPS       stop after this many stops (default 400)
+//   env MAXCLICKS      end this process after this many new clicks, with no "end" line, so a shell loop can start it
+//                      again from its log: a headless browser holds temporary files until it exits (several GB over a
+//                      long run, which filled a disk on 2026-11-10). Loop until the log holds an "end" line:
+//                        until grep -q '"kind":"end"' out/A/clicks.jsonl; do MAXCLICKS=60 node clickcrawl.cjs …; done
 // Each account holds 5 concurrent sessions (shared/auth/session-policy.ts): run at most 3 of these as one person,
 // and sign any other test browser out, or the runs' sessions are superseded and every screen shows sign-in.
 /* global getComputedStyle, innerHeight -- page code passed to page.evaluate runs in the browser */
@@ -46,6 +50,7 @@ function priorRun() {
   return done;
 }
 const DONE = priorRun();
+const BUDGET = { left: Number(process.env.MAXCLICKS || Infinity) };
 
 // The app must answer before a stop is crawled: with it down, every click would be recorded as the app's failure.
 async function requireApp(page) {
@@ -209,7 +214,8 @@ async function afterClick(page, bt) {
 
 // One control on a freshly opened stop: click it and record what happened.
 async function clickOne(page, ev, add, stop, c) {
-  if (DONE.clicks.has(clickKey(stop, c))) return;
+  if (DONE.clicks.has(clickKey(stop, c)) || BUDGET.left <= 0) return;
+  BUDGET.left--;
   await openStop(page, stop);
   const b = await snapshot(page).catch(() => null);
   const bt = await bodyText(page).catch(() => '');
@@ -259,12 +265,14 @@ async function crawlStop(page, ev, add, stop) {
   const { queue, add } = stopQueue();
   for (const url of DONE.reached) add(url);
   if (process.env.DISCOVER === '1' && !DONE.discovered) await discover(page, ev, add);
-  let clicks = 0;
   for (let qi = 0; qi < queue.length && qi < Number(process.env.MAXSTOPS || 400); qi++) {
     if (sessionEnded) { fs.appendFileSync(LOG, JSON.stringify({ kind: 'fatal', error: 'session ended (401 on the session read); stopping' }) + '\n'); break; }
-    clicks += await crawlStop(page, ev, add, queue[qi]);
+    await crawlStop(page, ev, add, queue[qi]);
+    if (BUDGET.left <= 0) break;
   }
-  fs.appendFileSync(LOG, JSON.stringify({ kind: 'end', stops: queue.length, clicks }) + '\n');
+  // The end line counts every click on record, this process's and the ones it resumed over.
+  const recorded = fs.readFileSync(LOG, 'utf8').split('\n').filter((l) => l.includes('"kind":"click"')).length;
+  if (BUDGET.left > 0) fs.appendFileSync(LOG, JSON.stringify({ kind: 'end', stops: queue.length, clicks: recorded }) + '\n');
   // Sign out, so this run's session does not hold one of the account's five slots.
   await page.evaluate(async () => { const t = localStorage.getItem('trialsage_access_token'); await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).catch(() => {}); }).catch(() => {});
   await browser.close();
