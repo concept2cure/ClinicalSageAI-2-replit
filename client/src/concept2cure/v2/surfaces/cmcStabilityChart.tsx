@@ -118,7 +118,7 @@ export function StabilityFitChart({ estimate: e }: { estimate: Q1eChartEstimate 
         <polyline className="fitted" data-mark="fitted" points={line('fitted')} />
         <line className="ref" data-mark="spec" x1={M.l} x2={W - M.r} y1={y(e.specLimit!)} y2={y(e.specLimit!)} />
         <text className="ref-l" x={W - M.r} y={y(e.specLimit!) - 6} textAnchor="end">Specification {fmt(e.specLimit!)}</text>
-        <line className="ref shelf" data-mark="shelf-life" x1={sx} x2={sx} y1={M.t} y2={H - M.b} />
+        <line className="ref" data-mark="shelf-life" x1={sx} x2={sx} y1={M.t} y2={H - M.b} />
         <text className="ref-l" x={sx + 6} y={M.t + 10}>Shelf life {fmt(e.shelfLife!)} mo</text>
         {obs.map((o) => (
           <circle key={`${o.time}-${o.value}`} className="dot" data-mark="observation" cx={x(o.time)} cy={y(o.value)} r={4}>
