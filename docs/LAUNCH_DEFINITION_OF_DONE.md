@@ -3120,3 +3120,60 @@ not pay for a feature that is nearly right.
    qualification approval that lets AnA be walked over folders in a conversation.
 
 Evidence: `docs/evidence/SPINE/S6/2026-11-10/README.md`.
+
+### P-124 — Decided under the founder's delegation: the trial master file in the Vault
+
+The founder, 2026-11-10: **"I don't see the TMF on the vault UI anywhere. The vault UI seems to be lacking in a lot of
+ways."** And, the same day: **"Continue you decide as the SME would."** Decided by session `…01KnUGoX3g` (the Vault
+parity lane), inside P-74 and P-75 (the eTMF lives inside the Vault and files against the project's study) and under
+P-122 (nothing a screen showed is removed without a decision). Each is reversible by the founder. The test applied:
+a sponsor or CRO pays for a trial master file an inspector can open and trust, where every "filed" has a document
+behind it and every change says who made it and why.
+
+1. **It is called the trial master file, and it is the study's.** The Vault's button read "Inspection readiness" and
+   opened a screen where a trial id was typed by hand and bound to nothing. The button reads "Trial master file" and
+   opens the trial master file of the open project's study. A filing belongs to a study of the project, and its
+   document is a live document of that project's Vault. Rows filed before this name no study and are never served
+   as one's. Built: `64e4bcca0a` (the server), `docs/evidence/D2-ETMF/2026-11-10/`.
+2. **Filing and removing are governed.** Each needs the person's reason and a role that may write the Vault, and
+   writes the chained audit row in the same transaction. A removal stays on the record with who, when and why. The
+   inspection package is a recorded download: nothing is sent when its record cannot be written.
+3. **Everything the retired screen showed is kept (P-122), with two changes decided here.**
+   - Kept: the choice between essential records and all records of the reference model; the figures (zones
+     complete, records filed, open gaps); each record's code and zone; upload a document and file it in one step;
+     the inspection package shown as a document; asking AnA what an inspector would raise.
+   - **Changed: upload-and-file asks for a reason.** It filed with none. A filing with no reason is not one an
+     inspector accepts.
+   - **Not kept: the report built in the browser when the package could not be downloaded.** It was an export with
+     no record of who took it. The package is a recorded download, and when it cannot be recorded the page says so
+     and offers to try again.
+   - The two tiles that read "Not yet available" (timeliness, QC) become one plain line: neither is assessed,
+     because no filing lag and no QC state is recorded for a record. A tile that states an absence is not a figure.
+   - "Open in Project management" is the page's way back to the project.
+4. **Where it lives until admission.** P-75 puts the trial master file in the Vault's own views, and P-74 admits it
+   only with one store, a URS and an OQ. Until then a launch screen may not call its API, so the section is hosted
+   by the `etmf` page that the Vault's button opens, and in a release that page stays locked as the old screen was.
+   The founder's sentence is fully answered only at admission, when the section sits in the Vault's Required
+   documents view (the change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`).
+5. **What retires with the second, undeployed store (slice E4), and what is carried.** That store's tables are on no
+   deploy path, so no deployed database holds a row of it; its screens and tools were refused in a release.
+   - **Carried onto the deployed store before admission: "not applicable", with a reason.** A study to which an
+     essential record does not apply could otherwise never read complete. The declaration says who, when and why,
+     is audited, counts as neither filed nor missing, and the verdict says how many were declared.
+   - **A record's status is its document's.** The second store let a person type a status (received, in review,
+     final) with no document behind it. A record's state is the lifecycle stage of the Vault document it is filed
+     against, shown on the record. No status is typed separately.
+   - **Not carried: an artifact outside the reference model's catalog.** A document the catalog does not name is
+     kept in the Vault and is not a record of the trial master file.
+   - **AnA's tools:** `get_tmf_view` and `classify_tmf_artifact` keep their names and read and file through the
+     deployed store, the filing with the person's confirmation and reason. `create_tmf`, `seed_tmf`,
+     `update_tmf_artifact_status` and `review_tmf_completeness` retire, each onto what now answers it: a study's
+     trial master file exists with the study; its expected records are the reference model's; a record changes by
+     filing, removing or declaring it not applicable; completeness is part of the view. No tool is added.
+   - The report pack `etmf.completeness_pack` and the trial master file part of AnA's document search read the
+     deployed store.
+6. **Order to admission:** E4 (one store); "not applicable"; the URS and OQ; then the Vault app gains the `etmf`
+   surface as a professional-tier module and the section moves into the Vault.
+
+Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`. The steps of E4
+are in the plan's §3a.

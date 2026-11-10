@@ -1,0 +1,18 @@
+# Red: the gate as it stood at 303d019f09, run on a tree where an unnamed job deletes a version's bytes
+# server/jobs/retentionPurge.ts: await getStorageProvider().delete(row.vault_version_id, row.organization_id);
+$ node <gate at HEAD> --root <tree>
+[ci:vault-document-writers] 7 file(s) write vault.documents; 7 named.
+[ci:vault-document-writers] OK: every writer is a named one.
+exit=0
+
+# The same tree, the gate as changed (the named deleters are absent from this tree, so they are reported as stale too)
+[ci:vault-document-writers] 7 file(s) write vault.documents; 7 named.
+[ci:vault-document-writers] 1 file(s) can delete stored bytes; 10 named.
+  ✗ server/jobs/retentionPurge.ts can delete stored bytes (a store delete by version and organization, or an S3 delete) and is not a named deleter.
+
+  No version is destroyed during a tenant's life (P-107 item 3, retention FD3 (c)): retention
+  tombstones the record and keeps the bytes. The byte store sits outside the database, so a
+  delete there passes every database control. Do not delete a recorded version's bytes. For
+  bytes that no record names, add this file to ALLOWED_BYTE_DELETERS with which bytes it
+  deletes and why they are not a recorded version's.
+exit=1

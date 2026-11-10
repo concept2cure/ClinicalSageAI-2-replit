@@ -1,0 +1,130 @@
+Existing and new suites over the files of E2 and E3, on the final tree. 2026-11-10T12:17Z.
+Counts are tests, per file.
+
+## eTMF services, routes and the Vault's TMF taxonomy (npx vitest run, vitest.config.ts)
+  server/services/__tests__/vault-taxonomy-etmf.test.ts                                         18 passed
+  server/routes/__tests__/etmf-artifacts.routes.test.ts                                         11 passed
+  server/routes/__tests__/etmf-error-containment.test.ts                                         2 passed
+  server/routes/__tests__/etmf.routes.test.ts                                                    4 passed
+  server/routes/__tests__/tmf-assessment-audit-outcomes.test.ts                                 11 passed
+  server/services/etmf/__tests__/etmf-classifier-classifies-its-own-catalog.test.ts             10 passed
+  server/services/etmf/__tests__/etmf-logic.test.ts                                             13 passed
+  server/services/etmf/__tests__/etmf-unmatched-artifact-is-unclassified.test.ts                 5 passed
+  server/services/etmf/__tests__/tmf-completeness.test.ts                                        6 passed
+  server/services/etmf/__tests__/tmf-document-ref-guard.test.ts                                 11 passed
+  server/services/etmf/__tests__/tmf-governed-filing.test.ts                                    22 passed
+  server/services/etmf/__tests__/tmf-inspection-package.test.ts                                  4 passed
+  server/services/etmf/__tests__/tmf-readiness-counts-only-verified-documents.test.ts            8 passed
+  server/services/etmf/__tests__/tmf-study-binding.test.ts                                      20 passed
+  14 file(s): 145 passed, 0 failed, 0 skipped
+
+## What the slices reuse and one contract they change: recorded downloads, the governed reason, the export recorder
+  server/routes/__tests__/governed-reason.test.ts                                                7 passed
+  server/services/export/__tests__/governed-export-size-ceiling.test.ts                          3 passed
+  server/services/export/__tests__/recorded-downloads.contract.test.ts                          35 passed
+  3 file(s): 45 passed, 0 failed, 0 skipped
+
+## eTMF on PostgreSQL 16 (vitest.db.config.ts; fixture database with 20261110 applied; runtime role app_service, RLS_ENFORCE=on)
+  tests/db/etmf-governed-filing.dbtest.ts                                                       13 passed
+  tests/db/etmf-study-binding.dbtest.ts                                                         13 passed
+  tests/db/tmf-assessment-audit-outcomes.dbtest.ts                                              10 passed
+  3 file(s): 36 passed, 0 failed, 0 skipped
+
+## Vault and study suites on the same database: the project admission the slices reuse, a recorded Vault export,
+## and the other reader of cdisc_prm_studies (id, tenant_id) (the 20261008d key this migration mirrors)
+  tests/db/data-room-catalog-facts.dbtest.ts                                                     6 passed
+  tests/db/vault-folder-export.dbtest.ts                                                        17 passed
+  tests/db/vault-library-search.dbtest.ts                                                        9 passed
+  3 file(s): 32 passed, 0 failed, 0 skipped
+
+## The migration set, applied in order on PGlite (npx vitest run --config vitest.config.ts tests/schema-contract/…)
+  tests/schema-contract/ana-memory-migrations-reachable.contract.test.ts                        10 passed
+  tests/schema-contract/c2c-apply-path.contract.test.ts                                          6 passed
+  tests/schema-contract/tenant-isolation-sweep.contract.test.ts                                 20 passed
+  tests/schema-contract/uuid-tenant-isolation.contract.test.ts                                  10 passed
+  4 file(s): 46 passed, 0 failed, 0 skipped
+
+## The applier manifest (node --test tests/ops/apply-c2c-migrations-manifest.test.mjs)
+  ok 1 - every migration in the applier allowlist exists on disk
+  ok 2 - feature toggles are provisioned by a replay-safe durable migration
+  ok 3 - the data-room migrations are listed, and the spine precedes its ALTER
+  ok 4 - the authoring loop tables are NOT listed — half a Part 11 subsystem is worse than none
+  not ok 5 - the authoring entries on the list are guarded, additive ALTERs only
+  ok 6 - the source-usage migration yields its index where the subsystem IS provisioned
+  ok 7 - the source-usage migration no-ops when authoring_citations is absent
+  ok 8 - the data-room migrations apply in listed order and yield the expected schema
+  ok 9 - no NEW root migration is silently absent from the applier allowlist
+  not ok 10 - the grandfathered baseline stays honest (no stale or double-counted entries)
+  # pass 8
+  # fail 2
+  The two failures name other files (db/migrations/20261014_qms_controlled_authoring_content.sql, which does not guard on
+  to_regclass; migrations/20260702_usage_model_credit_ledger.sql, listed and still in KNOWN_UNLISTED). With HEAD's
+  scripts/db/migration-set.mjs the same two fail, and case 9 fails too, because the new file is then on disk and unlisted:
+    HEAD set: ok 1 - every migration in the applier allowlist exists on disk
+    HEAD set: ok 2 - feature toggles are provisioned by a replay-safe durable migration
+    HEAD set: ok 3 - the data-room migrations are listed, and the spine precedes its ALTER
+    HEAD set: ok 4 - the authoring loop tables are NOT listed — half a Part 11 subsystem is worse than none
+    HEAD set: not ok 5 - the authoring entries on the list are guarded, additive ALTERs only
+    HEAD set: ok 6 - the source-usage migration yields its index where the subsystem IS provisioned
+    HEAD set: ok 7 - the source-usage migration no-ops when authoring_citations is absent
+    HEAD set: ok 8 - the data-room migrations apply in listed order and yield the expected schema
+    HEAD set: not ok 9 - no NEW root migration is silently absent from the applier allowlist
+    HEAD set: not ok 10 - the grandfathered baseline stays honest (no stale or double-counted entries)
+    HEAD set: # pass 7
+    HEAD set: # fail 3
+
+## Gates (each exit 0; last line of each)
+  ci:column-reachability: [ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+  ci:discarded-audit-write: check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+  ci:drizzle-tenant-scope: [ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 2 fix(es).
+  ci:fabricated-identity: [ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+  ci:fixture-fallback: ✅ no new ungated fixture fallback. 0 baselined.
+  ci:governed-export-routes: ✅ Governed export route contract check passed.
+  ci:install-fresh-overlay-deps: [ci:install-fresh-overlay-deps] ✅ every overlay dependency is reachable by the installer.
+  ci:json-operator-types: [ci:json-operator-types] ✅ no jsonb operator on a json column.
+  ci:migration-deploy-path: [ci:migration-deploy-path] OK — 101 baselined file(s) on no deploy path, none new.
+  ci:migration-drop-safety: [ci:migration-drop-safety] OK — 469 migrations, 45 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolv
+  ci:migration-guard-order: [ci:migration-guard-order] OK — every guarded table is created before it is guarded (0 baselined).
+  ci:migration-prefix-collisions: [ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+  ci:migration-reachability: [ci:migration-reachability] ✅ no new unreachable table references.
+  ci:migration-set-order: [ci:migration-set-order] OK — 469 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+  ci:no-mock-in-prod-routes: ✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+  ci:runtime-ddl: [ci:runtime-ddl] ✅ no new runtime DDL.
+  ci:server-error-leaks: [ci:server-error-leaks] OK — 9 baselined site(s) across 9 file(s); no file gained one.
+  ci:session-scoped-rls-bypass: [ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (798 migration file(s) and 4444 code file(s) read), and no script writes either (P-70).
+  ci:sql-interpolation: [ci:sql-interpolation] OK — no new value interpolated into SQL text. 1048 baselined interpolation(s) in 222 file(s); the baseline may only shrink.
+  ci:untracked-imports: [ci:untracked-imports] no source files changed against origin/concept2cure-v2. (It reads committed changes; nothing here is committed.)
+  ci:db-test-isolation: [ci:db-test-isolation] OK — 253 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+  ci:check-unrun-tests: [ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+  eslint ratchet (node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD): no file changed its warning count since HEAD.
+  eslint on each file changed or created by these slices: 0 warnings, 0 errors (before: 0 on the four source files and on each existing test file).
+
+## The recorded-downloads contract, seen failing: with HEAD's test file (the route still listed as delivering unrecorded)
+## and the final route, which records:
+   × server/services/export/__tests__/recorded-downloads.contract.test.ts > every handler that delivers a file records it, or is not served > 'server/routes/etmf.routes.ts' `'get(\'/trials/:trialId/inspection-pac…'` still delivers unrecorded, and is not served 5ms
+     → get('/trials/:trialId/inspection-package' delivers no file any more: remove its entry: expected +0 to be 1 // Object.is equality
+  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+   Test Files  1 failed (1)
+        Tests  1 failed | 35 passed (36)
+  The entry is removed; the file then passes (35 passed, above).
+
+## After E3b (the filing's document on the list): the eTMF suites again, on the final tree. 2026-11-10T12:31Z.
+  server/routes/__tests__/etmf-artifacts.routes.test.ts                                         12 passed
+  server/routes/__tests__/etmf-error-containment.test.ts                                         2 passed
+  server/routes/__tests__/etmf.routes.test.ts                                                    4 passed
+  server/routes/__tests__/tmf-assessment-audit-outcomes.test.ts                                 11 passed
+  server/services/__tests__/vault-taxonomy-etmf.test.ts                                         18 passed
+  server/services/etmf/__tests__/etmf-classifier-classifies-its-own-catalog.test.ts             10 passed
+  server/services/etmf/__tests__/etmf-logic.test.ts                                             13 passed
+  server/services/etmf/__tests__/etmf-unmatched-artifact-is-unclassified.test.ts                 5 passed
+  server/services/etmf/__tests__/tmf-completeness.test.ts                                        6 passed
+  server/services/etmf/__tests__/tmf-document-ref-guard.test.ts                                 11 passed
+  server/services/etmf/__tests__/tmf-governed-filing.test.ts                                    22 passed
+  server/services/etmf/__tests__/tmf-inspection-package.test.ts                                  4 passed
+  server/services/etmf/__tests__/tmf-readiness-counts-only-verified-documents.test.ts            8 passed
+  server/services/etmf/__tests__/tmf-study-binding.test.ts                                      27 passed
+  14 file(s): 153 passed, 0 failed, 0 skipped
+  tests/db/etmf-governed-filing.dbtest.ts                                                       13 passed
+  tests/db/etmf-study-binding.dbtest.ts                                                         15 passed
+  tests/db/tmf-assessment-audit-outcomes.dbtest.ts                                              10 passed
+  3 file(s): 38 passed, 0 failed, 0 skipped

@@ -1,0 +1,86 @@
+E2 green, part 1 of 2. The E2 tests on the source as it stood when E2 was done and E3 had not begun
+(the four source files saved at that point; the test files are the final ones).
+
+## server/services/etmf/__tests__/tmf-study-binding.test.ts
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > is looked up by its own id string, within the caller's organization
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > admits a read by the Vault's project read rule, for the study's own project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > admits a write by the Vault's write rule, inside the writer's transaction
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a name no study of the organization has
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study that belongs to no project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > an empty name, or one longer than a study id can be, without asking the database
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (403 PROJECT_PERMISSION_DENIED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (404 PROJECT_NOT_FOUND) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (409 PROJECT_ANCHOR_UNRESOLVED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (403 PROJECT_ACTOR_ACCESS_DENIED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a write to a study the caller cannot open writes nothing and rolls back
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > answers STUDY_ACCESS_UNAVAILABLE (503) when project access could not be verified
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > a failed study lookup is thrown as it is, not turned into an empty TMF
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > tells a role that may read the Vault but not change it, in the Vault's own words
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing carries its study > stores the study row id and the study's own id string
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing carries its study > says which study a completeness answer is about, in the names the study list uses
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing's Vault document is the study's project's > looks the document up in the organization and in the study's project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing's Vault document is the study's project's > refuses a document that is not there with DOCUMENT_NOT_IN_PROJECT (409), and writes nothing
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing is removed through its own study > does not find a row that has no study, or an id that is not one
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing is removed through its own study > asks the Vault's write rule about the filing's study, and changes nothing when it refuses
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+
+## tests/db/etmf-study-binding.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > takes the studyId that GET /api/study-design lists, and says which study the answer is about
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > refuses a name that is no study the caller can open, on every route, and writes nothing
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > lets a member shared on the project read and file its study, and no other project's
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > stores the study and the study's own id string, one row per study and artifact
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > never serves a row with no study as a study's filing, even when its free text equals the study's id
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > holds a filing's study to the filing's own organization, in the database
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > keeps a filing on record, detached, when its study design is deleted
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > refuses a document of another project, absent, or of another organization, with one code, and writes nothing
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > still refuses a path built from the trial and the artifact code
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > reports each item of a batch, and files only what is in the project
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > counts a filing as verified only while its document is a live document of the study's project
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the inspection package is the study's > names the study in its manifest and its file name, and lists only the study's filings
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is removed only by someone who can write its study's project > answers 404 for a filing of a project the caller cannot open, and leaves it
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+
+E2 green, part 2 of 2. The same E2 tests on the final source (E2 and E3).
+
+## server/services/etmf/__tests__/tmf-study-binding.test.ts
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > is looked up by its own id string, within the caller's organization
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > admits a read by the Vault's project read rule, for the study's own project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > the trial a caller names is a study of their organization > admits a write by the Vault's write rule, inside the writer's transaction
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a name no study of the organization has
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study that belongs to no project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > an empty name, or one longer than a study id can be, without asking the database
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (403 PROJECT_PERMISSION_DENIED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (404 PROJECT_NOT_FOUND) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (409 PROJECT_ANCHOR_UNRESOLVED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a study in a project the caller cannot open (403 PROJECT_ACTOR_ACCESS_DENIED) is not disclosed
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > anything else is STUDY_NOT_FOUND, and no filing is read or written > a write to a study the caller cannot open writes nothing and rolls back
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > answers STUDY_ACCESS_UNAVAILABLE (503) when project access could not be verified
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > a failed study lookup is thrown as it is, not turned into an empty TMF
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a check that could not run is an error with a code, never "not found" > tells a role that may read the Vault but not change it, in the Vault's own words
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing carries its study > stores the study row id and the study's own id string
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing carries its study > says which study a completeness answer is about, in the names the study list uses
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing's Vault document is the study's project's > looks the document up in the organization and in the study's project
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing's Vault document is the study's project's > refuses a document that is not there with DOCUMENT_NOT_IN_PROJECT (409), and writes nothing
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing is removed through its own study > does not find a row that has no study, or an id that is not one
+ ✓ server/services/etmf/__tests__/tmf-study-binding.test.ts > a filing is removed through its own study > asks the Vault's write rule about the filing's study, and changes nothing when it refuses
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+
+## tests/db/etmf-study-binding.dbtest.ts  (PostgreSQL 16, runtime role app_service, RLS_ENFORCE=on)
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > takes the studyId that GET /api/study-design lists, and says which study the answer is about
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > refuses a name that is no study the caller can open, on every route, and writes nothing
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the trial a route names is a study of the open project > lets a member shared on the project read and file its study, and no other project's
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > stores the study and the study's own id string, one row per study and artifact
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > never serves a row with no study as a study's filing, even when its free text equals the study's id
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > holds a filing's study to the filing's own organization, in the database
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is bound to its study > keeps a filing on record, detached, when its study design is deleted
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > refuses a document of another project, absent, or of another organization, with one code, and writes nothing
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > still refuses a path built from the trial and the artifact code
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > reports each item of a batch, and files only what is in the project
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing's Vault document belongs to the study's project > counts a filing as verified only while its document is a live document of the study's project
+ ✓ tests/db/etmf-study-binding.dbtest.ts > the inspection package is the study's > names the study in its manifest and its file name, and lists only the study's filings
+ ✓ tests/db/etmf-study-binding.dbtest.ts > a filing is removed only by someone who can write its study's project > answers 404 for a filing of a project the caller cannot open, and leaves it
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

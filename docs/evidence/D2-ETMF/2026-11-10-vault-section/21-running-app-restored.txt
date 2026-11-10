@@ -1,0 +1,61 @@
+# The restored capabilities, opened and used in the running app (2026-11-10)
+# Local dev server on :5000, PostgreSQL 16, the demo's biotech project C2C-101 (one study). Chromium through Playwright,
+# signed in through the real sign-in form. Each line is what the browser showed. 1440x900 unless a width is named.
+
+## 1. Essential records (the default), with the figures, each record's zone and code, and Ask AnA
+1 heading row: Records Of [Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis · Phase 2 Essential records All records
+1 verdict (essential): 1 of 26 essential records are filed. 25 are missing.
+1 figures: Zones complete 0 of 11 · Essential records filed 1 of 26 · Open records 25, 0 filed with no verified document
+1 basis: Essential records are those of the DIA TMF Reference Model that ICH E6(R3) Appendix C names. A record counts as filed only when its filing names a Vault document that existed when this was read. A filing with no document, with a document that no longer exists, or with a reference outside the Vault does not count.
+1 not assessed: Timeliness and quality control are not assessed: no filing lag and no QC state is recorded for trial master file records.
+1 records (essential): 26
+1 first row: Trial Master File Plan Zone 1 · tmf_plan Filed against “[Demo · Biotech] Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled”, version 1.0 on 2026-11-10. Remove
+1 ask AnA: Ask AnA which gaps an inspector would raise
+
+## 2. All records of the reference model
+2 verdict (all): 1 of 41 records are filed. 40 are missing.
+2 figures (all): Zones complete 0 of 11 · Records filed 1 of 41 · Open records 40, 0 filed with no verified document
+2 records (all): 41
+
+## 3. The inspection package shown as a document, and its download in the chosen scope
+3 package cover: [Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis (sd_65bfd735cf9649258e6d6bd78349e1cb) · DIA TMF Reference Model (ICH E6(R3) Appendix C) · Scope: all records · As read on Nov 10, 2026
+3 package verdict: Not inspection-ready
+3 package readiness: 1 of 41 records are filed. 40 are missing. It is not yet inspection-ready. The open records are listed in part 3.
+3 package zone rows: 11
+3 package open rows: 40
+3 package what: The index and the readiness picture of this study’s trial master file: a manifest, the completeness assessment, and an index of every filing with its zone, its record code, when it was filed, the document it refers to an…
+3 package download (all scope): tmf-inspection-sd_65bfd735cf9649258e6d6bd78349e1cb.zip
+
+## 4. Upload a file and file it in one step, with a reason
+4 chosen: File from your computer: C2C-101-201 Monitoring Plan v1.0.pdf. It is added to this project’s Vault first, then filed as Monitoring Plan. Choose another
+4 said: “C2C-101-201 Monitoring Plan v1.0.pdf” was added to this project’s Vault, version 1.0. Monitoring Plan is filed against it. Your reason is recorded with the filing.
+4 row after: Monitoring Plan Zone 1 · monitoring_plan Filed against “C2C-101-201 Monitoring Plan v1.0”, version 1.0 on 2026-11-10. Remove
+4 verdict after: 2 of 26 essential records are filed. 24 are missing.
+
+## 5. Ask AnA
+5 after Ask AnA, url: /concept2cure/conversation-thread?program=833164a5-6fca-4bf8-95c4-a2030fed4acb
+5 the composer holds: Which trial master file gaps would an inspector raise for [Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis, and how do I close them?
+5 with: "From Trial master file" and "Back to Trial master file" above the composer (24-ask-ana.png). No model key is set
+  on this machine, so the question was not sent.
+
+desktop console errors: []
+desktop responses >= 400: []
+
+## 6. Widths, after the last stylesheet change (a record's name keeps its line beside a long filing sentence)
+desktop: names cut []; names on more than one line []; rows overflowing 0; horizontal scroll false; console errors []
+tablet: names cut []; names on more than one line ["Regulatory approval / authorisation","Laboratory certification/accreditation"]; rows overflowing 0; horizontal scroll false; console errors []
+phone: names cut []; names on more than one line []; rows overflowing 0; horizontal scroll false; console errors []
+
+## 7. What the upload-and-file left in the database (read as the owner, after the walk)
+$ select chain_seq, action, left(reason, 90) from audit_logs where chain_seq between 544 and 547 order by chain_seq
+544 | EXPORT_GENERATED | 
+545 | vault.document.ingest | 
+546 | TMF_ARTIFACT_FILED | The approved monitoring plan for C2C-101-201, uploaded and filed for inspection readiness.
+547 | vault.document.extracted | 
+
+$ select artifact_code, study_ref, document_ref, live from tmf_artifact_filings
+tmf_plan | 1 | vault://9ed8e080-cb49-495c-9ddb-2793e00639bc | live
+monitoring_plan | 1 | vault://282502b1-d0dc-4097-adc6-2643e4df1e45 | live
+
+# The upload is the Vault's own ingest (vault.document.ingest), the filing is the governed filing with the reason typed,
+# and the package download before it is a recorded download (EXPORT_GENERATED).

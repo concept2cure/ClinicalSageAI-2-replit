@@ -1,0 +1,140 @@
+# 08-suites: the suites that cover the changed files, on the changed code
+# $ npx vitest run --config vitest.config.ts <the 125 files below>
+# passed/total per file. This change's suites, vaultTrialMasterFile.test.tsx (36) and etmfHostsTrialMasterFile.test.tsx (8), are in group A.
+# The retired screen's three suites (etmfFilingPayload, etmfHonesty, etmfReadinessNotDeterminedIsNotNotReady) are deleted and not run.
+
+A. The Vault and eTMF client suites (client/src/concept2cure/v2/__tests__/vault*.test.ts(x), etmf*.test.tsx, filingPathNoDeadEnds.test.tsx)
+  pass    8/8    client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx
+  pass   10/10   client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx
+  pass   19/19   client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx
+  pass   18/18   client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx
+  pass    1/1    client/src/concept2cure/v2/__tests__/vaultAskRowGroup.test.tsx
+  pass   18/18   client/src/concept2cure/v2/__tests__/vaultCatalogRecord.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx
+  pass    6/6    client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx
+  pass    3/3    client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx
+  pass   10/10   client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/vaultDataRoomFiledAs.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx
+  pass    1/1    client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx
+  pass    6/6    client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx
+  pass    3/3    client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx
+  pass    6/6    client/src/concept2cure/v2/__tests__/vaultFolderExport.test.tsx
+  pass   10/10   client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx
+  pass   12/12   client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultHoldNotice.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx
+  pass   18/18   client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts
+  pass   30/30   client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/vaultOpensOnFiledDocument.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultOpensUploadedDocument.test.tsx
+  pass   25/25   client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx
+  pass    3/3    client/src/concept2cure/v2/__tests__/vaultPlaceFromVault.test.tsx
+  pass   57/57   client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx
+  pass    8/8    client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx
+  pass    1/1    client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultRefusalNotFailedRead.test.tsx
+  pass   11/11   client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx
+  pass   13/13   client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx
+  pass    8/8    client/src/concept2cure/v2/__tests__/vaultReviewRouteReassign.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultReviewRouteRR2.test.tsx
+  pass   21/21   client/src/concept2cure/v2/__tests__/vaultSavedViews.test.tsx
+  pass   14/14   client/src/concept2cure/v2/__tests__/vaultSeals.test.tsx
+  pass   16/16   client/src/concept2cure/v2/__tests__/vaultSearchFilters.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx
+  pass    3/3    client/src/concept2cure/v2/__tests__/vaultSectionCitations.test.ts
+  pass    3/3    client/src/concept2cure/v2/__tests__/vaultSigningPosture.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx
+  pass    6/6    client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultStatusVocabulary.test.ts
+  pass   23/23   client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx
+  pass   36/36   client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx
+  pass   16/16   client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx
+  pass   12/12   client/src/concept2cure/v2/__tests__/vaultUploadManifest.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultUploadManifestPanel.test.tsx
+  pass   28/28   client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx
+  pass   74/74   client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx
+  pass    8/8    client/src/concept2cure/v2/__tests__/vaultUploadReview.test.tsx
+  pass   17/17   client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx
+  pass    4/4    client/src/concept2cure/v2/__tests__/vaultVersionRestore.test.tsx
+  pass    6/6    client/src/concept2cure/v2/__tests__/vaultVersionViewer.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/vaultViewOnly.test.tsx
+  pass   11/11   client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx
+  pass   14/14   client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx
+  -- 67 files, 744 of 744 tests passed
+
+B. The other suites that render the Vault or read Vault.tsx
+  pass   13/13   client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+  pass    1/1    client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx
+  pass    9/9    client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+  pass   20/20   client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts
+  pass    6/6    client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx
+  pass   31/31   client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx
+  -- 6 files, 80 of 80 tests passed
+
+C. The suites that scan the v2 source tree or read its stylesheets (class vocabulary, sentence case, retired patterns, tokens, CSS rules, navigation)
+  pass   12/12   client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/answerLeadSpark.test.tsx
+  pass   25/25   client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/cmcStylesheetClosure.test.ts
+  pass   18/18   client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts
+  pass   23/23   client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx
+  pass   23/23   client/src/concept2cure/v2/__tests__/d0Focus.test.ts
+  pass   12/12   client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts
+  pass   43/43   client/src/concept2cure/v2/__tests__/d0Primitives.test.ts
+  pass    6/6    client/src/concept2cure/v2/__tests__/d0SpecDecisions.test.ts
+  pass    2/2    client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts
+  pass   14/14   client/src/concept2cure/v2/__tests__/documentCanvasPolish.test.tsx
+  pass   20/20   client/src/concept2cure/v2/__tests__/ectdCompileReference.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldBilling.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts
+  pass    6/6    client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/foldPart11Console.test.ts
+  pass    7/7    client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/foldSetup.test.ts
+  pass   17/17   client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts
+  pass   78/78   client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts
+  pass    3/3    client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts
+  pass    3/3    client/src/concept2cure/v2/__tests__/iconKeys.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/indFormsPanelAttachmentVerdict.test.tsx
+  pass    5/5    client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts
+  pass    9/9    client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+  pass    2/2    client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+  pass   11/11   client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx
+  pass   16/16   client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx
+  pass    2/2    client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx
+  pass   17/17   client/src/concept2cure/v2/__tests__/shellQuietChromeRules.test.ts
+  pass    5/5    client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts
+  pass    4/4    client/src/concept2cure/v2/__tests__/surfaceReadySignal.test.ts
+  pass    1/1    client/src/concept2cure/v2/editor/__tests__/pdfFrameOneSite.test.ts
+  pass    6/6    tests/ui/ana-rail-phone-drawer.test.ts
+  pass   21/21   tests/ui/filing-path-reachability.test.ts
+  pass    2/2    tests/ui/motion-token.test.ts
+  pass    8/8    tests/ui/one-shell.test.ts
+  pass    3/3    tests/ui/pj-title-authority.test.ts
+  pass    3/3    tests/ui/shell-kit-lazy.test.ts
+  pass    8/8    tests/ui/surface-honesty.contract.test.ts
+  pass    4/4    tests/ui/surface-registry-coverage.test.ts
+  pass    3/3    tests/ui/tailwind-source-scope.test.ts
+  pass    8/8    tests/ui/token-authority.test.ts
+  -- 52 files, 515 of 515 tests passed
+
+Total: 125 files, 1339 of 1339 tests passed, 0 failed.
