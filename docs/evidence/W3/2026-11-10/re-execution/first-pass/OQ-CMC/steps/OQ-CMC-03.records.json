@@ -1,0 +1,11 @@
+{
+  "projectId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+  "created": {
+    "drugSubstance": 5,
+    "drugProduct": 2,
+    "analyticalMethod": 4,
+    "specification": "56fa6310-ea01-40f1-95ff-3500af357034",
+    "batchRecord": "0350e58e-3dac-4089-b5f4-40756ea888f7",
+    "stabilityStudy": 6
+  }
+}

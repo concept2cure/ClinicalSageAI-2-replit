@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/specifications/56fa6310-ea01-40f1-95ff-3500af357034",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "acceptanceCriteria": {
+        "release": "90.0-110.0%"
+      }
+    }
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 24,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "REASON_REQUIRED",
+      "message": "This specification is approved. Changing it withdraws the approval, so a reason is required: A reason for change of at least 8 characters is required.",
+      "field": "reason"
+    }
+  }
+}

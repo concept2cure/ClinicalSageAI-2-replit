@@ -9,6 +9,8 @@ import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../.
 import { ACCOUNT_STANDING_TEXT, accountStandingStep } from './account-standing.mjs';
 import { INACTIVITY_TEXT, inactivityStep } from './inactivity.mjs';
 import { filingReferenceStep } from './filing-reference.mjs';
+import { organisationChainVerdict } from '../../lib/chain-verdict.mjs';
+import { trackingProjectId } from '../../lib/fixtures.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -158,8 +160,9 @@ await step(
     id: 'OQ-PROJ-06',
     urs: ['URS-PROJ-004'],
     title: 'Program creation is attributable in the activity feed and the hash-chained audit log verifies',
-    action: 'GET /api/c2c/projects/:id/activity; GET /api/c2c/actions/verify-chain',
-    expected: 'Activity has ≥1 entry for the creation with an actor and time; the audit_logs chain verifier answers ok',
+    action: 'GET /api/c2c/projects/:id/activity; GET /api/audit/reports/audit-trail-integrity',
+    expected: 'Activity has ≥1 entry for the creation with an actor and time; the attestation reports the audit_logs hash chain intact',
+    note: 'v0.12: the chain verdict is read from the Audit trail integrity attestation (tests/validation/lib/chain-verdict.mjs). GET /api/c2c/actions/verify-chain is claimed by no launch surface, and a server that refuses unattributed paths (production\'s default) answers it 403 LAUNCH_SCOPE.',
     dependsOn: ['OQ-PROJ-04'],
   },
   async ({ api, expect }) => {
@@ -167,9 +170,9 @@ await step(
     expect(act.status === 200, `activity expected 200, got ${act.status}`, act.json);
     const entries = act.json?.data ?? act.json?.activity ?? [];
     expect(Array.isArray(entries) && entries.length >= 1, 'no activity entries', act.json);
-    const v = await api('GET', '/api/c2c/actions/verify-chain');
-    expect(v.status === 200 && v.json?.ok === true, `verify-chain expected ok, got ${v.status}`, v.json);
-    return `activity entries: ${entries.length} (first: ${JSON.stringify(entries[0]).slice(0, 160)}); verify-chain ${JSON.stringify(v.json).slice(0, 120)}`;
+    const v = await organisationChainVerdict(api);
+    expect(v.intact, `the audit_logs hash chain expected intact, got ${v.status} ${v.code ?? v.row?.verdict}`, v);
+    return `activity entries: ${entries.length} (first: ${JSON.stringify(entries[0]).slice(0, 160)}); audit_logs hash chain ${v.row.verdict}, ${v.row.rows_checked} rows (${v.exportId})`;
   },
 );
 
@@ -256,17 +259,15 @@ await step(
     id: 'OQ-PROJ-09',
     urs: ['URS-PROJ-006'],
     title: 'Create a task and see it on the task board',
-    action: 'POST /api/tasks/tasks {title, moduleType:"projects", priority:"high"}; GET /api/task-management/board',
+    action: 'GET /api/projects (the program\'s tracking record); POST /api/tasks/tasks {title, moduleType:"projects", priority:"high", projectId}; GET /api/task-management/board',
+    note: 'v0.12: the task is created under the program, as New task creates it. Since 958c213e03 (2026-10-31) the Tasks board opens filtered to the open project, so a task with no project is not on the board OQ-PROJ-10 opens.',
     expected: 'Task created (2xx) with a taskId; the board lists it',
   },
   async ({ api, expect }) => {
     const title = `OQ-001 task ${stamp}`;
-    const r = await api('POST', '/api/tasks/tasks', {
-      title,
-      description: 'Created by OQ-001 step 09',
-      moduleType: 'projects',
-      priority: 'high',
-    });
+    const projectId = await trackingProjectId(api, state.programId);
+    expect(Boolean(projectId), 'the program has no tracking record in GET /api/projects', { programId: state.programId });
+    const r = await api('POST', '/api/tasks/tasks', { title, description: 'Created by OQ-001 step 09', moduleType: 'projects', priority: 'high', projectId });
     expect(r.status >= 200 && r.status < 300, `expected 2xx, got ${r.status}`, r.json);
     const task = r.json?.data ?? r.json?.task ?? r.json;
     state.taskTitle = title;

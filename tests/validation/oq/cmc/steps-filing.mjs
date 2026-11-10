@@ -27,7 +27,9 @@ await step(
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const submissions = await api('GET', '/api/submissions');
     const rows = dataOf(submissions);
-    const own = (Array.isArray(rows) ? rows : []).find((s) => String(s.projectId ?? s.project_id) === String(state.projectId));
+    /* v0.12: a submission names its programme as `programId` (GET /api/submissions). Until v0.11 the step matched
+       `projectId`, which no row carries, so it never found the spine the programme's creation had made. */
+    const own = (Array.isArray(rows) ? rows : []).find((s) => String(s.programId ?? s.projectId ?? s.project_id) === String(state.projectId));
     if (!own) {
       deviation('not executed — the programme has no submission spine to place into; the IND filing path (OQ-SUBC) creates it.', rows);
     }
@@ -38,17 +40,32 @@ await step(
 
     const idempotencyKey = `oq-cmc-place-${stamp}`;
     const reason = 'Placing the approved Module 3 into sequence 0001 for filing.';
-    const place = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId, reason, idempotencyKey,
-    });
+    /* v0.12: the route requires the submission with the sequence (module3OperatingSystemRoutes.ts); until v0.11
+       the step sent the sequence alone and would have been answered 400. */
+    state.submissionId = own.id;
+    const target = { submissionId: own.id, sequenceId, reason, idempotencyKey };
+    const place = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, target);
     attach('placement.json', place.json ?? {});
+    /* The placement refuses, before any write, unless the final-export gate passes. The reference records compose
+       sections the compiler scores incomplete, which cannot be approved, so this fixture never clears the gate.
+       The refusal is the designed answer and is recorded with the gate's own counts; the positive placement is
+       not observed, which is a deviation and never a pass. */
+    const gate = place.json?.data ?? {};
+    if (place.status === 409 && Number(gate.approvedSections) < Number(gate.totalSections)) {
+      const refusedLeaves = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
+      expect(refusedLeaves === 0, `the refused placement wrote ${refusedLeaves} leaf/leaves`, place.json);
+      deviation(
+        `not executed — the placement was refused 409 by the final-export gate (${gate.approvedSections} of ${gate.totalSections} sections approved, ` +
+          `${gate.sectionsWithoutProvenance} without source lineage) and wrote no leaf, which is the designed answer. The reference records do not compose ` +
+          'a Module 3 whose every section can be approved, so the positive placement and its idempotent retry were not observed. A fixture for it is owed.',
+        { status: place.status, error: place.json?.error, approvedSections: gate.approvedSections, totalSections: gate.totalSections, leaves: refusedLeaves },
+      );
+    }
     expect(place.status === 200, `the placement expected 200, got ${place.status}`, place.json);
     const placed = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
     expect(placed > 0, 'the placement wrote no leaf', place.json);
 
-    const retry = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId, reason, idempotencyKey,
-    });
+    const retry = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, target);
     const after = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
     expect(after === placed, `the retry wrote further leaves: ${placed} → ${after}`, { placed, after });
     return `placed ${placed} leaf/leaves; retry ${retry.status} with ${after} leaves still`;
@@ -60,18 +77,22 @@ await step(
     id: 'OQ-CMC-20',
     urs: ['URS-CMC-011'],
     title: 'Placement requires the regulatory-author role',
-    action: 'as a member without that role: place',
+    action: 'as the viewer, who holds no regulatory-author role: place',
     expected: '403; no leaf written',
-    dependsOn: ['OQ-CMC-19'],
-    note: 'v0.11: the placement is the member\'s (OQ_MEMBER). Until v0.10 it was sent with the run session.',
+    dependsOn: ['OQ-CMC-13'],
+    note: 'v0.11: the placement is the member\'s (OQ_MEMBER). Until v0.10 it was sent with the run session. v0.12: the placement is the viewer\'s (OQ_VIEWER). An organisation member holds the regulatory-author role (ORG_ROLE_FUNCTIONAL_GRANTS, server/middleware/auth.ts), so OQ_MEMBER passed the role and was answered by the export gate (409); the viewer is the identity without it. The step depends on the approval (OQ-CMC-13), not on a completed placement: the role is refused before the target is read, and the step needs only the sequence OQ-CMC-19 creates.',
   },
-  async ({ apiAs, expect, deviation, baseUrl }) => {
-    const member = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_MEMBER', 'an identity without the regulatory-author role is needed to observe the refusal.');
-    const r = await apiAs(member.session)('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId: state.sequenceId, reason: 'Attempting a placement without the role.',
+  async ({ api, apiAs, expect, deviation, baseUrl }) => {
+    if (!state.sequenceId) deviation('not executed — OQ-CMC-19 created no sequence to place into.');
+    const viewer = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_VIEWER', 'an identity without the regulatory-author role is needed to observe the refusal.');
+    const before = leafCount(await api('GET', `/api/submissions/sequences/${state.sequenceId}/leaves`));
+    const r = await apiAs(viewer.session)('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
+      submissionId: state.submissionId, sequenceId: state.sequenceId, reason: 'Attempting a placement without the role.',
     });
     expect([401, 403].includes(r.status), `expected 403, got ${r.status}`, r.json);
-    return `${r.status} ${errCode(r) ?? ''}`.trim();
+    const after = leafCount(await api('GET', `/api/submissions/sequences/${state.sequenceId}/leaves`));
+    expect(after === before, `the refused placement wrote leaves: ${before} → ${after}`, { before, after });
+    return `${r.status} ${errCode(r) ?? ''}; leaves ${before} → ${after}`.trim();
   },
 );
 

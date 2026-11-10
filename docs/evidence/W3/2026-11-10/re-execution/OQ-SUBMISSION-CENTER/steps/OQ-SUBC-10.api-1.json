@@ -1,0 +1,522 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects/fb517312-5af8-49de-9d04-2a5dafe99192/dossier",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "projectId": "fb517312-5af8-49de-9d04-2a5dafe99192",
+      "measuredAt": "2026-11-10T02:50:02.382Z",
+      "home": {
+        "state": "measured",
+        "pct": 0,
+        "counted": 72,
+        "complete": 0
+      },
+      "markets": [
+        {
+          "scope": "home",
+          "agency": "fda",
+          "docType": "ind",
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 72,
+            "complete": 0
+          },
+          "notHeld": []
+        }
+      ],
+      "rows": [
+        {
+          "group": "module",
+          "module": "1",
+          "agency": null,
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "label": "Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3)",
+          "counted": 13,
+          "complete": 0,
+          "inReview": 0,
+          "drafted": 0,
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 13,
+            "complete": 0
+          },
+          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "sections": [
+            {
+              "key": "1.1.1",
+              "label": "Form FDA 1571 — Investigational New Drug Application",
+              "status": "todo"
+            },
+            {
+              "key": "1.1.2",
+              "label": "Form FDA 1572 — Statement of Investigator",
+              "status": "todo"
+            },
+            {
+              "key": "1.1.3",
+              "label": "Form FDA 3674 — Certification of Compliance (ClinicalTrials.gov)",
+              "status": "todo"
+            },
+            {
+              "key": "1.2",
+              "label": "Cover letter",
+              "status": "todo"
+            },
+            {
+              "key": "1.3.1",
+              "label": "Contact, sponsor and U.S. agent information",
+              "status": "todo"
+            },
+            {
+              "key": "1.3.4",
+              "label": "Financial certification and disclosure (Forms FDA 3454 / 3455)",
+              "status": "todo"
+            },
+            {
+              "key": "1.4.1",
+              "label": "Letters of authorization (DMF / cross-reference)",
+              "status": "todo"
+            },
+            {
+              "key": "1.4.2",
+              "label": "Statements of right of reference",
+              "status": "todo"
+            },
+            {
+              "key": "1.12.1",
+              "label": "Pre-IND correspondence",
+              "status": "todo"
+            },
+            {
+              "key": "1.12.14",
+              "label": "Environmental analysis or claim of categorical exclusion (21 CFR 25.31)",
+              "status": "todo"
+            },
+            {
+              "key": "1.14.4.1",
+              "label": "Investigator's brochure",
+              "status": "todo"
+            },
+            {
+              "key": "1.14.4.2",
+              "label": "Investigational drug labeling (21 CFR 312.6)",
+              "status": "todo"
+            },
+            {
+              "key": "1.20",
+              "label": "Introductory statement and general investigational plan (21 CFR 312.23(a)(3))",
+              "status": "todo"
+            }
+          ]
+        },
+        {
+          "group": "module",
+          "module": "2",
+          "agency": null,
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "label": "Module 2 · Summaries",
+          "counted": 12,
+          "complete": 0,
+          "inReview": 0,
+          "drafted": 0,
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 12,
+            "complete": 0
+          },
+          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "sections": [
+            {
+              "key": "2.2",
+              "label": "Introduction",
+              "status": "todo"
+            },
+            {
+              "key": "2.3.S",
+              "label": "Drug substance summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.3.P",
+              "label": "Drug product summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.4",
+              "label": "Nonclinical overview",
+              "status": "todo"
+            },
+            {
+              "key": "2.5",
+              "label": "Clinical overview",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.2",
+              "label": "Pharmacology written summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.3",
+              "label": "Pharmacology tabulated summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.4",
+              "label": "Pharmacokinetics written summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.5",
+              "label": "Pharmacokinetics tabulated summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.6",
+              "label": "Toxicology written summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.6.7",
+              "label": "Toxicology tabulated summary",
+              "status": "todo"
+            },
+            {
+              "key": "2.7",
+              "label": "Clinical summary (abbreviated for an initial IND)",
+              "status": "todo"
+            }
+          ]
+        },
+        {
+          "group": "module",
+          "module": "3",
+          "agency": null,
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "label": "Module 3 · Quality (CMC)",
+          "counted": 20,
+          "complete": 0,
+          "inReview": 0,
+          "drafted": 0,
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 20,
+            "complete": 0
+          },
+          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "sections": [
+            {
+              "key": "3.2.S.1",
+              "label": "General information",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.2",
+              "label": "Manufacture",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.3",
+              "label": "Characterisation",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.4",
+              "label": "Control of drug substance",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.5",
+              "label": "Reference standards or materials",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.6",
+              "label": "Container closure system",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.S.7",
+              "label": "Stability",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.1",
+              "label": "Description and composition",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.2",
+              "label": "Pharmaceutical development",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.3",
+              "label": "Manufacture",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.4",
+              "label": "Control of excipients",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.5",
+              "label": "Control of drug product",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.6",
+              "label": "Reference standards or materials",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.7",
+              "label": "Container closure system",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.P.8",
+              "label": "Stability",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.A.1",
+              "label": "Facilities and equipment",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.A.2",
+              "label": "Adventitious agents safety evaluation",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.A.3",
+              "label": "Excipients (novel)",
+              "status": "todo"
+            },
+            {
+              "key": "3.2.R",
+              "label": "Regional information",
+              "status": "todo"
+            },
+            {
+              "key": "3.3",
+              "label": "Literature references",
+              "status": "todo"
+            }
+          ]
+        },
+        {
+          "group": "module",
+          "module": "4",
+          "agency": null,
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "label": "Module 4 · Nonclinical study reports",
+          "counted": 19,
+          "complete": 0,
+          "inReview": 0,
+          "drafted": 0,
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 19,
+            "complete": 0
+          },
+          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "sections": [
+            {
+              "key": "4.2.1.1",
+              "label": "Primary pharmacodynamics",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.1.2",
+              "label": "Secondary pharmacodynamics",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.1.3",
+              "label": "Safety pharmacology",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.1.4",
+              "label": "Pharmacodynamic drug interactions",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.1",
+              "label": "Analytical methods and validation reports",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.2",
+              "label": "Absorption",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.3",
+              "label": "Distribution",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.4",
+              "label": "Metabolism",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.5",
+              "label": "Excretion",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.6",
+              "label": "Pharmacokinetic drug interactions (nonclinical)",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.2.7",
+              "label": "Other pharmacokinetic studies",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.1",
+              "label": "Single-dose toxicity",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.2",
+              "label": "Repeat-dose toxicity",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.3",
+              "label": "Genotoxicity",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.4",
+              "label": "Carcinogenicity",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.5",
+              "label": "Reproductive and developmental toxicity",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.6",
+              "label": "Local tolerance",
+              "status": "todo"
+            },
+            {
+              "key": "4.2.3.7",
+              "label": "Other toxicity studies",
+              "status": "todo"
+            },
+            {
+              "key": "4.3",
+              "label": "Literature references",
+              "status": "todo"
+            }
+          ]
+        },
+        {
+          "group": "module",
+          "module": "5",
+          "agency": null,
+          "documentId": "doc_775f4ba75f5043ea853e469bfa563f99",
+          "label": "Module 5 · Clinical study reports",
+          "counted": 8,
+          "complete": 0,
+          "inReview": 0,
+          "drafted": 0,
+          "figure": {
+            "state": "measured",
+            "pct": 0,
+            "counted": 8,
+            "complete": 0
+          },
+          "lastUpdated": "2026-11-10T02:49:19.450Z",
+          "sections": [
+            {
+              "key": "5.2",
+              "label": "Tabular listing of all clinical studies",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.1",
+              "label": "Reports of biopharmaceutic studies",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.3",
+              "label": "Reports of human pharmacokinetic studies",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.5.1",
+              "label": "Study reports of controlled clinical studies — includes the clinical protocol(s) and IRB information for an initial IND (21 CFR 312.23(a)(6))",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.5.2",
+              "label": "Study reports of uncontrolled clinical studies",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.5.4",
+              "label": "Other study reports — previous human experience (21 CFR 312.23(a)(9))",
+              "status": "todo"
+            },
+            {
+              "key": "5.3.7",
+              "label": "Case report forms and individual patient listings",
+              "status": "todo"
+            },
+            {
+              "key": "5.4",
+              "label": "Literature references",
+              "status": "todo"
+            }
+          ]
+        }
+      ],
+      "artifactReadiness": {
+        "basis": "governed_artifacts",
+        "state": "no_artifacts",
+        "sections": [],
+        "summary": {
+          "totalSections": 0,
+          "readySections": 0,
+          "inProgressSections": 0,
+          "draftSections": 0,
+          "notAssessedSections": 0
+        }
+      },
+      "supportingReadiness": {
+        "sectionTracking": {
+          "basis": "section_tracking",
+          "state": "no_sections",
+          "modules": [],
+          "unmapped": []
+        }
+      }
+    }
+  }
+}

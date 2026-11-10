@@ -1,0 +1,4349 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/report-os/runs?limit=100",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 25,
+          "runUuid": "cc839692-caf0-4074-89c9-fb6831a95073",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "lifecycle.obligation_calendar",
+          "status": "partial",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:38:15.712Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:38:15.712Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:38:15.712Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+            ]
+          },
+          "blockers": [
+            "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:38:15.721Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:38:15.721Z",
+          "completedAt": "2026-11-10T03:38:15.721Z",
+          "createdAt": "2026-11-10T03:38:15.721Z",
+          "updatedAt": "2026-11-10T03:38:15.721Z",
+          "reportTypeLabel": "Lifecycle Obligation Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 24,
+          "runUuid": "90f0169b-fc4e-425e-a03a-8ebbccf94cf7",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "completed",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:35:50.176Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:35:50.176Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:35:50.193Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:35:50.193Z",
+          "completedAt": "2026-11-10T03:35:50.193Z",
+          "createdAt": "2026-11-10T03:35:50.193Z",
+          "updatedAt": "2026-11-10T03:35:50.193Z",
+          "reportTypeLabel": "Research Administration Scorecard",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 23,
+          "runUuid": "6bfb5192-7af4-4520-909d-ce33735f14b0",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "final",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:35:49.586Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:35:49.603Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:35:49.603Z",
+          "completedAt": "2026-11-10T03:38:30.611Z",
+          "createdAt": "2026-11-10T03:35:49.603Z",
+          "updatedAt": "2026-11-10T03:38:30.611Z",
+          "reportTypeLabel": "Research Administration Scorecard",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 22,
+          "runUuid": "ed68148e-6217-40cf-97b0-c3c7e301986e",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "lifecycle.obligation_calendar",
+          "status": "partial",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:33:31.487Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:33:31.487Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:33:31.487Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:33:31.487Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+            ]
+          },
+          "blockers": [
+            "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:33:31.492Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:33:31.492Z",
+          "completedAt": "2026-11-10T03:33:31.492Z",
+          "createdAt": "2026-11-10T03:33:31.492Z",
+          "updatedAt": "2026-11-10T03:33:31.492Z",
+          "reportTypeLabel": "Lifecycle Obligation Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 21,
+          "runUuid": "df0e68dd-71f6-4e95-b53c-1da6c1cfc764",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "completed",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:33:06.360Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:33:06.360Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:33:06.372Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:33:06.372Z",
+          "completedAt": "2026-11-10T03:33:06.372Z",
+          "createdAt": "2026-11-10T03:33:06.372Z",
+          "updatedAt": "2026-11-10T03:33:06.372Z",
+          "reportTypeLabel": "Research Administration Scorecard",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 20,
+          "runUuid": "4ee28513-ae3c-4de4-b7a5-5d8fcbb7c368",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "final",
+          "requestedBy": 1,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:33:05.786Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:33:05.786Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:33:05.803Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:33:05.803Z",
+          "completedAt": "2026-11-10T03:34:00.634Z",
+          "createdAt": "2026-11-10T03:33:05.803Z",
+          "updatedAt": "2026-11-10T03:34:00.634Z",
+          "reportTypeLabel": "Research Administration Scorecard",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 19,
+          "runUuid": "4865f500-c1b7-4b04-8cee-6dc6a7f7569a",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "global.label_currency_matrix",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "rim_label_currency_matrix",
+                "observedAt": "2026-11-10T03:24:36.176Z",
+                "status": "missing",
+                "blocker": "Legal label currency is unknown: the recorded label status, version and approval date do not establish effective dates, expiry or the current agency-authorized text.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Recorded label-slot cardinality and open-obligation due-date comparison; no regulatory currency inference",
+                  "snapshot": "single-statement",
+                  "computedScope": "organization",
+                  "asOfDate": "2026-11-10"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "labelCurrencyMatrix": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:24:36.176Z",
+                  "products": [],
+                  "registrations": [],
+                  "labels": [],
+                  "obligations": [],
+                  "gaps": [
+                    {
+                      "title": "Legal currency not established",
+                      "message": "Legal label currency is unknown: the recorded label status, version and approval date do not establish effective dates, expiry or the current agency-authorized text.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "Source records missing",
+                      "message": "Products, registrations and label versions must all have recorded inputs to populate the matrix. Empty inputs do not establish currency.",
+                      "severity": "critical"
+                    }
+                  ],
+                  "limits": [
+                    "Legal label currency is unknown: the recorded label status, version and approval date do not establish effective dates, expiry or the current agency-authorized text.",
+                    "The data covers the organization. A project is context, not a product or client-workspace filter.",
+                    "All stored versions and statuses are shown. Version strings are not ranked and approved status is not an effective-date assertion.",
+                    "J-Label is not supported by the canonical label-type schema. No CCDS or other label type is substituted for it or for an unknown market.",
+                    "Lifecycle obligations are independent product/region records; they are not linked to a specific label. Region is not mapped to country, and overdue dates do not establish labeling noncompliance."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "computedScope": "organization",
+                "observedAt": "2026-11-10T03:24:36.176Z",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_products AS (\n  SELECT id, organization_id, product_name, status FROM rim_products\n  WHERE organization_id = $1 AND deleted_at IS NULL\n), visible_registrations AS (\n  SELECT r.id, r.product_id, r.country, r.market_status, r.registration_number, r.approval_date, r.renewal_due_date\n  FROM rim_registrations r JOIN visible_products p ON p.id = r.product_id AND p.organization_id = r.organization_id\n  WHERE r.organization_id = $1 AND r.deleted_at IS NULL\n), visible_labels AS (\n  SELECT l.id, l.product_id, l.country, l.label_type, l.version, l.status, l.approved_date\n  FROM rim_labels l JOIN visible_products p ON p.id = l.product_id AND p.organization_id = l.organization_id\n  WHERE l.organization_id = $1 AND l.deleted_at IS NULL\n), visible_obligations AS (\n  SELECT o.id, o.product_id, o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date\n  FROM lifecycle_obligations o\n  WHERE o.organization_id = $1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR EXISTS (SELECT 1 FROM visible_products p WHERE p.id = o.product_id AND p.organization_id = o.organization_id))\n)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.id) FROM visible_products p), '[]'::jsonb) AS products,\n  COALESCE((SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM visible_registrations r), '[]'::jsonb) AS registrations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(l) ORDER BY l.id) FROM visible_labels l), '[]'::jsonb) AS labels,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.id) FROM visible_obligations o), '[]'::jsonb) AS obligations",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:24:36.176Z",
+                        "products": [],
+                        "registrations": [],
+                        "labels": [],
+                        "obligations": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal label currency is unknown: the recorded label status, version and approval date do not establish effective dates, expiry or the current agency-authorized text."
+            ]
+          },
+          "blockers": [
+            "Legal label currency is unknown: the recorded label status, version and approval date do not establish effective dates, expiry or the current agency-authorized text."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:36.178Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:36.179Z",
+          "completedAt": "2026-11-10T03:24:36.178Z",
+          "createdAt": "2026-11-10T03:24:36.179Z",
+          "updatedAt": "2026-11-10T03:24:36.179Z",
+          "reportTypeLabel": "Label Currency Matrix (USPI / SmPC / PIL / J-Label per Market)",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 18,
+          "runUuid": "5e77633d-d1e2-4120-bd59-e241ca146487",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_admin.scorecard",
+          "status": "final",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_admin_scorecard",
+                "observedAt": "2026-11-10T03:24:35.698Z",
+                "status": "ready",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "lifecycle_obligations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "totalAttentionItems": 0,
+                "critical": 0,
+                "warning": 0,
+                "info": 0,
+                "byDomain": {},
+                "topItems": []
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:35.698Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM lifecycle_obligations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM lifecycle_obligations WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('approved','closed','submitted') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:35.724Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:35.725Z",
+          "completedAt": "2026-11-10T03:25:30.360Z",
+          "createdAt": "2026-11-10T03:24:35.725Z",
+          "updatedAt": "2026-11-10T03:25:30.360Z",
+          "reportTypeLabel": "Research Administration Scorecard",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 17,
+          "runUuid": "fe2a94e3-b4aa-4770-b14f-6e0d7c0f515b",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_security.coi_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_security_coi",
+                "observedAt": "2026-11-10T03:24:35.247Z",
+                "status": "missing",
+                "blocker": "No research_security_coi records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "coi_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "disclosures": 0,
+                "byStatus": {},
+                "byType": {},
+                "foreignNexus": 0,
+                "unmanagedConflicts": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:35.247Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT disclosure_type AS k, count(*)::int AS n FROM coi_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY disclosure_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM coi_disclosures WHERE organization_id=$1 AND deleted_at IS NULL AND (disclosure_type IN ('foreign_appointment','foreign_support') OR (country IS NOT NULL AND upper(country) <> 'US'))",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No research_security_coi records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:35.249Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:35.249Z",
+          "completedAt": "2026-11-10T03:24:35.249Z",
+          "createdAt": "2026-11-10T03:24:35.249Z",
+          "updatedAt": "2026-11-10T03:24:35.249Z",
+          "reportTypeLabel": "Research Security & COI Disclosure Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 16,
+          "runUuid": "53d7611d-12d5-4d6c-8c86-8f13d50dde9e",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "effort.certification_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "effort_certifications",
+                "observedAt": "2026-11-10T03:24:34.798Z",
+                "status": "missing",
+                "blocker": "No effort_certifications records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "effort_certifications",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "effort_lines",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "statements": 0,
+                "byStatus": {},
+                "certified": 0,
+                "recertCandidates": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:34.798Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM effort_certifications WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(DISTINCT certification_id)::int n FROM effort_lines WHERE organization_id=$1 AND deleted_at IS NULL AND award_id IS NOT NULL AND abs(actual_pct - committed_pct) > 25",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No effort_certifications records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:34.800Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:34.800Z",
+          "completedAt": "2026-11-10T03:24:34.800Z",
+          "createdAt": "2026-11-10T03:24:34.800Z",
+          "updatedAt": "2026-11-10T03:24:34.800Z",
+          "reportTypeLabel": "Effort Certification Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 15,
+          "runUuid": "6d6f8645-e1e8-405b-ace3-63c3f8913fc7",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "research_compliance.training_status",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "research_compliance_training",
+                "observedAt": "2026-11-10T03:24:34.350Z",
+                "status": "missing",
+                "blocker": "No research_compliance_training records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "research_personnel",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "personnel_training",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "personnel": 0,
+                "trainingRecords": 0,
+                "byType": {},
+                "expired": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:34.350Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT count(*)::int n FROM research_personnel WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM personnel_training WHERE organization_id=$1 AND deleted_at IS NULL AND expires_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT training_type AS k, count(*)::int AS n FROM personnel_training WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY training_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No research_compliance_training records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:34.352Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:34.352Z",
+          "completedAt": "2026-11-10T03:24:34.352Z",
+          "createdAt": "2026-11-10T03:24:34.352Z",
+          "updatedAt": "2026-11-10T03:24:34.352Z",
+          "reportTypeLabel": "Research Personnel Training Status",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 14,
+          "runUuid": "1ed8e127-c6b3-41c1-9831-9e518ab53f1d",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "etmf.completeness_pack",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "etmf",
+                "observedAt": "2026-11-10T03:24:33.900Z",
+                "status": "missing",
+                "blocker": "No etmf records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "tmf_files",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "tmf_artifacts",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "tmfFiles": 0,
+                "artifacts": 0,
+                "byStatus": {},
+                "finalPct": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:33.900Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT count(*)::int n FROM tmf_files WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM tmf_artifacts WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No etmf records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:33.901Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:33.902Z",
+          "completedAt": "2026-11-10T03:24:33.901Z",
+          "createdAt": "2026-11-10T03:24:33.902Z",
+          "updatedAt": "2026-11-10T03:24:33.902Z",
+          "reportTypeLabel": "eTMF Artifact Lifecycle Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 13,
+          "runUuid": "aa2db2cc-8e10-45f5-bb5d-738b7b3fa99a",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "lifecycle.obligation_calendar",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:24:33.426Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:24:33.426Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:24:33.426Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:24:33.426Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+            ]
+          },
+          "blockers": [
+            "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:33.432Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:33.433Z",
+          "completedAt": "2026-11-10T03:24:33.432Z",
+          "createdAt": "2026-11-10T03:24:33.433Z",
+          "updatedAt": "2026-11-10T03:24:33.433Z",
+          "reportTypeLabel": "Lifecycle Obligation Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 12,
+          "runUuid": "9096e568-73a5-4c38-aff2-8826be648061",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "controlled_substances.inventory_ledger",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "controlled_substances",
+                "observedAt": "2026-11-10T03:24:32.948Z",
+                "status": "missing",
+                "blocker": "No controlled_substances records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "controlled_substances",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "dea_registrations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "cs_transactions",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "substances": 0,
+                "bySchedule": {},
+                "activeRegistrations": 0,
+                "transactions": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:32.948Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT dea_schedule AS k, count(*)::int AS n FROM controlled_substances WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY dea_schedule",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM dea_registrations WHERE organization_id=$1 AND deleted_at IS NULL AND status='active'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM cs_transactions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No controlled_substances records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:32.951Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:32.952Z",
+          "completedAt": "2026-11-10T03:24:32.951Z",
+          "createdAt": "2026-11-10T03:24:32.952Z",
+          "updatedAt": "2026-11-10T03:24:32.952Z",
+          "reportTypeLabel": "Controlled Substances Activity Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 11,
+          "runUuid": "02e02b9e-ea37-42c1-846b-c8c2c15b2d9d",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "inspection.readiness_pack",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "inspections",
+                "observedAt": "2026-11-10T03:24:32.472Z",
+                "status": "missing",
+                "blocker": "No inspections records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "inspections",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "inspection_findings",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "inspections": 0,
+                "byStatus": {},
+                "findingsByClass": {}
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:32.472Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM inspections WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT classification AS k, count(*)::int AS n FROM inspection_findings WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY classification",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No inspections records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:32.475Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:32.475Z",
+          "completedAt": "2026-11-10T03:24:32.475Z",
+          "createdAt": "2026-11-10T03:24:32.475Z",
+          "updatedAt": "2026-11-10T03:24:32.475Z",
+          "reportTypeLabel": "Inspection & Finding Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 10,
+          "runUuid": "a356bc58-43f4-44e2-ab13-e07be65f40d6",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "rim.registration_grid",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "rim_registrations",
+                "observedAt": "2026-11-10T03:24:32.011Z",
+                "status": "missing",
+                "blocker": "No rim_registrations records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "rim_registrations",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "rim_products",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "products": 0,
+                "registrations": 0,
+                "byMarketStatus": {},
+                "approved": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:32.011Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT market_status AS k, count(*)::int AS n FROM rim_registrations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY market_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM rim_products WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No rim_registrations records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:32.013Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:32.013Z",
+          "completedAt": "2026-11-10T03:24:32.013Z",
+          "createdAt": "2026-11-10T03:24:32.013Z",
+          "updatedAt": "2026-11-10T03:24:32.013Z",
+          "reportTypeLabel": "Product Registration Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 9,
+          "runUuid": "926e5fd2-6a55-412a-8f95-03f9f7832b03",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "grants.portfolio_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "grants_portfolio",
+                "observedAt": "2026-11-10T03:24:31.550Z",
+                "status": "missing",
+                "blocker": "No grants_portfolio records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "grant_awards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_proposals",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_invoices",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_closeout_records",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_subawards",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_budget_lines",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_expenditures",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_cost_share_contributions",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "grant_nce_records",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "awards": 0,
+                "awardsByStatus": {},
+                "proposals": 0,
+                "proposalsByStatus": {},
+                "invoicesByStatus": {},
+                "closeoutsByStatus": {},
+                "overdueCloseouts": 0,
+                "subawards": 0,
+                "subawardsByScreen": {},
+                "unscreenedExecuted": 0,
+                "totalBudgeted": 0,
+                "totalExpended": 0,
+                "overspentAwards": 0,
+                "costShareCommitted": 0,
+                "costShareContributed": 0,
+                "costShareShortfall": 0,
+                "ncesByStatus": {}
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:31.550Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_awards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_proposals WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_invoices WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_closeout_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_closeout_records WHERE organization_id=$1 AND deleted_at IS NULL AND status <> 'completed' AND closeout_due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT screen_status AS k, count(*)::int AS n FROM grant_subawards WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY screen_status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM grant_subawards WHERE organization_id=$1 AND deleted_at IS NULL AND status='executed' AND screen_status <> 'cleared'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(budgeted_amount),0)::float8 s FROM grant_budget_lines WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_expenditures WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM (SELECT a.id FROM grant_awards a JOIN grant_expenditures e ON e.award_id=a.id AND e.organization_id=a.organization_id AND e.deleted_at IS NULL WHERE a.organization_id=$1 AND a.deleted_at IS NULL AND a.total_amount IS NOT NULL GROUP BY a.id, a.total_amount HAVING sum(e.amount) > a.total_amount) x",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(cost_share_committed),0)::float8 s FROM grant_awards WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT COALESCE(sum(amount),0)::float8 s FROM grant_cost_share_contributions WHERE organization_id=$1 AND deleted_at IS NULL",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "s": 0
+                      }
+                    ]
+                  },
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM grant_nce_records WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No grants_portfolio records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:31.563Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:31.563Z",
+          "completedAt": "2026-11-10T03:24:31.563Z",
+          "createdAt": "2026-11-10T03:24:31.563Z",
+          "updatedAt": "2026-11-10T03:24:31.563Z",
+          "reportTypeLabel": "Grant Portfolio Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 8,
+          "runUuid": "210ad2db-eb19-4301-bb70-eeefd1b860ce",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "nonclinical.study_send_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "nonclinical_studies",
+                "observedAt": "2026-11-10T03:24:31.103Z",
+                "status": "missing",
+                "blocker": "No nonclinical_studies records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "nonclinical_studies",
+                    "transformation": "aggregation"
+                  },
+                  {
+                    "sourceTable": "send_datasets",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "studies": 0,
+                "byStatus": {},
+                "sendValidated": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:31.103Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM nonclinical_studies WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM send_datasets WHERE organization_id=$1 AND deleted_at IS NULL AND validation_status='passed'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No nonclinical_studies records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:31.105Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:31.105Z",
+          "completedAt": "2026-11-10T03:24:31.105Z",
+          "createdAt": "2026-11-10T03:24:31.105Z",
+          "updatedAt": "2026-11-10T03:24:31.105Z",
+          "reportTypeLabel": "Nonclinical Study & SEND Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 7,
+          "runUuid": "71eb0522-9a64-4806-9261-0c0a6d2144fa",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "ibc.registration_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "ibc_registrations",
+                "observedAt": "2026-11-10T03:24:30.647Z",
+                "status": "missing",
+                "blocker": "No ibc_registrations records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "ibc_registrations",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "registrations": 0,
+                "byStatus": {},
+                "byBsl": {}
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:30.647Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM ibc_registrations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT biosafety_level AS k, count(*)::int AS n FROM ibc_registrations WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY biosafety_level",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No ibc_registrations records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:30.649Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:30.649Z",
+          "completedAt": "2026-11-10T03:24:30.649Z",
+          "createdAt": "2026-11-10T03:24:30.649Z",
+          "updatedAt": "2026-11-10T03:24:30.649Z",
+          "reportTypeLabel": "IBC Biosafety Registration Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 6,
+          "runUuid": "7a7cdb6a-bc79-4577-922a-f531cc8a6890",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "irb.submission_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "irb_submissions",
+                "observedAt": "2026-11-10T03:24:30.186Z",
+                "status": "missing",
+                "blocker": "No irb_submissions records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "irb_submissions",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "submissions": 0,
+                "byStatus": {},
+                "byReviewType": {}
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:30.186Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT review_type AS k, count(*)::int AS n FROM irb_submissions WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY review_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No irb_submissions records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:30.188Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:30.188Z",
+          "completedAt": "2026-11-10T03:24:30.188Z",
+          "createdAt": "2026-11-10T03:24:30.188Z",
+          "updatedAt": "2026-11-10T03:24:30.188Z",
+          "reportTypeLabel": "IRB Submission Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 5,
+          "runUuid": "4e3ca95e-a3d9-4e0f-8609-828a41a97fb2",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "iacuc.protocol_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "iacuc_protocols",
+                "observedAt": "2026-11-10T03:24:29.731Z",
+                "status": "missing",
+                "blocker": "No iacuc_protocols records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "iacuc_protocols",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "protocols": 0,
+                "byStatus": {},
+                "expiringOrExpired": 0,
+                "expiringOrExpiredByExpirySource": {
+                  "recorded": 0,
+                  "computed_approval_plus_3_years": 0
+                },
+                "approvedExpiryNotDetermined": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:29.731Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM iacuc_protocols WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*) FILTER (WHERE COALESCE(expiration_date, (approval_date + INTERVAL '3 years')::date) < CURRENT_DATE + INTERVAL '90 days')::int AS n,\n            count(*) FILTER (WHERE expiration_date IS NULL AND (approval_date + INTERVAL '3 years')::date < CURRENT_DATE + INTERVAL '90 days')::int AS computed,\n            count(*) FILTER (WHERE expiration_date IS NULL AND approval_date IS NULL)::int AS undetermined\n       FROM iacuc_protocols WHERE organization_id=$1 AND deleted_at IS NULL AND status='approved'",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0,
+                        "computed": 0,
+                        "undetermined": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No iacuc_protocols records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:29.733Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:29.733Z",
+          "completedAt": "2026-11-10T03:24:29.733Z",
+          "createdAt": "2026-11-10T03:24:29.733Z",
+          "updatedAt": "2026-11-10T03:24:29.733Z",
+          "reportTypeLabel": "IACUC Protocol Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 4,
+          "runUuid": "88c5d767-1243-4f20-97dc-7baf5e2f332c",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "ha.commitment_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "ha_commitments",
+                "observedAt": "2026-11-10T03:24:29.271Z",
+                "status": "missing",
+                "blocker": "No ha_commitments records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "regulatory_commitments",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "commitments": 0,
+                "byStatus": {},
+                "overdue": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:29.271Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM regulatory_commitments WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT count(*)::int n FROM regulatory_commitments WHERE organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('fulfilled','waived','released') AND due_date < CURRENT_DATE",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": [
+                      {
+                        "n": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No ha_commitments records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:29.272Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:29.272Z",
+          "completedAt": "2026-11-10T03:24:29.272Z",
+          "createdAt": "2026-11-10T03:24:29.272Z",
+          "updatedAt": "2026-11-10T03:24:29.272Z",
+          "reportTypeLabel": "Health Authority Commitment Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 3,
+          "runUuid": "d5d05a90-8745-4a0f-a9ed-af85648212a7",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "fcoi.disclosure_register",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "fcoi_disclosures",
+                "observedAt": "2026-11-10T03:24:28.819Z",
+                "status": "missing",
+                "blocker": "No fcoi_disclosures records for this organization",
+                "atoms": [
+                  {
+                    "sourceTable": "financial_disclosures",
+                    "transformation": "aggregation"
+                  }
+                ],
+                "calculation": {
+                  "method": "SQL aggregates over recorded, non-deleted rows",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "domain": {
+                "disclosures": 0,
+                "byStatus": {},
+                "byForm": {},
+                "signed": 0
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "observedAt": "2026-11-10T03:24:28.819Z",
+                "organizationId": 2,
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "SELECT status AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY status",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  },
+                  {
+                    "query": "SELECT form_type AS k, count(*)::int AS n FROM financial_disclosures WHERE organization_id = $1 AND deleted_at IS NULL GROUP BY form_type",
+                    "parameters": [
+                      2
+                    ],
+                    "rows": []
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": []
+          },
+          "blockers": [
+            "No fcoi_disclosures records for this organization"
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:28.821Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:28.821Z",
+          "completedAt": "2026-11-10T03:24:28.821Z",
+          "createdAt": "2026-11-10T03:24:28.821Z",
+          "updatedAt": "2026-11-10T03:24:28.821Z",
+          "reportTypeLabel": "Financial Disclosure Status Summary (21 CFR 54)",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        },
+        {
+          "id": 2,
+          "runUuid": "d5283d96-908e-45c3-80f3-3cf687a750c5",
+          "organizationId": 2,
+          "clientWorkspaceId": null,
+          "scopeType": "account",
+          "scopeId": "2",
+          "reportTypeId": "lifecycle.obligation_calendar",
+          "status": "partial",
+          "requestedBy": 3,
+          "dependencySummary": {
+            "providers": [
+              {
+                "provider": "lifecycle_obligation_calendar",
+                "observedAt": "2026-11-10T03:24:16.995Z",
+                "status": "missing",
+                "blocker": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                "atoms": [],
+                "calculation": {
+                  "method": "Canonical obligationUrgency and summarizeCalendar over recorded admitted rows",
+                  "snapshot": "single-statement",
+                  "asOfDate": "2026-11-10",
+                  "computedScope": "organization"
+                }
+              }
+            ],
+            "scopeLineage": [
+              {
+                "scopeType": "account",
+                "scopeId": "2"
+              }
+            ],
+            "summary": {
+              "scopeType": "account",
+              "scopeId": "2",
+              "accessProjectIds": [],
+              "domain": {
+                "obligations": 0,
+                "byStatus": {},
+                "overdue": 0,
+                "lifecycleCalendar": {
+                  "schemaVersion": 1,
+                  "observedAt": "2026-11-10T03:24:16.995Z",
+                  "obligations": [],
+                  "events": [],
+                  "obligationSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "eventSummary": {
+                    "total": 0,
+                    "overdue": 0,
+                    "due_30": 0,
+                    "due_90": 0,
+                    "later": 0,
+                    "undated": 0,
+                    "closed": 0
+                  },
+                  "gaps": [
+                    {
+                      "title": "Lifecycle legal assessment unavailable",
+                      "message": "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                      "severity": "critical"
+                    },
+                    {
+                      "title": "No admitted obligation records",
+                      "message": "This is not evidence that no obligations exist or apply.",
+                      "severity": "high"
+                    }
+                  ],
+                  "limits": [
+                    "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred.",
+                    "The collection includes organization-owned unlinked obligations and submission-linked obligations in the current actor's admitted projects. A selected project is context, not an organization-completeness claim.",
+                    "Only persisted occurrences are shown. Parent obligations and occurrences are counted separately; no new deadline or recurrence is generated.",
+                    "Date standing compares the recorded due date with the database observation date. Submitted and approved are stored statuses, not agency acknowledgements.",
+                    "Sources above 500 admitted rows per table are refused rather than silently truncated."
+                  ]
+                }
+              },
+              "domainScope": "organization",
+              "computedScope": "organization",
+              "provenance": {
+                "organizationId": 2,
+                "observedAt": "2026-11-10T03:24:16.995Z",
+                "computedScope": "organization",
+                "queries": [
+                  {
+                    "query": "\nWITH visible_obligations AS (\n  SELECT o.id, o.product_id, p.product_name, o.submission_id, a.id AS project_id,\n    o.region, o.obligation_type, o.classification, o.title, o.status, o.due_date, o.submitted_date, o.recurrence_months\n  FROM lifecycle_obligations o\n  LEFT JOIN rim_products p ON p.id=o.product_id AND p.organization_id=o.organization_id AND p.deleted_at IS NULL\n  LEFT JOIN submissions s ON s.id=o.submission_id AND s.organization_id=o.organization_id AND s.deleted_at IS NULL\n  LEFT JOIN regulatory_programs r ON r.id=s.program_id AND r.organization_id=o.organization_id AND r.deleted_at IS NULL\n  LEFT JOIN projects a ON a.regulatory_program_id=r.id AND a.organization_id=o.organization_id AND a.status IS DISTINCT FROM 'deleted'\n  WHERE o.organization_id=$1 AND o.deleted_at IS NULL\n    AND (o.product_id IS NULL OR p.id IS NOT NULL)\n    AND (o.submission_id IS NULL OR (s.id IS NOT NULL AND r.id::text=ANY($2::text[]) AND a.id IS NOT NULL))\n), visible_events AS (\n  SELECT e.id, e.obligation_id, o.title, o.project_id, e.period_start, e.period_end, e.due_date, e.status, e.submitted_date\n  FROM lifecycle_obligation_events e JOIN visible_obligations o ON o.id=e.obligation_id\n  WHERE e.organization_id=$1 AND e.deleted_at IS NULL\n), bounded_obligations AS (SELECT * FROM visible_obligations ORDER BY due_date NULLS LAST,id LIMIT 501),\n bounded_events AS (SELECT * FROM visible_events ORDER BY due_date NULLS LAST,id LIMIT 501)\nSELECT CURRENT_TIMESTAMP AS observed_at,\n  (SELECT count(*)::int FROM bounded_obligations) AS obligation_count,\n  (SELECT count(*)::int FROM bounded_events) AS event_count,\n  COALESCE((SELECT jsonb_agg(to_jsonb(o) ORDER BY o.due_date NULLS LAST,o.id) FROM bounded_obligations o),'[]'::jsonb) AS obligations,\n  COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.due_date NULLS LAST,e.id) FROM bounded_events e),'[]'::jsonb) AS events",
+                    "parameters": [
+                      2,
+                      {
+                        "redacted": true,
+                        "reason": "The current actor program allowlist may include unrelated private programs. Only contributing source records are retained."
+                      }
+                    ],
+                    "rows": [
+                      {
+                        "observed_at": "2026-11-10T03:24:16.995Z",
+                        "obligation_count": 0,
+                        "event_count": 0,
+                        "obligations": [],
+                        "events": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              "scopeLabel": "Organization"
+            },
+            "criticalBlockers": [
+              "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+            ]
+          },
+          "blockers": [
+            "Legal applicability, completeness and regulatory currency are not assessed by recorded lifecycle dates. No agency acknowledgement is inferred."
+          ],
+          "confidence": null,
+          "freshness": {
+            "generatedAt": "2026-11-10T03:24:16.999Z",
+            "freshnessBudgetMs": 1800000
+          },
+          "error": null,
+          "startedAt": "2026-11-10T03:24:17.000Z",
+          "completedAt": "2026-11-10T03:24:16.999Z",
+          "createdAt": "2026-11-10T03:24:17.000Z",
+          "updatedAt": "2026-11-10T03:24:17.000Z",
+          "reportTypeLabel": "Lifecycle Obligation Status Summary",
+          "regionCode": null,
+          "registryId": null,
+          "agency": null,
+          "scopeLabel": "Organization",
+          "computedScope": "organization"
+        }
+      ],
+      "meta": {
+        "limit": 100,
+        "offset": 0,
+        "total": 24,
+        "hasMore": false
+      }
+    }
+  }
+}

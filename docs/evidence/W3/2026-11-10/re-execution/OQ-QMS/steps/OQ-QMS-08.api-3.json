@@ -1,0 +1,98 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/training/compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 3,
+          "doc_number": "SOP-OQ-20261110025052",
+          "title": "OQ-006 Document control SOP 20261110025052",
+          "document_version": "1.0",
+          "content_digest": "804d7ef87df6b82819200f1ef87a103066d63dc615046552b03329378e81cba4",
+          "eligible": true,
+          "unavailable_reason": null,
+          "assignment": "not_assigned",
+          "current": null,
+          "of": null,
+          "last_cycle": null,
+          "me": {
+            "assigned": false,
+            "countsNow": false
+          }
+        },
+        {
+          "id": 7,
+          "doc_number": "SOP-OQ-20261110031119",
+          "title": "OQ-006 Document control SOP 20261110031119",
+          "document_version": "1.0",
+          "content_digest": "c597034be84a54bc7f548e6d88f06b39afd21622a28f6cf5fda667f49238d966",
+          "eligible": true,
+          "unavailable_reason": null,
+          "assignment": "not_assigned",
+          "current": null,
+          "of": null,
+          "last_cycle": null,
+          "me": {
+            "assigned": false,
+            "countsNow": false
+          }
+        },
+        {
+          "id": 5,
+          "doc_number": "SOP-OQ-B-20261110025052",
+          "title": "OQ-006 Second SOP 20261110025052",
+          "document_version": "1.0",
+          "content_digest": "f44bf72cc7b5531bf2fea5d200da3ecd4c8fe3b8ad881e61431ef091091e5eeb",
+          "eligible": true,
+          "unavailable_reason": null,
+          "assignment": "not_assigned",
+          "current": null,
+          "of": null,
+          "last_cycle": null,
+          "me": {
+            "assigned": false,
+            "countsNow": true
+          }
+        },
+        {
+          "id": 9,
+          "doc_number": "SOP-OQ-B-20261110031119",
+          "title": "OQ-006 Second SOP 20261110031119",
+          "document_version": "1.0",
+          "content_digest": "4dbc4c3c9d8ffbc575d8c52d29278603da1fe104783ef1084f420ce222bd3f1f",
+          "eligible": true,
+          "unavailable_reason": null,
+          "assignment": "not_assigned",
+          "current": null,
+          "of": null,
+          "last_cycle": null,
+          "me": {
+            "assigned": false,
+            "countsNow": true
+          }
+        }
+      ],
+      "meta": {
+        "count": 4,
+        "summary": {
+          "documents": 4,
+          "assigned": 0,
+          "notAssigned": 4,
+          "noActiveAssignees": 0,
+          "unavailable": 0,
+          "averageCurrentPct": null
+        }
+      }
+    }
+  }
+}

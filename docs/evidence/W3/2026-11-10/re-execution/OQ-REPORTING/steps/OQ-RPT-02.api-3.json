@@ -1,0 +1,3502 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/insights-canvas/overview",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 218,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "organizationId": 2,
+        "tier": "enterprise",
+        "tierResolved": true,
+        "segments": [
+          "pharma",
+          "biotech"
+        ],
+        "reportTypes": [
+          {
+            "typeId": "readiness.executive_digest",
+            "label": "Executive Readiness Digest",
+            "family": "readiness",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [],
+            "allowedPersonas": [
+              "executive",
+              "ra_lead",
+              "pm"
+            ],
+            "region": null,
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "provenance.evidence_trace_report",
+            "label": "Evidence & Provenance Trace Report",
+            "family": "evidence_provenance",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [
+              "document"
+            ],
+            "allowedClientSegments": [],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": "document",
+            "reasonCode": null,
+            "availabilityReason": "This engine computes document scope only.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "compliance.audit_assurance_pack",
+            "label": "Compliance & Audit Assurance Pack",
+            "family": "compliance_audit",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [],
+            "allowedPersonas": [
+              "qa",
+              "ra_lead",
+              "auditor"
+            ],
+            "region": null,
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.pma_submission_readiness",
+            "label": "FDA PMA Submission Readiness Pack",
+            "family": "usa_fda_pma",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "device",
+              "biotech",
+              "ivd"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "USA_FDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.deficiency_response_intelligence",
+            "label": "FDA Deficiency Response Intelligence Report",
+            "family": "usa_fda_response",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech",
+              "ivd"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "qa",
+              "medical_writer"
+            ],
+            "region": "USA_FDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": false,
+              "requireBlockers": true,
+              "requireExplicitGaps": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.maa_readiness_assessment",
+            "label": "EMA MAA Readiness Assessment",
+            "family": "ema_maa",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "executive",
+              "medical_writer"
+            ],
+            "region": "EU_EMA",
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.rmp_psur_signal_alignment",
+            "label": "EMA RMP / PSUR Signal Alignment Report",
+            "family": "ema_post_market",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "qa"
+            ],
+            "region": "EU_EMA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "china_nmpa.ctd_module_gap_analysis",
+            "label": "NMPA CTD Module Gap Analysis",
+            "family": "china_nmpa_ctd",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "CN_NMPA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "china_nmpa.registration_dossier_readiness",
+            "label": "NMPA Registration Dossier Readiness Pack",
+            "family": "china_nmpa_registration",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "executive"
+            ],
+            "region": "CN_NMPA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "china_nmpa.deficiency_letter_root_cause_pack",
+            "label": "NMPA Deficiency Letter Root-Cause Pack",
+            "family": "china_nmpa_response",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "qa",
+              "medical_writer"
+            ],
+            "region": "CN_NMPA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": false,
+              "requireBlockers": true,
+              "requireExplicitGaps": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "fcoi.disclosure_register",
+            "label": "Financial Disclosure Status Summary (21 CFR 54)",
+            "family": "fcoi_compliance",
+            "allowedScopes": [
+              "submission",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "submission",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device",
+              "ivd"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "qa",
+              "submission_coordinator"
+            ],
+            "region": "USA_FDA",
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "ha.commitment_register",
+            "label": "Health Authority Commitment Status Summary",
+            "family": "ha_commitment",
+            "allowedScopes": [
+              "submission",
+              "project",
+              "program",
+              "account"
+            ],
+            "computedScopes": [
+              "submission",
+              "project",
+              "program",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device",
+              "ivd",
+              "cro",
+              "cdmo"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "reg_strategy",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "iacuc.protocol_register",
+            "label": "IACUC Protocol Status Summary",
+            "family": "iacuc_governance",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "program",
+              "account"
+            ],
+            "computedScopes": [
+              "project",
+              "submission",
+              "program",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "iacuc_coordinator",
+              "ra_lead",
+              "qa"
+            ],
+            "region": "USA_OLAW",
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "irb.submission_register",
+            "label": "IRB Submission Status Summary",
+            "family": "irb_ethics",
+            "allowedScopes": [
+              "study",
+              "submission",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "submission",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "biotech",
+              "pharma",
+              "academic",
+              "government"
+            ],
+            "allowedPersonas": [
+              "clinical_ops",
+              "ra_lead",
+              "qa"
+            ],
+            "region": "USA_OHRP",
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "ibc.registration_register",
+            "label": "IBC Biosafety Registration Summary",
+            "family": "ibc_biosafety",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "program",
+              "account"
+            ],
+            "computedScopes": [
+              "project",
+              "submission",
+              "program",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "biotech",
+              "academic",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "biosafety_officer",
+              "ra_lead",
+              "qa"
+            ],
+            "region": "USA_NIH",
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "nonclinical.study_send_register",
+            "label": "Nonclinical Study & SEND Status Summary",
+            "family": "nonclinical_module4",
+            "allowedScopes": [
+              "submission",
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "submission",
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "nonclinical_lead",
+              "ra_lead",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "grants.portfolio_register",
+            "label": "Grant Portfolio Summary",
+            "family": "sponsored_programs",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "government"
+            ],
+            "allowedPersonas": [
+              "research_admin",
+              "pi",
+              "finance",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "portfolio_rollup",
+            "requiredTier": "enterprise",
+            "runnable": true
+          },
+          {
+            "typeId": "rim.registration_grid",
+            "label": "Product Registration Status Summary",
+            "family": "rim_registration",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_ops",
+              "labeling_lead",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "inspection.readiness_pack",
+            "label": "Inspection & Finding Summary",
+            "family": "inspection_readiness",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "submission",
+              "account"
+            ],
+            "allowedClientSegments": [],
+            "allowedPersonas": [
+              "qa",
+              "ra_lead",
+              "executive",
+              "clinical_ops"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "controlled_substances.inventory_ledger",
+            "label": "Controlled Substances Activity Summary",
+            "family": "controlled_substances",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "research_ops",
+              "qa",
+              "ra_lead"
+            ],
+            "region": "USA_DEA",
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": false,
+              "requireBlockers": true,
+              "requireExplicitGaps": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "lifecycle.obligation_calendar",
+            "label": "Lifecycle Obligation Status Summary",
+            "family": "lifecycle_obligations",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "submission",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_ops",
+              "ra_lead",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "etmf.completeness_pack",
+            "label": "eTMF Artifact Lifecycle Summary",
+            "family": "etmf",
+            "allowedScopes": [
+              "study",
+              "submission",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "submission",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "cro",
+              "ivd",
+              "academic",
+              "government"
+            ],
+            "allowedPersonas": [
+              "clinical_ops",
+              "tmf_lead",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "research_compliance.training_status",
+            "label": "Research Personnel Training Status",
+            "family": "research_compliance",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "compliance_officer",
+              "ra_lead",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "effort.certification_register",
+            "label": "Effort Certification Status Summary",
+            "family": "effort_certification",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "compliance_officer",
+              "ra_lead",
+              "finance"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "research_security.coi_register",
+            "label": "Research Security & COI Disclosure Summary",
+            "family": "research_security",
+            "allowedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "project",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "compliance_officer",
+              "ra_lead",
+              "research_security"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "research_admin.scorecard",
+            "label": "Research Administration Scorecard",
+            "family": "research_admin",
+            "allowedScopes": [
+              "program",
+              "account"
+            ],
+            "computedScopes": [
+              "program",
+              "account"
+            ],
+            "allowedClientSegments": [
+              "academic",
+              "biotech",
+              "pharma",
+              "government"
+            ],
+            "allowedPersonas": [
+              "compliance_officer",
+              "ra_lead",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "prediction.regulatory_forecast",
+            "label": "Predictive Regulatory Forecast",
+            "family": "prediction",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device"
+            ],
+            "allowedPersonas": [
+              "executive",
+              "ra_lead",
+              "pm"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "forbidFinal": true,
+              "requireDisclosure": true
+            },
+            "entitled": true,
+            "feature": "prediction_forecast_report",
+            "requiredTier": "professional",
+            "runnable": false
+          },
+          {
+            "typeId": "prediction.crl_rtf_premortem",
+            "label": "CRL / RTF Pre-Mortem",
+            "family": "prediction",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "executive",
+              "ra_lead",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "forbidFinal": true,
+              "requireDisclosure": true
+            },
+            "entitled": true,
+            "feature": "crl_rtf_premortem",
+            "requiredTier": "professional",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.ind_safety_readiness",
+            "label": "FDA IND Safety & Readiness Pack (21 CFR 312)",
+            "family": "usa_fda_ind",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "pv_lead",
+              "qa"
+            ],
+            "region": "USA_FDA",
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.nda_bla_filing_readiness",
+            "label": "FDA NDA / BLA Filing Readiness Assessment (eCTD)",
+            "family": "usa_fda_nda_bla",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive",
+              "qa"
+            ],
+            "region": "USA_FDA",
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.crl_response_intelligence",
+            "label": "FDA Complete Response Letter (CRL) Response Pack",
+            "family": "usa_fda_response",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa",
+              "executive"
+            ],
+            "region": "USA_FDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": false,
+              "requireBlockers": true,
+              "requireExplicitGaps": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "crl_rtf_premortem",
+            "requiredTier": "professional",
+            "runnable": false
+          },
+          {
+            "typeId": "usa_fda.type_bcd_meeting_brief",
+            "label": "FDA Type A/B/C Meeting Briefing Package",
+            "family": "usa_fda_meetings",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "USA_FDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.maa_loq_response_pack",
+            "label": "EMA MAA List of Questions (Day-120 / Day-180) Response Pack",
+            "family": "ema_response",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "EU_EMA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": false,
+              "requireBlockers": true,
+              "requireExplicitGaps": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.variation_readiness",
+            "label": "EMA Variation Readiness Pack (Type IA / IB / II)",
+            "family": "ema_variation",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "ra_ops",
+              "qa"
+            ],
+            "region": "EU_EMA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.psur_pbrer_pack",
+            "label": "EMA PSUR / PBRER Pack (ICH E2C(R2))",
+            "family": "ema_post_market",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "pv_lead",
+              "ra_lead",
+              "medical_writer"
+            ],
+            "region": "EU_EMA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "ema.scientific_advice_brief",
+            "label": "EMA Scientific Advice / Protocol Assistance Briefing Package",
+            "family": "ema_meetings",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "EU_EMA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "japan_pmda.jnda_shonin_readiness",
+            "label": "PMDA J-NDA / Shonin Approval Readiness Pack",
+            "family": "japan_pmda_jnda",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [
+              "project"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "JP_PMDA",
+            "computedScope": "project",
+            "reasonCode": null,
+            "availabilityReason": "Open a project to run this report.",
+            "availabilityState": "scope-required",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "japan_pmda.consultation_brief",
+            "label": "PMDA Consultation (Taimen Advice) Briefing Package",
+            "family": "japan_pmda_meetings",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "JP_PMDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "japan_pmda.reexamination_pack",
+            "label": "PMDA Re-examination (Saishinsa) Pack",
+            "family": "japan_pmda_post_market",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "pv_lead",
+              "qa"
+            ],
+            "region": "JP_PMDA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "canada_hc.nds_snds_readiness",
+            "label": "Health Canada NDS / SNDS Filing Readiness Pack",
+            "family": "canada_hc_nds",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "CA_HC",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "uk_mhra.maa_readiness",
+            "label": "MHRA Marketing Authorisation Application Readiness Pack",
+            "family": "uk_mhra_maa",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "UK_MHRA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "uk_mhra.ilap_pathway_brief",
+            "label": "MHRA ILAP Target Development Profile Briefing Package",
+            "family": "uk_mhra_pathway",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "executive"
+            ],
+            "region": "UK_MHRA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "australia_tga.prescription_medicine_readiness",
+            "label": "TGA Prescription Medicine Registration Readiness Pack (ARTG)",
+            "family": "australia_tga_medicine",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "AU_TGA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "korea_mfds.drug_registration_readiness",
+            "label": "MFDS Drug Item Registration Readiness Pack",
+            "family": "korea_mfds_registration",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "KR_MFDS",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "switzerland_swissmedic.maa_readiness",
+            "label": "Swissmedic Marketing Authorisation (Zulassung) Readiness Pack",
+            "family": "switzerland_swissmedic_maa",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "CH_SWISSMEDIC",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "brazil_anvisa.registration_dossier_readiness",
+            "label": "ANVISA Registration Dossier (Registro) Readiness Pack",
+            "family": "brazil_anvisa_registration",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech",
+              "device"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "medical_writer",
+              "qa"
+            ],
+            "region": "BR_ANVISA",
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "global.cross_region_submission_comparison",
+            "label": "Cross-Region Submission Comparison Matrix",
+            "family": "global_portfolio",
+            "allowedScopes": [
+              "account",
+              "program",
+              "project"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "reg_strategy",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "portfolio_rollup",
+            "requiredTier": "enterprise",
+            "runnable": false
+          },
+          {
+            "typeId": "global.harmonization_gap_matrix",
+            "label": "ICH Harmonization Gap Matrix (Cross-Market Alignment)",
+            "family": "global_portfolio",
+            "allowedScopes": [
+              "account",
+              "program",
+              "project"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "reg_strategy",
+              "qa",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "portfolio_rollup",
+            "requiredTier": "enterprise",
+            "runnable": false
+          },
+          {
+            "typeId": "global.label_currency_matrix",
+            "label": "Label Currency Matrix (USPI / SmPC / PIL / J-Label per Market)",
+            "family": "global_labeling",
+            "allowedScopes": [
+              "account",
+              "program",
+              "project"
+            ],
+            "computedScopes": [
+              "account",
+              "program",
+              "project"
+            ],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "labeling_lead",
+              "ra_ops",
+              "ra_lead",
+              "executive"
+            ],
+            "region": null,
+            "computedScope": "organization",
+            "reasonCode": null,
+            "availabilityReason": null,
+            "availabilityState": "available",
+            "runScopeType": "account",
+            "runScopeId": "2",
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "forbidFinalIfMissingCritical": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": true
+          },
+          {
+            "typeId": "pv.dsur_readiness",
+            "label": "DSUR Readiness Pack (ICH E2F)",
+            "family": "pv_periodic",
+            "allowedScopes": [
+              "program",
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "pv_lead",
+              "ra_lead",
+              "medical_writer"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireBlockers": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "pv.signal_management_report",
+            "label": "Signal Management Report (GVP Module IX)",
+            "family": "pv_signal",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "document"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "pv_lead",
+              "ra_lead",
+              "qa"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireExplicitGaps": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "report_families",
+            "requiredTier": "standard",
+            "runnable": false
+          },
+          {
+            "typeId": "prediction.deficiency_risk",
+            "label": "Deficiency Risk Prediction (RTF / CRL / First-Cycle Approval)",
+            "family": "prediction",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "executive",
+              "biostatistician"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "prediction_forecast_report",
+            "requiredTier": "professional",
+            "runnable": false
+          },
+          {
+            "typeId": "prediction.readiness_trajectory",
+            "label": "Readiness Trajectory Prediction",
+            "family": "prediction",
+            "allowedScopes": [
+              "project",
+              "submission"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "executive",
+              "biostatistician"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "prediction_forecast_report",
+            "requiredTier": "professional",
+            "runnable": false
+          },
+          {
+            "typeId": "prediction.trial_pos",
+            "label": "Trial Probability of Success Prediction",
+            "family": "prediction",
+            "allowedScopes": [
+              "project",
+              "submission",
+              "study"
+            ],
+            "computedScopes": [],
+            "allowedClientSegments": [
+              "pharma",
+              "device",
+              "biotech"
+            ],
+            "allowedPersonas": [
+              "ra_lead",
+              "executive",
+              "biostatistician"
+            ],
+            "region": null,
+            "computedScope": null,
+            "reasonCode": null,
+            "availabilityReason": "No engine computes this report in this release.",
+            "availabilityState": "not-computed",
+            "runScopeType": null,
+            "runScopeId": null,
+            "truthfulnessRules": {
+              "allowPartial": true,
+              "requireConfidence": true
+            },
+            "entitled": true,
+            "feature": "prediction_forecast_report",
+            "requiredTier": "professional",
+            "runnable": false
+          }
+        ],
+        "leadProgram": null,
+        "openProgram": null,
+        "programs": [
+          {
+            "programId": "72fe3b08-9bcd-48d2-a29e-a48d0ed94ae0",
+            "code": "BX-701-UX24",
+            "label": "BX-700 EMPTY 20261110020703"
+          },
+          {
+            "programId": "c1e34c96-124f-4dab-b254-f7ee3308ff13",
+            "code": "BX-701-IDJD",
+            "label": "BX-700 EMPTY 20261110025315"
+          },
+          {
+            "programId": "c2d8ccef-0968-4f84-a8ee-d1a750874e5d",
+            "code": "BX-701-A15M",
+            "label": "BX-700 EMPTY 20261110031446"
+          },
+          {
+            "programId": "376c7d0a-ef70-4f0c-a017-055b061309ea",
+            "code": "BX-701-LWYE",
+            "label": "BX-700 EMPTY 20261110032400"
+          },
+          {
+            "programId": "808060af-b01c-4b94-b24f-58138b33098d",
+            "code": "BX-701",
+            "label": "BX-701 IND 20261110020703"
+          },
+          {
+            "programId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+            "code": "BX-701-I8KQ",
+            "label": "BX-701 IND 20261110025315"
+          },
+          {
+            "programId": "326c94fd-d61d-4ea1-94c6-fd1ad3d8b30a",
+            "code": "BX-701-9W43",
+            "label": "BX-701 IND 20261110031446"
+          },
+          {
+            "programId": "7918ccd4-f38c-4537-918a-a2be34ecfe2d",
+            "code": "BX-701-LS2E",
+            "label": "BX-701 IND 20261110032400"
+          },
+          {
+            "programId": "7e941c46-53fc-429d-9843-df0f11b53428",
+            "code": "BX-701-UYMT",
+            "label": "BX-701 NDA 20261110020703"
+          },
+          {
+            "programId": "105bb1fe-3b73-4e77-a342-16ac73f8f130",
+            "code": "BX-701-IF4F",
+            "label": "BX-701 NDA 20261110025315"
+          },
+          {
+            "programId": "e3460bdc-2d52-4e41-a459-e4d6fba17930",
+            "code": "BX-701-A2RT",
+            "label": "BX-701 NDA 20261110031446"
+          },
+          {
+            "programId": "13d636fe-2f02-4365-9777-6adb09aa349d",
+            "code": "BX-701-LYJZ",
+            "label": "BX-701 NDA 20261110032400"
+          },
+          {
+            "programId": "5aa39330-66df-40f1-ae09-a610d43f8544",
+            "code": "BX-703",
+            "label": "BX-703 IND 20261110020703"
+          },
+          {
+            "programId": "4af7d245-994e-4773-b88a-d03f914a25d7",
+            "code": "BX-703-IFSD",
+            "label": "BX-703 IND 20261110025315"
+          },
+          {
+            "programId": "2dbe83f6-8140-47f5-8cf2-296a0d0dc352",
+            "code": "BX-703-A3GH",
+            "label": "BX-703 IND 20261110031446"
+          },
+          {
+            "programId": "4aeb2542-2c52-4cf6-bbcb-d7f5c7d57919",
+            "code": "BX-703-LZ9L",
+            "label": "BX-703 IND 20261110032400"
+          },
+          {
+            "programId": "53be45d6-0591-45ec-a571-e6512b00baeb",
+            "code": "BX-902",
+            "label": "BX-902 IND 20261110020703"
+          },
+          {
+            "programId": "0d801c1b-ee09-44be-9fa3-a5bac1262c67",
+            "code": "BX-902-IE84",
+            "label": "BX-902 IND 20261110025315"
+          },
+          {
+            "programId": "204fdbc4-3f93-4856-8205-f402048401a0",
+            "code": "BX-902-A1V6",
+            "label": "BX-902 IND 20261110031446"
+          },
+          {
+            "programId": "bbaa2188-9f7f-49a6-8d9a-458a02cbe541",
+            "code": "BX-902-LXNC",
+            "label": "BX-902 IND 20261110032400"
+          },
+          {
+            "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
+            "code": "OQQM",
+            "label": "OQ QMS program"
+          },
+          {
+            "programId": "647c72fc-f2e7-4e43-9492-6b43eaf6e6a7",
+            "code": "OQ-001-ZCEC",
+            "label": "OQ-001 exact IND reference 20261110030559"
+          },
+          {
+            "programId": "2d03e03e-8223-4374-9528-7125cb651f62",
+            "code": "OQ-001",
+            "label": "OQ-001 IND program 20261110024200"
+          },
+          {
+            "programId": "5c942649-d864-49de-a912-c344fa278b91",
+            "code": "OQ-001-YOJL",
+            "label": "OQ-001 IND program 20261110030559"
+          },
+          {
+            "programId": "f2a71086-9691-474c-8b31-1a9065fbf434",
+            "code": "OQ-002-PQRE",
+            "label": "OQ-002 Library program 20261110020007"
+          },
+          {
+            "programId": "2a5913d3-78a9-41a0-9443-d9a52c648380",
+            "code": "OQ-002-BM0C",
+            "label": "OQ-002 Library program 20261110024537"
+          },
+          {
+            "programId": "0b1d7411-0217-456e-b45f-cbbff3f735a1",
+            "code": "OQ-002-575N",
+            "label": "OQ-002 Library program 20261110030837"
+          },
+          {
+            "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+            "code": "OQ-002",
+            "label": "OQ-002 Vault program 20261110020007"
+          },
+          {
+            "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+            "code": "OQ-002-8EOL",
+            "label": "OQ-002 Vault program 20261110024537"
+          },
+          {
+            "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
+            "code": "OQ-002-1ZIG",
+            "label": "OQ-002 Vault program 20261110030837"
+          },
+          {
+            "programId": "dbc325d1-73e9-4f9c-b490-1e5a8fbee829",
+            "code": "OQ-002-PU5O",
+            "label": "OQ-002 Where-used program 20261110020007"
+          },
+          {
+            "programId": "29d6b5d4-ab07-4c51-b6d2-9a49691ad952",
+            "code": "OQ-002-BPFR",
+            "label": "OQ-002 Where-used program 20261110024537"
+          },
+          {
+            "programId": "b2d81724-b8d9-4fa0-8d48-00d746b07b9a",
+            "code": "OQ-002-5AMV",
+            "label": "OQ-002 Where-used program 20261110030837"
+          },
+          {
+            "programId": "bc2946f0-8a62-47e6-bdf7-9aced623e69a",
+            "code": "OQ-003",
+            "label": "OQ-003 Authoring program 20261110020318"
+          },
+          {
+            "programId": "0f6df2e4-d780-4097-a157-694bbe51a663",
+            "code": "OQ-003-BUUF",
+            "label": "OQ-003 Authoring program 20261110024818"
+          },
+          {
+            "programId": "119bddbb-3abc-4781-92a7-6c1588c5da76",
+            "code": "OQ-004",
+            "label": "OQ-004 Submission program 20261110020503"
+          },
+          {
+            "programId": "fb517312-5af8-49de-9d04-2a5dafe99192",
+            "code": "OQ-004-D5QZ",
+            "label": "OQ-004 Submission program 20261110024919"
+          },
+          {
+            "programId": "1a0d5ae0-decb-40b4-88a4-07f97b6e47a4",
+            "code": "OQ-004-S9NU",
+            "label": "OQ-004 Submission-create program 20261110020503"
+          },
+          {
+            "programId": "2a5550d5-b980-49a5-afff-24da3eac8b5e",
+            "code": "OQ-004-D6T8",
+            "label": "OQ-004 Submission-create program 20261110024919"
+          },
+          {
+            "programId": "fc7b2edb-3601-4215-a081-81f3f6730da8",
+            "code": "OQ-005",
+            "label": "OQ-005 Readiness program 20261110020625"
+          },
+          {
+            "programId": "dad8d372-b2c9-4d28-b3c1-17cdcb029eb1",
+            "code": "OQ-005-ELX0",
+            "label": "OQ-005 Readiness program 20261110025026"
+          },
+          {
+            "programId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+            "code": "OQ-008-S6ZZ",
+            "label": "OQ-008 provenance running 20261110025315"
+          },
+          {
+            "programId": "2b0e8854-27fc-4d14-82bc-848c968ec1f0",
+            "code": "OQ-008-KHIK",
+            "label": "OQ-008 provenance running 20261110031446"
+          },
+          {
+            "programId": "ca490ed5-c32c-41fe-b756-1bfdc939b2f5",
+            "code": "OQ-008-W26B",
+            "label": "OQ-008 provenance running 20261110032400"
+          },
+          {
+            "programId": "451684e9-524c-465e-8389-599ad123eaf9",
+            "code": "OQ-008-S858",
+            "label": "OQ-008 provenance signed 20261110025315"
+          },
+          {
+            "programId": "84fdde34-655b-4d53-9525-7076f2b3aee7",
+            "code": "OQ-008-KIOH",
+            "label": "OQ-008 provenance signed 20261110031446"
+          },
+          {
+            "programId": "84399ad8-fa74-43be-ae41-4ec1de6e47a6",
+            "code": "OQ-008-W3CV",
+            "label": "OQ-008 provenance signed 20261110032400"
+          },
+          {
+            "programId": "11be7a75-a606-4f4f-a8bb-dd11617ef300",
+            "code": "OQ-008-PNZX",
+            "label": "OQ-008 Q1E beyond 20261110025315"
+          },
+          {
+            "programId": "8ca4decb-aaa0-4cfe-b527-c3d3b52a134a",
+            "code": "OQ-008-HYHD",
+            "label": "OQ-008 Q1E beyond 20261110031446"
+          },
+          {
+            "programId": "3469e426-4e64-40a1-9b19-cb28735a2757",
+            "code": "OQ-008-TJ58",
+            "label": "OQ-008 Q1E beyond 20261110032400"
+          },
+          {
+            "programId": "554a00ab-5944-48ee-8783-723df129a44f",
+            "code": "OQ-008-PP65",
+            "label": "OQ-008 Q1E noaccel 20261110025315"
+          },
+          {
+            "programId": "b787f824-8046-41b6-9578-5c53d84b25c9",
+            "code": "OQ-008-HZLX",
+            "label": "OQ-008 Q1E noaccel 20261110031446"
+          },
+          {
+            "programId": "ce70ad7b-074f-4063-99e3-654ef929b0c2",
+            "code": "OQ-008-TKA1",
+            "label": "OQ-008 Q1E noaccel 20261110032400"
+          },
+          {
+            "programId": "4593ef9a-87d2-4319-997f-5f5540b6f17f",
+            "code": "OQ-008-PRAC",
+            "label": "OQ-008 Q1E planned 20261110025315"
+          },
+          {
+            "programId": "27f5cb96-e8d3-484b-b6c2-bc4df81c4315",
+            "code": "OQ-008-I1N4",
+            "label": "OQ-008 Q1E planned 20261110031446"
+          },
+          {
+            "programId": "43a59759-821f-4ba5-883a-5e288da6de9e",
+            "code": "OQ-008-TMBH",
+            "label": "OQ-008 Q1E planned 20261110032400"
+          },
+          {
+            "programId": "7f8dece7-8d56-416f-bc36-e27e8327a7af",
+            "code": "OQ-008-PQ4X",
+            "label": "OQ-008 Q1E unreadable 20261110025315"
+          },
+          {
+            "programId": "a64dbaf1-da10-4dd5-ad1e-b71f99ddeb29",
+            "code": "OQ-008-I0IQ",
+            "label": "OQ-008 Q1E unreadable 20261110031446"
+          },
+          {
+            "programId": "36df8cdd-82e1-42f5-a1e6-8da75d0536e6",
+            "code": "OQ-008-TL71",
+            "label": "OQ-008 Q1E unreadable 20261110032400"
+          },
+          {
+            "programId": "00841ef3-cc70-4e8a-8e3e-ae2a198d8dd8",
+            "code": "OQ-008",
+            "label": "OQ-008 Q1E within 20261110020703"
+          },
+          {
+            "programId": "b9a1b0e8-00f8-4868-ab67-46a82487bf28",
+            "code": "OQ-008-PMTX",
+            "label": "OQ-008 Q1E within 20261110025315"
+          },
+          {
+            "programId": "8c418c97-8199-426b-b1a3-a26499d18f70",
+            "code": "OQ-008-HXCI",
+            "label": "OQ-008 Q1E within 20261110031446"
+          },
+          {
+            "programId": "06a73f81-4c54-498c-8af3-9d83ed51200a",
+            "code": "OQ-008-TI06",
+            "label": "OQ-008 Q1E within 20261110032400"
+          }
+        ],
+        "portfolio": {
+          "entitled": true,
+          "requiredTier": "enterprise",
+          "summary": {
+            "programCount": 63,
+            "avgReadiness": 0,
+            "avgConfidence": null,
+            "worstRisk": "critical",
+            "readyCount": 0,
+            "partialCount": 0,
+            "missingCount": 63,
+            "totalCriticalBlockers": 1645,
+            "truncated": false
+          },
+          "programs": [
+            {
+              "projectId": 12,
+              "programId": "7e941c46-53fc-429d-9843-df0f11b53428",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-UYMT",
+              "label": "BX-701 NDA 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 72
+            },
+            {
+              "projectId": 27,
+              "programId": "105bb1fe-3b73-4e77-a342-16ac73f8f130",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-IF4F",
+              "label": "BX-701 NDA 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 72
+            },
+            {
+              "projectId": 44,
+              "programId": "e3460bdc-2d52-4e41-a459-e4d6fba17930",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-A2RT",
+              "label": "BX-701 NDA 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 72
+            },
+            {
+              "projectId": 56,
+              "programId": "13d636fe-2f02-4365-9777-6adb09aa349d",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-LYJZ",
+              "label": "BX-701 NDA 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 72
+            },
+            {
+              "projectId": 1,
+              "programId": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQQM",
+              "label": "OQ QMS program",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 2,
+              "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002",
+              "label": "OQ-002 Vault program 20261110020007",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 3,
+              "programId": "f2a71086-9691-474c-8b31-1a9065fbf434",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-PQRE",
+              "label": "OQ-002 Library program 20261110020007",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 4,
+              "programId": "dbc325d1-73e9-4f9c-b490-1e5a8fbee829",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-PU5O",
+              "label": "OQ-002 Where-used program 20261110020007",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 5,
+              "programId": "bc2946f0-8a62-47e6-bdf7-9aced623e69a",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-003",
+              "label": "OQ-003 Authoring program 20261110020318",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 6,
+              "programId": "119bddbb-3abc-4781-92a7-6c1588c5da76",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-004",
+              "label": "OQ-004 Submission program 20261110020503",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 7,
+              "programId": "1a0d5ae0-decb-40b4-88a4-07f97b6e47a4",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-004-S9NU",
+              "label": "OQ-004 Submission-create program 20261110020503",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 8,
+              "programId": "fc7b2edb-3601-4215-a081-81f3f6730da8",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-005",
+              "label": "OQ-005 Readiness program 20261110020625",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 9,
+              "programId": "808060af-b01c-4b94-b24f-58138b33098d",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "BX-701",
+              "label": "BX-701 IND 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 10,
+              "programId": "72fe3b08-9bcd-48d2-a29e-a48d0ed94ae0",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-UX24",
+              "label": "BX-700 EMPTY 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 11,
+              "programId": "53be45d6-0591-45ec-a571-e6512b00baeb",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-902",
+              "label": "BX-902 IND 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 13,
+              "programId": "5aa39330-66df-40f1-ae09-a610d43f8544",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-703",
+              "label": "BX-703 IND 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 14,
+              "programId": "00841ef3-cc70-4e8a-8e3e-ae2a198d8dd8",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008",
+              "label": "OQ-008 Q1E within 20261110020703",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 16,
+              "programId": "2d03e03e-8223-4374-9528-7125cb651f62",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-001",
+              "label": "OQ-001 IND program 20261110024200",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 17,
+              "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-8EOL",
+              "label": "OQ-002 Vault program 20261110024537",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 18,
+              "programId": "2a5913d3-78a9-41a0-9443-d9a52c648380",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-BM0C",
+              "label": "OQ-002 Library program 20261110024537",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 19,
+              "programId": "29d6b5d4-ab07-4c51-b6d2-9a49691ad952",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-BPFR",
+              "label": "OQ-002 Where-used program 20261110024537",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 20,
+              "programId": "0f6df2e4-d780-4097-a157-694bbe51a663",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-003-BUUF",
+              "label": "OQ-003 Authoring program 20261110024818",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 21,
+              "programId": "fb517312-5af8-49de-9d04-2a5dafe99192",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-004-D5QZ",
+              "label": "OQ-004 Submission program 20261110024919",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 22,
+              "programId": "2a5550d5-b980-49a5-afff-24da3eac8b5e",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-004-D6T8",
+              "label": "OQ-004 Submission-create program 20261110024919",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 23,
+              "programId": "dad8d372-b2c9-4d28-b3c1-17cdcb029eb1",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-005-ELX0",
+              "label": "OQ-005 Readiness program 20261110025026",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 24,
+              "programId": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "BX-701-I8KQ",
+              "label": "BX-701 IND 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 25,
+              "programId": "c1e34c96-124f-4dab-b254-f7ee3308ff13",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-IDJD",
+              "label": "BX-700 EMPTY 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 26,
+              "programId": "0d801c1b-ee09-44be-9fa3-a5bac1262c67",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-902-IE84",
+              "label": "BX-902 IND 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 28,
+              "programId": "4af7d245-994e-4773-b88a-d03f914a25d7",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-703-IFSD",
+              "label": "BX-703 IND 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 29,
+              "programId": "b9a1b0e8-00f8-4868-ab67-46a82487bf28",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-PMTX",
+              "label": "OQ-008 Q1E within 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 30,
+              "programId": "11be7a75-a606-4f4f-a8bb-dd11617ef300",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-PNZX",
+              "label": "OQ-008 Q1E beyond 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 31,
+              "programId": "554a00ab-5944-48ee-8783-723df129a44f",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-PP65",
+              "label": "OQ-008 Q1E noaccel 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 32,
+              "programId": "7f8dece7-8d56-416f-bc36-e27e8327a7af",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-PQ4X",
+              "label": "OQ-008 Q1E unreadable 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 33,
+              "programId": "4593ef9a-87d2-4319-997f-5f5540b6f17f",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-PRAC",
+              "label": "OQ-008 Q1E planned 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 34,
+              "programId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-S6ZZ",
+              "label": "OQ-008 provenance running 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 35,
+              "programId": "451684e9-524c-465e-8389-599ad123eaf9",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-S858",
+              "label": "OQ-008 provenance signed 20261110025315",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 36,
+              "programId": "5c942649-d864-49de-a912-c344fa278b91",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-001-YOJL",
+              "label": "OQ-001 IND program 20261110030559",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 37,
+              "programId": "647c72fc-f2e7-4e43-9492-6b43eaf6e6a7",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-001-ZCEC",
+              "label": "OQ-001 exact IND reference 20261110030559",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 38,
+              "programId": "51d77e85-b3f5-4ed6-ba14-8bd5415ec721",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-1ZIG",
+              "label": "OQ-002 Vault program 20261110030837",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 39,
+              "programId": "0b1d7411-0217-456e-b45f-cbbff3f735a1",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-575N",
+              "label": "OQ-002 Library program 20261110030837",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 40,
+              "programId": "b2d81724-b8d9-4fa0-8d48-00d746b07b9a",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-002-5AMV",
+              "label": "OQ-002 Where-used program 20261110030837",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 41,
+              "programId": "326c94fd-d61d-4ea1-94c6-fd1ad3d8b30a",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "BX-701-9W43",
+              "label": "BX-701 IND 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 42,
+              "programId": "c2d8ccef-0968-4f84-a8ee-d1a750874e5d",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-A15M",
+              "label": "BX-700 EMPTY 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 43,
+              "programId": "204fdbc4-3f93-4856-8205-f402048401a0",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-902-A1V6",
+              "label": "BX-902 IND 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 45,
+              "programId": "2dbe83f6-8140-47f5-8cf2-296a0d0dc352",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-703-A3GH",
+              "label": "BX-703 IND 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 46,
+              "programId": "8c418c97-8199-426b-b1a3-a26499d18f70",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-HXCI",
+              "label": "OQ-008 Q1E within 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 47,
+              "programId": "8ca4decb-aaa0-4cfe-b527-c3d3b52a134a",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-HYHD",
+              "label": "OQ-008 Q1E beyond 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 48,
+              "programId": "b787f824-8046-41b6-9578-5c53d84b25c9",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-HZLX",
+              "label": "OQ-008 Q1E noaccel 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 49,
+              "programId": "a64dbaf1-da10-4dd5-ad1e-b71f99ddeb29",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-I0IQ",
+              "label": "OQ-008 Q1E unreadable 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 50,
+              "programId": "27f5cb96-e8d3-484b-b6c2-bc4df81c4315",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-I1N4",
+              "label": "OQ-008 Q1E planned 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 51,
+              "programId": "2b0e8854-27fc-4d14-82bc-848c968ec1f0",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "OQ-008-KHIK",
+              "label": "OQ-008 provenance running 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 52,
+              "programId": "84fdde34-655b-4d53-9525-7076f2b3aee7",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "OQ-008-KIOH",
+              "label": "OQ-008 provenance signed 20261110031446",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 53,
+              "programId": "7918ccd4-f38c-4537-918a-a2be34ecfe2d",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "BX-701-LS2E",
+              "label": "BX-701 IND 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 54,
+              "programId": "376c7d0a-ef70-4f0c-a017-055b061309ea",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-701-LWYE",
+              "label": "BX-700 EMPTY 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 55,
+              "programId": "bbaa2188-9f7f-49a6-8d9a-458a02cbe541",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-902-LXNC",
+              "label": "BX-902 IND 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 57,
+              "programId": "4aeb2542-2c52-4cf6-bbcb-d7f5c7d57919",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "BX-703-LZ9L",
+              "label": "BX-703 IND 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 58,
+              "programId": "06a73f81-4c54-498c-8af3-9d83ed51200a",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-TI06",
+              "label": "OQ-008 Q1E within 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 59,
+              "programId": "3469e426-4e64-40a1-9b19-cb28735a2757",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-TJ58",
+              "label": "OQ-008 Q1E beyond 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 60,
+              "programId": "ce70ad7b-074f-4063-99e3-654ef929b0c2",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-TKA1",
+              "label": "OQ-008 Q1E noaccel 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 61,
+              "programId": "36df8cdd-82e1-42f5-a1e6-8da75d0536e6",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-TL71",
+              "label": "OQ-008 Q1E unreadable 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 62,
+              "programId": "43a59759-821f-4ba5-883a-5e288da6de9e",
+              "topBlockers": [
+                "No governed artifacts discovered for this scope",
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence"
+              ],
+              "code": "OQ-008-TMBH",
+              "label": "OQ-008 Q1E planned 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 63,
+              "programId": "ca490ed5-c32c-41fe-b756-1bfdc939b2f5",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "OQ-008-W26B",
+              "label": "OQ-008 provenance running 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            },
+            {
+              "projectId": 64,
+              "programId": "84399ad8-fa74-43be-ae41-4ec1de6e47a6",
+              "topBlockers": [
+                "No approved or locked governed artifacts",
+                "Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+                "Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence"
+              ],
+              "code": "OQ-008-W3CV",
+              "label": "OQ-008 provenance signed 20261110032400",
+              "indication": null,
+              "readiness": 0,
+              "confidence": null,
+              "status": "missing",
+              "riskLevel": "critical",
+              "criticalBlockerCount": 23
+            }
+          ]
+        },
+        "dataScope": "accessible_projects",
+        "device": {
+          "state": "none"
+        }
+      }
+    }
+  }
+}

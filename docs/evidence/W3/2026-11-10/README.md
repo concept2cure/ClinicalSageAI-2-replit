@@ -89,4 +89,111 @@ request, its answer, its screenshot) and traced to the commit that changed the b
 **For the Part 11 owner (not changed here):** `GET /api/part11/signatures/by-target` does not return
 `bound_payload_digest`. A reviewer can see that a row binds something, but not what, without the database.
 
-The revised package is re-executed at head in `re-execution/` (VSR-001 §21).
+## Re-execution at head
+
+The revised package, executed again, with OQ-007 (Reporting & analytics) added. Record: `re-execution/`.
+
+| | |
+|---|---|
+| Server code | `97a0fec5cf` on `concept2cure-v2` (one process for the IQ and every OQ execution below) |
+| Installation | The same database, `c2c_oq_w3_20261110`, migrated to that commit (468 of 468 migration files). It holds the first execution's records |
+| Posture | `RLS_ENFORCE=on` as `app_service`; `NODE_ENV=development` with dev-login refused; auth boundary and launch scope enforced; **`LAUNCH_SCOPE_API_UNATTRIBUTED=enforce`**, production's default, which the first execution left at development's `report`; `DATABASE_URL_RUNTIME` supplied (OQ-CMC-14, -21, -42); no AI provider; a development build (report-only CSP) |
+| Identities | As the first execution, with the signer's role changed from admin to approver through user administration (OQ-001 v0.11 §1) |
+| Added to the installation | `fonts-noto-core`, which the production image installs (`Dockerfile.optimized`) and the reporting PDF embeds. Without it the run export answered 503 `REPORT_PDF_FONTS_UNAVAILABLE` (OQ-007 §4.1). One more database-owner fixture: another organisation's report run (`setup/fixtures-reporting.mjs`, `transcripts/fixtures-reporting.transcript.txt`) |
+
+### What each folder holds
+
+| Folder | Execution |
+|---|---|
+| `re-execution/IQ/` | IQ-001, 2026-11-10T02:41:53Z |
+| `re-execution/OQ-AUTHORING/`, `OQ-SUBMISSION-CENTER/`, `OQ-SUBMISSION-READINESS/` | The whole-package run, 02:41:53Z to 03:01:06Z (`transcripts/oq-re-execution.transcript.txt`). No step failed; not re-run |
+| `re-execution/first-pass/OQ-PROJECTS/`, `OQ-VAULT/`, `OQ-QMS/`, `OQ-CMC/` | The same whole-package run, for the four protocols that had a failure. Superseded by the folders below; kept as the red record |
+| `re-execution/OQ-PROJECTS/`, `OQ-VAULT/`, `OQ-QMS/` | Re-run after their revision, 03:05:58Z onward (`transcripts/oq-rerun-1-projects-vault-qms-cmc.transcript.txt`) |
+| `re-execution/OQ-REPORTING/` | OQ-007's execution, 03:35:45Z (`transcripts/oq-rerun-3-reporting-cmc.transcript.txt`) |
+| `re-execution/OQ-CMC/` | OQ-008's fourth run of this re-execution, 03:39Z to 03:48:04Z (the same transcript). Its second and third runs (`oq-rerun-1…`, `oq-rerun-2-cmc.transcript.txt`) each still had OQ-CMC-19 or -20 red; their transcripts are kept, their step records are not |
+
+Each `result.json` records the checkout's HEAD when it ran: `3088335238` for the whole-package run, `644657a825` for
+the re-runs. Neither changes server code. The re-runs executed the runners as this record's commit carries them,
+which were uncommitted changes to `tests/validation/` at the time.
+
+### Results
+
+**IQ-001: 12 pass, 0 fail, 3 deviation** (IQ-04, IQ-09, IQ-12, as before).
+
+**OQ, final: 170 pass, 0 fail, 8 deviation, 2 not executed, of 180 steps.**
+
+| Protocol | Version | Pass | Fail | Deviation | Not executed | First execution | Whole-package run |
+|---|---|---|---|---|---|---|---|
+| OQ-001 Projects | 0.12 | 20 | 0 | 0 | 0 | 9 / 5 / 0 / 6 | 17 / 3 / 0 / 0 |
+| OQ-002 Vault | 0.17 | 24 | 0 | 0 | 0 | 23 / 1 / 0 / 0 | 23 / 1 / 0 / 0 |
+| OQ-003 Authoring | 0.6 | 25 | 0 | 1 | 0 | 19 / 4 / 0 / 3 | 25 / 0 / 1 / 0 |
+| OQ-004 Submission Center | 0.8 | 16 | 0 | 1 | 0 | 14 / 3 / 0 / 0 | 16 / 0 / 1 / 0 |
+| OQ-005 Submission Readiness | 0.8 | 10 | 0 | 1 | 0 | 8 / 2 / 1 / 0 | 10 / 0 / 1 / 0 |
+| OQ-006 QMS | 0.10 | 22 | 0 | 0 | 0 | 7 / 2 / 0 / 13 | 21 / 1 / 0 / 0 |
+| OQ-007 Reporting & analytics | 0.1 | 17 | 0 | 1 | 0 | no protocol | no protocol |
+| OQ-008 CMC / Module 3 | 0.12 | 36 | 0 | 4 | 2 | 19 / 9 / 5 / 9 | 31 / 3 / 5 / 3 |
+| **Total** | | **170** | **0** | **8** | **2** | 99 / 26 / 6 / 31 of 162 | 143 / 8 / 8 / 3 of 162 |
+
+### The whole-package run's eight failures
+
+Each was read from its step record and traced. **Every one is A or B. No product regression was found.**
+
+| Step | Class | Cause | Revision |
+|---|---|---|---|
+| OQ-PROJ-06, OQ-VAULT-08 | A | The steps read `GET /api/c2c/actions/verify-chain`. No launch screen calls it and no surface claims it (`launchScopeApiVerdict`: `unmapped`). This run set `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce`, production's default since the D2 API-scope measurement of 2026-09-25, and the route answered 403 `LAUNCH_SCOPE`. In production it has always been refused; the first execution's `report` posture served it | OQ-001 v0.12, OQ-002 v0.17: the chain verdict is read from the Audit trail integrity attestation (`GET /api/audit/reports/audit-trail-integrity`, `tests/validation/lib/chain-verdict.mjs`), which the release serves. Observed `intact` |
+| OQ-PROJ-10 | A | Since `958c213e03` (2026-10-31) the Tasks board opens filtered to the open project. OQ-PROJ-09 created its task with no project, so the board did not list it (screenshot) | OQ-001 v0.12: the task is created under the program's tracking record, as *New task* does |
+| OQ-PROJ-12 | A | The step's fixture is an IND with no product class, refused since `4f53d90f3b` (as OQ-PROJ-04). It was not executed on the first execution, so the refusal was first met here | OQ-001 v0.12: `productType:"drug"` |
+| OQ-QMS-10 | A | Since decision P-51 (`cd95dc9e6c`, 2026-10-29) a retirement is signed with the meaning `retirement`, not `APPROVED`. Not executed on the first execution | OQ-006 v0.10: signs `retirement` and expects it on the stamp, the signature and the row |
+| OQ-CMC-18 | B | The step looked for *approv* in the gate's sentence. The sentence names the first blocker in the gate's precedence (since 2026-09-05); `data` carries every count. The gate refused 409, 1 of 21 sections approved | OQ-008 v0.12: reads the unapproved count from `data` |
+| OQ-CMC-33 | B | Took the first unapproved section, an incomplete one: the completeness refusal (409) comes before the separation of duties | OQ-008 v0.12: a complete section |
+| OQ-CMC-41 | B | The close-out sent the password with no authenticator code: 401 `REAUTH_TOTP_REQUIRED` | OQ-008 v0.12: a fresh code, as OQ-CMC-33, -35, -40 |
+
+Three more runner defects were behind deviations and steps not executed:
+- **OQ-CMC-29 (B).** Its "unclaimed" probe, `/api/cmc/projects/:id/process-capability`, is claimed, so it was served,
+  and the step called that `LAUNCH_SCOPE_API_UNATTRIBUTED=report`. The server ran `enforce`. Every route the core CMC
+  router registers is claimed at `97a0fec5cf` (66 of 66), so the probe is now a path under `/api/cmc` that names no
+  register. It answered 403 `LAUNCH_SCOPE`. A served probe is now a failure, not a deviation.
+- **OQ-CMC-19 (B).** It matched a submission to its programme by `projectId` (the field is `programId`) and sent the
+  sequence without its submission (400). With both fixed the placement is refused 409 by the final-export gate with no
+  leaf written, which is the designed answer; see the deviations.
+- **OQ-CMC-20 (B).** It named `OQ_MEMBER` as the identity without the regulatory-author role. A member holds that role
+  (`ORG_ROLE_FUNCTIONAL_GRANTS`, `server/middleware/auth.ts`, since 2026-09-02), passed it, and was answered by the
+  gate (409). The step is the viewer's: 403, no leaf.
+
+### Deviations and steps not executed, final
+
+| Step | Reason | What it needs |
+|---|---|---|
+| OQ-AUTH-16, OQ-CMC-26 | No AI provider is configured | A PQ-passed model |
+| OQ-SUBC-16, OQ-CMC-30 | A development build allows inline run inputs by design; the refusal is a production control | A production build |
+| OQ-SRDY-06b | The contradiction scan is the Inconsistency board's, which is outside the release | Nothing in this release |
+| OQ-CMC-17 | The reference records raise no critical contradiction (only `batch_rejected` is critical) | A fixture |
+| OQ-CMC-19 | The placement is refused 409 by the final-export gate (1 of 21 sections approved, 3 without source lineage), with no leaf. The reference records compose sections the compiler scores incomplete, which cannot be approved | A fixture whose every section can be approved |
+| OQ-CMC-27, -28 (not executed) | They need the sequence OQ-CMC-19 places into | The same fixture |
+| OQ-RPT-16 | The organisation is on the enterprise plan, which covers every report type | An organisation on a lower plan |
+
+### OQ-007, Reporting & analytics
+
+The seventh launch app had no URS and no protocol. `docs/validation/URS-008-REPORTING-ANALYTICS.md` (15 requirements,
+with what already exists) and `docs/validation/OQ-007-REPORTING-ANALYTICS.md` (18 steps) were written from the code,
+and `tests/validation/oq/reporting/` executes them: **17 pass, 0 fail, 1 deviation**. Observed: a run's figures are
+the engine's and a request's are not stored; another organisation's run is not found; the finalize is a signature by
+someone other than the requester, with password and authenticator code; the seal verifies `intact` on four checks; the
+export's `X-Export-Sha256` is the SHA-256 of its bytes; a compliance report is sealed and stops verifying when one
+character changes. The runner's first run failed OQ-RPT-14 on its own expectation and is not kept.
+
+### Observations for other rows (not dispositioned here)
+
+- **The Part 11 owner.** `GET /api/c2c/actions/verify-chain`, which `server/routes/audit-trail-ledger.routes.ts` calls
+  the authoritative verdict, is not served in production. The reachable verdicts are the attestation report and the
+  ledger's `meta.chain`. On this installation the attestation verifies the `audit_logs` chain walk and reports the
+  `audit_events` linkage and the HMAC seals as *not verified* (no entries; no seal key), with no anchor store.
+- **The CMC owner.** The final-export gate's sentence names one blocker; URS-CMC-010 says each blocker is named. The
+  counts in `data` name the rest. OQ-CMC-18's and -19's rows named cases no runner version has executed (the gate with
+  a contradiction open, with a stale section, all clear; a placement into another submission's sequence).
+- **The security owner (D6).** `POST /api/audit/export/verify` has no role gate, compares no organisation and writes
+  no audit row (URS-008 §3).
+- **The installation owner (D1).** IQ-001 has no check for the report fonts. A sealed report snapshot
+  (`report_snapshots`) is a row the runtime role may update; a change is detected on read, not prevented.
+
+What stands between the package and signature is in VSR-001 §21.

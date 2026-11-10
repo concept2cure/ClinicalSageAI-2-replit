@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/concept2cure/projects/51e1fef6-b4ad-4a31-92b6-da93122fd087/agency-communications",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "sourceType": "uploaded_official_correspondence",
+      "communicationType": "OQ-CMC-42 information request",
+      "sourceChannel": "esg",
+      "urgency": "high",
+      "responseRequired": true,
+      "dueDate": "2099-12-31T00:00:00.000Z",
+      "visibilityTier": "shared_client_c2c"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 66,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "ace_1794279665586_c81c4974",
+        "organizationId": 2,
+        "projectId": 24,
+        "sourceType": "uploaded_official_correspondence",
+        "communicationType": "OQ-CMC-42 information request",
+        "sourceChannel": "esg",
+        "linkedSubmission": null,
+        "linkedSectionCodes": [],
+        "linkedArtifactIds": [],
+        "receivedDate": "2026-11-10T03:01:05.586Z",
+        "dueDate": "2099-12-31T00:00:00.000Z",
+        "urgency": "high",
+        "responseRequired": true,
+        "extractedIssues": [],
+        "humanReviewStatus": "pending_review",
+        "closureStatus": "open",
+        "letterClass": null,
+        "auditMetadata": {
+          "capturedBy": "oq-runner@validation.local",
+          "capturedAt": "2026-11-10T03:01:05.586Z",
+          "visibilityTier": "shared_client_c2c"
+        }
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": false
+        }
+      }
+    }
+  }
+}

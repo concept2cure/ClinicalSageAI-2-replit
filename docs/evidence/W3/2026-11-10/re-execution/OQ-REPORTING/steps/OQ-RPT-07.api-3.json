@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs",
+    "anonymous": false,
+    "identity": "oq-viewer@validation.local",
+    "body": {
+      "scopeType": "account",
+      "scopeId": "2",
+      "reportTypeId": "research_admin.scorecard"
+    }
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 16,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Insufficient permissions"
+    }
+  }
+}
