@@ -18,7 +18,7 @@ const BASE = 'http://localhost:5263';
       const acts = [...t.querySelectorAll('.qms-rowacts')].map((a) => Math.round(a.getBoundingClientRect().right));
       return { pane: Math.round(sec.right), table: Math.round(r.right), maxActRight: Math.max(0, ...acts) };
     });
-    console.log(tab, JSON.stringify(m));
+    console.info(tab, JSON.stringify(m));
   }
   await b.close();
 })();

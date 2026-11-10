@@ -49,6 +49,13 @@ async function tab(page, name) {
   return false;
 }
 
+/** A tab's screenshot, and its text at 1440 px light, when the tab is there. */
+async function shotTab(page, label, name, width, dark) {
+  if (!(await tab(page, label))) return;
+  await shot(page, `${name}-${width}-${dark ? 'dark' : 'light'}`);
+  if (width === 1440 && !dark) await text(page, name);
+}
+
 (async () => {
   if (!PW) throw new Error('WALK_PASSWORD is not set');
   const browser = await chromium.launch();
@@ -61,14 +68,8 @@ async function tab(page, name) {
         await open(page, `/concept2cure/quality?program=${LMN201}`);
         await shot(page, `quality-sop-${width}-${theme}`);
         if (width === 1440 && !dark) await text(page, 'quality-sop');
-        if (await tab(page, 'CAPA')) {
-          await shot(page, `quality-capa-${width}-${theme}`);
-          if (width === 1440 && !dark) await text(page, 'quality-capa');
-        }
-        if (await tab(page, 'Complaints and MDR')) {
-          await shot(page, `quality-complaints-${width}-${theme}`);
-          if (width === 1440 && !dark) await text(page, 'quality-complaints');
-        }
+        await shotTab(page, 'CAPA', 'quality-capa', width, dark);
+        await shotTab(page, 'Complaints and MDR', 'quality-complaints', width, dark);
         // Post-market surveillance on the organisation's device project.
         await open(page, `/concept2cure/device-postmarket?program=${NEUR}`);
         await shot(page, `postmarket-${width}-${theme}`, width === 1440);
