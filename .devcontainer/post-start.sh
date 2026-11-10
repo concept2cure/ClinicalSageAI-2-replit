@@ -47,6 +47,10 @@ c2c_provision || c2c_blocked "database provisioning failed."
 if [[ "${NEED_ACCOUNTS:-0}" == "1" ]] || ! c2c_accounts_current; then
   c2c_seed_accounts || c2c_blocked "sign-in accounts could not be created."
 fi
+# The Lumen account (post-create.sh). It is not required for the rest of the demo, so a failure is logged, not fatal.
+if ! c2c_lumen_accounts_current; then
+  c2c_seed_lumen_accounts || c2c_log "The Lumen account was not created; the rest of the demo still starts."
+fi
 
 # The forwarded origin the browser uses; the CSRF origin check refuses others.
 C2C_ORIGINS="http://localhost:$C2C_PORT,http://127.0.0.1:$C2C_PORT"
@@ -115,6 +119,8 @@ c2c_start_app() {
   c2c_log "Starting the app (npm run dev) on port $C2C_PORT; log: $C2C_APP_LOG"
   (
     set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+    # "Demo access" signs in as the Lumen account's lead once that account exists (the founder's landing account).
+    if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then VITE_DEV_LOGIN_EMAIL="$(c2c_lumen_person lead)"; fi
     exec env "${C2C_UNSET[@]}" NODE_ENV=development PORT="$C2C_PORT" ALLOWED_ORIGINS="$C2C_ORIGINS" \
       setsid nohup npm run dev >"$C2C_APP_LOG" 2>&1 </dev/null
   ) &
@@ -174,6 +180,8 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 # executed. Not the reviewer: QMS approval needs the Approver role, and the
 # packs route a draft to review before approving it (158323d776).
 C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
+# The Lumen account first: it is where "Demo access" lands.
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_seed_lumen_org "$C2C_DEMO_VERSION"; fi
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
   if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
@@ -215,6 +223,7 @@ c2c_set_idle_window() {
   fi
 }
 c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_set_idle_window "$(c2c_lumen_person lead)" 120; fi
 
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
@@ -305,11 +314,19 @@ case "$C2C_APP_ANA" in
   *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
 esac
 
+C2C_DEMO_ACCESS_EMAIL="$DEMO_SEED_EMAIL"
+C2C_LUMEN_PEOPLE="not created (see accounts.log)"
+if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+  C2C_DEMO_ACCESS_EMAIL="$(c2c_lumen_person lead)"
+  C2C_LUMEN_PEOPLE="$(c2c_lumen_roster | awk -F'|' '{ print $2 " <" $1 ">" }' | paste -sd, - | sed 's/,/, /g')"
+fi
 cat <<EOF
 
 ============================================================================
  Concept2Cure is running: $C2C_PUBLIC_URL
- Sign in: press "Demo access" on the sign-in page (signs in as $DEMO_SEED_EMAIL).
+ Sign in: press "Demo access" on the sign-in page (signs in as $C2C_DEMO_ACCESS_EMAIL).
+ Lumen account: $C2C_LUMEN_ORG_NAME, with $C2C_LUMEN_PEOPLE.
+ Development organisation: $DEMO_SEED_EMAIL (password sign-in), with the CDISC CSR study.
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
    (DEMO_SIGNER_PASSWORD). App log: $C2C_APP_LOG
  Restart the app: bash .devcontainer/post-start.sh (restarts it when it lacks a key this
