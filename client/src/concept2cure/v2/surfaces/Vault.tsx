@@ -94,6 +94,7 @@ import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
 import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
+import { DataRoomSourcesPanel, takeVaultCatalogAsk } from '../editor/DataRoomSourcesPanel';
 import { artifactImportId } from '@shared/authoring/source-import';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -1216,6 +1217,7 @@ export function findVaultArtifactLeaf(
 
 const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
+
 /* ── The work area's views (D6 §C.3–C.4 step 5) ──
    One Vault, its library first. What a DMS keeps beside the library (what came
    in, what is required, the governed artifacts, the seals and fixity) is a view
@@ -1223,9 +1225,13 @@ const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — o
    view stays mounted and the inactive ones are `hidden`: a fixity result, a
    seal's verdict or a staged upload is not lost by looking at another view, and
    the reads each panel makes on mount are the ones it always made. */
-type VaultView = 'library' | 'uploads' | 'required' | 'artifacts' | 'seals';
+type VaultView = 'library' | 'catalog' | 'uploads' | 'required' | 'artifacts' | 'seals';
 const VAULT_VIEWS: ReadonlyArray<{ id: VaultView; label: string }> = [
   { id: 'library', label: 'Library' },
+  /* The data catalog (S2, the founder 2026-11-06): every captured file across the person's projects
+     of this sponsor, organized by study, kind, CTD section and folder, each graded. The project's
+     Data room panel (editor/DataRoomSourcesPanel.tsx), opened on "All my projects". */
+  { id: 'catalog', label: 'Data catalog' },
   { id: 'uploads', label: 'Uploads' },
   { id: 'required', label: 'Required documents' },
   { id: 'artifacts', label: 'Governed artifacts' },
@@ -1375,7 +1381,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   const canWrite = useVaultCanWrite();
   /* The view on screen (D6 §C.4 step 5); the library first. */
-  const [view, setView] = useState<VaultView>('library');
+  const [view, setView] = useState<VaultView>(() => (takeVaultCatalogAsk() ? 'catalog' : 'library'));
+  /* The catalog grades every row it reads: it is read once the person opens it, then kept like every view. */
+  const [catalogOpened, setCatalogOpened] = useState(false);
+  React.useEffect(() => { if (view === 'catalog') setCatalogOpened(true); }, [view]);
   const viewIds = useId();
   /* Below 1280px the record is a drawer opened from a row; below 1024px the
      structure tree is one too (D6 §C.3). */
@@ -3061,8 +3070,16 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     </>
   );
 
+  const catalogView = !catalogOpened ? null : projectId ? (
+    <DataRoomSourcesPanel key={projectId} programId={projectId} initialScope="catalog" onAsk={onAsk} onNav={onNav}
+      onOpenDocument={(docId) => { if (readOwner.current()) openImportedDocument(docId, projectId, onNav); }} />
+  ) : (
+    <p className="sec-sub" role="status">{NO_PROGRAM_OPEN} The data catalog lists every captured file across your projects of that project&rsquo;s sponsor.</p>
+  );
+
   const viewBodies: Record<VaultView, React.ReactNode> = {
     library: libraryView,
+    catalog: catalogView,
     uploads: uploadsView,
     required: requiredView,
     artifacts: artifactsView,

@@ -17,6 +17,7 @@ import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads, useWorkingThreads } from './projectThreads';
 import { WORKING_UNREADABLE_LINE, workingMarkerLine } from '../anaWorkModel';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { openVaultCatalog } from '../editor/DataRoomSourcesPanel';
 import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { SourceAssemblyAction } from '../editor/SourceAssemblyDialog';
@@ -539,6 +540,8 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         {pid && (
           <span className="pj-sec-acts">
             <button type="button" className="btn small" disabled={state.loading} title="Refresh only reads status; it does not retry processing" onClick={() => setReloadKey(k => k + 1)}>Refresh sources</button>
+            {/* The data catalog across the person's projects, graded (S2): Vault's Data catalog view. */}
+            <button type="button" className="btn small" data-testid="open-data-catalog" onClick={() => openVaultCatalog(onNav)}>Open the data catalog {I.right}</button>
           </span>
         )}
       </div>
