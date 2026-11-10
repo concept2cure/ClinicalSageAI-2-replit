@@ -53,23 +53,27 @@ beforeEach(() => {
 afterEach(cleanup);
 const mount = () => render(<QualityApp onAskAna={(q) => H.asked.push(q)} />);
 
-/* C14 (QP3): opened with a project open, Quality says whose records it lists and offers the whole organisation. */
+/* P-122 (2026-11-10): opened with a project open, Quality reads the whole organisation and says so; narrowing to the
+   project is one quiet control. C14 (QP3) had made the project's records the default, so the registers looked empty. */
 describe('Quality says whose records it lists', () => {
   afterEach(() => { H.shell = null; H.reviewRows = []; window.history.replaceState(null, '', '/concept2cure/quality'); });
-  it('names the open project, and widens to the whole organisation and back', () => {
+  it("reads the whole organisation with a project open, narrows to the project and back", () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
     mount();
+    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
+    expect(new URLSearchParams(window.location.search).get('quality')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show C11 · Gasket programme only' }));
+    expect(new URLSearchParams(window.location.search).get('quality')).toBe('project');
     expect(screen.getByTestId('quality-scope').textContent).toMatch(/^C11 · Gasket programme: its controlled documents and their periodic review, changes, CAPAs and nonconformances\. Training, deviations, suppliers, audits and management reviews are the organisation's\.$/);
     fireEvent.click(screen.getByRole('button', { name: 'Show the whole organisation' }));
-    expect(new URLSearchParams(window.location.search).get('quality')).toBe('organisation');
-    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
-    fireEvent.click(screen.getByRole('button', { name: 'Show C11 · Gasket programme only' }));
     expect(new URLSearchParams(window.location.search).get('quality')).toBeNull();
+    expect(screen.getByTestId('quality-scope').textContent).toBe("The whole organisation's quality records.");
   });
 
   // The SOP tab in a project's scope is its documents and their review: the organisation's schedule is filtered to them.
-  it("lists for periodic review only the project's documents, and says training is the organisation's", () => {
+  it("narrowed to the project, lists for periodic review only the project's documents, and says training is the organisation's", () => {
     H.shell = { id: '40000000-0000-4000-8000-000000000001', code: 'C11', title: 'Gasket programme' };
+    window.history.replaceState(null, '', '/concept2cure/quality?quality=project');
     H.reviewRows = [
       { id: 1, docNumber: 'QS-SOP-001', title: 'Handling of customer complaints', nextReviewDate: '2026-11-20', overdue: false, status: 'effective' },
       { id: 99, docNumber: 'QS-SOP-099', title: 'Another project\'s procedure', nextReviewDate: '2026-11-21', overdue: true, status: 'effective' },
