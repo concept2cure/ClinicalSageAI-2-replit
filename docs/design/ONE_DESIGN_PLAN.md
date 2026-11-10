@@ -999,6 +999,41 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
 - **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
   this environment does not have.
 
+- **Demo-day UI sweep** (2026-11-06), `f05919e54`, `docs/evidence/D2-CSR/2026-11-06-demo-day-ui-sweep/`.
+  - Every screen was walked as author, reviewer and approver, with no page error.
+  - The AI paths reach the provider.
+  - The founder's "model not approved" in the Codespace was a key that never reached the app. The Codespace
+    session fixed its start script (`11b191038`).
+  - The docked composer's overflow was fixed by the design lead.
+
+**DATA: the Lumen demonstration data** (2026-11-06 to 11-10, at the founder's request: "faux seeded demo examples …
+RBM, QMS and more; Vault … and tasking too")
+
+- **Tasks, review, information request, sequence and reports**, `4fad016a5`:
+  - LMN-201's board has 16 tasks across every column, with a critical path;
+  - the Investigator's Brochure is out for review;
+  - a FICTIONAL FDA information request sits in Communication and Respond;
+  - LMN-201 has sequence 0000;
+  - four computed reports have run.
+- **Quality** `dff867c6f`, **risk-based monitoring** `91d6a97da`, **Vault** `893451f02`:
+  - every Quality register;
+  - RBM: RACT, KRIs, QTLs, signals, the plan and site actions;
+  - 25 synthetic documents filed, reviewed, approved and sealed.
+
+  All through the screens' own routes, and idempotent.
+- **Task owners by role and a third person**, `893451f02`; **a named demonstration organisation** in
+  `seed-admin.mjs`, `98e664c40`.
+- **Not finished, handed over:**
+  - the founder's Lumen account in the Codespace (design agreed with the Codespace session: identities only from
+    secrets);
+  - the Vault re-filing on each run;
+  - the QMS approver designation;
+  - the biotech/mdx QMS signer 409;
+  - two RBM product defects;
+  - the CSR study's package identity.
+
+  Each is in `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md`.
+
 **Finding shared with the design lead**
 
 In production `LAUNCH_SCOPE_ENFORCE` defaults to on (`server/services/entitlements/launch-scope.ts:42-45`). So
