@@ -69,12 +69,15 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { syncQualityProjectSources } from '../../services/clinical-regulatory-evidence/record-source.js';
+import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access.js';
 import { sourceReadView } from '../../../shared/data-room-processing-status.js';
 import { sourceProcessingSummary } from '../../services/clinical-regulatory-evidence/data-room-processing-read.js';
 import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import {
-  binderFolderId, buildFolderIndex, createProgramFolder, personFolderId, readProgramFolderIndex, renameProgramFolder,
+  binderFolderId, buildFolderIndex, createProgramFolder, moveProgramFolder, personFolderId, readProgramFolderIndex,
+  removeProgramFolder, renameProgramFolder,
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
@@ -644,6 +647,27 @@ async function librarySponsors(
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+
+/** The project's Quality records are captured as data-room sources. One that changed after its capture (an approval,
+ *  say) is refreshed first, as the data room's own search does (data-room-search.ts), so the list reads the current
+ *  record: unrefreshed, it refused the list and the Vault answered 500 (2026-11-10). A refresh that cannot be verified
+ *  leaves the Vault up and says why its data room is not listed; it is never shown as an empty room. */
+async function refreshQualitySources(req: Request, organizationId: number, programId: string,
+  unavailable: Array<{ branch: string; reason: string }>): Promise<boolean> {
+  const userId = governedActorId(req);
+  if (!userId) return true;
+  try {
+    await syncQualityProjectSources({ organizationId, programId, userId });
+    return true;
+  } catch (err) {
+    if (!(err instanceof SourceReadAccessError)) throw err;
+    unavailable.push({
+      branch: 'Data room',
+      reason: "The project's Quality records could not be verified as current, so its data room is not listed. The documents are unaffected.",
+    });
+    return false;
+  }
+}
 
 /** Org id from tenant/user context (integer — c2c tables key on numeric org). */
 /** The program's active hold notices, or an `unavailable` entry saying they could not be read. */
@@ -1964,7 +1988,7 @@ export default function createProjectVaultRoutes(): Router {
           branch: 'Data room',
           reason: "The 'filed' stage joins captured sources against the uploads store, which is not provisioned — pipeline stages cannot be derived.",
         });
-      } else {
+      } else if (await refreshQualitySources(req, orgId, id, unavailable)) {
         try {
           /* Current sources only: a re-upload retires its predecessor
              (is_current = false), and counting both made one file two. One
@@ -2667,19 +2691,28 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
-  router.post('/:id/folders/:folderId/rename', requireEditorAccess, async (req: Request, res: Response) => {
+  /* Rename, move or remove a folder a person made: one handler shape, three governed writers (vault-folders.ts).
+     Move takes the folder's subfolders and documents with it; remove takes only an empty folder. */
+  const changeFolder = (what: 'rename' | 'move' | 'remove') => async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
     const folderId = Array.isArray(req.params.folderId) ? (req.params.folderId[0] ?? '') : req.params.folderId;
-    const body = (req.body ?? {}) as { name?: unknown; reason?: unknown };
+    const body = (req.body ?? {}) as { name?: unknown; parentFolderId?: unknown; reason?: unknown };
+    const base = { ...folderWriteBase(req, orgId, id, body.reason), folderId };
     try {
-      const outcome = await renameProgramFolder({ ...folderWriteBase(req, orgId, id, body.reason), folderId, name: body.name });
+      const outcome = what === 'rename' ? await renameProgramFolder({ ...base, name: body.name })
+        : what === 'move' ? await moveProgramFolder({ ...base,
+          parentFolderId: typeof body.parentFolderId === 'string' && body.parentFolderId.trim() ? body.parentFolderId.trim() : null })
+          : await removeProgramFolder(base);
       return sendFolderOutcome(res, outcome);
     } catch (err) {
-      return folderStorePending(res, err, 'rename');
+      return folderStorePending(res, err, what);
     }
-  });
+  };
+  router.post('/:id/folders/:folderId/rename', requireEditorAccess, changeFolder('rename'));
+  router.post('/:id/folders/:folderId/move', requireEditorAccess, changeFolder('move'));
+  router.post('/:id/folders/:folderId/remove', requireEditorAccess, changeFolder('remove'));
 
   /* POST /:id/data-room/file — File into Vault (VR-11, D2).
      Captured sources, chosen in the data room, each filed through the one

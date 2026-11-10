@@ -10,8 +10,8 @@ const DocumentWorkbench = React.lazy(async () => {
   return { default: module.DocumentWorkbench };
 });
 
-export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate, onAsk }: {
-  documentId: number; onBack: () => void; onNavigate: (target: string) => void; onAsk: (text: string) => void;
+export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate }: {
+  documentId: number; onBack: () => void; onNavigate: (target: string) => void;
 }) {
   const [copy, setCopy] = React.useState<QmsEditingCopy | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -43,7 +43,7 @@ export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate, on
     </> : copy ? <React.Suspense fallback={<div role="status">Loading the document editor…</div>}>
       <DocumentWorkbench docs={[copy.document]} docsState="ready" status="all" programId={copy.programId}
         pinnedDocId={copy.document.id} reloadDocs={load} surfaceActionId={null} consumeDeepLinks={false}
-        embedded={{ onBack, backLabel: 'Back to Quality register' }} onNav={onNavigate} onAsk={onAsk} />
+        embedded={{ onBack, backLabel: 'Back to Quality register' }} onNav={onNavigate} onAsk={null} />
     </React.Suspense> : <div className="qms-empty" role="status">Opening the controlled document…</div>}
   </div>;
 }

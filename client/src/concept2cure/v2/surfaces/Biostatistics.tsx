@@ -42,7 +42,8 @@ import {
 import { statusWords } from '../editor/CanvasDocumentList';
 import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
 import { BiostatKnowledgePanel } from './biostatKnowledge';
-import { DefensibilitySection, DesignCalculatorsSection, CALCULATOR_TITLES } from './BiostatWorkbench';
+import { DefensibilitySection, DesignCalculatorsSection, CALCULATOR_TITLES, resolveCalculatorByName } from './BiostatWorkbench';
+import { CALCULATORS } from './biostatCalculators';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -553,6 +554,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [designReload, setDesignReload] = useState(0);
   const designs = useBridgeDesigns(designReload);
   const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
+  /* The design engine open in the calculators section. Held here, not in the
+     section, because the action that opens one by name is this surface's: the
+     bus keeps one registration per screen (useSurfaceActionHandlers below). */
+  const [calculatorId, setCalculatorId] = useState<string>(CALCULATORS[0].id);
   const bridge = useDesignAssessment(selectedStudyId);
   const loadedDesign = bridge.assessment;
   /* With a project open, its own study design is what the engine opens on —
@@ -927,6 +932,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       setDocType(target);
       return { ok: true, detail: `Switched the document to ${found.label} — filing it stays a human act` };
     },
+    /* Came with the design calculators on 2026-11-09. The section registered
+       it under this id itself; the bus keeps ONE registration, so the
+       section's effect (a child's runs first) answered a held load-design
+       "not supported" and this registration then replaced the section's.
+       Opening an engine is view state only; computing stays deliberate. */
+    'biostatistics.select-calculator': (params) => {
+      const r = resolveCalculatorByName(String(params.calculator ?? ''));
+      if (!r.ok) return { ok: false, reason: r.reason };
+      if (calculatorId === r.calc.id) return { ok: true, detail: `Already on ${r.calc.title}` };
+      setCalculatorId(r.calc.id);
+      return { ok: true, detail: `Opened ${r.calc.title}` };
+    },
   });
   /* The ready signal for the hold above. A design named while the list is
      loading gets its answer once the list has settled, loaded or not: the
@@ -1270,7 +1287,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           decided ("Survivor: biostatistics. Fold the workbench in as a tab")
           was carried out then. See BiostatWorkbench.tsx's header. */}
       <DefensibilitySection fireToast={fireToast} />
-      <DesignCalculatorsSection fireToast={fireToast} onNav={onNav} deviceProject={isDeviceFamily(program?.productType)} />
+      <DesignCalculatorsSection
+        fireToast={fireToast}
+        onNav={onNav}
+        deviceProject={isDeviceFamily(program?.productType)}
+        activeId={calculatorId}
+        onSelect={setCalculatorId}
+      />
 
       {/* The two capabilities that RECORD. Everything above sizes, judges and
           writes: a figure is computed, a document is produced, nothing about

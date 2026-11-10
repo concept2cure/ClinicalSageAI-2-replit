@@ -1,6 +1,6 @@
 /** The cabinet's folders as the Vault lists them (S6, 2026-11-06). */
 import { describe, expect, it } from 'vitest';
-import { binderFolderFor, cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, planTasksForFolder } from '../vaultFolders';
+import { binderFolderFor, cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, planTasksForFolder } from '../vaultFolders';
 
 const cabinet = {
   id: 'cabinet', code: '', label: 'Filing binder',
@@ -52,5 +52,19 @@ describe('the plan in the Vault (S6 step 3)', () => {
     expect(binderFolderFor('3.2.S.4.1', has)).toBe('cab-bn:3.2.S');
     expect(binderFolderFor('3.2.P.1', has)).toBe('cab-bn:M3');
     expect(binderFolderFor('4.2.3', has)).toBeNull();
+  });
+});
+
+describe('where a folder sits, and which one an action opens', () => {
+  it('names the folder a cabinet folder is in', () => {
+    expect(folderParentOf(cabinet as never, 'cab-uf:4')).toBe('bn:5.3');
+    expect(folderParentOf(cabinet as never, 'cab-bn:M5')).toBe('');
+    expect(folderParentOf(cabinet as never, 'cab-uf:99')).toBe('');
+  });
+  it('an exact id never falls back to a name match', () => {
+    const found = [{ folder: { id: 'cab-bn:5.3', label: 'Clinical study reports' } }, { folder: { id: 'cab-uf:4', label: '5.3 notes' } }];
+    expect(openFolderMatches(found, 'bn:5.3.5', '5.3').map((f) => f.folder.id)).toEqual(['cab-bn:5.3']);
+    expect(openFolderMatches(found, 'bn:4.2', '5.3')).toEqual([]);
+    expect(openFolderMatches(found, '', '5.3 notes').map((f) => f.folder.id)).toEqual(['cab-uf:4']);
   });
 });

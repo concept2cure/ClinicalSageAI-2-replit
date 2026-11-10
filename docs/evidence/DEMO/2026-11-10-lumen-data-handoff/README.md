@@ -64,27 +64,22 @@ With no second or third person, every two-person step says "not executed" and no
 
 ## Open, in order
 
-1. **Wire the Lumen account into the Codespace.** This is what the founder asked for. `.devcontainer/**` is held by
-   the Codespace session `01QoxbLaF…`. We agreed the following on 2026-11-06:
-   - Identities come only from Codespaces secrets; no real person's name or address in the repository (the
-     2026-10-15 rule).
-   - The secrets are `C2C_FOUNDER_EMAIL` (required; skip the step with a log line if unset), `C2C_FOUNDER_NAME`,
-     `C2C_LUMEN_REVIEWER_NAME` and `C2C_LUMEN_APPROVER_NAME`. Sign-in addresses are derived and non-deliverable
-     (`…@lumen-demo.example`).
-   - `post-create.sh`: a `c2c_seed_lumen_accounts` function through `seed-admin.mjs`, with the owner credential only
-     inside `c2c_with_owner_env`, and its own done flag.
-   - `post-start.sh`:
-     - call that function when its flag is missing;
-     - after the `--pack all` block, seed `--pack lumen` into the Lumen organisation as the founder, with
-       `OQ_SIGNER_*` as the reviewer and `OQ_APPROVER_*` as the approver, and re-run it when `scripts/demo`
-       changes, as the Codespace session already does for `--pack all`;
-     - start the app with `VITE_DEV_LOGIN_EMAIL` set to the founder once the account exists, so "Demo access" lands
-       in Lumen.
-   - After the Lumen seed, call `c2c_set_idle_window "$C2C_FOUNDER_EMAIL" 120`, as the Codespace session asked
-     (`fe3bdced`), so the founder's landing organisation keeps a session for 120 idle minutes.
-   - The Codespace session has since released `.devcontainer/**`. Its next steps are in plan §3a, "L1 (rows D1/D2) —
-     the founder's Codespace sets itself up".
-   - Before pushing, run `npm run codespaces:doctor:test`.
+1. **Done (2026-11-10): the Lumen account in the Codespace.** The commit subject is "L1: the Codespace sets up the
+   Lumen account, seeds it, and 'Demo access' lands there".
+   - `post-create.sh` holds `c2c_seed_lumen_accounts` and `c2c_seed_lumen_org`.
+   - `post-start.sh` does four things:
+     - creates the account;
+     - seeds it before `--pack all`;
+     - points "Demo access" at the Lumen lead;
+     - sets the lead's 120-minute idle window.
+   - The people come from the Codespaces secrets `C2C_FOUNDER_EMAIL`, `C2C_FOUNDER_NAME`, `C2C_LUMEN_REVIEWER_NAME`
+     and `C2C_LUMEN_APPROVER_NAME`. Without them the people are the fictional Lumen Lead, Lumen Reviewer and Lumen
+     Approver. Changing a secret re-creates the people and re-seeds on the next start. Everyone's password is
+     `DEMO_SIGNER_PASSWORD` in `~/.concept2cure-codespace/app.env`.
+   - Since P-95 (2026-11-09) an artifact is approved only after its reviewers approve it, and a placed one needs two
+     independent reviewers. The Lumen organisation has one reviewer besides its author and approver, so its placed
+     artifacts stay in review with the review recorded, and the step says so. A fourth person in the organisation,
+     added to the roster as a second reviewer, would let them be approved.
 2. **The Vault re-files on every run.** The second run counts `vault-filing: 21`. `ensureFiled` in `lumen-vault.mjs`
    trusts the ingest reply's `filing` on a re-upload. It should read the document's current filing before calling
    `POST …/file`. There is no data harm, only audit entries on each re-seed.

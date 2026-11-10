@@ -18,6 +18,10 @@ describe('parseVaultFilters', () => {
     expect(parseVaultFilters({ folderId: 'module-3' }, { view: 'pharma' })).toEqual({ filters: { folderIds: ['module-3'] } });
     expect(parseVaultFilters({ folderId: 'module-3' })).toMatchObject({ refusal: { parameter: 'folderId' } });
     expect(parseVaultFilters({ folderId: 'module-9' }, { view: 'pharma' })).toMatchObject({ refusal: { error: 'INVALID_FILTER', parameter: 'folderId' } });
+    // A binder heading and a person's folder are folders of the project too (S6, vault-folders.ts).
+    expect(parseVaultFilters({ folderId: 'bn:3.2.S.4,uf:12' }, { view: 'pharma' })).toEqual({ filters: { folderIds: ['bn:3.2.S.4', 'uf:12'] } });
+    expect(parseVaultFilters({ folderId: 'uf:0' }, { view: 'pharma' })).toMatchObject({ refusal: { parameter: 'folderId' } });
+    expect(parseVaultFilters({ folderId: 'bn:3.2 S' }, { view: 'pharma' })).toMatchObject({ refusal: { parameter: 'folderId' } });
   });
 
   it('refuses more than twenty values in one dimension rather than truncating', () => {

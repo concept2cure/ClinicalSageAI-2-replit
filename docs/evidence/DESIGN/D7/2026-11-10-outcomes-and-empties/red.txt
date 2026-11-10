@@ -1,0 +1,12 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the register on screen while a re-read is in flight
+      Tests  1 failed | 13 passed (14)
+
+# a refused controlled copy, against the previous register
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a refused controlled copy is said as a refusal > shows the server refusal as an alert, not as a line in the register 310ms
+AssertionError: expected <div class="qms-empty" …(2)></div> to be null
+      Tests  1 failed | 22 skipped (23)
+
+# found on the walk: the change figures did not re-read
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 541ms
+AssertionError: expected "vi.fn()" to be called at least once
+      Tests  1 failed | 11 skipped (12)

@@ -1,0 +1,21 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T02:21:35.679Z",
+  "steps": [
+    {
+      "name": "1. Remove is refused for a folder holding a file",
+      "message": "“Pivotal study CDISCPILOT01 184713” holds 1 document. Move them out first; nothing was removed."
+    },
+    {
+      "name": "Working copies 022135"
+    },
+    {
+      "name": "3. Moved to Module 4",
+      "parent": "Module 4 · Nonclinical study reports 0/0"
+    },
+    {
+      "name": "4. Removed; the list returns to the folder it was in",
+      "breadcrumb": "Module 4 · Nonclinical study reports"
+    }
+  ]
+}

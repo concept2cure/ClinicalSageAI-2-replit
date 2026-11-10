@@ -282,17 +282,51 @@ async function ensureArtifacts({ api, run, tally }, program, label, artifacts, p
       }
       if (want >= 2 && have < 2) {
         if (!people) return `${steps.join(', ') || status}; approval ${NO_PEOPLE}`;
-        must(await people.approver.api('PUT', `${base}/${encodeURIComponent(row.id)}/status`, {
+        steps.push(await ensureArtifactReview(api, `${base}/${encodeURIComponent(row.id)}`, a.name, people));
+        const approval = await people.approver.api('PUT', `${base}/${encodeURIComponent(row.id)}/status`, {
           status: 'approved', reason: 'Demo seed: approved for the demonstration project.',
           attestation: { meaning: 'approval', attestationText: 'I approve this synthetic memo as the current version for the demonstration project.' },
           reauth: { password: people.approver.password },
-        }), 200, `approve "${a.name}"`);
+        });
+        /* A document placed in a CTD section needs more independent reviewers than this organisation has besides
+           its author and approver (P-95 Q2, server/services/artifact-approval-act.ts). It stays in review with its
+           review recorded, and the step says so; the server's floor is not worked around. */
+        if (approval.status === 409 && /independent reviewers/.test(String(approval.text ?? ''))) {
+          return `${row.id}: ${steps.join(', ')}; approval not executed: ${String(approval.json?.error?.message ?? approval.text).slice(0, 160)}`;
+        }
+        must(approval, 200, `approve "${a.name}"`);
         tally.created('governed-artifact-approval');
         steps.push(`approved by ${people.approver.email}`);
       }
       return `${row.id}: ${steps.length ? steps.join(', ') : `${status} (already)`}`;
     });
   }
+}
+
+/**
+ * The artifact's review, before its approval: since 2026-11-09 (P-95, server/services/artifact-approval-act.ts) an
+ * artifact is approved only after every reviewer named in its current round has approved it. The author names the
+ * second person, who approves, through the routes the artifact card's Review step uses
+ * (ConversationArtifactReview.tsx). A round that already holds that person's approval is left as it is.
+ */
+async function ensureArtifactReview(api, artifactPath, name, people) {
+  const read = async () => must(await api('GET', `${artifactPath}/reviews/status`), 200, `read the review of "${name}"`).data ?? {};
+  let status = await read();
+  const live = () => (status.reviewers ?? []).filter((r) => r.status !== 'withdrawn');
+  let mine = live().find((r) => Number(r.reviewerId) === people.reviewerId) ?? null;
+  if (mine?.decision?.decision === 'approve') return `reviewed by ${people.signer.email} (already)`;
+  if (!mine) {
+    must(await api('POST', `${artifactPath}/reviewers`, {
+      reviewerIds: [people.reviewerId], notes: 'Demo seed: please review this synthetic memo before its approval.',
+    }), [200, 201], `name the reviewer of "${name}"`);
+    status = await read();
+    mine = live().find((r) => Number(r.reviewerId) === people.reviewerId) ?? null;
+    if (!mine) throw new Error(`the review of "${name}" does not name ${people.signer.email} after naming them`);
+  }
+  must(await people.signer.api('POST', `${artifactPath}/reviews/submit`, {
+    decision: 'approve', comment: 'Demo seed: reviewed; consistent with the synthetic study record.',
+  }), [200, 201], `approve the review of "${name}"`);
+  return `reviewed by ${people.signer.email}`;
 }
 
 /* ───────────────────────── Fixity and seal ───────────────────────── */

@@ -91,7 +91,7 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { cabinetFolderOptions, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { VaultPlanWork } from './VaultPlanWork';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
@@ -2230,11 +2230,13 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const folderMade = (folderId: string) => {
     /* The folder it was made in is opened, so the new folder shows beneath it. */
     const parent = folderEdit?.kind === 'create' && folderEdit.parentId ? `cab-${folderEdit.parentId}` : null;
+    /* A removed folder is gone: the list returns to the folder it was in, or the cabinet. */
+    const removedFrom = folderEdit?.kind === 'remove' ? (folderParentOf(cabinet, `cab-${folderEdit.folderId}`) || null) : undefined;
     setExpanded((e) => ({ ...e, cabinet: true, ...(parent ? { [parent]: true } : {}) }));
     setFolderEdit(null);
     setVaultEpoch((n) => n + 1);
     setView('library');
-    setActiveFolder(`cab-${folderId}`);
+    setActiveFolder(removedFrom === undefined ? `cab-${folderId}` : removedFrom ? `cab-${removedFrom}` : 'cabinet');
     leaveFind();
   };
   const headerParts = vaultHeaderParts(vault);
@@ -2834,6 +2836,19 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
                 Rename
               </button>
             ) : null}
+            {!searching && folder && canWrite && projectId && personFolderOf(folder.id) ? (
+              <>
+                <button type="button" className="sp-ask" data-testid="vault-move-folder"
+                  onClick={() => setFolderEdit({ kind: 'move', folderId: personFolderOf(folder.id)!, name: folder.label,
+                    parentId: folderParentOf(cabinet, folder.id) })}>
+                  Move
+                </button>
+                <button type="button" className="sp-ask" data-testid="vault-remove-folder"
+                  onClick={() => setFolderEdit({ kind: 'remove', folderId: personFolderOf(folder.id)!, name: folder.label })}>
+                  Remove
+                </button>
+              </>
+            ) : null}
             {searching && (
               <span className="vd-here">
                 {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
@@ -2880,7 +2895,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
           ) : null}
           {folderEdit && projectId ? (
             <VaultFolderEdit
-              key={folderEdit.kind === 'rename' ? folderEdit.folderId : `new-${folderEdit.parentId}`}
+              key={folderEdit.kind === 'create' ? `new-${folderEdit.parentId}` : `${folderEdit.kind}-${folderEdit.folderId}`}
               projectId={projectId}
               mode={folderEdit}
               folders={cabinetFolders}

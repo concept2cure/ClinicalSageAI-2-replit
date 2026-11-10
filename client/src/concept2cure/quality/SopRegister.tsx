@@ -42,12 +42,13 @@ import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } 
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
 import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
-import { qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
+import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
 import { approvalShare } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { todayUtc, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, REVIEW_WINDOW_DAYS, useRecordPeriodicReview } from './PeriodicReview';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { C2CToast, useToast } from '../v2/toast';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { fetchQmsControlledCopy, reviseQmsDocument } from './qmsDocuments';
@@ -149,19 +150,18 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const [routePanel, setRoutePanel] = React.useState<QmsDoc | null>(null);
   const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   const admin = ((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin');
-  /** The last register action's outcome, in the server's words when it refused. */
-  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The last register action's outcome, in the server's words when it refused: a toast (C3), not a line in the table. */
+  const [toast, fire] = useToast();
   /** The day an approval makes its version effective from (CAT2-19): today unless the approver chooses later. */
   const [effectiveFrom, setEffectiveFrom] = React.useState<string>(todayUtc());
   /** The controlled copy of the version in force (MR-12 Stage 8): issued, recorded and downloaded, or the server's reason. */
   const downloadControlledCopy = async (d: QmsDoc) => {
     try {
       const { blob, filename } = await fetchQmsControlledCopy(d.id);
-      setNotice(downloadBlob(filename, blob)
-        ? { tone: 'ok', text: `A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.` }
-        : { tone: 'err', text: 'The controlled copy was issued but this browser could not save it. Try again from another browser.' });
+      if (downloadBlob(filename, blob)) fire(`A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.`);
+      else fire('The controlled copy was issued but this browser could not save it. Try again from another browser.', 'error');
     } catch (e) {
-      setNotice({ tone: 'err', text: e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.' });
+      fire(e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.', 'error');
     }
   };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
@@ -181,14 +181,21 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     if(editingId!==null)return; // Keep the canonical workbench's unsaved-leave decision in control.
     // A training notice opens the reader, on the version approved for a later day when one waits (slice 4b).
     if(qmsIntent==='read'){target.clear();setReading({documentId:d.id,scope:readerScope,successor:true});return;}
+    // A reviewer's or approver's notice opens the review route, where their turn is taken; the editor cannot sign (C5).
+    if(d.status==='in_review'&&myTurn(qmsRouteView(d),meId)){target.clear();setRoutePanel(d);return;}
     if(d.authoringDocumentId){target.clear();setEditingId(d.id);}
     else if(d.status==='draft'){target.clear();setSetup({document:d});}
-  },[target.document,target.clear,editingId,qmsIntent,readerScope]);
+  },[target.document,target.clear,editingId,qmsIntent,readerScope,meId]);
   const targetStatus=<ControlledDocumentTargetStatus target={target} editing={editingId!==null} onRevise={d=>{target.clear();setSetup({document:d,revision:true});}} />;
   React.useEffect(() => { onEditorOpenChange?.(editingId !== null); }, [editingId, onEditorOpenChange]);
+  /* Open a controlled document where its text lives. A document with an editing copy opens in the one editor. A
+     legacy register entry has its text inline and no editing copy: a draft is set up (bound) first; past draft, its
+     controlled text is read where it lives, read-only, because the editor has nothing to open and answered "no
+     editing copy" with a Try again that could not help (C5, walked 2026-11-10). */
   const openDocument = (d: QmsDoc) => {
-    if (d.status === 'draft' && !d.authoringDocumentId) setSetup({ document: d });
-    else setEditingId(d.id);
+    if (d.authoringDocumentId) setEditingId(d.id);
+    else if (d.status === 'draft') setSetup({ document: d });
+    else openReader(d.id);
   };
   const openCreated = (id: number) => {
     setSetup(null);
@@ -213,7 +220,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     ask: onAsk,
   };
   const sent = (d: QmsDoc) => {
-    setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review on its route. The people named are told when it is their turn.` });
+    fire(`${d.docNumber} was sent for review on its route. The people named are told when it is their turn.`);
     setReviewing(null);
     reg.refresh?.();
   };
@@ -261,7 +268,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
 
   if (editingId !== null) return <>{targetStatus}<ControlledDocumentWorkbench documentId={editingId}
     onBack={() => { setEditingId(null); reg.refresh?.(); rev.refresh?.(); trainComp.refresh?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} /></>;
+    onNavigate={onNavigate ?? (() => undefined)} /></>;
 
   return (
     <>
@@ -295,55 +302,46 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           </div>
         </div>
 
-        <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
-            <div>Number</div>
-            <div>Title</div>
-            <div>Type</div>
-            <div>Version</div>
-            <div>Status</div>
-            <div>Effective</div>
-            <div>Next review</div>
-            <div />
+        {regFailed && (
+          <ErrorState
+            title="The controlled-document register could not be read"
+            message={reg.error}
+            retry={reg.refresh}
+            testId="sop-register-failed"
+          />
+        )}
+        {regUnread && !regFailed && <EmptyState title="Loading the register…" busy />}
+        {!regUnread && visible.length === 0 && (
+          <EmptyState title={filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'} />
+        )}
+        {visible.length > 0 && (
+          <div className="qms-table">
+            <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
+              <div>Number</div>
+              <div>Title</div>
+              <div>Type</div>
+              <div>Version</div>
+              <div>Status</div>
+              <div>Effective</div>
+              <div>Next review</div>
+              <div />
+            </div>
+            {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
           </div>
-          {notice && (
-            <div
-              className="qms-empty"
-              role={notice.tone === 'err' ? 'alert' : 'status'}
-              data-tone={notice.tone}
-            >
-              {notice.text}
-            </div>
-          )}
-          {regFailed && (
-            <ErrorState
-              title="The controlled-document register could not be read"
-              message={reg.error}
-              retry={reg.refresh}
-              testId="sop-register-failed"
-            />
-          )}
-          {regUnread && !regFailed && (
-            <div className="qms-empty" role="status">Loading the register…</div>
-          )}
-          {!regUnread && visible.length === 0 && (
-            <div className="qms-empty">
-              {filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'}
-            </div>
-          )}
-          {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
-        </div>
+        )}
       </section>
 
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
       <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error}
         retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
-        canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
+        canOpen={(id) => docs.some((x) => x.id === id)}
+        onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); }} onRecord={recordReview.start} />
 
       <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
         refresh={trainComp.refresh} figure={coverageFigure}
         canOpen={canOpen} onOpen={openReader} />
       <TrainingExpiry assigned={trainComp.summary ? trainComp.summary.assigned : null} />
+      <C2CToast msg={toast} />
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
       {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}

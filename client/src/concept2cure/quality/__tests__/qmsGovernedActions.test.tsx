@@ -33,6 +33,7 @@ function openMore(scope: HTMLElement = document.body) {
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(),
   refresh: vi.fn(),
+  summaryRefresh: vi.fn(),
   docs: [] as unknown[],
   reviewRows: [] as unknown[],
 }));
@@ -72,7 +73,7 @@ vi.mock('../hooks', () => ({
 }));
 vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
-  return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null }) };
+  return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null, refresh: H.summaryRefresh }) };
 });
 // a2f9264a5d: ChangeControl's ReviewedLearningPreparation keys its read to the session (authService), so keep the real module.
 vi.mock('@/services/portal/authService', async original => ({
@@ -207,7 +208,9 @@ describe('SOP register — governed actions reach their routes', () => {
   it('a periodic-review row opens the document instead of asking AnA to "schedule" it', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /periodic review/i }));
-    expect(screen.getByRole('dialog', { name: 'Controlled document' }).getAttribute('data-document-id')).toBe('6');
+    // C5: it opens the one editor, as every other way of opening a document does (it opened the training reader).
+    expect(screen.getByRole('region', { name: 'Controlled editing copy' }).getAttribute('data-document-id')).toBe('6');
+    expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
     expect(asked).toEqual([]);
   });
 
@@ -235,6 +238,8 @@ describe('Change control — governed actions reach their routes', () => {
       })),
     );
     expect(H.refresh).toHaveBeenCalled();
+    // C3, found walking it: the figure line re-reads with the log, so a raised change is counted, not just listed.
+    expect(H.summaryRefresh).toHaveBeenCalled();
     expect(asked).toEqual([]);
   });
 

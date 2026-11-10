@@ -23,6 +23,7 @@ vi.mock('../data-room-capture-audit', () => ({ captureActor: () => null, recordC
 
 import { searchDataRoom } from '../data-room-search';
 import { getCurrentReadableSourceScope } from '../source-read-access';
+import { listClientDocuments } from '../evidence-spine.service';
 
 const ORG = 71, OTHER_ORG = 72, USER = 1;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -138,5 +139,34 @@ describe('native catalogue omission stays private', () => {
   it('failed native verification still refuses the catalogue instead of creating an empty success', async () => {
     afterProjection = async () => { failRead = true; };
     await expect(catalogue()).rejects.toMatchObject({ status: 503 });
+  });
+});
+
+// 2026-11-10, the Codespace click-through: approving one project's controlled document left its captured Quality
+// source stale, and every project's Vault answered 500. The Vault's list checked every source in the organization.
+describe('a changed Quality record in one project', () => {
+  // A second project in the same organization, owned by the same person (the fixture's two are in two organizations).
+  const SIBLING = '44444444-4444-4444-8444-444444444444';
+  beforeAll(async () => {
+    await pg.query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_type,primary_agency,product_name)
+      VALUES($1,$2,'Sibling programme','SOURCE-SIBLING','IND','drug','FDA','QA fixture')`, [SIBLING, ORG]);
+    await pg.query(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
+      VALUES(171,$1,$1,'Sibling project','regulatory','active',1,1,$2,'{}')`, [ORG, SIBLING]);
+    await pg.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,171,'private')", [ORG]);
+  });
+  async function staleInOtherProgram() {
+    await searchDataRoom(ORG, { programId: SIBLING, limit: 200, offset: 0 }, { userId: USER });
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+  }
+
+  it('does not refuse another project\'s list of its sources', async () => {
+    await staleInOtherProgram();
+    await expect(listClientDocuments(q, ORG, { userId: USER, programId: PROGRAM, currentOnly: true })).resolves.toEqual([]);
+  });
+
+  it('still refuses a list of its own project, so a stale record never reads as current', async () => {
+    await staleInOtherProgram();
+    await expect(listClientDocuments(q, ORG, { userId: USER, programId: SIBLING, currentOnly: true }))
+      .rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
   });
 });

@@ -53,7 +53,8 @@ import {
   type ChangeControl as ChangeControlRow,
 } from './changeData';
 import { useChangeSummary } from './changeHooks';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { C2CToast, useToast } from '../v2/toast';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import { postQmsApproval, verifyLearningReviewHash, type LearningReviewView } from './qmsApproval';
@@ -163,7 +164,8 @@ function ChangeControlSession({
   /** The server's refusal of the open drawer's write, shown in the drawer. */
   const [refusal, setRefusal] = React.useState<string | null>(null);
   /** The last write's outcome, shown above the log. */
-  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /* A write's outcome is a toast (C3), not a line inside the log's table. */
+  const [toast, fire] = useToast();
   /** The real bound editing copy created from the gallery. */
   const [editingId, setEditingId] = React.useState<number | null>(null);
   React.useEffect(() => {
@@ -184,8 +186,8 @@ function ChangeControlSession({
     try {
       const text = await write();
       setDrawer(null);
-      setNotice({ tone: 'ok', text });
-      onRetry?.();
+      fire(text);
+      onRetry?.(); sum.refresh?.();
       after?.();
     } catch (err) {
       setRefusal(`Not recorded — ${errText(err)}`);
@@ -210,8 +212,8 @@ function ChangeControlSession({
   const unread = failed || (changes.length === 0 && loading);
 
   if (editingId !== null) return <ControlledDocumentWorkbench documentId={editingId}
-    onBack={() => { setEditingId(null); onRetry?.(); }}
-    onNavigate={onNavigate ?? (() => undefined)} onAsk={onAsk} />;
+    onBack={() => { setEditingId(null); onRetry?.(); sum.refresh?.(); }}
+    onNavigate={onNavigate ?? (() => undefined)} />;
 
   return (
     <>
@@ -225,19 +227,19 @@ function ChangeControlSession({
       <section className="pj-sec qms-sec" aria-labelledby="qcc-log-h">
         <div className="pj-sec-h">
           <h2 id="qcc-log-h">Change control log</h2>
-          <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
-            {summary === null ? 'Change-log totals appear once the change register loads.'
-              /* An empty log is said as empty: "none overdue" of nothing is only vacuously true (finding 112). */
-              : summary.total === 0 ? 'No changes in the log yet.' : <>
+          {/* An empty log is said once, by its empty state below: "none overdue" of nothing is only vacuously true
+              (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
+          {!(summary && summary.total === 0) && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
+            {summary === null ? 'Change-log totals appear once the change register loads.' : <>
               {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
               {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
               {summary.overdueImplementation ? <span data-tone="err">{summary.overdueImplementation} overdue</span> : 'none overdue'}.
             </>}
-          </span>
+          </span>}
           <div className="pj-sec-acts">
             {/* a2f9264a5: a curator prepares reviewed learning from the open project (moved here from the retired head). */}
             <ReviewedLearningPreparation key={openProgram ?? 'no-project'} programId={openProgram}
-              onCreated={id => { setEditingId(id); onRetry?.(); }} />
+              onCreated={id => { setEditingId(id); onRetry?.(); sum.refresh?.(); }} />
             <button type="button" className="btn primary small" onClick={() => openDrawer({ kind: 'raise' })}>
               Raise change request
             </button>
@@ -247,7 +249,19 @@ function ChangeControlSession({
             shows no zeroes, and an empty one has nothing to filter. */}
         {!unread && changes.length > 0 && <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} />}
 
-        <div className="qms-table">
+        {failed && (
+          <ErrorState
+            title="The change log could not be read"
+            message={error}
+            retry={onRetry}
+            testId="change-log-failed"
+          />
+        )}
+        {unread && !failed && <EmptyState title="Loading the change log…" busy />}
+        {!unread && visible.length === 0 && (
+          <EmptyState title={changes.length === 0 ? 'No changes in the log yet.' : 'No changes at this stage.'} />
+        )}
+        {visible.length > 0 && <div className="qms-table">
           <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
@@ -258,23 +272,6 @@ function ChangeControlSession({
             <div>Links</div>
             <div />
           </div>
-          {notice && (
-            <div className="qms-empty" role={notice.tone === 'err' ? 'alert' : 'status'} data-tone={notice.tone}>
-              {notice.text}
-            </div>
-          )}
-          {failed && (
-            <ErrorState
-              title="The change log could not be read"
-              message={error}
-              retry={onRetry}
-              testId="change-log-failed"
-            />
-          )}
-          {unread && !failed && (
-            <div className="qms-empty" role="status">Loading the change log…</div>
-          )}
-          {!unread && visible.length === 0 && <div className="qms-empty">No changes at this stage.</div>}
           {visible.map((c) => {
             const overdue = isImplementationOverdue(c);
             const open = openId === c.id;
@@ -360,10 +357,7 @@ function ChangeControlSession({
                       </button>
                     </div>
                     {linkCount === 0 ? (
-                      <div className="qcc-detail-empty">
-                        No linked records yet. Link the deviation, CAPA or validation protocol this change
-                        touches so the change control log stays traceable end to end.
-                      </div>
+                      <EmptyState title="No linked records yet." hint="Link the deviation, CAPA or validation protocol this change touches so the change control log stays traceable end to end." />
                     ) : (
                       <div className="qcc-links">
                         {c.links!.map((l) => (
@@ -390,7 +384,7 @@ function ChangeControlSession({
               </React.Fragment>
             );
           })}
-        </div>
+        </div>}
         {/* How a change is raised: the procedure's five steps, closed by default (D5 §WA.4.2 rule 8). Until
             2026-11-10 a boxed guidance panel beside the forms, with an orange "Explain the procedure" and a
             "Find the controlled procedure"; the explanation is the tab's third starter, and the SOP register,
@@ -433,6 +427,7 @@ function ChangeControlSession({
           ))}
         </div>
       </section>
+      <C2CToast msg={toast} />
       {drawer?.kind === 'raise' && (
         <C2CForm
           config={{
@@ -528,7 +523,7 @@ function ChangeControlSession({
           onNavigate={onNavigate}
           onCreated={(id) => {
             setDrawer(null);
-            onRetry?.();
+            onRetry?.(); sum.refresh?.();
             setEditingId(id);
           }}
         />
@@ -551,7 +546,7 @@ function ChangeControlSession({
             const review = learningReview && !('unavailable' in learningReview)
               ? { expectedArtifactSha256: learningReview.artifactSha256, invariantAccepted: true as const } : undefined;
             const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review);
-            onRetry?.();
+            onRetry?.(); sum.refresh?.();
             return manifest;
           }}
         />
