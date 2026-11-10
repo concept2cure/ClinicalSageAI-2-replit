@@ -1,6 +1,7 @@
 /**
  * Hops 7–8 of the founder-path lineage walk (place into a sequence, transmit to
- * the agency) and the two walks over recorded keys. Support for
+ * the agency), the two walks over recorded keys and the retention hop. Hop 6b
+ * moved to founder-path-lineage.hops-authoring.ts, beside hop 6 (2026-11-10). Support for
  * tests/lineage/founder-path-lineage.pglite.test.ts — not a test file; the
  * header there names every route and service line these hops drive.
  */
@@ -19,53 +20,6 @@ import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch
 import { coverCurrentLeaves } from '../../server/services/shadow-review/__tests__/review-covers-current-leaves';
 
 type Row = Record<string, unknown>;
-
-/**
- * 6b · The Vault copy is reviewed and approved (VR-13, VR-14; FD5 (c)).
- *
- * Since 2026-10-01 only an approved, current Vault version is transmitted
- * (leaf-source-resolver.ts, vaultVersionNotTransmittable). Under FD5 (c) an
- * Authoring approval carries to the Vault copy only after an independent
- * Authoring review (authoring-approval-carryover.ts). This document was
- * frozen by its author and approved, never reviewed, so hop 6 records that it
- * did not carry, and the export is approved in the Vault: its filer starts
- * the record and sends it for review on a named route (RR1b), the named
- * reviewer signs, the named approver approves by signing on the route.
- * POST /api/regulatory/documents (document-lifecycle.ts) and /:id/advance, /:id/sign.
- */
-export async function hopVaultApproval(w: World): Promise<void> {
-  const { k, q } = w;
-  const hop = new Hop('vault-approval');
-  const as = (user: number) => asPrincipal(ORG_A, user);
-  const lifecycle = (user: number, p: string, body: object) =>
-    as(user)(request(w.app).post(`/api/regulatory/documents${p}`)).send(body);
-  const signed = { password: PASSWORD, mfaToken: '000000' };
-
-  const start = await lifecycle(3, '', { sources: { vault_documents: { nativeId: k.vaultDocumentId, role: 'artifact' } } });
-  expect(start.status, JSON.stringify(start.body)).toBe(201);
-  const canonicalId = String(start.body.canonicalId);
-  // Since RR1b a Vault version is sent on a named route (REVIEW_ROUTE_REQUIRED):
-  // user 5 reviews, user 4 approves by signing on the route.
-  const due = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
-  const route = { reviewers: [5], approvers: [4], order: 'parallel', reviewDueDate: due(3), approvalDueDate: due(5) };
-  const toReview = await lifecycle(3, `/${canonicalId}/advance`, { to: 'in_review', route, reason: 'Send the sealed export for review' });
-  expect(toReview.status, JSON.stringify(toReview.body)).toBe(200);
-  const reviewed = await lifecycle(5, `/${canonicalId}/sign`, { meaning: 'reviewed', ...signed, reason: 'Reviewed against the sealed document' });
-  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
-  const approved = await lifecycle(4, `/${canonicalId}/sign`, { meaning: 'approved', ...signed, reason: 'Approved for the C2C-101 IND original sequence' });
-  expect(approved.status, JSON.stringify(approved.body)).toBe(200);
-
-  await hop.check('vault-copy-approved-for-its-bytes', 'the Vault copy\'s lifecycle record is approved, for the bytes the Vault holds', async (observe) => {
-    const [row] = await q<{ stage: string; content_hash: string; vault_hash: string }>(
-      `SELECT c.stage, c.content_hash, d.content_hash AS vault_hash
-         FROM canonical_documents c JOIN vault.documents d ON d.id::text = c.source_refs -> 'vault_documents' ->> 'nativeId'
-        WHERE c.canonical_id = $1`, [canonicalId]);
-    observe(row?.stage);
-    expect(row).toMatchObject({ stage: 'approved' });
-    expect(row.content_hash).toBe(row.vault_hash);
-  });
-  hop.verdict();
-}
 
 /**
  * 7 · takeAuthoringSnapshot — the service behind POST /api/coauthor/documents
@@ -413,6 +367,21 @@ export async function walkBack(w: World): Promise<void> {
     }
     observe(checksums.length);
     expect(checksums).toContain(SHA256_X);
+  });
+  /* The person's path (hop 4): the source is reached by the citation the editor registered, which records the
+     source's checksum as it stood when cited, and the sealed text carries that citation. */
+  await hop.check('document-to-source-by-citation', 'the sealed document’s registered citation reaches cre_evidence_sources.checksum = sha256(X), at the checksum it was cited under', async (observe) => {
+    const rows = await q<{ source_id: string; cited: string; checksum: string }>(
+      `SELECT c.reference_id AS source_id, c.payload_sha256 AS cited, src.checksum
+         FROM authoring_sections s
+         JOIN authoring_citations c ON c.section_id = s.id AND c.tenant_id = s.tenant_id AND c.source = 'cre_evidence_source'
+         JOIN cre_evidence_sources src ON src.id::text = c.reference_id AND src.organization_id = s.tenant_id
+        WHERE s.doc_id = $1`, [trail.docId]);
+    const [seal] = await q<{ frozen_content: string }>(`SELECT frozen_content FROM frozen_documents WHERE document_id = $1 AND version = 'approved'`, [trail.docId]);
+    const sealed = (JSON.parse(seal.frozen_content).sections as Array<{ content: string }>).map((s) => s.content).join('');
+    observe(rows.length);
+    expect(rows.map((r) => ({ cited: r.cited, checksum: r.checksum }))).toEqual([{ cited: SHA256_X, checksum: SHA256_X }]);
+    expect(sealed).toContain(`data-cite="${rows[0].source_id}"`);
   });
   hop.verdict();
 }
