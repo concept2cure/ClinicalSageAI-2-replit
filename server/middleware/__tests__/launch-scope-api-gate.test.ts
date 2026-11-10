@@ -508,7 +508,12 @@ describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
     expect(prefixes.length).toBeGreaterThan(0);
     // A mount root admits every handler mounted under it, called or not.
     expect(prefixes.filter((p) => p === '/api/cmc' || p === '/api/cmc/module3-os')).toEqual([]);
-    const uncalled = prefixes.filter((pre) => !cmcCalls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    /* Every path a CMC screen names, not only those under /api/cmc: since P-122
+       the CMC surface also claims '/api/cmc-changes' (the deferred variation
+       assessment records through it), which /api/cmc/* filtering never sees, so
+       it read as uncalled while CmcVariationAssessment.tsx called it. */
+    const calledByCmc = [...walk.all].filter(([, e]) => e.surfaces.has('cmc'));
+    const uncalled = prefixes.filter((pre) => !calledByCmc.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
     expect(uncalled, `cmc apiPrefixes no CMC screen calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 });

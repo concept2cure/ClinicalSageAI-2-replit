@@ -620,6 +620,13 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/cmc/control-strategy',
       // Deferred UI caller; the route itself refuses when launch scope is on.
       '/api/cmc/variations/classify',
+      /* 2026-11-10 (P-122, Plan: R1): the same deferred assessment records the
+         change it classified (POST, CmcVariationAssessment.tsx). Claimed exactly;
+         its two handlers are org-scoped (403 without an organization), the write
+         is editor-only and refuses a project not the organization's (404), and
+         both refuse themselves 409 while launch scope is on, because they carry
+         post-approval categories P-28 withholds (cmc-changes.routes.ts). */
+      '/api/cmc-changes',
       '/api/cmc/specifications',
       '/api/cmc/batch-records',
       '/api/cmc/module3-board',
