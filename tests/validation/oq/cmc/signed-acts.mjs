@@ -14,9 +14,12 @@
  * docs/validation/URS-007-CMC-MODULE-3.md.
  */
 import { signerCode } from '../../lib/credentials.mjs';
+import { freshTotp } from '../../lib/totp.mjs';
 
 /** The §11.70 digest the app binds a section approval to. */
-export const SECTION_BINDING_BASIS = 'cmc-module3-section-version';
+/* BINDING_BASIS.CMC_MODULE3_SECTION_VERSION (server/services/part11/signature-persistence.ts), as written since
+   2026-08-14. Until OQ-008 v0.11 this read 'cmc-module3-section-version', which no row carries. */
+export const SECTION_BINDING_BASIS = 'cmc-module3-section-version-sha256';
 const HEX64 = /^[0-9a-f]{64}$/;
 
 /**
@@ -80,6 +83,19 @@ export async function reauthOf(signer) {
   return { password: signer.password, ...(code ? { totp: code } : {}) };
 }
 
+/**
+ * The run identity's re-authentication for a signature it makes itself (a register qualification or close-out, and
+ * the self-approval OQ-CMC-33 must see refused): its password and, when it has an authenticator enrolled, a fresh
+ * code, never one already presented. Until v0.11 these steps sent the password alone, and a run identity with an
+ * authenticator was answered 401 REAUTH_TOTP_REQUIRED before the control under test (OQ-CMC-33, -35, -40).
+ */
+export async function runReauth() {
+  const password = process.env.OQ_RUN_PASSWORD || process.env.VALIDATION_USER_PASSWORD || '';
+  const secret = process.env.VALIDATION_USER_TOTP_SECRET || '';
+  const code = secret ? await freshTotp(process.env.VALIDATION_USER_EMAIL || '', secret) : undefined;
+  return { password, ...(code ? { totp: code } : {}) };
+}
+
 /** A governed POST as the signer, recorded on the step like every other call. */
 export async function postAsSigner(ctx, signer, path, body) {
   const api = ctx.apiAs(signer.session);
@@ -110,11 +126,17 @@ export async function signatureRowsFor(api, target) {
   return { status: r.status, rows: Array.isArray(rows) ? rows : [] };
 }
 
-/** The signature row a Module 3 section approval writes. */
+/**
+ * The signature row a Module 3 section approval writes, as GET /api/part11/signatures/by-target returns it: the signer,
+ * the approval meaning, the section-version binding basis, a sha256 signature hash, valid. That read does not return
+ * the bound digest (bound_payload_digest); OQ-CMC-14 reads it, and recomputes it, as the runtime role. Until v0.11 this
+ * predicate also required the bound digest from the read, so no row could ever match.
+ */
 export const isSectionSignatureRow = (row, signerId) =>
   String(row.signer_id ?? row.signerId) === String(signerId) &&
   row.binding_basis === SECTION_BINDING_BASIS &&
-  HEX64.test(String(row.bound_payload_digest ?? row.boundPayloadDigest)) &&
+  String(row.signature_meaning ?? row.signatureMeaning).toLowerCase() === 'approval' &&
+  HEX64.test(String(row.signature_hash ?? row.signatureHash)) &&
   (row.is_valid ?? row.isValid) !== false;
 
 /**
