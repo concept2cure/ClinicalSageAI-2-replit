@@ -49,3 +49,33 @@ Run on the Codespace-shaped local database, signed in through `/api/auth/dev-log
 
 - Device coverage converged onto the eSTAR mapper (the D4/D6 disagreement, red first).
 - Renditions for formats other than Word.
+
+## Device coverage onto the eSTAR mapper: what the convergence needs (not built; design only)
+
+P-107: "Device coverage follows the eSTAR mapper's per-device slots … The rule pack's mandatory flags converge onto
+the mapper, so one rule remains. The D4 and D6 disagreement is a defect, repaired red first."
+
+The disagreement, read from the code on 2026-11-10:
+
+| eSTAR section | Rule pack `k510` × `fda`, `fda-estar-510k-v1.1` (`migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`) | Mapper (`server/services/pathway-engines/estar/estar-mapper.ts`) |
+|---|---|---|
+| D4 Sterilization | `mandatory: false` | slot `sterilization`, `whenFlag('sterile')`: required for a sterile device, not applicable for a non-sterile one, **not known** when nobody has said |
+| D6 Benefits, risks and mitigation (ISO 14971) | `mandatory: false` | slot `risk-management`, `always(...)`: required for every device |
+
+So the Vault's Library shows a 510(k)'s risk management section as "Optional", and never says a sterile device owes
+its sterilization section (`leafDoc` in `server/routes/c2c/project-vault.ts` reads the pack's `mandatory`).
+
+What the repair is, in order, red first:
+
+1. **D6:** mint `fda-estar-510k-v1.2` (and the De Novo pack's matching section, after checking its own keys) with
+   D6 `mandatory: true`, superseding v1.1, in a migration in `C2C_MIGRATION_FILES` with a row-count assertion (RULE 1:
+   a seeded pack is corrected only by a new version row). Documents bound to v1.1 keep their version.
+2. **D4:** a boolean cannot say "required when sterile". The Vault's leaf for D4 reads the project's device flags
+   (`loadProgramDeviceFlags`, `program-device-flags.ts`) through the mapper's own `slotApplicability`, and says
+   Required, Not applicable, or "Not known: nobody has said whether the device is sterile". Never "Optional".
+3. **One rule:** a test that fails if any pack section the mapper has a slot for carries a flag the mapper
+   contradicts, so the two cannot drift again.
+
+Why it was not built in this pass: step 1 changes regulatory reference data that is filed against, and needs the
+De Novo tree checked section by section; it deserves its own slice with the MDX journey lane (which owns the mapper)
+reading it.
