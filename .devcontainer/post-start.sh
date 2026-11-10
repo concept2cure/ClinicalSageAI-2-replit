@@ -179,7 +179,9 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 # made earlier gets new demo data on its next start. The approver is the second
 # signer (OQ_SIGNER_*): without one, every two-person step (QMS approvals,
 # method validation, the RACT's approval, review requests) was recorded as not
-# executed. The QMS packs route a draft to review with the signer as its
+# executed. The reviewer is the third person (OQ_APPROVER_*): the Vault's review
+# route refuses one person in two roles, so without a third the Lumen packs'
+# Vault reviews and approvals (25 steps) were recorded as not executed here. The QMS packs route a draft to review with the signer as its
 # approver (158323d776), and in an organisation that has designated no QMS
 # approver only the Approver role approves; every demo person is an
 # administrator. So the approver is first designated as the organisation's QMS
@@ -223,14 +225,16 @@ if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
   c2c_designate_qms_approver "$(c2c_lumen_person lead)" "$(c2c_lumen_person reviewer)"
   c2c_seed_lumen_org "$C2C_DEMO_VERSION"
 fi
-# After the Lumen account, before the long development-organisation seed: Reporting's PDF exports need their fonts
-# (post-create.sh). An existing Codespace never re-runs post-create, so the check is here too. Never fatal.
-c2c_install_report_fonts
+# After the Lumen account, before the long development-organisation seed: what the document exports need (report
+# PDF fonts, the Word-to-PDF converter, xmllint; post-create.sh). An existing Codespace never re-runs post-create, so
+# the check is here too. Never fatal.
+c2c_install_export_tools
 c2c_designate_qms_approver "$DEMO_SEED_EMAIL" "$DEMO_APPROVER_EMAIL"
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
   if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
       OQ_SIGNER_EMAIL="$DEMO_APPROVER_EMAIL" OQ_SIGNER_PASSWORD="$DEMO_SIGNER_PASSWORD" \
+      OQ_APPROVER_EMAIL="$DEMO_REVIEWER_EMAIL" OQ_APPROVER_PASSWORD="$DEMO_SIGNER_PASSWORD" \
       npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
     echo "$C2C_DEMO_VERSION" >"$C2C_CODESPACE_STATE/demo-seed.done"

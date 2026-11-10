@@ -55,7 +55,7 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 
 | # | Where | What is on screen | Say or do |
 |---|---|---|---|
-| 1 | Home, then **LMN-201** | "Good morning"; four Lumen projects. The project: its objective from the public trial listing, AnA's box, the six steps (Plan, Evidence, Author, Review, Submit, Respond), and on the right About, Filing ("Dispatch blocked · 3 blockers"), Team (three people with their open work), Work areas | One project, one goal. Everything else hangs off it |
+| 1 | Home, then **LMN-201** | "Good morning"; four Lumen projects. The project: its objective from the public trial listing, AnA's box, the six steps (Plan, Evidence, Author, Review, Submit, Respond), and on the right About (IND number 194021, fictional), Filing ("Dispatch blocked · 3 blockers"), Team (three people with their open work), Work areas | One project, one goal. Everything else hangs off it |
 | 2 | **Plan**, then **Tasks** | What an initial IND needs, with target Mar 10, 2027; tasks by due date. Tasks: "5 tasks stand between you and Database lock readiness checklist, and 2 tasks are overdue" | Work comes from the plan, quality records and agency letters, in one board |
 | 3 | **Evidence**, then **Vault** | Data room: 45 sources. Vault: 16 uploads, "Required sections: 5 of 36 have a confirmed document", 3 governed artifacts, 1 seal "by Lumen Approver · 16 documents · SHA-256 …" with **Verify** | Give Evidence a few seconds to load. Open Required documents, then Seals & fixity and press Verify: "Intact: every sealed document is recorded with its sealed hash, and each stored file was read again and matches" |
 | 4 | Author, **Write the protocol in the protocol workspace** | Protocol LMN-201-CDI-02 (synthetic): 10 sections, 5 objectives, 10 eligibility criteria, 8 assessments by 7 visits, 6 risks, amendment 2, 2 deviations with a CAPA. Statistics: "375 planned subjects · 80% power · 0.05 alpha". Compliance: 28 rules assessed, 5 unmet, 17 not assessed | Show Schedule of assessments, Statistics, then Compliance: three counts, never one score |
@@ -64,7 +64,7 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 | 7 | **Quality** | 3 controlled documents, 2 in force, each "Approved by Lumen Reviewer · Meaning: Approval"; 1 change in implementation; 3 open CAPAs; 3 open deviations; 5 suppliers; 4 audits; 2 management reviews | Open SOP-201; show "Read and acknowledge" |
 | 8 | **Author**, open **LMN-201 RePreve Part B Clinical Study Report — SYNTHETIC**, then "Build from the study's data" | Study data frozen: "DEMO-LMN201-PARTB-001 … SYNTHETIC, NOT CLINICAL EVIDENCE". **Build CSR draft** is ready; no build has run | The headline. Press Build CSR draft (needs the model key). The page shows the heading being written and its prose, "N of 69 headings written". Do not promise a filed CSR: see below |
 | 9 | Sign in as **Lumen Reviewer**, LMN-201, **Review** | "Waiting on you 1": 1.14.4.1 Investigator's Brochure, "Awaiting your review" | Open the document and review it. Then sign in as Lumen Approver for approval and signature |
-| 10 | **Submit**, then **Submission Center** | Sequence 0000, Assembling, 5 leaves. Builder lists them. Validation: 7 errors, each naming the missing section. Dispatch: "Not yet. Three things stand between sequence 0000 and dispatch" | The platform refuses to dispatch an incomplete sequence and says exactly why |
+| 10 | **Submit**, then **Submission Center** | Sequence 0000, Assembling, 5 leaves. Builder lists them. Validation: 7 errors, each naming the missing section. Dispatch: "Not yet. Three things stand between sequence 0000 and dispatch" | The platform refuses to dispatch an incomplete sequence and says exactly why. "Compile and download" builds the package as it stands (index.xml, the US regional file, a Study Tagging File per study) and lists the required sections that have no document |
 | 11 | **Respond**, or **Communication** | "1 agency communication needs a response": an FDA information request (fictional demo), IND 194021, three questions. Also a fictional approval letter with its commitments | "Draft response with AnA" (needs the model key). Every letter says it is fictional and not issued by FDA |
 | 12 | **Reporting & analytics** | "LMN-201 scores 0% on submission readiness, with 23 critical gaps". Run history: 4 computed reports. Schedules: 2. Bundles: "LMN-201 monthly governance pack", 4 reports | Open a run; export its PDF, or the bundle's. Numbers are computed, not estimated |
 | 13 | Sign in as **Cal CMC**, project **C2C-201**, **CMC / Module 3** | "21 sections in CTD §3.2 · 0 of 21 approved · 18 ready to compile"; each section with its completeness and what is missing | Module 3 build, then Overview. The script is stop 6b of `docs/demo/biotech-walkthrough.md` |
@@ -78,6 +78,8 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
   filed CSR (from the CSR-path session, `01QoxbLZ…`, which is walking the build in the Lumen account).
 - **Module 3 is not composed for LMN-201, or for any Lumen project.** Each is a biologic, and Module 3 is composed
   here only for a small-molecule US IND (decision P-28). The screen says so. Show Module 3 on C2C-201 (scene 13).
+- **Compile says the backbone's DTD check is unverified.** The ICH and FDA DTD files are not in the package, so
+  the check cannot complete. With `xmllint` installed the screen no longer also says "xmllint not available".
 - **Validation shows 7 errors on sequence 0000.** That is the state of an IND whose Module 1 forms and Module 3 are
   not placed yet, and it is the point of scene 10.
 - **Risk-based monitoring's Site risk and Site oversight read "0 sites".** The site register those two tabs read has
@@ -88,6 +90,61 @@ Scenes 1 to 12 are one project, LMN-201, in the Lumen account. Each scene names 
 - **Of LMN-201's three governed artifacts, one is approved, one is in review and one is a draft.** A placed
   artifact needs two independent reviewers (decision P-95), and the Lumen account has one besides its author and
   approver, so the placed one stays in review.
+- **The data room lists quality training records first** ("Training assignment: 4 …"). Use its search, or open the
+  Vault for the documents.
+- **A Codespace that pulled and restarted on 2026-11-10 between 06:45 and 07:15 UTC** has a second protocol on
+  LMN-201 titled "SET ASIDE, do not use". It carried another demo study's eligibility criteria because of a seed
+  defect, now fixed (`34ecd2981`), and the product cannot remove it. The workspace opens the correct protocol first.
+  A Codespace that did not restart in that half hour has one protocol.
+
+## With and without a model key
+
+| | With `ANTHROPIC_API_KEY` | Without |
+|---|---|---|
+| AnA's box, suggestion buttons, "Draft with AnA" | Not exercised on this stack | "No AI provider is configured for this deployment, so AnA cannot answer" (read on the 2026-11-09 tour) |
+| Scene 8, Build CSR draft | Not exercised on this stack. The CSR-path session is walking it in the Lumen account | Not pressed on this stack; the earlier walks stopped at "no model key" |
+| Shadow review (Submission Center) | Not exercised on this stack | A failed run is listed, with "no AI provider is configured" |
+| Everything else in the 14 scenes | Same | Works: it is recorded data and deterministic engines |
+
+**Not verified here, and worth five minutes before the room:** scene 8 with the real key, in the Codespace. If a
+build stops part-way, "Resume build N" continues it. Whether the synthetic LMN-201 study data carries every table
+the builder binds figures to is an open question the CSR-path session is answering by running the build.
+
+## How this was checked
+
+- **Three sweeps of the Lumen account** (lead, reviewer, approver): home, the project's six steps, every rail
+  destination and every tab, and the protocol workspace. 70 stops as the lead and 76 as each of the others. No page
+  error. The only failed requests were the two Module 3 refusals for a biologic.
+- **A content read** of each stop as the lead, of the reviewer's and approver's home, Review step, Tasks and
+  Quality, of C2C-101 and C2C-201 as the development organisation's people, and of NeuroPanel-Dx.
+- **The seed from zero, as a fresh Codespace runs it:** a new database, provisioned, the three Lumen people created
+  by `seed-admin.mjs`, the reviewer designated QMS approver by the Codespace's own function, then `--pack lumen` at
+  trunk `52d1c629c`. Run 1: exit 0, "created 419, found 2", about seven minutes. Run 2: "created 0, found 328". On
+  that database: one protocol with its own 10 criteria, Compile "completed", a document's PDF and Word working
+  copies and the bundle PDF all delivered.
+- **The exports with the production image's tools hidden** (a PATH without LibreOffice, `xmllint`, poppler and
+  pandoc), which is how the PDF refusal and "xmllint not available" were found.
+
+### Found and fixed during this pass (commits on `concept2cure-v2`)
+
+| Found | Fix |
+|---|---|
+| The protocol workspace was empty for LMN-201 | `lumen-protocol.mjs`, through the biotech pack's `ensureProtocol` (`7d9112e60`) |
+| Submission Center's Builder said "No leaves in sequence 0000 yet" | The approved Vault documents are placed as 5 leaves (`7d9112e60`) |
+| The Team card listed the lead alone: "16 open items assigned to someone not on this list" | Each Lumen project is shared with the reviewer and the approver (`80f5b7c41`) |
+| Reporting's Schedules and Bundles were empty | A bundle of the four runs and two in-platform schedules (`80f5b7c41`) |
+| Every report and bundle PDF export answered 503, "Reporting PDF fonts are unavailable on this deployment" | The Codespace installs the Noto fonts the PDF writer embeds, on every start (`4a473cffe`). After it, both exports answer with a PDF |
+| A document's "Download, PDF" answered 503, "The formatted PDF could not be completed", and Compile said "xmllint not available" (found by running the app with the production image's tools hidden, as a Codespace is) | The Codespace also installs LibreOffice and `xmllint` (`01a5f04db`) |
+| "Compile and download" on LMN-201 failed on the demo data: no IND number, sponsor, D-U-N-S or FDA contact, and three study files in no Study Tagging File | The fictional applicant identity and the study tagging are seeded through Submission Center's own routes (`52d1c629c`). Compile now completes |
+| **The Lumen protocol's Eligibility tab listed the psoriasis study's criteria** | A defect in `7d9112e60`, found by reading the screen. Fixed, with a repair for a copy already seeded (`34ecd2981`) |
+
+### Open, for whoever continues
+
+- **The Codespace's document tools are installed by its start script, and that install has not run in a real
+  Codespace yet.** Fonts, LibreOffice and `xmllint` (`4a473cffe`, `01a5f04db`): the first start after the pull is
+  slower by a download of some hundreds of megabytes, after the Lumen account is seeded. Before the room, press
+  "Download, PDF" on a document and export a report PDF once. Not installed, on purpose: Ghostscript, veraPDF and
+  `ocrmypdf` (PDF/A is not required in development). Not checked: python-docx and lxml, which AnA's Word tools use.
 - **The data room lists quality training records first** ("Training assignment: 4 …"). Use its search, or open the
   Vault for the documents.
 - **A Codespace that pulled and restarted on 2026-11-10 between 06:45 and 07:15 UTC** has a second protocol on
@@ -126,6 +183,8 @@ the builder binds figures to is an open question the CSR-path session is answeri
 | The Team card listed the lead alone: "16 open items assigned to someone not on this list" | Each Lumen project is shared with the reviewer and the approver (`80f5b7c41`) |
 | Reporting's Schedules and Bundles were empty | A bundle of the four runs and two in-platform schedules (`80f5b7c41`) |
 | Every report and bundle PDF export answered 503, "Reporting PDF fonts are unavailable on this deployment" | The Codespace installs the Noto fonts the PDF writer embeds, on every start (`4a473cffe`). After it, both exports answer with a PDF |
+| A document's "Download, PDF" answered 503, "The formatted PDF could not be completed", and Compile said "xmllint not available" (found by running the app with the production image's tools hidden, as a Codespace is) | The Codespace also installs LibreOffice and `xmllint` (`01a5f04db`) |
+| "Compile and download" on LMN-201 failed on the demo data: no IND number, sponsor, D-U-N-S or FDA contact, and three study files in no Study Tagging File | The fictional applicant identity and the study tagging are seeded through Submission Center's own routes (`52d1c629c`). Compile now completes |
 | **The Lumen protocol's Eligibility tab listed the psoriasis study's criteria** | A defect in `7d9112e60`, found by reading the screen. Fixed, with a repair for a copy already seeded (`34ecd2981`) |
 
 ### Open, for whoever continues

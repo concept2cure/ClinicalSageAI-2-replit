@@ -31,8 +31,15 @@ import {
   recordOtherSupportCreated, recordOtherSupportEntryUpserted, recordOtherSupportCertified,
 } from '../services/other-support-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create an Other Support document and change its entries (same repair as
+   biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

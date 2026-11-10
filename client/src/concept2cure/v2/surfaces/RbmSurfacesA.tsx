@@ -20,7 +20,7 @@ import { I } from '../icons';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
 import { frameworkLabel } from './rbmBoard';
 import {
-  RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
+  RbmChip, RbmScore, RbmWhen, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import { ErrorState } from '../dataConnect';
@@ -524,7 +524,7 @@ export function RbmKris({ board, onReload }: SubProps) {
             <div className="rbm-kri-v" data-st={k.status}>{k.current ?? '—'}<em>{k.unit}</em></div>
             {tableFor[k.id] ? <TrendTable kri={k} /> : <Sparkline values={k.spark} amber={k.amber} red={k.red} />}
           </div>
-          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} — red {k.red ?? '—'}{k.unit} — {k.at ? `evaluated ${k.at}` : 'never evaluated'}</div>
+          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} — red {k.red ?? '—'}{k.unit} — {k.at ? <>evaluated <RbmWhen at={k.at} /></> : 'never evaluated'}</div>
           <div className="rbm-kri-acts">
             <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setEntryFor(k.id)}>{I.zap}Add reading</button>
             <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', kri: k })}>{I.penLine}Configure</button>
