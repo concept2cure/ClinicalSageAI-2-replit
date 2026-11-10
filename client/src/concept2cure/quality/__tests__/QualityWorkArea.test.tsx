@@ -215,7 +215,7 @@ describe('Quality is one work area with one header (D7-B)', () => {
     const { container } = mount();
     expect(container.querySelector('.qms-grid2, .qms-sec-head, .qms-train-fill')).toBeNull();
     const heads = [...container.querySelectorAll('[data-work-area] h2')];
-    expect(heads.map((h) => h.textContent)).toEqual(['Controlled documents', 'Periodic review', 'Read-and-understood training', 'Training lapsed or lapsing soon']);
+    expect(heads.map((h) => h.textContent)).toEqual(['Controlled documents', 'Periodic review', 'Read-and-understood training', 'Training overdue, due or lapsing']);
     for (const h of heads) expect(h.parentElement?.classList.contains('pj-sec-h'), h.textContent ?? '').toBe(true);
     expect(screen.getByRole('button', { name: 'Job roles' }).querySelector('svg')).toBeNull();
     expect((screen.getByText('How coverage is counted').closest('details') as HTMLDetailsElement).open).toBe(false);

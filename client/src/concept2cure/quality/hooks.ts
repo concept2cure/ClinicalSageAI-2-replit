@@ -121,28 +121,44 @@ export function useTrainingCompliance() {
   return { rows, summary, loading, error: error ?? shapeError(TRAINING_PATH, data, raw), failure, refresh };
 }
 
-export interface TrainingExpiryRow {
+interface TrainingPersonRow {
   userId: number; userName: string | null; documentId: number; docNumber: string; title: string;
-  documentVersion: string; expiresAt: string; daysLeft: number;
+  documentVersion: string;
+  /** Days from today to the lapse or due day; negative once it has passed. */
+  daysLeft: number;
+}
+/** Training on a release in force that lapses within the window, or lapsed. */
+export interface TrainingLapseRow extends TrainingPersonRow {
+  kind: 'lapsing'; expiresAt: string;
   /** Already lapsed: no current receipt, and the last one on this release expired. */
   lapsed: boolean;
 }
+/** Training not yet acknowledged, as the task resolver states it (G10 slice 5). */
+export interface TrainingOutstandingRow extends TrainingPersonRow {
+  kind: 'due' | 'overdue'; dueDate: string;
+  /** Assigned after the version took effect: due 14 days after they were assigned. */
+  lateAssignment: boolean;
+}
+export type TrainingExpiryRow = TrainingLapseRow | TrainingOutstandingRow;
 const isExpiryRow = (r: unknown): r is TrainingExpiryRow => {
   const o = r as Record<string, unknown> | null;
-  return !!o && Number.isInteger(o.userId) && Number.isInteger(o.documentId) && typeof o.docNumber === 'string' &&
-    typeof o.expiresAt === 'string' && typeof o.daysLeft === 'number' && typeof o.lapsed === 'boolean' &&
-    (o.userName === null || typeof o.userName === 'string');
+  if (!o || !Number.isInteger(o.userId) || !Number.isInteger(o.documentId) || typeof o.docNumber !== 'string' ||
+    typeof o.daysLeft !== 'number' || !(o.userName === null || typeof o.userName === 'string')) return false;
+  if (o.kind === 'lapsing') return typeof o.expiresAt === 'string' && typeof o.lapsed === 'boolean';
+  return (o.kind === 'due' || o.kind === 'overdue') && typeof o.dueDate === 'string' && typeof o.lateAssignment === 'boolean';
 };
-/** Each active member whose current training lapses within `withinDays` —
- *  GET /api/mdx/qms/training/expiring (G10). A body that is not that list is a failure. */
+/** Each person assigned whose training is overdue, due or lapsing within `withinDays` —
+ *  GET /api/mdx/qms/training/expiring (G10; slice 5 added due and overdue). A body that is not that list, or a row of
+ *  an unknown kind, is a failure. `truncated`: the server stopped at its cap. */
 export function useTrainingExpiring(withinDays: number) {
   const path = `/api/mdx/qms/training/expiring?within=${withinDays}`;
   const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const raw = useMemo(() => listOf<unknown>(data), [data]);
   const rows = useMemo(() => (raw && raw.every(isExpiryRow) ? raw : null), [raw]);
+  const truncated = (data as { meta?: { truncated?: unknown } } | null)?.meta?.truncated === true;
   const unreadable = data != null && rows === null ? `unexpected response shape for ${path}` : null;
   const failed = !loading && (error != null || unreadable != null);
-  return { rows: loading || failed ? null : rows, failed, error: error ?? unreadable, failure, refresh };
+  return { rows: loading || failed ? null : rows, truncated, failed, error: error ?? unreadable, failure, refresh };
 }
 
 /* ── Job roles and training assignments (P-49; design §3.12) ──
