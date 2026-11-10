@@ -53,8 +53,14 @@ import {
 import { summarizeDeadlines, reportingObligations, awardPeriodState, evaluateCloseout } from '../services/grants/grants-logic';
 import { recordGrantProposalCreated, recordGrantAwardRecorded, recordGrantInvoice, recordGrantMilestoneStatus, recordGrantCloseoutOpened, recordGrantCloseoutFinalized, recordGrantSubaward, recordGrantSubawardExecuted, recordGrantBudgetLine, recordGrantExpenditure, recordGrantCostShareContribution, recordGrantNceRequested, recordGrantNceApproved } from '../services/grants-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   record awards, invoices and expenditures (same repair as biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
