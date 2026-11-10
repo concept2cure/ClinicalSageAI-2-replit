@@ -23,8 +23,14 @@ import {
 } from '../services/export-control/export-control-service';
 import { recordExportReviewCreated, recordExportReviewUpdated, recordExportReviewDetermined } from '../services/export-control-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create and change export-control reviews (same repair as biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

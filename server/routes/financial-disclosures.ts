@@ -48,9 +48,16 @@ import { signMeaningRefusal, type GovernedSignMeaning } from '../services/part11
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('financial-disclosures');
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create, change and delete disclosures (same repair as biostat-bridge.ts).
+   Certify still asks checkSigningAuthority after this: writing is not signing. */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

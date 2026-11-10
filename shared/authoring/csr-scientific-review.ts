@@ -310,7 +310,11 @@ export function numericalClaimDisplays(content: string, claims: readonly { value
  * "[N]" or "[value]", the convention the build's prompt and its template use where data is missing. The one rule
  * of the build runner, the assembly's placement (server/services/csr/csr-placeholders.ts) and the scientific review.
  */
-export const CSR_DATA_PLACEHOLDER = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
+/* Not placeholders: the two unit labels the engine's own demographics table prints in brackets, "Age, mean (SD) [yr]"
+ * and "Weight, mean (SD) [kg]" (server/services/csr-tabulation-builders.ts). A draft that quotes the engine's row
+ * label is quoting the study's table, and was refused as missing data (showcase walk, 2026-11-10). Exactly those
+ * two spans; "[yr to be confirmed]" and every other bracketed span holding a letter is still a placeholder. */
+export const CSR_DATA_PLACEHOLDER = /\[(?!(?:yr|kg)\])[^[\]]*[A-Za-z][^[\]]*\]/;
 
 /**
  * The first data placeholder in a saved section's visible text, or null. Markup is read as blank, so brackets in

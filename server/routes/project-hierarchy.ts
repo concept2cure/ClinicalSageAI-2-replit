@@ -164,7 +164,7 @@ function workProjectFailure(error: unknown): Failure {
 
 const fail = (res: Response, f: Failure) => res.status(f.status).json({ success: false, error: { code: f.code, message: f.message } });
 
-const childrenQuery = z.object({ programId: z.string().uuid() });
+const childrenQuery = z.object({ programId: z.string().guid() });
 
 router.get('/:projectId/children', async (req: Request, res: Response) => {
   const projectId = Number(req.params.projectId);

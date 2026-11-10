@@ -16,7 +16,12 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const query = vi.fn();
-vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* The listing first reads which sponsor its projects belong to (P-107, one sponsor at a time). Project 4 has none, so
+   nothing is narrowed; that read is answered here and `query` stays the registry read these cases script. */
+const sponsorRead = (sql: unknown) => typeof sql === 'string' && sql.includes('LEFT JOIN client_workspaces cw') && sql.includes('FROM projects p');
+vi.mock('../../db.js', () => ({ pool: { query: async (...a: unknown[]) => (sponsorRead(a[0])
+  ? { rows: [{ id: 4, program_id: null, client_workspace_id: null, client_name: null }] }
+  : query(...a)) } }));
 /* The listing is bound to the projects the caller can open (fold F3 slice C,
    2026-10-29). The sharing policy is stubbed here to open project 4, the
    fixture's own; artifacts-center-accessible-projects.pglite.test.ts proves the binding. */
