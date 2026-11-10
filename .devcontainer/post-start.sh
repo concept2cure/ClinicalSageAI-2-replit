@@ -40,6 +40,7 @@ if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.en
   NEED_ACCOUNTS=1
 fi
 c2c_start_postgres || c2c_blocked "PostgreSQL did not start."
+c2c_ensure_attestation_key
 c2c_ensure_database || c2c_blocked "the owner role or database could not be ensured."
 # Idempotent: over a complete database this is deploy-migrate + the readiness
 # contract, so migrations committed since the last start are applied.
