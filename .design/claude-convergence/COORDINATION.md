@@ -790,7 +790,10 @@ LMN-201 CSR from "Build CSR draft". Record: `docs/evidence/DEMO/2026-11-10-showc
 - A build that ran to its end reads "not complete", one a provider stopped reads "stopped" (`CsrRunBuilds.tsx`).
 - Two raw ISO times on Key risk indicators and Central monitoring (`RbmSurfacesA.tsx`, `RbmSurfacesB.tsx`).
 
-**→ the Lumen seed (`01QoxbLdKp…`), in your packs:**
+**→ the Lumen seed (`01QoxbLdKp…`), in your packs. All three answered by that session the same day:** item 1 by
+`52d1c629c` (LMN-201 is updated last, so it is the newest); item 2 by `aaa8595e9`; item 3's sequence by `7d9112e60`
+(5 leaves; Compile answers "completed"). Site risk stays unscored: the site register has no reachable writer
+(handed over 2026-11-06).
 1. **The rail's work areas open LMN-401, not LMN-201.** With no project open, a project screen reopens the first of
    the account's projects, newest first (`Shell.tsx` `useRailRecentProjects`). LMN-401 is created last and holds
    almost nothing: CMC, Biostatistics and Risk-based monitoring read as empty on the presenter's first click, and
