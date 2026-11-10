@@ -954,10 +954,7 @@ export async function generateProjectSchedule(
           basis_summary, ana_summary, confidence, version, baseline_date, target_date,
           generated_by_ana, last_reviewed_by_ana_at, updated_at)
        VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, NULL, now())
-       -- last_reviewed_by_ana_at is NULL, not now(): a generation is a human schedule
-       -- write, and withHumanScheduleWrite marks the objective monitor dirty (NULL) before
-       -- it commits. Stamping now() here put a review time in the response view that the
-       -- committed row never held (tests/db/project-schedule-atomic.dbtest.ts).
+       -- Review time NULL, not now(): a human write; withHumanScheduleWrite marks the monitor dirty before COMMIT.
        -- Arbiter MUST name the tenant column. Uniqueness is what ON CONFLICT
        -- resolves against, so an arbiter of (project_id) alone — against the old
        -- org-blind unique index — decided whose row this upsert landed on, and
