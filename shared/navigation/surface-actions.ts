@@ -284,6 +284,11 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         required: true,
         description: 'The folder name as shown in the vault tree (case-insensitive; partial names resolve when unambiguous).',
       },
+      {
+        name: 'folderId',
+        required: false,
+        description: 'Optional exact folder: a binder heading "bn:<CTD or section code>" (opens that heading, or the nearest one above it), or a folder id from the tree. Takes precedence over the name.',
+      },
     ],
   },
   {

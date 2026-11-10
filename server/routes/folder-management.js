@@ -28,7 +28,7 @@ router.get(
     }
 
     const result = await pool.query(
-      'SELECT id, name, parent_id, organization_id, created_at, updated_at FROM document_folders WHERE organization_id = $1 ORDER BY name',
+      'SELECT id, name, parent_id, organization_id, created_at, updated_at FROM document_folders WHERE organization_id = $1 AND program_id IS NULL ORDER BY name',
       [organizationId]
     );
 
@@ -72,6 +72,18 @@ router.post(
       return res.status(403).json({ error: 'Tenant context required' });
     }
 
+    // A project's folders (program_id set) belong to its Vault and are made, renamed and audited only
+    // through /api/c2c/project-vault/:id/folders, under that project's access. They are neither listed,
+    // changed, deleted nor parented here: in a multi-tenant organization (a CRO's sponsors), an
+    // organization-wide route reaching them would cross project and sponsor lines (S6, 2026-11-10).
+    if (validated.parentId) {
+      const parent = await pool.query(
+        'SELECT id FROM document_folders WHERE id = $1 AND organization_id = $2 AND program_id IS NULL',
+        [validated.parentId, organizationId]
+      );
+      if (parent.rows.length === 0) return res.status(404).json({ error: 'Parent folder not found' });
+    }
+
     const result = await pool.query(
       `INSERT INTO document_folders (name, parent_id, organization_id, created_by_id)
        VALUES ($1, $2, $3, $4)
@@ -99,7 +111,7 @@ router.patch(
     }
 
     const result = await pool.query(
-      'UPDATE document_folders SET name = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 RETURNING id, name, parent_id, organization_id, created_at, updated_at',
+      'UPDATE document_folders SET name = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND program_id IS NULL RETURNING id, name, parent_id, organization_id, created_at, updated_at',
       [name, req.params.id, organizationId]
     );
 
@@ -123,7 +135,7 @@ router.delete(
     // Verify ownership first so a foreign folder 404s rather than leaking its
     // existence (and document/subfolder counts) through the guards below.
     const owned = await pool.query(
-      'SELECT id FROM document_folders WHERE id = $1 AND organization_id = $2',
+      'SELECT id FROM document_folders WHERE id = $1 AND organization_id = $2 AND program_id IS NULL',
       [req.params.id, organizationId]
     );
     if (owned.rows.length === 0) {
@@ -151,7 +163,7 @@ router.delete(
     }
 
     const result = await pool.query(
-      'DELETE FROM document_folders WHERE id = $1 AND organization_id = $2 RETURNING id',
+      'DELETE FROM document_folders WHERE id = $1 AND organization_id = $2 AND program_id IS NULL RETURNING id',
       [req.params.id, organizationId]
     );
 
