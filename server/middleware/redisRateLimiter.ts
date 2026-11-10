@@ -394,6 +394,12 @@ function isAnaRiNonModelRequest(path: string, method?: string): boolean {
  * document's review requests could not be read, so no reviewer could be chosen.
  * Renamed `document_metadata`, since it is no longer the Vault's alone.
  *
+ * 2026-11-10 (CSR path walk): the open document's review route and who that
+ * route admits (GET …/review-route, …/route-candidates). The editor has read the
+ * first on every open since 2026-11-09, so a few opens in a minute spent the
+ * bucket and Send for review was refused 429 again. Reassigning and handing back
+ * a route are writes and stay in `documents`.
+ *
  * Every download, section text read, compare and write stays in `documents`:
  * those move content or change it.
  */
@@ -401,7 +407,7 @@ const DOCUMENT_METADATA_READS: readonly RegExp[] = [
   /(^|\/)c2c\/project-vault\/[^/]+\/documents\/[^/]+\/(versions|history|annotations|relationships)\/?$/,
   /(^|\/)c2c\/documents\/?$/,
   /(^|\/)c2c\/documents\/[^/]+\/outline\/?$/,
-  /(^|\/)authoring\/documents\/[^/]+\/(reviews|comments|tracked-change-decisions)\/?$/,
+  /(^|\/)authoring\/documents\/[^/]+\/(reviews|comments|tracked-change-decisions|review-route|route-candidates)\/?$/,
   /(^|\/)data-origins\/document\/?$/,
 ];
 
