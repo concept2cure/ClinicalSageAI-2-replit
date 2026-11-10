@@ -3822,6 +3822,10 @@ export const C2C_MIGRATION_FILES = [
   // cre_evidence_sources (a deterministic engine's grade and its basis) and 'data_room' admitted by
   // c2c_pinned_ev_kind_check, replaced only when its live definition differs. Additive; no table.
   'migrations/20261106_data_room_grade.sql',
+  // P-122 defects, item 2 (2026-11-10): projects.risk_level loses its DEFAULT 'medium', a risk nobody assessed that
+  // the hierarchy roll-up reported as one. Conditional on the column still having a default; changes no row; no table.
+  // Its only creator is push, and shared/schema.ts drops the default in the same change (RULE 1).
+  'migrations/20261110_projects_risk_level_not_defaulted.sql',
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

@@ -7,6 +7,14 @@
  * Rollup fields: progress (weighted avg), budget (sum), risk (worst-case), task counts,
  * module counts, milestone completion %, child status summary.
  *
+ * A read (P-122 defects, 2026-11-10; docs/evidence/DESIGN/P-122/defects/2-rollup/):
+ *   - the roll-up is computed when asked and written nowhere. getTree used to write every
+ *     node's roll-up into projects.metadata and move its updated_at, so opening the project
+ *     page's Plan step changed the project and each work project under it, and Projects said
+ *     each was "updated" when someone had only looked. Nothing read the written copy.
+ *   - risk is the worst of the levels RECORDED on the subtree's projects, and none when none is
+ *     recorded. A missing or unknown level used to read as "medium", a risk nobody assessed.
+ *
  * @module server/services/project-rollup-service.ts
  */
 
@@ -21,8 +29,8 @@ export interface RollupMetrics {
   aggregateProgress: number;
   /** Sum of budgets across children */
   totalBudget: number;
-  /** Worst-case risk level across children */
-  worstRiskLevel: 'low' | 'medium' | 'high' | 'critical';
+  /** Worst risk level recorded on this project or below it; null when none is recorded */
+  worstRiskLevel: RiskLevel | null;
   /** Total tasks across all descendants */
   totalTasks: number;
   /** Completed tasks across all descendants */
@@ -57,7 +65,8 @@ export interface ProjectTreeNode {
   progress: number;
   budget: number | null;
   budgetStatus: string;
-  riskLevel: string;
+  /** The risk level recorded on the project, as stored; null when none is recorded */
+  riskLevel: string | null;
   startDate: string | null;
   targetEndDate: string | null;
   ownerId: number | null;
@@ -71,11 +80,17 @@ export interface ProjectTreeNode {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
+export type RiskLevel = (typeof RISK_LEVELS)[number];
 
-function worstRisk(a: string, b: string): 'low' | 'medium' | 'high' | 'critical' {
-  const ai = RISK_LEVELS.indexOf(a as any);
-  const bi = RISK_LEVELS.indexOf(b as any);
-  return RISK_LEVELS[Math.max(ai >= 0 ? ai : 1, bi >= 0 ? bi : 1)];
+/** A recorded risk level the engine can rank, or null: a missing or unknown one is not ranked as anything. */
+function rankedRisk(value: string | null | undefined): RiskLevel | null {
+  return (RISK_LEVELS as readonly string[]).includes(String(value)) ? (value as RiskLevel) : null;
+}
+
+/** The worse of two levels; one that is not recorded does not count. */
+function worstRisk(a: RiskLevel | null, b: RiskLevel | null): RiskLevel | null {
+  if (a === null || b === null) return a ?? b;
+  return RISK_LEVELS[Math.max(RISK_LEVELS.indexOf(a), RISK_LEVELS.indexOf(b))];
 }
 
 // People are named through public.actor_name, not a join on users: since users
@@ -129,7 +144,7 @@ export class ProjectRollupService {
         progress: row.progress ?? 0,
         budget: row.budget,
         budgetStatus: row.budget_status || 'within-budget',
-        riskLevel: row.risk_level || 'medium',
+        riskLevel: row.risk_level ?? null,
         startDate: row.start_date,
         targetEndDate: row.target_end_date,
         ownerId: row.owner_id,
@@ -157,9 +172,6 @@ export class ProjectRollupService {
 
     const rootNode = nodeMap.get(projectId)!;
     this.computeRollupFromCache(rootNode, taskCountsMap, moduleCountsMap);
-
-    // Persist rollups for all nodes
-    await this.persistRollups(nodeMap, organizationId);
 
     return rootNode;
   }
@@ -246,9 +258,7 @@ export class ProjectRollupService {
     const tasks = taskCountsMap.get(node.id) || { total: 0, completed: 0, blocked: 0, overdue: 0 };
     const moduleCount = moduleCountsMap.get(node.id) || 0;
 
-    const riskLevel = RISK_LEVELS.includes(node.riskLevel as any)
-      ? (node.riskLevel as 'low' | 'medium' | 'high' | 'critical')
-      : 'medium';
+    const riskLevel = rankedRisk(node.riskLevel);
 
     // Aggregate
     let rollup: RollupMetrics;
@@ -281,7 +291,7 @@ export class ProjectRollupService {
         childStatusSummary[child.status] = (childStatusSummary[child.status] || 0) + 1;
       }
 
-      let risk: 'low' | 'medium' | 'high' | 'critical' = riskLevel;
+      let risk: RiskLevel | null = riskLevel;
       for (const cr of childRollups) {
         risk = worstRisk(risk, cr.worstRiskLevel);
       }
@@ -326,41 +336,6 @@ export class ProjectRollupService {
 
     node.rollup = rollup;
     return rollup;
-  }
-
-  /**
-   * Persist rollup metadata for all nodes in a single batched update.
-   */
-  private async persistRollups(
-    nodeMap: Map<number, ProjectTreeNode>,
-    organizationId: number
-  ): Promise<void> {
-    const updates: Array<{ id: number; rollup: RollupMetrics }> = [];
-    for (const [id, node] of nodeMap) {
-      if (node.rollup) {
-        updates.push({ id, rollup: node.rollup });
-      }
-    }
-    if (updates.length === 0) return;
-
-    // Use a single UPDATE ... FROM VALUES batch
-    const idParams: string[] = [];
-    const values: any[] = [];
-    for (let i = 0; i < updates.length; i++) {
-      const base = i * 2;
-      idParams.push(`($${base + 1}::int, $${base + 2}::jsonb)`);
-      values.push(updates[i].id, JSON.stringify(updates[i].rollup));
-    }
-
-    await this.pool.query(
-      `UPDATE projects AS p
-       SET metadata = COALESCE(p.metadata::jsonb, '{}'::jsonb) || jsonb_build_object('rollup', v.rollup_data),
-           updated_at = NOW()
-       FROM (VALUES ${idParams.join(', ')}) AS v(project_id, rollup_data)
-       WHERE p.id = v.project_id
-         AND p.organization_id = $${values.length + 1}`,
-      [...values, organizationId]
-    );
   }
 
   /**

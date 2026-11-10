@@ -1,0 +1,26 @@
+# Replaying migrations/20261110_projects_risk_level_not_defaulted.sql on c2c_p122_defects (2026-11-10T14:41:46Z)
+## 1. A deployed database's shape: push's default, a project created without naming a risk, and one a person recorded 'high'
+ALTER TABLE
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+projects.risk_level default: 'medium'::text
+p122-replay created before: medium
+p122-replay recorded high: high
+## 2. Apply: the default goes, and no stored value is changed
+applied, exit 0
+projects.risk_level default: none
+p122-replay created before: medium
+p122-replay recorded high: high
+## 3. A project created now has no risk until one is recorded
+INSERT 0 1
+p122-replay created after: (none recorded)
+p122-replay created before: medium
+p122-replay recorded high: high
+## 4. Apply again (every deploy re-runs it): nothing to do, no failure, no row changed
+applied, exit 0
+projects.risk_level default: none
+p122-replay created after: (none recorded)
+p122-replay created before: medium
+p122-replay recorded high: high

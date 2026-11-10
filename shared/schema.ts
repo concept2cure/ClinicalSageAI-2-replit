@@ -5742,7 +5742,10 @@ export const projects = pgTable(
      */
     therapeuticArea: text('therapeutic_area'),
     criticalToQualityFactors: json('critical_to_quality_factors'), // CtQ factors array
-    riskLevel: text('risk_level').default('medium'), // low, medium, high
+    /* low, medium, high, critical — as recorded by a person or a rule; null until one is. No default (2026-11-10, P-122
+       defects): 'medium' was given to every project at creation, a risk nobody assessed, and the hierarchy roll-up
+       reported it as one. Deployed databases: migrations/20261110_projects_risk_level_not_defaulted.sql. */
+    riskLevel: text('risk_level'),
     riskAssessment: json('risk_assessment'),
     qualityTargets: json('quality_targets'),
     moduleReferences: json('module_references'), // References to specific module instances
