@@ -61,3 +61,37 @@ test('C2C-201: a second run creates nothing', async () => {
   const after = app.calls.filter((c) => c.method === 'POST' && CMC_REGISTER_PATHS.includes(c.url)).length;
   assert.equal(after, before, 'a re-run posted the registers again');
 });
+
+/* Found walking the register after the seed (P-122): every C2C-201 study was
+   refused by ICH Q1E — "placed at 2 storage conditions … results are not
+   recorded against a condition" — and the register counted all 14 results as
+   outside their limits. The register's own result form records both with each
+   result; the seed recorded neither. */
+test('C2C-201: each stability result carries the condition it was pulled at and its reading', async () => {
+  const app = fakeCmcApplication();
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  const studies = app.state.stability;
+  assert.equal(studies.length, 3);
+  for (const study of studies) {
+    const results = study.stabilityData?.results ?? [];
+    assert.ok(results.length > 0, `${study.studyTitle}: no results recorded`);
+    for (const r of results) {
+      assert.match(String(r.condition ?? ''), /°C/, `${study.studyTitle} ${r.parameter} @ ${r.timePoint}: no storage condition recorded`);
+      assert.equal(typeof r.withinSpecification, 'boolean', `${study.studyTitle} ${r.parameter} @ ${r.timePoint}: no within-specification reading`);
+    }
+  }
+  const outside = studies.flatMap((s) => s.stabilityData.results).filter((r) => !r.withinSpecification);
+  assert.deepEqual(outside.map((r) => `${r.parameter} @ ${r.timePoint}: ${r.result}`), ['Total impurities @ 6: 0.61']);
+});
+
+test('C2C-201: an earlier run’s results are re-recorded with their condition and reading, and only the seed’s own', async () => {
+  const app = fakeCmcApplication();
+  const bare = BIOTECH_SM_CMC.stability.map((s) => ({ ...s, results: s.results.map(({ withinSpecification: _w, ...r }) => r) }));
+  await ensureCmc(app.ctx, PROGRAM, { ...BIOTECH_SM_CMC, stability: bare }, 'C2C-201');
+  assert.ok(app.state.stability.every((s) => s.stabilityData.results.every((r) => r.withinSpecification === undefined)));
+  /* A person's own extra result makes the series no longer the seed's: it is left alone. */
+  app.state.stability[2].stabilityData.results.push({ timePoint: '9', parameter: 'Assay', result: '97.0' });
+  await ensureCmc(app.ctx, PROGRAM, BIOTECH_SM_CMC, 'C2C-201');
+  assert.ok(app.state.stability.slice(0, 2).every((s) => s.stabilityData.results.every((r) => typeof r.withinSpecification === 'boolean')));
+  assert.equal(app.state.stability[2].stabilityData.results.length, 4, 'a series with a result the seed did not write was rewritten');
+});

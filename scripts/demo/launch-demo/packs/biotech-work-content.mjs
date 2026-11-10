@@ -224,34 +224,34 @@ export const BIOTECH_SM_CMC = {
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 36, monthsRunning: 12, timePoints: ['0', '3', '6', '9', '12', '18', '24', '36'],
       parameters: ['Assay', 'Total impurities', 'Water content'], notes: 'Primary registration lot, double polyethylene bag in a fibre drum.',
       results: [
-        { timePoint: '0', parameter: 'Assay', result: '99.8', specification: '98.0 - 102.0 %' },
-        { timePoint: '6', parameter: 'Assay', result: '99.4', specification: '98.0 - 102.0 %' },
-        { timePoint: '12', parameter: 'Assay', result: '99.1', specification: '98.0 - 102.0 %' },
-        { timePoint: '0', parameter: 'Total impurities', result: '0.11', specification: 'NMT 0.5 %' },
-        { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %' },
-        { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %' },
+        { timePoint: '0', parameter: 'Assay', result: '99.8', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Assay', result: '99.4', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '12', parameter: 'Assay', result: '99.1', specification: '98.0 - 102.0 %', withinSpecification: true },
+        { timePoint: '0', parameter: 'Total impurities', result: '0.11', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Total impurities', result: '0.18', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '12', parameter: 'Total impurities', result: '0.24', specification: 'NMT 0.5 %', withinSpecification: true },
       ] },
     { title: 'C2C-201 tablets — long-term, 25°C/60% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP', shelfLife: '18 months',
       studyType: 'long-term', storage: ['LT', '25°C ± 2°C / 60% ± 5% RH'], duration: 24, monthsRunning: 9, timePoints: ['0', '3', '6', '9', '12', '18', '24'],
       parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'HDPE bottle, 30 count, with desiccant.',
       results: [
-        { timePoint: '0', parameter: 'Assay', result: '100.2', specification: '95.0 - 105.0 %' },
-        { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '95.0 - 105.0 %' },
-        { timePoint: '9', parameter: 'Assay', result: '98.6', specification: '95.0 - 105.0 %' },
-        { timePoint: '0', parameter: 'Dissolution', result: '94', specification: 'NLT 80 %' },
-        { timePoint: '9', parameter: 'Dissolution', result: '88', specification: 'NLT 80 %' },
+        { timePoint: '0', parameter: 'Assay', result: '100.2', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '6', parameter: 'Assay', result: '99.1', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '9', parameter: 'Assay', result: '98.6', specification: '95.0 - 105.0 %', withinSpecification: true },
+        { timePoint: '0', parameter: 'Dissolution', result: '94', specification: 'NLT 80 %', withinSpecification: true },
+        { timePoint: '9', parameter: 'Dissolution', result: '88', specification: 'NLT 80 %', withinSpecification: true },
       ] },
     { title: 'C2C-201 tablets — accelerated, 40°C/75% RH', product: 'C2C-201 tablets', batch: 'C2C201-DP-2503', dosageForm: 'Film-coated tablet', strength: '15 mg', scope: 'DP',
       studyType: 'accelerated', storage: ['ACC', '40°C ± 2°C / 75% ± 5% RH'], duration: 6, monthsRunning: 6, timePoints: ['0', '1', '3', '6'],
       parameters: ['Assay', 'Dissolution', 'Total impurities'], notes: 'Supports the ICH Q1A(R2) accelerated package.',
       results: [
-        { timePoint: '0', parameter: 'Total impurities', result: '0.12', specification: 'NMT 0.5 %' },
-        { timePoint: '3', parameter: 'Total impurities', result: '0.38', specification: 'NMT 0.5 %' },
+        { timePoint: '0', parameter: 'Total impurities', result: '0.12', specification: 'NMT 0.5 %', withinSpecification: true },
+        { timePoint: '3', parameter: 'Total impurities', result: '0.38', specification: 'NMT 0.5 %', withinSpecification: true },
         /* Out of specification at six months accelerated, as happens. The
            composed §3.2.P.8 reports it, withholds the stability conclusion and
            names the point — which is the behaviour phase 4's acceptance
            fixture pins, shown here on demo data a person can click through. */
-        { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %' },
+        { timePoint: '6', parameter: 'Total impurities', result: '0.61', specification: 'NMT 0.5 %', withinSpecification: false },
       ] },
   ],
   /**
