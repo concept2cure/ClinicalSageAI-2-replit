@@ -1,0 +1,7 @@
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-meta`: no more than 84 uses, and gone from the CSS at 0 13ms
+   → `cm-meta` is retired (D0 spec §4.6, §4.7). Use the canonical primitive instead; uses rose from 84 to 90.: expected 90 to be less than or equal to 84
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 0 uses, and gone from the CSS at 0 7ms
+   → `What to do now` is retired (D0 spec §4.6, §4.7). Use the canonical primitive instead; uses rose from 0 to 1.: expected 1 to be less than or equal to 0
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 76 passed (78)

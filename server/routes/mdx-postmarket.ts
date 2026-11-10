@@ -70,7 +70,7 @@ router.get('/postmarket', async (req: Request, res: Response) => {
     const programs = access.programIds;
 
     // vigilance_events are program-scoped; join regulatory_programs to enforce tenant.
-    const sigRes = await q.query<SignalRow>(
+    const sigRes = await q.query(
       `SELECT v.id, p.code AS program_code, v.kind, v.occurred_at, v.payload,
               v.reason, v.actor
          FROM vigilance_events v
@@ -80,7 +80,8 @@ router.get('/postmarket', async (req: Request, res: Response) => {
         ORDER BY v.occurred_at DESC NULLS LAST
         LIMIT 500`,
       [orgId, programs],
-    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] as SignalRow[] }; throw e; });
+    ).then((r) => r as unknown as { rows: SignalRow[] })
+      .catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] as SignalRow[] }; throw e; });
 
     const signals = sigRes.rows.map((r) => {
       const pl = r.payload ?? {};
@@ -110,7 +111,7 @@ router.get('/postmarket', async (req: Request, res: Response) => {
        CAPA that cannot be attributed to a program in this organization
        must not be visible to it. Orphaned rows now surface nowhere
        rather than everywhere. */
-    const capaRes = await q.query<CapaRow>(
+    const capaRes = await q.query(
       `SELECT c.id, c.capa_code, c.title, p.code AS program_code, c.state,
               c.assigned_to, c.created_at, c.risk_level, c.source_refs
          FROM capa_records c
@@ -120,7 +121,8 @@ router.get('/postmarket', async (req: Request, res: Response) => {
         ORDER BY c.created_at DESC NULLS LAST
         LIMIT 500`,
       [orgId, programs],
-    ).catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] as CapaRow[] }; throw e; });
+    ).then((r) => r as unknown as { rows: CapaRow[] })
+      .catch((e) => { if ((e as { code?: string }).code === '42P01') return { rows: [] as CapaRow[] }; throw e; });
 
     const capas = capaRes.rows.map((r) => ({
       id: r.capa_code ?? String(r.id),
