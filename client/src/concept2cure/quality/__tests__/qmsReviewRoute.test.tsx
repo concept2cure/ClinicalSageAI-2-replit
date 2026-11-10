@@ -145,7 +145,8 @@ describe('Send for review names the route (RR4, §2.7)', () => {
       route: { reviewers: [5], approvers: [8], order: 'parallel', reviewDueDate: '2099-01-03', approvalDueDate: '2099-01-05' },
     });
     await waitFor(() => expect(H.refresh).toHaveBeenCalled());
-    expect(screen.getByRole('status').textContent).toMatch(/SOP-021 was sent for review on its route/);
+    // C3: the confirmation is the register's toast, a polite status beside the page's other status regions.
+    expect(screen.getByText(/SOP-021 was sent for review on its route/).closest('[role="status"]')).toBeTruthy();
   });
 
   it('says the server’s refusal and keeps the form open', async () => {
