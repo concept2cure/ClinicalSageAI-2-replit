@@ -1,6 +1,8 @@
-/** The saved pack must roundtrip whole, and every project copy and its audit
- * event must commit together. The real route/Drizzle transaction are exercised;
- * the connection and audit edge record statement order and injected failures. */
+/** The saved pack must roundtrip whole, as ONE row in report_bundles with its
+ * runs and projects as rows of their own (P-91, C-3), and the pack and its audit
+ * event must commit together. It was one project_memory_entries copy per covered
+ * project. The real route/Drizzle transaction are exercised; the connection and
+ * audit edge record statement order and injected failures. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -63,8 +65,12 @@ function ready(blockers: string[] = Array.from({ length: 12 }, (_, i) => `Findin
   h.respond.fn = (sql, arrayMode) => arrayMode && /select "id" from "project_intelligence_profiles"/.test(sql) ? [[101]] : [];
 }
 const post = () => request(app).post('/api/report-os/bundles').send({ name: 'Two-project review pack', runIds: [41, 42] });
-const copies = () => h.statements.flatMap((sql, index) => /^insert into "project_memory_entries"/.test(sql)
-  ? [h.params[index].find(value => typeof value === 'string' && value.startsWith('{"bundleRecord":')) as string] : []);
+/** The manifest bound into each report_bundles insert (the jsonb `record`). */
+const packRows = () => h.statements.flatMap((sql, index) => /^insert into "report_bundles"/.test(sql)
+  ? [h.params[index].find(value => typeof value === 'string' && value.startsWith('{"bundleId":')) as string] : []);
+/** The values bound into the run or project link inserts. */
+const linkParams = (table: 'report_bundle_runs' | 'report_bundle_projects') => h.statements.flatMap((sql, index) =>
+  new RegExp(`^insert into "${table}"`).test(sql) ? [h.params[index]] : []);
 
 beforeEach(() => {
   resetReportOsHarness(h);
@@ -79,13 +85,14 @@ beforeEach(() => {
 const BUNDLE_SQL_FIXTURE = `
   CREATE TABLE project_intelligence_profiles (id serial PRIMARY KEY, project_id integer, organization_id integer);
   INSERT INTO project_intelligence_profiles (id, project_id, organization_id) VALUES (101, 11, 7), (102, 12, 7);
-  CREATE TABLE project_memory_entries (
-    id serial PRIMARY KEY, project_profile_id integer, project_id integer, organization_id integer,
-    category text, subcategory text, title text, content text, source_document_name text,
-    source_document_type text, confidence_score real, importance_level text,
-    is_verified_by_user boolean DEFAULT false, embedding text, status text DEFAULT 'active',
-    extracted_by text, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now()
+  CREATE TABLE report_bundles (
+    id uuid PRIMARY KEY, organization_id integer NOT NULL, name text NOT NULL, created_by integer,
+    created_at timestamptz NOT NULL, record jsonb NOT NULL, byte_length integer NOT NULL, payload_hash text NOT NULL
   );
+  CREATE TABLE report_bundle_runs (bundle_id uuid NOT NULL REFERENCES report_bundles(id), organization_id integer NOT NULL,
+    run_id integer NOT NULL, position integer NOT NULL, PRIMARY KEY (bundle_id, run_id));
+  CREATE TABLE report_bundle_projects (bundle_id uuid NOT NULL REFERENCES report_bundles(id), organization_id integer NOT NULL,
+    project_id integer NOT NULL, PRIMARY KEY (bundle_id, project_id));
   CREATE TABLE bundle_audit_test (resource_id text, action text);
 `;
 type BundleSqlFailure = 'none' | 'audit' | 'rollback' | 'commit-after' | 'release-after';
@@ -135,76 +142,80 @@ async function withBundleSql(failure: BundleSqlFailure,
 }
 
 async function storedBundleSqlCounts(database: PGlite) {
-  return (await database.query<{ copies: number; audit: number }>(
-    'SELECT (SELECT count(*) FROM project_memory_entries)::integer AS copies, (SELECT count(*) FROM bundle_audit_test)::integer AS audit',
+  return (await database.query<{ packs: number; runs: number; projects: number; audit: number }>(
+    `SELECT (SELECT count(*) FROM report_bundles)::integer AS packs, (SELECT count(*) FROM report_bundle_runs)::integer AS runs,
+            (SELECT count(*) FROM report_bundle_projects)::integer AS projects, (SELECT count(*) FROM bundle_audit_test)::integer AS audit`,
   )).rows[0];
 }
 
+/** A pack's row in report_bundles: its id, the manifest kept whole, and when. */
 function storedPack(index: number, projectId = 11) {
   const bundleId = `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
-  return { id: 100_000 - index, title: `bundle:${bundleId}`, createdAt: '2026-10-13 12:00:00.123456',
-    content: JSON.stringify({ bundleRecord: { bundleId, organizationId: 7, name: 'Recorded pack',
-      createdAt: '2026-10-13T12:00:00Z', createdBy: 5, projectIds: [projectId], runIds: [41], items: [] } }) };
+  return { id: bundleId, createdAt: '2026-10-13 12:00:00.123456+00',
+    record: { bundleId, organizationId: 7, name: 'Recorded pack',
+      createdAt: '2026-10-13T12:00:00Z', createdBy: 5, projectIds: [projectId], runIds: [41], items: [] as unknown[] } };
 }
 function addDocumentScope(row: ReturnType<typeof storedPack>) {
-  const payload = JSON.parse(row.content);
-  payload.bundleRecord.items = [{ runId: 41, runUuid: 'run-41', reportTypeId: 'readiness.executive_digest',
+  return { ...row, record: { ...row.record, items: [{ runId: 41, runUuid: 'run-41', reportTypeId: 'readiness.executive_digest',
     reportTypeLabel: 'Readiness', scopeType: 'document', scopeId: 'artifact-41', status: 'completed', confidence: 90,
-    blockers: [], createdAt: '2026-10-13T12:00:00Z' }];
-  return { ...row, content: JSON.stringify(payload) };
+    blockers: [], createdAt: '2026-10-13T12:00:00Z' }] } };
 }
 
 
 describe('saved report packs are complete and atomically recorded', () => {
-  it('roundtrips more than 20,000 characters with one intact copy per project and a bound audit event', async () => {
+  it('roundtrips more than 20,000 characters as ONE pack row, with its runs and projects and a bound audit event', async () => {
     ready();
     const result = await post();
     expect(result.status).toBe(201);
-    const stored = copies();
-    expect(stored).toHaveLength(2);
+    const stored = packRows();
+    expect(stored, 'one row per pack, not one copy per project').toHaveLength(1);
     expect(stored[0].length).toBeGreaterThan(20_000);
-    expect(stored[0]).toBe(stored[1]);
-    expect(JSON.parse(stored[0]).bundleRecord).toEqual(result.body.data);
+    expect(JSON.parse(stored[0])).toEqual(result.body.data);
     expect(stored[0]).toContain('END-11');
-    h.statements.forEach((sql, index) => {
-      if (/^insert into "project_memory_entries"/.test(sql)) expect(boundInsertColumn(sql, h.params[index], 'confidence_score')).toBeNull();
-    });
+    expect(boundInsertColumn(h.statements.find(sql => /^insert into "report_bundles"/.test(sql))!,
+      h.params[h.statements.findIndex(sql => /^insert into "report_bundles"/.test(sql))], 'organization_id')).toBe(7);
+    expect(linkParams('report_bundle_runs')).toHaveLength(1);
+    expect(linkParams('report_bundle_runs')[0]).toEqual(expect.arrayContaining([41, 42, 1, 2]));
+    expect(linkParams('report_bundle_projects')[0]).toEqual(expect.arrayContaining([11, 12]));
+    expect(h.statements.some(sql => /project_memory_entries/.test(sql)), 'the legacy memory path is not written').toBe(false);
     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(h.statements.slice(-3)).toEqual(['<audit row>', 'COMMIT', '<released>']);
+    const content = JSON.stringify({ bundleRecord: result.body.data });
     expect(h.audit.mock.calls[0]?.[1]).toMatchObject({ tenantId: 7, userId: 5, action: 'report_os.bundle_created',
-      details: { projectIds: [11, 12], runIds: [41, 42], byteLength: Buffer.byteLength(stored[0]),
-        payloadHash: createHash('sha256').update(stored[0]).digest('hex') } });
-    h.queued.select.push([{ title: `bundle:${result.body.data.bundleId}`, content: stored[0], createdAt: new Date() }]);
+      details: { projectIds: [11, 12], runIds: [41, 42], byteLength: Buffer.byteLength(content),
+        payloadHash: createHash('sha256').update(content).digest('hex') } });
+    h.queued.select.push([{ id: result.body.data.bundleId, record: JSON.parse(stored[0]), createdAt: new Date().toISOString() }]);
     const listed = await request(app).get('/api/report-os/bundles');
     expect(listed.status).toBe(200);
     expect(listed.body.data).toEqual([result.body.data]);
     expect(listed.body.meta).toBeUndefined();
   });
 
-  it('rolls both project copies back when the second write fails, before any success or audit event', async () => {
+  it('rolls the pack row back when its run rows fail to write, before any success or audit event', async () => {
     ready();
-    let insertCount = 0;
-    h.respond.fn = (sql, arrayMode) => {
-      if (/^insert into "project_memory_entries"/.test(sql) && ++insertCount === 2) throw new Error('second copy failed');
-      return arrayMode && /select "id" from "project_intelligence_profiles"/.test(sql) ? [[101]] : [];
+    h.respond.fn = (sql) => {
+      if (/^insert into "report_bundle_runs"/.test(sql)) throw new Error('run rows failed');
+      return [];
     };
     const result = await post();
     expect(result.status).toBe(503);
     expect(result.body.error.code).toBe('REPORT_BUNDLE_NOT_RECORDED');
     expect(result.body.data).toBeUndefined();
-    expect(copies()).toHaveLength(2);
+    expect(packRows()).toHaveLength(1);
     expect(h.audit).not.toHaveBeenCalled();
     expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
     expect(h.statements).not.toContain('COMMIT');
   });
 
-  it('rolls every copy back when the audit event fails', async () => {
+  it('rolls the pack and its run and project rows back when the audit event fails', async () => {
     ready();
     h.audit.mockImplementation(async () => { h.statements.push('<audit row>'); throw new Error('audit failed'); });
     const result = await post();
     expect(result.status).toBe(503);
     expect(result.body.error.code).toBe('REPORT_BUNDLE_NOT_RECORDED');
-    expect(copies()).toHaveLength(2);
+    expect(packRows()).toHaveLength(1);
+    expect(linkParams('report_bundle_runs')).toHaveLength(1);
+    expect(linkParams('report_bundle_projects')).toHaveLength(1);
     expect(h.statements.slice(-3)).toEqual(['<audit row>', 'ROLLBACK', '<released>']);
     expect(h.statements).not.toContain('COMMIT');
   });
@@ -213,15 +224,17 @@ describe('saved report packs are complete and atomically recorded', () => {
 });
 
 describe('saved report pack receipts distinguish SQL rollback from lost acknowledgements', () => {
-  it('confirms ordinary SQL persistence only after both copies and the audit marker commit', async () => {
+  it('confirms ordinary SQL persistence only after the pack, its links and the audit marker commit', async () => {
     ready([]);
     await withBundleSql('none', async fixture => {
       const result = await post();
       expect(result.status).toBe(201);
       expect(result.body.data).toMatchObject({ name: 'Two-project review pack', runIds: [41, 42], projectIds: [11, 12] });
-      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 2, audit: 1 });
-      const rows = (await fixture.database.query<{ content: string; organization_id: number }>('SELECT content, organization_id FROM project_memory_entries')).rows;
-      expect(rows.every(row => row.organization_id === 7 && JSON.parse(row.content).bundleRecord.bundleId === result.body.data.bundleId)).toBe(true);
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ packs: 1, runs: 2, projects: 2, audit: 1 });
+      const rows = (await fixture.database.query<{ id: string; record: { bundleId: string }; organization_id: number }>('SELECT id::text, record, organization_id FROM report_bundles')).rows;
+      expect(rows).toEqual([{ id: result.body.data.bundleId, record: result.body.data, organization_id: 7 }]);
+      expect((await fixture.database.query('SELECT run_id, position FROM report_bundle_runs ORDER BY position')).rows)
+        .toEqual([{ run_id: 41, position: 1 }, { run_id: 42, position: 2 }]);
       expect(fixture.statements).toContain(tenantStampSql());
       expect(fixture.statements.at(-1)).toBe('COMMIT');
       expect(fixture.release).toHaveBeenCalledExactlyOnceWith();
@@ -232,7 +245,7 @@ describe('saved report pack receipts distinguish SQL rollback from lost acknowle
     ready([]);
     await withBundleSql(failure, async fixture => {
       const result = await post();
-      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 2, audit: 1 });
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ packs: 1, runs: 2, projects: 2, audit: 1 });
       expect(result.status).toBe(503);
       expect(result.body).toMatchObject({ success: false, error: { code: 'REPORT_BUNDLE_OUTCOME_UNKNOWN' }, recordingOutcome: 'unconfirmed', retryAllowed: false });
       expect(result.body.data).toBeUndefined();
@@ -249,7 +262,7 @@ describe('saved report pack receipts distinguish SQL rollback from lost acknowle
       const result = await post();
       expect(result.status).toBe(503);
       expect(result.body).toMatchObject({ error: { code: 'REPORT_BUNDLE_NOT_RECORDED' }, recordingOutcome: 'not-recorded', retryAllowed: true });
-      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ copies: 0, audit: 0 });
+      expect(await storedBundleSqlCounts(fixture.database)).toEqual({ packs: 0, runs: 0, projects: 0, audit: 0 });
       expect(fixture.statements.at(-1)).toBe('ROLLBACK');
       expect(fixture.statements).not.toContain('COMMIT');
       expect(fixture.release).toHaveBeenCalledExactlyOnceWith();
@@ -298,17 +311,8 @@ describe('report pack register admits before counting or limiting', () => {
     h.queued.select.push(Array.from({ length: 5000 }, (_, i) => storedPack(i + 1, 13)), [storedPack(5001)]);
     const listed = await request(app).get('/api/report-os/bundles');
     expect(listed.status).toBe(200);
-    expect(listed.body.data.map((pack: { bundleId: string }) => pack.bundleId)).toEqual([JSON.parse(storedPack(5001).content).bundleRecord.bundleId]);
+    expect(listed.body.data.map((pack: { bundleId: string }) => pack.bundleId)).toEqual([storedPack(5001).record.bundleId]);
     expect(listed.body.meta).toBeUndefined();
-    expect(h.reads.select).toBe(2);
-  });
-
-  it('does not reveal an older public copy behind a private latest record, even across a page boundary', async () => {
-    const latest = storedPack(1, 13);
-    h.queued.select.push(Array.from({ length: 5000 }, (_, i) => ({ ...latest, id: 100_000 - i })), [storedPack(1)]);
-    const listed = await request(app).get('/api/report-os/bundles');
-    expect(listed.status).toBe(200);
-    expect(listed.body).toEqual({ data: [] });
     expect(h.reads.select).toBe(2);
   });
 
@@ -345,16 +349,17 @@ describe('report pack register execution context', () => {
     const statements: { text: string; values: unknown[] }[] = [];
     const client = { query: async (config: { text: string }, values: unknown[]) => {
       statements.push({ text: config.text, values });
-      return { rows: (pages.shift() ?? []).map(row => [row.id, row.title, row.content, row.createdAt]) };
+      return { rows: (pages.shift() ?? []).map(row => [row.id, row.record, row.createdAt]) };
     } };
     requestOverride = { client, db: drizzle(client as any) };
     const listed = await request(app).get('/api/report-os/bundles');
     expect(listed.status).toBe(200);
     expect(listed.body.data).toHaveLength(1);
     expect(statements).toHaveLength(2);
-    expect(statements[1].text).toContain('::timestamp');
-    expect(statements[1].text).toContain('::integer');
-    expect(statements[1].values).toContain('2026-10-13 12:00:00.123456');
+    expect(statements[1].text).toContain('::timestamptz');
+    expect(statements[1].text).toContain('::uuid');
+    expect(statements[1].values).toContain('2026-10-13 12:00:00.123456+00');
+    expect(statements[1].values).toContain(storedPack(5000).id);
     expect(statements.every(statement => !/count\s*\(/i.test(statement.text))).toBe(true);
   });
 
@@ -371,8 +376,11 @@ describe('report pack register refuses incomplete records', () => {
     expect(h.audit).not.toHaveBeenCalled();
   });
 
-  it.each(['{"bundleRecord":{"bundleId":', '{"bundleRecord":{"organizationId":99}}'])('refuses corrupt saved pack data instead of an empty register (%s)', async content => {
-    h.queued.select.push([{ title: 'bundle:old-record', content, createdAt: new Date() }]);
+  it.each([
+    ['an incomplete manifest', { bundleId: '00000000-0000-4000-8000-000000000001' }],
+    ['another organisation', { ...storedPack(1).record, organizationId: 99 }],
+  ])('refuses corrupt saved pack data instead of an empty register (%s)', async (_label, record) => {
+    h.queued.select.push([{ id: '00000000-0000-4000-8000-000000000001', record, createdAt: '2026-10-13 12:00:00+00' }]);
     const result = await request(app).get('/api/report-os/bundles');
     expect(result.status).toBe(503);
     expect(result.body.error.code).toBe('REPORT_BUNDLE_CORRUPT');
@@ -381,7 +389,7 @@ describe('report pack register refuses incomplete records', () => {
 });
 
 
-it('carries every contributing project into a saved account-calendar bundle manifest and its reserved stored copies', async () => {
+it('carries every contributing project into a saved account-calendar bundle manifest and its project rows', async () => {
   const calendar = { ...run(41,11,['Lifecycle legal assessment remains unavailable']), reportTypeId:'lifecycle.obligation_calendar',scopeType:'account',scopeId:'7',dependencySummary:{summary:{accessProjectIds:[11,12]}} };
   h.queued.select.push([calendar,run(42,11,[])],[{typeId:'lifecycle.obligation_calendar',label:'Lifecycle Obligation Calendar'},{typeId:'readiness.executive_digest',label:'Executive Readiness Digest'}],[{id:11},{id:12}]);
   h.respond.fn=(sql,arrayMode)=>arrayMode&&/select "id" from "project_intelligence_profiles"/.test(sql)?[[101]]:[];
@@ -389,9 +397,7 @@ it('carries every contributing project into a saved account-calendar bundle mani
   expect(result.status,JSON.stringify(result.body)).toBe(201);
   expect(result.body.data.projectIds).toEqual([11,12]);
   expect(result.body.data.items.find((item:{runId:number})=>item.runId===41)).toMatchObject({scopeType:'account',scopeId:'7',accessProjectIds:[11,12]});
-  expect(copies()).toHaveLength(2);
-  for (const copy of copies()) expect(JSON.parse(copy).bundleRecord).toEqual(result.body.data);
-  h.statements.forEach((sql,index)=>{
-    if (/^insert into "project_memory_entries"/.test(sql)) expect(boundInsertColumn(sql,h.params[index],'source_document_type')).toBe('report_os_state');
-  });
+  expect(packRows()).toHaveLength(1);
+  expect(JSON.parse(packRows()[0])).toEqual(result.body.data);
+  expect(linkParams('report_bundle_projects')[0]).toEqual(expect.arrayContaining([11, 12]));
 });

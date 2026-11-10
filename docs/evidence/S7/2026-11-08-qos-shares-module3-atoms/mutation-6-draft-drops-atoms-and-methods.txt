@@ -1,0 +1,8 @@
+ × server/services/ana/__tests__/cmc-quality-summary-tool-carries-atoms-and-methods.test.ts > the 2.3 draft carries the records it was composed from > names each source record by id and by its hash at compile 1952ms
+ × server/services/ana/__tests__/cmc-quality-summary-tool-carries-atoms-and-methods.test.ts > the 2.3 draft carries the records it was composed from > names the procedure with the status the register recorded, not a kinder one 5ms
+ × server/services/ana/__tests__/cmc-quality-summary-tool-carries-atoms-and-methods.test.ts > the 2.3 draft carries the records it was composed from > every atom in the draft is a record the program actually holds 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'map')
+AssertionError: expected undefined to deeply equal [ { …(4) } ]
+TypeError: out.lineage is not iterable
+      Tests  3 failed | 1 passed (4)

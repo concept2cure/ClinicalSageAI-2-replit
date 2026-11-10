@@ -1,0 +1,49 @@
+Command: npm run ci:lineage-save-gate
+Package script: node scripts/ci/check-lineage-save-gate.mjs
+Node runtime: installed Node 22
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:lineage-save-gate
+> node scripts/ci/check-lineage-save-gate.mjs
+
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:lineage-save-gate] ok  server/routes/authoring.router.ts
+[ci:lineage-save-gate] ok  server/services/authoring/authoring-documents.ts
+[ci:lineage-save-gate] ok  server/services/authoring/csr-import-into-document.ts
+[ci:lineage-save-gate] ok  server/services/protocol-development/protocol-development-service.ts
+[ci:lineage-save-gate] ok  server/services/biosketch/biosketch-service.ts
+[ci:lineage-save-gate] ok  server/routes/cerv2-sections.ts
+[ci:lineage-save-gate] ok  server/services/dmsp/dmsp-service.ts
+[ci:lineage-save-gate] ok  server/services/protocol-consent/protocol-consent-service.ts
+[ci:lineage-save-gate] ok  server/services/ana/artifactVersionStore.ts
+[ci:lineage-save-gate] ok  server/routes/batch-draft-routes.ts
+[ci:lineage-save-gate] ok  server/services/cerv2/kit-section-write.ts
+[ci:lineage-save-gate] ok  server/routes/c2c/artifacts.ts
+[ci:lineage-save-gate] ok  server/services/ana/AnaToolExecutor.ts
+[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts
+[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts
+[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts
+[ci:lineage-save-gate] ok  server/routes/q-sub.ts
+[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts
+[ci:lineage-save-gate] ok  server/services/compute/artifactWriteback.ts
+[ci:lineage-save-gate] ok  server/services/ana/verifiedSealService.ts
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+
+[ci:lineage-save-gate] FAIL server/services/chat-thread-helpers.ts
+  ✗ unguarded-writer: this file writes a `content` column — UPDATEing one, or INSERTing a row into a governed document table — and is neither GUARDED nor declared in NOT_PROSE. If it writes regulated prose, enlist the lineage gate in its transaction and add it to GUARDED; if the content is not prose, add it to NOT_PROSE with the reason.
+
+[ci:lineage-save-gate] FAIL server/services/c2c/charter-objectives.ts
+  ✗ reviewed-structured-intent: the source no longer matches its reviewed structured-content, actor, version-chain and same-transaction audit contract. Review the changed writer before renewing this classification.
+
+[ci:lineage-save-gate] 2 guarded path(s) no longer enforce lineage on save.
+Documents saved through them would carry no record of where their text came from,
+and nothing at runtime would report it. Restore the gate, or — if the path genuinely
+no longer writes prose — remove it from GUARDED in this script with a reason.
+
+
+Exact gate exit code: 1

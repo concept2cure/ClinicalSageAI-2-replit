@@ -1,0 +1,20 @@
+# Red at f3fa4ffdd (before the change): the five test files, failures and totals
+
+ × server/services/archive/__tests__/archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary .zip, and refuses one named .zip that carries HTML 9ms
+   → promise resolved "undefined" instead of rejecting
+ × client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault stages a .zip as one file (P-112) > offers a .zip for upload, and still says why it skips what it does not take 5ms
+   → expected 'the Vault does not take .zip' to be null
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion with caller/program identity intact 8ms
+   → expected 400 to be 201 // Object.is equality
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes sponsor-copy-0003.zip to canonical governed ingestion with caller/program identity intact 3ms
+   → expected 400 to be 201 // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip declared text/html, naming the types a .zip may be declared as 7ms
+   → expected true to be false // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > refuses a .zip whose bytes are not a zip container, whatever zip type was declared 1ms
+   → expected true to be false // Object.is equality
+ × server/utils/__tests__/fileSignature.test.ts > a .zip name binds a zip container (P-112) > accepts a zip container under each type a browser sends one as, and checks it as a zip 2ms
+   → expected 'application/x-zip-compressed' to be 'application/zip' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > the Vault takes a .zip as one file; the Data Room still opens it in the browser (P-112) 4ms
+   → expected [ '.pdf', '.docx', '.xlsx', …(17) ] to include '.zip'
+ Test Files  5 failed (5)
+      Tests  8 failed | 101 passed (109)

@@ -1,0 +1,11 @@
+MUTATION C2M4-any-200-settled in client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx (on the final code and tests, 2026-11-09T14:24:07.388132Z): replaced [if (done.data?.settled !== true || done.data.sequenceId !== f.seq.id || done.data.outcome !== outcome) {] with [if (false) {]
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a statement that changed after the dialog opened is not signed 553ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > S7: the act's refusal is shown inline, with the server's words; nothing is said settled 288ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a 200 without settled: true is not a success 5195ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a 200 for another sequence is not a success 5194ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a 200 the other way is not a success 5227ms
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a 200 an empty body is not a success 5162ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T2b — what is not signed, and what is not a success > a cleared answer without the statement opens no signature 127ms
+      Tests  4 failed | 3 passed | 21 skipped (28)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0 (expected aa9da32b57f3e6c981d6febb6d7a91d29febc1d6723f4db4005f6e16f87313f0)

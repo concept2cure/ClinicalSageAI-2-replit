@@ -1,0 +1,4 @@
+      Tests  1 failed | 8 passed (9)
+ FAIL  client/src/concept2cure/v2/__tests__/railOpensWithoutProject.test.ts > the rail with no project open > never reopens a recent project noted for another account, or after a tenant switch
+AssertionError: a tenant switch must forget the noted project: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -189,7 +189,8 @@ export function setUpPgliteApp(ddl: string, fixture: string) {
       CREATE TABLE users(id integer PRIMARY KEY,name text,email text,status text);
       CREATE TABLE organization_users(id serial PRIMARY KEY,organization_id integer,user_id integer,role text);
       CREATE TABLE client_workspaces(id integer PRIMARY KEY,organization_id integer);
-      CREATE TABLE projects(id integer PRIMARY KEY,organization_id integer,client_workspace_id integer,owner_id integer,created_by_id integer,status text,settings jsonb);
+      CREATE TABLE projects(id integer PRIMARY KEY,organization_id integer,client_workspace_id integer,owner_id integer,created_by_id integer,status text,settings jsonb,
+        parent_project_id integer); -- P-111 (b): the task admission reads a work project's filing project (task-project.ts canWorkOnProjectTasks)
       CREATE TABLE project_members(id serial PRIMARY KEY,organization_id integer,project_id integer,user_id integer,role text,status text);
       CREATE TABLE project_visibility_settings(project_id integer PRIMARY KEY,organization_id integer,visibility text);
       CREATE TABLE concept2cure_artifacts(id integer,organization_id integer,project_id integer);

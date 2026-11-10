@@ -218,6 +218,18 @@ describe('DocumentAuthoring — the Sources rail', () => {
     expect(screen.queryByText(/may have been deleted/)).toBeNull();
   });
 
+  it('lists a native source that could not be verified, with its reason, beside the sources that could (S12)', async () => {
+    mockApi({ sections: () => ok({ sources: [
+      citation({ state: 'unverifiable', reasonCode: 'NATIVE_SOURCE_ACCESS_UNAVAILABLE', source: null }),
+      citation({ citationId: 'c-plain', state: 'current' }),
+    ] }) });
+    await openSourcesRail();
+    const label = await screen.findByText('Source could not be verified');
+    expect(label.getAttribute('title')).toMatch(/\(NATIVE_SOURCE_ACCESS_UNAVAILABLE\), so it is not used for drafting or citing/);
+    expect(screen.getByText('Matches the source record as stored')).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t load this section’s sources/)).toBeNull();
+  });
+
   it('distinguishes a failed read from a section that cites nothing', async () => {
     mockApi({ sections: () => fail(500) });
     await openSourcesRail();

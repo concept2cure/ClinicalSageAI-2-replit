@@ -1,0 +1,77 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > counts a dimension nothing assessed as not assessed — not as absent 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > keeps an applicable evidence module nothing has assessed, as not assessed 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 0ms
+ × server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one required module of six not started: 90, in progress, and the gap is named 6ms
+   → expected 'nearly_ready' to be 'in_progress' // Object.is equality
+ × server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one module whose required set turns on an unstated fact: not assessed, in progress 2ms
+   → expected 'nearly_ready' to be 'in_progress' // Object.is equality
+ × server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > the risk class not determined, everything else shown: 90, in progress 1ms
+   → expected 'nearly_ready' to be 'in_progress' // Object.is equality
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > every dimension begun and 80 or more shown is still nearly ready, and 100 with no gap is ready 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one required module of six not started: 90, in progress, and the gap is named
+AssertionError: expected 'nearly_ready' to be 'in_progress' // Object.is equality
+
+Expected: "in_progress"
+Received: "nearly_ready"
+
+ ❯ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts:164:22
+    162|     });
+    163|     expect(sc.score).toBe(90);
+    164|     expect(sc.level).toBe('in_progress');
+       |                      ^
+    165|     expect(sc.topGaps).toContain('PMS plan is not started.');
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one module whose required set turns on an unstated fact: not assessed, in progress
+AssertionError: expected 'nearly_ready' to be 'in_progress' // Object.is equality
+
+Expected: "in_progress"
+Received: "nearly_ready"
+
+ ❯ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts:175:22
+    173|     });
+    174|     expect(sc.score).toBe(90);
+    175|     expect(sc.level).toBe('in_progress');
+       |                      ^
+    176|   });
+    177|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > the risk class not determined, everything else shown: 90, in progress
+AssertionError: expected 'nearly_ready' to be 'in_progress' // Object.is equality
+
+Expected: "in_progress"
+Received: "nearly_ready"
+
+ ❯ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts:185:22
+    183|     });
+    184|     expect(sc.score).toBe(90);
+    185|     expect(sc.level).toBe('in_progress');
+       |                      ^
+    186|   });
+    187|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+   Start at  17:03:22
+   Duration  774ms (transform 338ms, setup 116ms, import 287ms, tests 23ms, environment 0ms)
+

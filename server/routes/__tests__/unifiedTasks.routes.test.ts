@@ -74,7 +74,8 @@ vi.mock('../../db', async () => {
     if (sql.includes('SELECT ou.role')) {
       return params[0] === 2 && params[1] === 7 && h.currentRole ? [{ role: h.currentRole }] : [];
     }
-    if (sql.includes('SELECT id,client_workspace_id,status FROM projects')) return params[1] === 2 ? parents.filter(row => row.id === params[0]) : [];
+    // P-111 (b): the admission's locked row read also names parent_project_id.
+    if (/SELECT id,client_workspace_id,status(,parent_project_id)? FROM projects/.test(sql)) return params[1] === 2 ? parents.filter(row => row.id === params[0]) : [];
     if (sql.includes('FROM client_workspaces')) return params[1] === 2 && [71, 72].includes(Number(params[0])) ? [{ id: params[0] }] : [];
     // Repeated placeholders bind in SQL occurrence order: the reviewer comes
     // first; the outer organization is third from last and project is last.

@@ -12,8 +12,9 @@
  */
 
 import type { PoolClient } from 'pg';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import { regionalDeviceApplicationClassTypes, regionalDeviceApplicationClassOf, regionalDeviceApplicationClassForFiling } from '../../../shared/regulatory/filing-catalog.js';
-import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
+import { createSubmissionTx, SubmissionError } from '../../services/submission-service/submission-service.js';
 import {
   listProductTypes,
   productTypeForFilingType,
@@ -86,22 +87,6 @@ const CLIENT_TYPE_BY_PRODUCT: Record<string, string> = {
   ivd: 'ivd',
 };
 
-/** Wizard agency values → canonical submissions.primary_region. */
-const AGENCY_TO_REGION: Record<string, string> = {
-  FDA: 'fda',
-  EMA: 'eu',
-  PMDA: 'jp',
-  MHRA: 'uk',
-  HEALTH_CANADA: 'ca',
-  TGA: 'au',
-  NMPA: 'cn',
-  SWISSMEDIC: 'ch',
-  ANVISA: 'br',
-  CDSCO: 'in',
-  MFDS: 'kr',
-  HSA: 'sg',
-};
-
 /** Region each application type files in when the agency doesn't say. Total
  *  over DRUG_APPLICATION_TYPES, so a region always resolves deterministically. */
 const REGION_BY_APPLICATION: Record<string, string> = {
@@ -114,13 +99,20 @@ const REGION_BY_APPLICATION: Record<string, string> = {
   jnda: 'jp',
 };
 
+/** The existing submission storage vocabulary, resolved through the shared
+ * agency/region identity instead of a second set of aliases. */
+export function submissionRegionFor(applicationType: string, primaryAgency: string): string | undefined {
+  const region = canonicalRegionOf(primaryAgency.trim().replace(/\s+/g, '_'));
+  return region ? region === 'US' ? 'fda' : region.toLowerCase() : REGION_BY_APPLICATION[applicationType.toLowerCase()];
+}
+
 /**
  * Ensure the canonical submission spine for a drug-program intake, INSIDE the
  * caller's transaction, anchored to the program it is for.
  *
  * The spine belongs to ONE program: `submissions.program_id`
  * (migrations/20260925b, LX-22). A submission already anchored to THIS program
- * (and of this application type) is reused, so a replayed intake never forks a
+ * (and of this application type and region) is reused, so a replayed intake never forks a
  * second spine. Nothing else is: this used to adopt any submission of the
  * organization whose product_name or title matched, so a second project for
  * the same product silently took the first project's filing, and both then
@@ -153,20 +145,25 @@ export async function ensureSubmissionSpine(params: {
   clientType?: string;
 }): Promise<{ id: number; created: boolean }> {
   const { client, orgId, userId, programId, name, productName, applicationType } = params;
+  const region = submissionRegionFor(applicationType, params.primaryAgency);
+  const requestedRegion = canonicalRegionOf(region);
+  if (!region || !requestedRegion) {
+    throw new SubmissionError('VALIDATION', 'The filing market could not be resolved. Confirm its agency and application type before creating or reusing this filing. Nothing was added.');
+  }
   const existing = await client.query(
-    `SELECT id FROM submissions
+    `SELECT id, primary_region FROM submissions
       WHERE organization_id = $1 AND program_id = $2 AND lower(application_type) = $3
         AND deleted_at IS NULL
-      ORDER BY updated_at DESC NULLS LAST, id DESC
-      LIMIT 1`,
-    [orgId, programId, applicationType],
+      ORDER BY updated_at DESC NULLS LAST, id DESC`,
+    [orgId, programId, applicationType.toLowerCase()],
   );
-  if (existing.rows.length > 0) {
-    return { id: Number((existing.rows[0] as { id: number | string }).id), created: false };
+  if (existing.rows.some(row => !canonicalRegionOf(row.primary_region))) {
+    throw new SubmissionError('INVALID_STATE', 'An existing filing has an unverified market. Confirm its recorded region before creating or reusing this filing. Nothing was added.');
   }
-  const region =
-    AGENCY_TO_REGION[params.primaryAgency.toUpperCase().replace(/\s+/g, '_')] ??
-    REGION_BY_APPLICATION[applicationType];
+  const matching = existing.rows.find(row => canonicalRegionOf(row.primary_region) === requestedRegion);
+  if (matching) {
+    return { id: Number(matching.id), created: false };
+  }
   const row = await createSubmissionTx(
     client,
     {

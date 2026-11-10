@@ -1,0 +1,108 @@
+# S5d immunogenicity red: server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts in the working tree before the change (trunk's immunogenicity engine). 45 of 58 fail, all on assertions; the 13 controls pass.
+
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'assess_immunogenicity_risk' reaches its engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'design_ada_assay_strategy' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'classify_immunogenicity_clinical_impa…' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'design_nab_assay' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'plan_immunogenicity_sampling' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six immunogenicity tools keep their stated results > 'assess_immunogenicity_comparability' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_risk' keeps each boolean answer as stated > hasEndogenousCounterpart reads not_stated when omitted or null, and is refused when malformed 14ms
+   → expected { Object (drugName, productType, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_risk' keeps each boolean answer as stated > endogenousNonRedundant reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (drugName, productType, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_risk' keeps each boolean answer as stated > hasImmunogenicImpurities reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (drugName, productType, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_risk' keeps each boolean answer as stated > formulationRisk reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (drugName, productType, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_risk' keeps each boolean answer as stated > concomitantImmunosuppression reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (drugName, productType, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'design_ada_assay_strategy' keeps each boolean answer as stated > highSolubleTarget reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (drugName, recommendedPlatform, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'design_ada_assay_strategy' keeps each boolean answer as stated > isMonoclonalAntibody reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (drugName, recommendedPlatform, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > pkImpact reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > neutralizingEfficacyLoss reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > hypersensitivity reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > igeMediated reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > endogenousCrossReactivity reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > endogenousLifeSustaining reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > persistentADA reads not_stated when omitted or null, and is refused when malformed 5ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > highTiter reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'classify_immunogenicity_clinical_impa…' keeps each boolean answer as stated > lifeThreateningIndication reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { drugName: '(unnamed product)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'design_nab_assay' keeps each boolean answer as stated > actsThroughCellReceptor reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, recommendedFormat, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'design_nab_assay' keeps each boolean answer as stated > cellBasedFeasible reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, recommendedFormat, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'design_nab_assay' keeps each boolean answer as stated > endogenousNonRedundant reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, recommendedFormat, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > analyticalComparable reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > affectsAggregation reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > affectsGlycosylation reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > affectsFormulation reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > affectsImpurities reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > 'assess_immunogenicity_comparability' keeps each boolean answer as stated > comparativeClinicalStudyPlanned reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { Object (drugName, context, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > plan_immunogenicity_sampling reports its required boolean > keeps the stated answer and refuses an omitted or malformed one 1ms
+   → expected undefined to deeply equal { endogenousNonRedundant: true }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > refuses 'productType' (case 1) 2ms
+   → design_ada_assay_strategy productType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > refuses 'preferredPlatform' (case 2) 1ms
+   → design_ada_assay_strategy preferredPlatform: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > refuses 'targetSensitivity_ng_per_mL' (case 3) 1ms
+   → design_ada_assay_strategy targetSensitivity_ng_per_mL: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > refuses 'targetSensitivity_ng_per_mL' (case 4) 1ms
+   → design_ada_assay_strategy targetSensitivity_ng_per_mL: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > refuses 'targetSensitivity_ng_per_mL' (case 5) 1ms
+   → design_ada_assay_strategy targetSensitivity_ng_per_mL: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy refuses what it cannot read, by field > asks for a missing productType by name 1ms
+   → design_ada_assay_strategy productType: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy says what an unstated or inferred input leaves > names an unstated soluble target and an inferred mAb status 1ms
+   → expected 'A bridging electrochemiluminescence (…' to match /Whether a high soluble target or shed…/
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy says what an unstated or inferred input leaves > says the sensitivity target was not stated, and uses a stated one 0ms
+   → expected 'Target assay sensitivity is 100 ng/mL…' to match /No target was stated/
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_ada_assay_strategy says what an unstated or inferred input leaves > keeps the stated soluble-target and mAb answers 0ms
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > classify_immunogenicity_clinical_impact names an unstated life-threatening indication > adds a monitoring line that names it, and none when it is stated false 0ms
+   → expected 'Perform integrated PK–ADA analysis (t…' to match /lifeThreateningIndication\) is not st…/
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > classify_immunogenicity_clinical_impact names an unstated life-threatening indication > does not weigh efficacy loss as tolerable while the severity is undetermined and could be critical 1ms
+   → expected 'Perform integrated PK–ADA analysis (t…' not to match /loss of efficacy may be tolerable/
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > design_nab_assay says when the receptor fact was inferred > names the inference where it decides the format 1ms
+   → expected 'The mechanism is binding of a soluble…' to match /actsThroughCellReceptor is not stated…/
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > assess_immunogenicity_risk does not call an unstated redundancy redundant > names the redundancy fact in the counterpart concern 1ms
+   → expected 'Potential cross-reactivity with the e…' to match /Whether the counterpart is non-redund…/
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_immunogenicity_risk' 1ms
+   → expected 1347 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_ada_assay_strategy' 0ms
+   → expected 1218 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'classify_immunogenicity_clinical_impa…' 0ms
+   → expected 1298 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_nab_assay' 0ms
+   → expected 1366 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_immunogenicity_sampling' 0ms
+   → expected 1516 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_immunogenicity_comparability' 0ms
+   → expected 1366 to be less than or equal to 1024
+ × server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > names the input no function reads, and the sensitivity it uses when none is stated 0ms
+   → expected 'Development phase (optional). Drives …' to match /Not read/
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_immunogenicity_risk among the tools selected for "How immunogenic is our humanized mAb likely to be?" 5ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps design_ada_assay_strategy among the tools selected for "Design an ADA assay strategy with screening and confirmatory cut points" 6ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps classify_immunogenicity_clinical_impact among the tools selected for "ADA are causing loss of efficacy and infusion reactions; grade the clinical impact" 10ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps design_nab_assay among the tools selected for "Should our neutralizing antibody assay be cell-based or competitive ligand binding?" 5ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps plan_immunogenicity_sampling among the tools selected for "Build an ADA sampling schedule for a 52-week weekly dosing study" 4ms
+ ✓ server/services/ana/__tests__/immunogenicity-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_immunogenicity_comparability among the tools selected for "Do we need a clinical immunogenicity study after this manufacturing change?" 4ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 45 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  45 failed | 13 passed (58)

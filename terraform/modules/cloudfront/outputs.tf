@@ -25,3 +25,8 @@ output "spa_security_headers" {
     config   = aws_cloudfront_response_headers_policy.spa.security_headers_config[0]
   }
 }
+
+output "web_acl_arn" {
+  description = "The distribution's web ACL (P-11)"
+  value       = aws_wafv2_web_acl.this.arn
+}

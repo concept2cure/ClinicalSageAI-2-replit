@@ -1,0 +1,1040 @@
+{
+  "base": "http://127.0.0.1:5100",
+  "email": "ana.author@concept2cure.pro",
+  "program": "95249590-7d36-442f-a317-211d243c52e1",
+  "browser": "141.0.7390.37",
+  "screens": {
+    "submission-center-1440-light": {
+      "file": "submission-center-1440-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-1440-light": {
+      "label": "Show the organization's submissions"
+    },
+    "submission-center-organization-1440-light": {
+      "file": "submission-center-organization-1440-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. No sequence yet.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND) · IND · FDA (US)[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show this project's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-back-1440-light": {
+      "label": "Show this project's submissions"
+    },
+    "submission-center-sequences-1440-light": {
+      "file": "submission-center-sequences-1440-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "div.pj-card",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0001\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "forms-1440-light": {
+      "url": "/concept2cure/ind-checklist?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": null,
+      "heading": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Initial IND"
+    },
+    "compile-1440-light": {
+      "url": "/concept2cure/ectd-compile?program=95249590-7d36-442f-a317-211d243c52e1",
+      "heading": "Compile & Export eCTD"
+    },
+    "submission-center-1440-dark": {
+      "file": "submission-center-1440-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-1440-dark": {
+      "label": "Show the organization's submissions"
+    },
+    "submission-center-organization-1440-dark": {
+      "file": "submission-center-organization-1440-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. No sequence yet.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND) · IND · FDA (US)[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show this project's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-back-1440-dark": {
+      "label": "Show this project's submissions"
+    },
+    "submission-center-sequences-1440-dark": {
+      "file": "submission-center-sequences-1440-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 322,
+          "w": 450,
+          "top": 80
+        },
+        {
+          "el": "header.ph",
+          "x": 322,
+          "w": 1060,
+          "top": 112
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 322,
+          "w": 1060,
+          "top": 187
+        },
+        {
+          "el": "div.sc-context",
+          "x": 322,
+          "w": 1060,
+          "top": 253
+        },
+        {
+          "el": "div.tabs",
+          "x": 322,
+          "w": 1060,
+          "top": 305
+        },
+        {
+          "el": "div.pj-card",
+          "x": 322,
+          "w": 1060,
+          "top": 365
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 322,
+        "w": 1060,
+        "h": 36
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0001\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "forms-1440-dark": {
+      "url": "/concept2cure/ind-checklist?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": null,
+      "heading": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Initial IND"
+    },
+    "compile-1440-dark": {
+      "url": "/concept2cure/ectd-compile?program=95249590-7d36-442f-a317-211d243c52e1",
+      "heading": "Compile & Export eCTD"
+    },
+    "submission-center-390-light": {
+      "file": "submission-center-390-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 319
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 384
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 500
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 16,
+          "w": 358,
+          "top": 568
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-390-light": {
+      "label": "Show the organization's submissions"
+    },
+    "submission-center-organization-390-light": {
+      "file": "submission-center-organization-390-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. No sequence yet.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 246
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 311
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 427
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 16,
+          "w": 358,
+          "top": 495
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND) · IND · FDA (US)[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show this project's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-back-390-light": {
+      "label": "Show this project's submissions"
+    },
+    "submission-center-sequences-390-light": {
+      "file": "submission-center-sequences-390-light.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 319
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 384
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 500
+        },
+        {
+          "el": "div.pj-card",
+          "x": 16,
+          "w": 358,
+          "top": 568
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(173, 81, 50)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0001\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "forms-390-light": {
+      "url": "/concept2cure/ind-checklist?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": null,
+      "heading": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Initial IND"
+    },
+    "compile-390-light": {
+      "url": "/concept2cure/ectd-compile?program=95249590-7d36-442f-a317-211d243c52e1",
+      "heading": "Compile & Export eCTD"
+    },
+    "submission-center-390-dark": {
+      "file": "submission-center-390-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 319
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 384
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 500
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 16,
+          "w": 358,
+          "top": 568
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-390-dark": {
+      "label": "Show the organization's submissions"
+    },
+    "submission-center-organization-390-dark": {
+      "file": "submission-center-organization-390-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. No sequence yet.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 246
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 311
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 427
+        },
+        {
+          "el": "section.pj-sec",
+          "x": 16,
+          "w": 358,
+          "top": 495
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions (selected)",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND) · IND · FDA (US)[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show this project's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "toggle-back-390-dark": {
+      "label": "Show this project's submissions"
+    },
+    "submission-center-sequences-390-dark": {
+      "file": "submission-center-sequences-390-dark.png",
+      "url": "/concept2cure/submission-center?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": "submission-center",
+      "title": "Submission Center",
+      "sub": "IND · FDA (US), planning. 1 sequence: 0000, assembling.",
+      "back": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "actions": [
+        "btn ghost: Forms and letters",
+        "btn ghost: Compile & export",
+        "btn primary: New submission"
+      ],
+      "areaDisplay": "block",
+      "childrenInOrder": [
+        {
+          "el": "button.pj-back",
+          "x": 16,
+          "w": 358,
+          "top": 68
+        },
+        {
+          "el": "header.ph",
+          "x": 16,
+          "w": 358,
+          "top": 119
+        },
+        {
+          "el": "div.sp-starters",
+          "x": 16,
+          "w": 358,
+          "top": 319
+        },
+        {
+          "el": "div.sc-context",
+          "x": 16,
+          "w": 358,
+          "top": 384
+        },
+        {
+          "el": "div.tabs",
+          "x": 16,
+          "w": 358,
+          "top": 500
+        },
+        {
+          "el": "div.pj-card",
+          "x": 16,
+          "w": 358,
+          "top": 568
+        }
+      ],
+      "oneColumn": true,
+      "tabs": [
+        "Submissions",
+        "Planner",
+        "Builder",
+        "Required deliverables",
+        "Sequences (selected)",
+        "Validation",
+        "Shadow review",
+        "Dispatch"
+      ],
+      "suggestions": [
+        "Where does this submission stand?",
+        "What blocks dispatch?",
+        "Plan the next sequence"
+      ],
+      "context": "Submission[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) · IND · FDA (US)Show the organization's submissions",
+      "contextRect": {
+        "x": 16,
+        "w": 358,
+        "h": 100
+      },
+      "accentStrong": "rgb(232, 145, 111)",
+      "orangeFills": [
+        "button.btn.primary \"New submission\"",
+        "button.sp-primary.sc-btn \"Start sequence 0001\""
+      ],
+      "horizontalOverflow": 0,
+      "documentOverflow": 0,
+      "pageErrors": []
+    },
+    "forms-390-dark": {
+      "url": "/concept2cure/ind-checklist?program=95249590-7d36-442f-a317-211d243c52e1",
+      "workArea": null,
+      "heading": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — Initial IND"
+    },
+    "compile-390-dark": {
+      "url": "/concept2cure/ectd-compile?program=95249590-7d36-442f-a317-211d243c52e1",
+      "heading": "Compile & Export eCTD"
+    }
+  }
+}

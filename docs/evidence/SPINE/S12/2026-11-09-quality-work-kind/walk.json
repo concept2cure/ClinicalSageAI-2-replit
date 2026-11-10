@@ -1,0 +1,32 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T08:37:33.369Z",
+  "steps": [
+    {
+      "name": "a Quality work project, through the one intake",
+      "status": 200
+    },
+    {
+      "name": "the card lists it with its kind, as a door to Quality",
+      "title": "Open Quality on this project",
+      "words": "Drug product QAQuality · JM Smith"
+    },
+    {
+      "name": "clicking it opens the Quality area",
+      "url": "/concept2cure/quality?program=6065271c-d4b0-4936-aad1-02855423a738"
+    },
+    {
+      "name": "the same at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/c2c/projects (quality)",
+      "status": 200,
+      "workKind": "quality"
+    }
+  ],
+  "finishedAt": "2026-11-09T08:37:45.526Z"
+}

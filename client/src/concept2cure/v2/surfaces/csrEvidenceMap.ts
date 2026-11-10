@@ -16,9 +16,10 @@
  * reviewer's attestations. The server re-verifies every byte.
  */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, markupRanges, placeholderIn, quotedPlaceholder, reportedDisplayAt,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
   type CsrTableKey, type RetainedScientificRun, type ScientificCellClaim, type ScientificReviewSubmission,
 } from '@shared/authoring/csr-scientific-review';
+import { looksLikeHtml } from '@shared/authoring/plain-text-html';
 
 export interface CellRef {
   runId: string; studyId: string; table: CsrTableKey; row: number; column: number;
@@ -68,18 +69,21 @@ export function claimableCells(runs: readonly RetainedScientificRun[]): CellRef[
 export function figureOccurrences(section: SavedSection, cells: readonly CellRef[]): FigureOccurrence[] {
   const content = section.content ?? '';
   if (!content.trim()) return [];
-  const markup = markupRanges(content);
+  const view = numericalText(content, looksLikeHtml(content) ? 'encoded' : 'text');
   const byDisplay = new Map<string, CellRef[]>();
   for (const cell of cells) byDisplay.set(cell.value, [...(byDisplay.get(cell.value) ?? []), cell]);
   const found = new Map<string, FigureOccurrence>();
   for (const [display, candidates] of byDisplay) {
-    for (let at = content.indexOf(display); at !== -1; at = content.indexOf(display, at + 1)) {
-      const end = at + display.length;
-      // The shared rule the server verifies a claim by (reportedDisplayAt).
-      const possible = candidates.filter((c) => reportedDisplayAt(content, at, display, c.header, markup));
-      if (!possible.length) continue;
-      const key = `${section.id}:${at}:${end}`;
-      found.set(key, { key, sectionId: section.id, start: at, end, display, candidates: possible });
+    const byHeader = new Map<string, ReturnType<typeof reportedDisplaySpans>>();
+    for (const candidate of candidates) {
+      let spans = byHeader.get(candidate.header);
+      if (!spans) { spans = reportedDisplaySpans(content, display, candidate.header, view); byHeader.set(candidate.header, spans); }
+      for (const { start, end } of spans) {
+        const key = `${section.id}:${start}:${end}`;
+        const occurrence = found.get(key);
+        if (occurrence) occurrence.candidates.push(candidate);
+        else found.set(key, { key, sectionId: section.id, start, end, display, candidates: [candidate] });
+      }
     }
   }
   return [...found.values()].sort((a, b) => a.start - b.start || a.end - b.end);

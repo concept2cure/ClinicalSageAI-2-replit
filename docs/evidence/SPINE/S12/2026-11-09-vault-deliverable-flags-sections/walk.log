@@ -1,0 +1,5 @@
+ok  seeded on the local database: v1, v2 superseding it in review, and a span in the section drafted from v1
+ok  while version 2 is in review, the section is not listed
+ok  once version 3 is approved, the project lists the section, naming 3.0 and passing over 2.0 in review
+ok  Evidence's data room names the section, the version it was drafted from and the approved one
+ok  the same at 390 dark

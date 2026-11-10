@@ -1,0 +1,10 @@
+terraform/stack | validate ok | Success! 84 passed, 0 failed.
+terraform/modules/alb | validate ok | Success! 4 passed, 0 failed.
+terraform/modules/cloudfront | validate ok | Success! 15 passed, 0 failed.
+terraform/modules/github-deploy-roles | validate ok | Success! 10 passed, 0 failed.
+terraform/modules/compliance-evidence | validate ok | Success! 5 passed, 0 failed.
+terraform/modules/vpc-secure | validate ok | Success! 3 passed, 0 failed.
+Success! The configuration is valid.
+Success! The configuration is valid.
+[terraform-preflight-proof] every check holds.
+

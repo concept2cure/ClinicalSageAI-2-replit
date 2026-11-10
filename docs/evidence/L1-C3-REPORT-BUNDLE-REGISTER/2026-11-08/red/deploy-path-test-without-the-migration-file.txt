@@ -1,0 +1,14 @@
+ ✓ server/__tests__/migrations/report-bundle-register-deploy-path.pglite.test.ts > migrations/20261108_report_bundle_register.sql > is in the deploy set, ahead of the isolation tail 2ms
+ × server/__tests__/migrations/report-bundle-register-deploy-path.pglite.test.ts > migrations/20261108_report_bundle_register.sql > carries every legacy pack once, with its runs and projects, and re-runs as a no-op 1624ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+ × server/__tests__/migrations/report-bundle-register-deploy-path.pglite.test.ts > migrations/20261108_report_bundle_register.sql > refuses a row whose manifest names another pack or organisation 1220ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+ × server/__tests__/migrations/report-bundle-register-deploy-path.pglite.test.ts > migrations/20261108_report_bundle_register.sql > fails the deploy when a legacy pack is silently not carried 1265ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+ × server/__tests__/migrations/report-bundle-register-deploy-path.pglite.test.ts > migrations/20261108_report_bundle_register.sql > under the set's tenant sweep, an organisation reads and writes only its own packs 1311ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql' }
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql' }
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261108_report_bundle_register.sql'

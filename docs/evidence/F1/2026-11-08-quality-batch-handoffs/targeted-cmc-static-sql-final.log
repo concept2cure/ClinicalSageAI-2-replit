@@ -1,0 +1,22 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: false) 5ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project (lock: true) 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: false) 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch (lock: true) 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > retains the complete evidence projection and fingerprint in the final locked read 4ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed 3ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  09:46:55
+   Duration  1.81s (transform 67ms, setup 63ms, import 41ms, tests 1.48s, environment 0ms)
+

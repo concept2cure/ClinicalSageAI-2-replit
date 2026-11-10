@@ -6,7 +6,10 @@
  */
 export interface DocumentIntakeFormat {
   extension: string;
-  /** 'archive': opened in the browser, never sent; each file inside is its own upload (archive-intake.ts). */
+  /**
+   * 'archive': in a conversation or the Data Room, opened in the browser and never sent; each file inside is its own
+   * upload (archive-intake.ts). In the Vault (P-112), stored as one file, hashed and bounded, and never opened.
+   */
   textExtraction: 'pdf' | 'docx' | 'xlsx' | 'utf8' | 'image-ocr' | 'dataset-structure' | 'archive' | 'none';
   /** A signature/byte-shape check exists for this format's declared MIME. */
   byteCheckSupported: boolean;
@@ -34,8 +37,10 @@ export const DOCUMENT_INTAKE_FORMATS: readonly DocumentIntakeFormat[] = [
     limitation: 'The define.xml stylesheet, stored and read as raw text. It is not applied or validated.' },
   { extension: '.pptx', textExtraction: 'none', byteCheckSupported: true, chat: false, vault: true,
     limitation: 'Stored and hashed within the archive limit; slide text is not read.' },
-  { extension: '.zip', textExtraction: 'archive', byteCheckSupported: false, chat: true, vault: false,
-    limitation: 'Opened in the browser: each file inside is uploaded, checked and read on its own, within bounds on size, count and compression. The archive itself is not stored.' },
+  // The Vault admits a .zip as one file (P-112, 2026-11-09; MR-08 Stage 3 step 3). It is bound to the zip
+  // container (upload-name-bindings.ts) and to the one archive limit (safeZip, through assertUploadSafe).
+  { extension: '.zip', textExtraction: 'archive', byteCheckSupported: true, chat: true, vault: true,
+    limitation: 'In a conversation or the Data Room, opened in the browser: each file inside is uploaded, checked and read on its own, within bounds on size, count and compression, and the archive itself is not stored. In the Vault, the archive is stored as one file, hashed and checked against the same bounds, and is not opened.' },
   { extension: '.doc', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Legacy admission retained; no canonical DOC text parser.' },
   { extension: '.xls', textExtraction: 'none', byteCheckSupported: true, chat: true, vault: true, limitation: 'Existing landing picker and Vault legacy admission retained; no canonical XLS text parser.' },
   { extension: '.rtf', textExtraction: 'utf8', byteCheckSupported: true, chat: false, vault: true, limitation: 'Legacy admission retained; raw markup text, not an RTF document parser.' },

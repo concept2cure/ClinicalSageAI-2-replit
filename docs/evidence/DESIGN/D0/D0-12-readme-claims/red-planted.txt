@@ -1,0 +1,11 @@
+$ planted in app-v2.css: .zz-planted{font-size:11px;text-transform:capitalize;transition:color var(--dur)} .zz-planted:hover{transform:translateY(-1px)}
+ ✓ client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts > the design-system README claims, held as ratchets (D0 review fix 14) > counts each kind as the README states it 2ms
+ × client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts > the design-system README claims, held as ratchets (D0 review fix 14) > smallType never rises above its baseline 74ms
+ × client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts > the design-system README claims, held as ratchets (D0 review fix 14) > hoverMotion never rises above its baseline 89ms
+ × client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts > the design-system README claims, held as ratchets (D0 review fix 14) > easelessTransition never rises above its baseline 83ms
+ × client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts > the design-system README claims, held as ratchets (D0 review fix 14) > titleCase never rises above its baseline 71ms
+AssertionError: New text below the 12px floor (use --fs-caption or larger): 1201 against a baseline of 1200.: expected 1201 to be less than or equal to 1200
+AssertionError: New a hover that moves (a hover changes fill, edge or ink only): 39 against a baseline of 38.: expected 39 to be less than or equal to 38
+AssertionError: New a transition without var(--ease): 111 against a baseline of 110.: expected 111 to be less than or equal to 110
+AssertionError: New text-transform: capitalize (sentence case everywhere): 26 against a baseline of 25.: expected 26 to be less than or equal to 25
+      Tests  4 failed | 1 passed (5)

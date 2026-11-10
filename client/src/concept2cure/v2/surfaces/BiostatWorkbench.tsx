@@ -1,8 +1,31 @@
 /**
- * Biostatistics Workbench — drives the REAL statistical engine instead of a
- * client-side normal approximation.
+ * The defensibility assessment and the design calculators — two sections of the
+ * ONE Biostatistics surface (`surfaces/Biostatistics.tsx`).
  *
- * Registry id: `biostat-workbench`.
+ * ── This was a second surface, and is not one any more (2026-11-09) ──────────
+ * It was registered as `biostat-workbench` from 2026-07-21 to 2026-11-09. Why
+ * it existed, and why it stopped needing to:
+ *
+ *  1. 2026-07-21 (`3b3299d733`) it was created — "workbench driving the real
+ *     statistical engine (not client approx)" — BECAUSE `Biostatistics.tsx`
+ *     carried its own ~520-line statistics engine in the browser, with its own
+ *     Abramowitz & Stegun CDF and four copies of the sizing arithmetic that did
+ *     not agree with each other.
+ *  2. 2026-08 `docs/SURFACE_CONSOLIDATION_2026-08.md` §5 decided the merge:
+ *     "Survivor: `biostatistics`. Fold the workbench in as a tab; it has no AnA
+ *     at all today." It was not carried out.
+ *  3. 2026-10-12 (`d1a742b5d6`) deleted the browser's engine from
+ *     `Biostatistics.tsx`, which now calls the same server engines this file
+ *     does. The reason for two surfaces ended there, leaving two registered
+ *     destinations with the same `layoutMode`, the same icon, the same group
+ *     and overlapping `apiPrefixes`, joined by a ghost button — and this one
+ *     took `SurfaceViewProps` and dropped `onAsk`, so AnA could not be reached
+ *     from it at all.
+ *
+ * The two capabilities are now exported as sections and mounted on the
+ * survivor; the page shell, the back button and the surface registration are
+ * gone. CLAUDE.md: "Zero duplication. One canonical implementation per
+ * capability." Pinned by `__tests__/biostatIsOneSurface.test.tsx`.
  *
  * Wired to two real backends:
  *   • Statistical defensibility (server/routes/statistical-defensibility.ts,
@@ -33,13 +56,12 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
+  IVD_CALCULATOR_BASE,
   buildRequestBody,
   calculatorEndpoint,
   calculatorResultKey,
@@ -49,13 +71,39 @@ import {
   type CalculatorField,
 } from './biostatCalculators';
 import '../styles/project-home-v2.css';
-import { C2CToast, useToast } from '../toast';
+
 import type { FireToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
-import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
-import { BiostatKnowledgePanel } from './biostatKnowledge';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
+
+/**
+ * Where a computed result belongs in the filing.
+ *
+ * Every hand-off said `module: 'M5'` from 2026-07-21 to 2026-11-09, the eleven
+ * CLSI calculators included — and a 510(k), De Novo, PMA or IVDR filing has no
+ * CTD Module 5. It files an eSTAR or a technical file, which is why every
+ * device placement in `services/biostatistics-bridge/filing-placement.ts` is an
+ * `ESTAR(...)` rule with `module: null`, and why `BridgePlacement.module` is
+ * typed `'M1' | … | 'M5' | null`. That catalog's header names this hardcode as
+ * the defect it was written to end; the sibling surface was fixed then and the
+ * calculators were not, because they had no project in scope until the two
+ * surfaces merged.
+ *
+ * Two things make a result a device result: the project files a device
+ * application, or the engine is one of the CLSI analytical/clinical-performance
+ * estimators, which are not clinical study reports in anyone's filing. The
+ * column is `text('module')` and its own comment reads "ind-wizard, coauthor,
+ * cmc, etc." — 'Risk-based monitoring' and 'eCTD co-author' are already in it —
+ * so naming the eSTAR is within its purpose, and nothing parses this into a CTD
+ * placement (the eSTAR and PMA mappers place by their own keys).
+ *
+ * 'M5' remains the answer for a drug design engine, as it has been throughout.
+ */
+export function filingModuleForCalculator(calc: Calculator, deviceProject?: boolean): string {
+  const clsi = calc.base === IVD_CALCULATOR_BASE;
+  return deviceProject || clsi ? 'eSTAR performance' : 'M5';
+}
 
 /** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
 interface JudgedDimension {
@@ -297,7 +345,7 @@ function Field({ field, value, error, onChange }: {
   );
 }
 
-function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToast: FireToast; onNav?: (id: string) => void }) {
+function CalculatorPanel({ calc, fireToast, onNav, deviceProject }: { calc: Calculator; fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
   const handoff = useAuthoringHandoff();
   const saveToAuthoring = handoff.save;
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
@@ -350,13 +398,13 @@ function CalculatorPanel({ calc, fireToast, onNav }: { calc: Calculator; fireToa
     });
     const outcome = await saveToAuthoring({
       title: `${calc.title} — engine result`,
-      module: 'M5',
+      module: filingModuleForCalculator(calc, deviceProject),
       code: `biostat.${calc.id}`,
       content: html,
       subject: 'the computed result',
     });
     if (outcome.isCurrent() && !outcome.ok && outcome.phase === 'blocked') fireToast(outcome.message, 'error');
-  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked]);
+  }, [acceptedResult, calc, rows, tables, provenance, fireToast, saveToAuthoring, handoff.blocked, deviceProject]);
 
   const run = useCallback(async () => {
     const generation = discardResult();
@@ -594,9 +642,14 @@ function DefensibilityResult({ asmtRes }: { asmtRes: Defensibility }) {
   );
 }
 
-export function BiostatWorkbench(props: SurfaceViewProps) {
-  const [toast, fireToast] = useToast();
-
+/**
+ * Reviewer-risk defensibility — a section of the Biostatistics surface.
+ *
+ * It was the top half of a second surface, `biostat-workbench`, until
+ * 2026-11-09. See this module's header for why that surface existed and why it
+ * no longer does.
+ */
+export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
   // The engine's own inputs (ana-biostats StatisticalInput). It judges the
   // design it computes from these, so what it needs is what the form asks for.
   const [asmt, setAsmt] = useState({
@@ -606,62 +659,6 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
   });
   const [asmtRes, setAsmtRes] = useState<Defensibility | null>(null);
   const [asmtBusy, setAsmtBusy] = useState(false);
-
-  const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
-  const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
-
-  /* AnA can open any design engine by its name — the same tile click a person
-     makes — so a drive can land on the right calculator before its inputs are
-     discussed. The registry (CALCULATORS) is static, so no not-ready state;
-     opening an engine is view-state only — computing a result stays deliberate. */
-  useSurfaceActionHandlers('biostat-workbench', {
-    'biostat-workbench.select-calculator': (params) => {
-      const raw = String(params.calculator ?? '').trim();
-      if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
-      const needle = raw.toLowerCase();
-      const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
-      const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
-      const hits = byId.length ? byId
-        : byTitle.length ? byTitle
-        : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
-      if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
-      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
-      const c = hits[0];
-      if (activeId === c.id) return { ok: true, detail: `Already on ${c.title}` };
-      setActiveId(c.id);
-      return { ok: true, detail: `Opened ${c.title}` };
-    },
-  });
-
-  /* What AnA can see of this screen: which engine is selected, what it computes
-     and what it needs. Without it, "is this the right design?" on the
-     group-sequential screen is answered from the message text alone, and she
-     cannot know the user is looking at boundaries rather than at MMRM sizing.
-     The calculator's own `about` prose is reused rather than restated, so this
-     cannot drift from what the user is reading. */
-  const anaContext = useMemo(
-    () => ({
-      summary: `Biostatistics design calculators, "${active.title}" selected — ${active.subtitle}.`,
-      facts: {
-        calculatorId: active.id,
-        endpoint: calculatorEndpoint(active),
-        computes: active.about,
-        requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
-        optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),
-        availableCalculators: CALCULATORS.map(c => c.title),
-        defensibilityAssessed: asmtRes !== null,
-      },
-      availableActions: [
-        'Explain what this calculator computes',
-        'Suggest inputs for a design',
-        'Switch to another calculator',
-        'Run a reviewer-risk defensibility assessment',
-      ],
-    }),
-    [active, asmtRes]
-  );
-
-  usePublishSurfaceContext('biostat-workbench', anaContext);
 
   const runAssess = useCallback(async () => {
     setAsmtBusy(true);
@@ -688,115 +685,110 @@ export function BiostatWorkbench(props: SurfaceViewProps) {
   }, [asmt, fireToast]);
 
   return (
-    <div className="page-inner" data-work-area="biostat-workbench">
-      {/* The way back is the link, not a ghost button reading "YOUR STUDY
-          DESIGNS AND DOCUMENTS" in the card's heading row (§WA.4.2 rule 2). */}
-      {props.onNav && (
-        <button type="button" className="pj-back" onClick={() => props.onNav?.('biostatistics')}>
-          {I.left} Biostatistics
-        </button>
-      )}
-      <header className="ph">
-        <div>
-          <h1 className="ph-title">Design calculators</h1>
-          {/* The intro card's three sentences, as one. What it said about the
-              defensibility assessment running on the same engine is said by
-              the two sections being on one page. */}
-          <p className="ph-sub">
-            Deterministic, provenance-stamped engines, reference-tested against published tables and closed
-            forms. Nothing is computed in the browser.
-          </p>
-        </div>
-      </header>
-
-      {/* Reviewer-risk defensibility */}
-      <section className="pj-sec" aria-label="Statistical defensibility">
-        <div className="pj-sec-h"><h2>Statistical defensibility</h2><span className="sec-sub">Reviewer-risk assessment</span></div>
-        <div className="wb-fields">
-            <label className="wb-f">Phase<select className="c2c-input" value={asmt.studyPhase} onChange={(e) => setAsmt({ ...asmt, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
-            <label className="wb-f">Indication<input className="c2c-input" value={asmt.indication} onChange={(e) => setAsmt({ ...asmt, indication: e.target.value })} placeholder="e.g. NSCLC" /></label>
-            <label className="wb-f">Design<select className="c2c-input" value={asmt.studyType} onChange={(e) => setAsmt({ ...asmt, studyType: e.target.value })}>{DESIGN_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            <label className="wb-f">Objective<select className="c2c-input" value={asmt.objectiveType} onChange={(e) => setAsmt({ ...asmt, objectiveType: e.target.value })}>{OBJECTIVES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            <label className="wb-f">Primary endpoint type<select className="c2c-input" value={asmt.endpointType} onChange={(e) => setAsmt({ ...asmt, endpointType: e.target.value })}>{ENDPOINT_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            {asmt.endpointType === 'binary' ? (
-              <>
-                <label className="wb-f">Control rate<input className="c2c-input" inputMode="decimal" value={asmt.controlRate} onChange={(e) => setAsmt({ ...asmt, controlRate: e.target.value })} placeholder="e.g. 0.5" /></label>
-                <label className="wb-f">Treatment rate<input className="c2c-input" inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
-              </>
-            ) : (
-              <label className="wb-f">
-                {/* The engine reads this field for a time-to-event design as
-                    the hazard-ratio REDUCTION (computation-engine.ts
-                    hazardRatio, HR = 1 − effectSize). It was labelled "Hazard
-                    ratio" with the placeholder 0.7, so an oncologist typing
-                    their protocol's HR sized for HR 0.300: 50 subjects where
-                    550 is right. The sibling surface (Biostatistics.tsx)
-                    already called it a reduction; the label now says it and
-                    the hint states the arithmetic, because a convention a
-                    reader has to infer is one that will be got wrong. */}
-                {asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)'}
-                <input className="c2c-input" inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
-                {asmt.endpointType === 'time_to_event' && (
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>
-                    Not the hazard ratio itself. For a protocol stating HR 0.7, enter 0.3.
-                  </span>
-                )}
-              </label>
+    <section className="pj-sec" aria-label="Statistical defensibility">
+      <div className="pj-sec-h"><h2>Statistical defensibility</h2><span className="sec-sub">Reviewer-risk assessment</span></div>
+      <div className="wb-fields">
+        <label className="wb-f">Phase<select className="c2c-input" value={asmt.studyPhase} onChange={(e) => setAsmt({ ...asmt, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="wb-f">Indication<input className="c2c-input" value={asmt.indication} onChange={(e) => setAsmt({ ...asmt, indication: e.target.value })} placeholder="e.g. NSCLC" /></label>
+        <label className="wb-f">Design<select className="c2c-input" value={asmt.studyType} onChange={(e) => setAsmt({ ...asmt, studyType: e.target.value })}>{DESIGN_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+        <label className="wb-f">Objective<select className="c2c-input" value={asmt.objectiveType} onChange={(e) => setAsmt({ ...asmt, objectiveType: e.target.value })}>{OBJECTIVES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+        <label className="wb-f">Primary endpoint type<select className="c2c-input" value={asmt.endpointType} onChange={(e) => setAsmt({ ...asmt, endpointType: e.target.value })}>{ENDPOINT_TYPES.map((v) => <option key={v} value={v}>{label(v)}</option>)}</select></label>
+        {asmt.endpointType === 'binary' ? (
+          <>
+            <label className="wb-f">Control rate<input className="c2c-input" inputMode="decimal" value={asmt.controlRate} onChange={(e) => setAsmt({ ...asmt, controlRate: e.target.value })} placeholder="e.g. 0.5" /></label>
+            <label className="wb-f">Treatment rate<input className="c2c-input" inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
+          </>
+        ) : (
+          <label className="wb-f">
+            {/* The engine reads this field for a time-to-event design as the
+                hazard-ratio REDUCTION (computation-engine.ts hazardRatio,
+                HR = 1 - effectSize). It was labelled "Hazard ratio" with the
+                placeholder 0.7, so an oncologist typing their protocol's HR
+                sized for HR 0.300: 50 subjects where 550 is right. */}
+            {asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)'}
+            <input className="c2c-input" inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
+            {asmt.endpointType === 'time_to_event' && (
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>
+                Not the hazard ratio itself. For a protocol stating HR 0.7, enter 0.3.
+              </span>
             )}
-            {(asmt.studyType === 'non_inferiority' || asmt.studyType === 'equivalence') && (
-              <label className="wb-f">{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
-            )}
-            <label className="wb-f">Alpha (two-sided)<input className="c2c-input" inputMode="decimal" value={asmt.alpha} onChange={(e) => setAsmt({ ...asmt, alpha: e.target.value })} /></label>
-            <label className="wb-f">Power<input className="c2c-input" inputMode="decimal" value={asmt.powerTarget} onChange={(e) => setAsmt({ ...asmt, powerTarget: e.target.value })} /></label>
-            <label className="wb-f">Dropout rate<input className="c2c-input" inputMode="decimal" value={asmt.attritionRate} onChange={(e) => setAsmt({ ...asmt, attritionRate: e.target.value })} /></label>
-            <label className="wb-f">Allocation ratio<input className="c2c-input" inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
-          </div>
-        {/* The view's ONE primary (§WA.4.2 rule 7). The engine list below used
-            to fill twenty-nine buttons with the same colour, and "Compute" a
-            thirtieth; this is the only one left. */}
-        <button type="button" className="btn primary" onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
+          </label>
+        )}
+        {(asmt.studyType === 'non_inferiority' || asmt.studyType === 'equivalence') && (
+          <label className="wb-f">{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
+        )}
+        <label className="wb-f">Alpha (two-sided)<input className="c2c-input" inputMode="decimal" value={asmt.alpha} onChange={(e) => setAsmt({ ...asmt, alpha: e.target.value })} /></label>
+        <label className="wb-f">Power<input className="c2c-input" inputMode="decimal" value={asmt.powerTarget} onChange={(e) => setAsmt({ ...asmt, powerTarget: e.target.value })} /></label>
+        <label className="wb-f">Dropout rate<input className="c2c-input" inputMode="decimal" value={asmt.attritionRate} onChange={(e) => setAsmt({ ...asmt, attritionRate: e.target.value })} /></label>
+        <label className="wb-f">Allocation ratio<input className="c2c-input" inputMode="decimal" value={asmt.allocationRatio} onChange={(e) => setAsmt({ ...asmt, allocationRatio: e.target.value })} /></label>
+      </div>
+      <button type="button" className="btn" onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
 
-        {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
-      </section>
-
-      {/* Design calculators. The picker and the chosen engine are one section:
-          the pills ARE the section's control, and a card around each of them
-          made two frames for one choice. */}
-      <section className="pj-sec" aria-label="Engines">
-        {/* Not "Design calculators" again: that is the page's `h1`, twelve
-            lines above, and a section heading repeating its page's title is
-            the repetition §WA.4.2 rule 4 retires. The section is the bank of
-            engines; the page is what the bank is for. */}
-        <div className="pj-sec-h"><h2>Engines</h2><span className="sec-sub">{CALCULATORS.length} deterministic calculators, one chosen</span></div>
-        <div className="wb-engines">
-          {CALCULATORS.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              className="btn small"
-              aria-pressed={c.id === activeId}
-              onClick={() => setActiveId(c.id)}
-            >
-              {c.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Remounted per calculator so form state never leaks between engines —
-            a leftover value under a key the next engine also uses would be sent
-            silently. */}
-        <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={props.onNav} />
-      </section>
-
-      {/* The two stored-state capabilities. Everything above is stateless: a
-          figure is computed and nothing is kept. These two record — an interim
-          look and the decision signed on it, and the method graph built from
-          the sponsor's own CSRs — so they sit below the engines that feed them.
-          Panels of this workbench, not rail destinations (CLAUDE.md RULE 2). */}
-      <AdaptiveMonitoringPanel />
-      <BiostatKnowledgePanel />
-
-      <C2CToast msg={toast} />
-    </div>
+      {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
+    </section>
   );
 }
+
+/**
+ * The design calculators — a section of the Biostatistics surface.
+ *
+ * It was the bottom half of `biostat-workbench`. The surface action AnA uses to
+ * open an engine by name moved with it, and is registered here under the
+ * surviving surface's id.
+ */
+export function DesignCalculatorsSection({ fireToast, onNav, deviceProject }: { fireToast: FireToast; onNav?: (id: string) => void; deviceProject?: boolean }) {
+  const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
+  const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
+
+  /* AnA can open any design engine by its name — the same tile click a person
+     makes — so a drive can land on the right calculator before its inputs are
+     discussed. The registry (CALCULATORS) is static, so no not-ready state;
+     opening an engine is view-state only — computing a result stays deliberate.
+     Registered under `biostatistics` since 2026-11-09: the action's id moved
+     with the section (shared/navigation/surface-actions.ts). */
+  useSurfaceActionHandlers('biostatistics', {
+    'biostatistics.select-calculator': (params) => {
+      const raw = String(params.calculator ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a design engine to open.' };
+      const needle = raw.toLowerCase();
+      const byId = CALCULATORS.filter((c) => c.id.toLowerCase() === needle);
+      const byTitle = CALCULATORS.filter((c) => c.title.toLowerCase() === needle);
+      const hits = byId.length ? byId
+        : byTitle.length ? byTitle
+        : CALCULATORS.filter((c) => c.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No design engine matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} engines — name one exactly.` };
+      const c = hits[0];
+      if (activeId === c.id) return { ok: true, detail: `Already on ${c.title}` };
+      setActiveId(c.id);
+      return { ok: true, detail: `Opened ${c.title}` };
+    },
+  });
+
+  return (
+    <section className="pj-sec" aria-label="Design calculators">
+      <div className="pj-sec-h"><h2>Design calculators</h2><span className="sec-sub">{CALCULATORS.length} deterministic engines, one chosen</span></div>
+      <div className="wb-engines">
+        {CALCULATORS.map(c => (
+          <button
+            key={c.id}
+            type="button"
+            className="btn small"
+            aria-pressed={c.id === activeId}
+            onClick={() => setActiveId(c.id)}
+          >
+            {c.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Remounted per calculator so form state never leaks between engines —
+          a leftover value under a key the next engine also uses would be sent
+          silently. */}
+      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} onNav={onNav} deviceProject={deviceProject} />
+    </section>
+  );
+}
+
+/** The titles AnA may name to open an engine, for the surface's context block. */
+export const CALCULATOR_TITLES: readonly string[] = CALCULATORS.map((c) => c.title);

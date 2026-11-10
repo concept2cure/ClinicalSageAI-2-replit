@@ -93,8 +93,9 @@ const REVIEW_STATUS_LABEL: Record<string, string> = {
 
 /* ── Inline helpers (kit shared bits) ── */
 
-function PageHead({ eyebrow, title, sub, actions }: {
-  eyebrow: string;
+/** D0's page header (§D4.J): the title, one line of description and the action slot. No context eyebrow: the top
+ *  bar and the rail say where you are. */
+function PageHead({ title, sub, actions }: {
   title: string;
   sub?: string;
   actions?: React.ReactNode;
@@ -102,11 +103,10 @@ function PageHead({ eyebrow, title, sub, actions }: {
   return (
     <div className="ph">
       <div>
-        <div className="ph-eyebrow">{eyebrow}</div>
         <h1 className="ph-title">{title}</h1>
         {sub && <div className="ph-sub">{sub}</div>}
       </div>
-      {actions && <div style={{ display: 'flex', gap: 8 }}>{actions}</div>}
+      {actions && <div className="ph-acts">{actions}</div>}
     </div>
   );
 }
@@ -126,7 +126,11 @@ function namedProgram(program: { id: string; title: string | null } | null, queu
   return { id: program.id, title };
 }
 
-/** Scope + program switch, rendered above the queue and in the empty state. */
+/**
+ * Scope + program switch, rendered above the queue and in the empty state. Both are D0's segmented control (§D4.J).
+ * The program switch is two items whose labels keep their names, so a screen reader hears which one is pressed
+ * rather than a toggle whose label changes with its state. The program is named in the tooltip, never by its id.
+ */
 function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
   scope: Scope;
   onScope: (s: Scope) => void;
@@ -134,32 +138,24 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
   onlyProgram: boolean;
   onOnlyProgram: (v: boolean) => void;
 }) {
-  const on = { fontWeight: 600, background: 'var(--bg-050)' } as const;
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-      {SCOPES.map((s) => (
-        <button
-          key={s.id}
-          className="btn ghost"
-          aria-pressed={scope === s.id}
-          data-on={scope === s.id || undefined}
-          style={scope === s.id ? on : undefined}
-          onClick={() => onScope(s.id)}
-        >
-          {s.label}
-        </button>
-      ))}
+    <div className="rv-scopes">
+      <div className="seg" role="group" aria-label="Show reviews">
+        {SCOPES.map((s) => (
+          <button key={s.id} className="seg-b" aria-pressed={scope === s.id} data-on={scope === s.id || undefined} onClick={() => onScope(s.id)}>
+            {s.label}
+          </button>
+        ))}
+      </div>
       {program && (
-        <button
-          className="btn ghost rv-scope-program"
-          aria-pressed={onlyProgram}
-          data-on={onlyProgram || undefined}
-          style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
-          onClick={() => onOnlyProgram(!onlyProgram)}
-          title={onlyProgram ? 'Showing this project only' : 'Show this project only'}
-        >
-          {I.gitBranch} {onlyProgram ? 'Only ' : 'All projects · '}{program.title}
-        </button>
+        <div className="seg rv-scope-program" role="group" aria-label="Projects">
+          <button className="seg-b" aria-pressed={onlyProgram} data-on={onlyProgram || undefined} title={`Show ${program.title} only`} onClick={() => { if (!onlyProgram) onOnlyProgram(true); }}>
+            This project
+          </button>
+          <button className="seg-b" aria-pressed={!onlyProgram} data-on={!onlyProgram || undefined} title="Show every project" onClick={() => { if (onlyProgram) onOnlyProgram(false); }}>
+            All projects
+          </button>
+        </div>
       )}
     </div>
   );
@@ -425,7 +421,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        <PageHead title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState title="Loading the review board…" icon={I.clock} />
       </div>
@@ -435,7 +431,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        <PageHead title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         <EmptyState
           tone="error"
@@ -468,7 +464,7 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         {decisionDialog}
-        <PageHead eyebrow="Project · review" title={REVIEW_TITLE} sub={REVIEW_SUB} />
+        <PageHead title={REVIEW_TITLE} sub={REVIEW_SUB} />
         {scopeBar}
         {boardRead ? (
           <EmptyState title={emptyTitle} hint={emptyHint} icon={I.shieldCheck} />
@@ -604,7 +600,6 @@ function ReviewSession({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner">
         {decisionDialog}
       <PageHead
-        eyebrow="Project · review"
         title={REVIEW_TITLE}
         sub={REVIEW_SUB}
         actions={

@@ -1,0 +1,267 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:59:43.812Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:59:43.813Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:59:43.813Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:59:44.082Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 12ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > links only a record of this organisation, and keeps a removed link with who removed it and why 18ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > removes only the owned active change through an executor that supplies rows alone 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: undefined 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: null 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "" 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "   " 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not record anonymous closure 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not 15ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code 15ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a live document status or typed validation reference as exact accepted completion 9ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > rechecks native prerequisite state in the same statement that records closure 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved state change 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved content change 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved link change 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not attach or erase a requirement after closure 9ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined 18ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: null 8ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {} 7ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: [] 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: "effective" 5ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective"} 5ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective","narrative":"  "} 7ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"not_effective","narrative":"Failed."} 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is planned 8ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is in_progress 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is blocked 8ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is cancelled 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > rechecks actions for effective closure, including a legacy record already at effectiveness check 5ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined 7ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [] 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [{}] 5ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: [{"kind":"reference","label":" "}] 6ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > completes a documented action and closes with the matching effective result under the actual actor 24ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > records unsuccessful effectiveness honestly and keeps its existing reopen path 11ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_effective CAPA 7ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_not_effective CAPA 5ms
+(node:54) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project 5ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch 1ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged 2ms
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed 3ms
+(node:66) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+{
+  "timestamp": "2026-11-08T16:59:51.726Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+[CMC Batch] Release testing for batch 9: released
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Batch] Error processing release: Error: signer identity unresolvable
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:230:17
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Specs] Error approving specification: Error: signer identity unresolvable
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:230:17
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:59:52.059Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the qualification of container closure system",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:59:52.067Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the validation of analytical method",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:59:52.073Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the approval of process validation record",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:59:52.080Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the approval of comparability assessment",
+    "error": "signer identity unresolvable"
+  }
+}
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 30ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 10ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing conditional disposition policy
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing rejected disposition policy
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition
+[CMC Batch] Release testing for batch 9: released
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' requires a signer with signing authority > refuses a user with no membership row in the organization 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition over a recorded result that fails is refused before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a release with no result recorded against the batch is refused — zero tests is not "all passed" 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > results that change while the signer re-authenticates refuse the signature, and nothing is signed 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an unchanged pass/review status does not conceal changed QC content during reauthentication 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a deviation opened while the signer reauthenticates blocks full release under the final batch lock 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing conditional disposition policy 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing rejected disposition policy 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition 2ms
+
+ Test Files  4 passed (4)
+      Tests  97 passed (97)
+   Start at  08:59:42
+   Duration  9.85s (transform 1.79s, setup 117ms, import 3.90s, tests 5.18s, environment 0ms)
+

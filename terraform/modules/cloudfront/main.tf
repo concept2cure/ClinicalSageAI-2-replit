@@ -176,15 +176,137 @@ resource "aws_cloudfront_response_headers_policy" "spa" {
   }
 }
 
-# No WAF yet: a founder decision, not defaulted (docs/evidence/W2/2026-09-24-trivy/).
-# It carries a monthly cost, and AWS's common managed rule set blocks request
-# bodies over 8 KB until it is tuned, which would refuse document uploads and
-# AnA turns. Until then the ALB admits CloudFront alone, and sign-in and API
-# rate limits are applied in the app.
-# Trivy applies an inline ignore to the line directly below it and nothing
-# else, so this one stays on the resource line (ci:trivy-inline-ignores).
-#trivy:ignore:AWS-0011
+# The web ACL on the distribution (founder decision P-11, docs/LAUNCH_DEFINITION_OF_DONE.md):
+# AWS's IP-reputation and known-bad-inputs groups block, a per-IP rate rule
+# blocks, and AWS's common rule set runs in count mode for its first two weeks
+# (waf_common_rule_set_action). The common set's body-size rule refuses any body
+# over 8 KB, which would refuse document uploads, AnA turns and the editor's own
+# saves; it stays in count mode on every path, also when the set blocks, and the
+# app applies its own body limits. The two weeks of counted matches decide
+# whether a path-scoped body rule is added. A CloudFront web ACL exists only in
+# us-east-1, so this module refuses any other provider region.
+data "aws_region" "current" {}
+
+resource "aws_wafv2_web_acl" "this" {
+  name        = "${var.bucket_name}-edge"
+  description = "Edge protection for the C2C distribution (P-11)"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "aws-ip-reputation"
+    priority = 10
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesAmazonIpReputationList"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "aws-ip-reputation"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-known-bad-inputs"
+    priority = 20
+    override_action {
+      none {}
+    }
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "aws-known-bad-inputs"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "per-ip-rate"
+    priority = 30
+    action {
+      block {}
+    }
+    statement {
+      rate_based_statement {
+        aggregate_key_type    = "IP"
+        limit                 = var.waf_rate_limit_per_5_minutes
+        evaluation_window_sec = 300
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "per-ip-rate"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-common-rule-set"
+    priority = 40
+    dynamic "override_action" {
+      for_each = var.waf_common_rule_set_action == "count" ? [1] : []
+      content {
+        count {}
+      }
+    }
+    dynamic "override_action" {
+      for_each = var.waf_common_rule_set_action == "block" ? [1] : []
+      content {
+        none {}
+      }
+    }
+    statement {
+      managed_rule_group_statement {
+        vendor_name = "AWS"
+        name        = "AWSManagedRulesCommonRuleSet"
+        # Count on every path, whatever the set's action (see above).
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            count {}
+          }
+        }
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "aws-common-rule-set"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.bucket_name}-edge"
+    sampled_requests_enabled   = true
+  }
+
+  lifecycle {
+    precondition {
+      condition     = data.aws_region.current.name == "us-east-1"
+      error_message = "A CloudFront web ACL can only be created in us-east-1; this module's provider is in another region."
+    }
+  }
+
+  tags = var.tags
+}
+
 resource "aws_cloudfront_distribution" "this" {
+  web_acl_id          = aws_wafv2_web_acl.this.arn
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"

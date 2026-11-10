@@ -40,7 +40,7 @@ describe('a controlled document under revision', () => {
     expect(revising.textContent).toMatch(/2026|Sep/);
     const fresh = screen.getByText('New procedure', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
     expect(within(fresh).queryByTestId('qms-in-force')).toBeNull();
-    // The KPI counts what is in force: the revised SOP, not the new draft.
-    expect(screen.getByText('Effective documents').parentElement?.textContent).toMatch(/^Effective documents1/);
+    // The register's figures count what is in force: the revised SOP, not the new draft (D7-B: the sentence that replaced the tiles).
+    expect(screen.getByTestId('qms-register-figures').textContent).toMatch(/^2 controlled documents: 1 in force, 2 draft;/);
   });
 });

@@ -1,0 +1,7 @@
+MUTATION C2-M9-precheck-judges-the-signer-first in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T08:12:42.226928Z): replaced [  const refusal = retirementRefusal(facts) ??
+    retirementSignerRefusal(n, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId));] with [  const refusal = retirementSignerRefusal(n, await signerIndependenceOf(`ectd-sequence:${seq.id}`, ctx.organizationId, ctx.userId)) ??
+    retirementRefusal(facts);]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a sequence something keeps is refused in the words the act refuses it with, before the creator rule 108ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64 (expected c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64)

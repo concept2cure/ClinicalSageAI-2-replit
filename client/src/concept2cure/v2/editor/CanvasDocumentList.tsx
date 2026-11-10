@@ -220,7 +220,7 @@ export function updatedWords(iso: string | null, now: Date = new Date()): string
 /** "← Documents (n)" in an open document's bar: the list, in the editor's place. */
 export function ToDocumentsButton({ count, onClick }: { count: number | null; onClick: () => void }) {
   return (
-    <button type="button" className="ed-back" onClick={onClick} data-testid="dc-documents">
+    <button type="button" className="btn ghost small" onClick={onClick} data-testid="dc-documents">
       {I.left} Documents{count ? ` (${count})` : ''}
     </button>
   );
@@ -351,12 +351,12 @@ function ListBody({ read, scope, onRetry, onOpen, fireToast, focusRowId, onFocus
 
 function ScopeSwitch({ scope, onScope }: { scope: ListScope; onScope: (s: ListScope) => void }) {
   const option = (value: ListScope, label: string) => (
-    <button type="button" className="cdl-scope-btn" aria-pressed={scope === value} onClick={() => onScope(value)} data-testid={`cdl-scope-${value}`}>
+    <button type="button" className="cdl-scope-btn seg-b" aria-pressed={scope === value} onClick={() => onScope(value)} data-testid={`cdl-scope-${value}`}>
       {label}
     </button>
   );
   return (
-    <div className="cdl-scope" role="group" aria-label="Show documents built in">
+    <div className="cdl-scope seg" role="group" aria-label="Show documents built in">
       {option('conversation', 'This conversation')}
       {option('project', 'This project')}
     </div>

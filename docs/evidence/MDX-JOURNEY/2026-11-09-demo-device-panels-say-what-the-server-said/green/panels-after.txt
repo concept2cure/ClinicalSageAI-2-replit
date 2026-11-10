@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > says so once, and offers no read failure or retry for the candidates or the SE matrix 120ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > still reports a service that is down as a failure 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > shows the empty matrix with its own hint, not a read failure 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > still reports a failed read as a failure 42ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:28:53
+   Duration  2.73s (transform 1.46s, setup 132ms, import 1.78s, tests 262ms, environment 440ms)
+

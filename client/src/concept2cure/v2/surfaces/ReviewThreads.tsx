@@ -7,6 +7,7 @@ import { apiRequest, serverMessage, ApiRequestError } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import type { FireToast } from '../toast';
 import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
+import { ReviewRequests } from './ReviewRequests';
 
 /**
  * Who a comment's words are from. A comment AnA wrote for a person carries
@@ -368,11 +369,15 @@ export function ReviewThreadsPane({
   };
 
   return (
+    <>
+    {/* The artifact reviews this person was named for (P-95), above their threads (ReviewRequests.tsx). */}
+    <ReviewRequests onNotice={onNotice} />
     <section aria-label="Review threads assigned to you" style={{ marginTop: 20 }}>
-      <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Threads &amp; change requests — assigned to you{program ? ` · ${program.title}` : ''}</span>
+      {/* D0's section heading (§D4.J). The project is the board's scope already, so it is not repeated here. */}
+      <div className="pj-sec-h">
+        <h2>Threads and change requests assigned to you</h2>
         {queue.data && (
-          <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
+          <span className="sec-sub">
             {queue.data.totalThreads} thread{queue.data.totalThreads === 1 ? '' : 's'} · {queue.data.totalTasks} task{queue.data.totalTasks === 1 ? '' : 's'}
           </span>
         )}
@@ -494,5 +499,6 @@ export function ReviewThreadsPane({
         </div>
       )}
     </section>
+    </>
   );
 }

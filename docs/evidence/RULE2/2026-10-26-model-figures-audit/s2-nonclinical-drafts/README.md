@@ -174,3 +174,42 @@ nothing does until R-1 is decided.
   `inspection-readiness-and-nonclinical-load-say-what-was-assessed` and `csr-template-tool`.
 - typecheck 0, ESLint ratchet unchanged, `manifest:ana` regenerated.
 
+## The 2.6 drafter is routed for its section codes again (2026-11-08)
+
+**Plan:** F1 (a repair of shipped behaviour). **Completes:** `server/services/ana/bla-biologics-tool-defs.ts`.
+
+**The defect.**
+- AnA's tool selector (`server/services/ana/tool-selection.ts`) scores a section code in the turn, such as "2.6.2",
+  only when a tool's name or description contains that exact code (`containsCode`).
+- On 2026-11-02 the `draft_nonclinical_summaries_m2_6` description listed "the 2.6.1 introduction, the
+  2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries".
+- `2ea66f6cf` (2026-11-06, "Preserve recorded nonclinical scope and expose unassessed report gaps") rewrote the
+  description for the protected project-record path and dropped that list. `67e472079` rewrote it again, without it.
+- From then on the tool scored 0 for a turn that names 2.6 sections. "write sections 2.6.2 and 2.6.4 for the EU MAA"
+  offered it at no cap, even 200, and `tool-selection-tokenize.test.ts` failed both of its 2.6 routing cases on
+  trunk.
+
+**What already exists (Rule 3).**
+- The routing pin is `tool-selection-tokenize.test.ts`: "routing on section codes", for the full catalog and for the
+  production composition.
+- The scorer is `tool-selection.ts` `scoreTool` and `containsCode`, unchanged.
+- The description is that of `2ea66f6cf` and `67e472079`, kept word for word.
+
+Nothing is added beside them. Searches: `git log -S'2.6.2/2.6.4/2.6.6'` on the definitions file, and the description
+at `60239c791`, `307a77ffb`, `2ea66f6cf^` and `67e472079`. That located the commit that dropped the codes.
+
+**The change.** One sentence is appended to the current description: "It covers the 2.6.1 introduction, the
+2.6.2/2.6.4/2.6.6 written summaries and the 2.6.3/2.6.5/2.6.7 tabulated summaries for pharmacology, pharmacokinetics
+and toxicology." The description is 895 characters, within the gateway's 1,024.
+
+**Proof.**
+- `red/routing-before.txt`: on trunk `374e21b3e` the two 2.6 cases fail; the other 26 pass.
+- `green/routing-after.txt`: 28 of 28.
+- **The neighbourhood: 19 files, 1,639 tests.** It covers every suite that names the tool, its definitions file or the
+  Module 2 nonclinical inputs, plus the tool-selection suites, the tool registry and the skills suites. 1,637 pass.
+  The other two fail identically on trunk without this change, and are not this fix's. Both are in
+  `nonclinical-clinpharm-tools.test.ts`, "draft_nonclinical_overview_m2_4 handler" and "draft_nonclinical_summaries_m2_6
+  handler", each "does not compose from studies supplied in the call". The handlers' result shape changed in the
+  2026-11-06 commits, and the test was not moved with them.
+- **Gates:** typecheck 0; ESLint ratchet unchanged; `manifest:ana` regenerated, where only this tool's description
+  changes.

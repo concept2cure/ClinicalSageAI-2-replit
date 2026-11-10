@@ -60,7 +60,7 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
-import { catalogScope, catalogDocumentBoundary, sourceReadInput } from './catalog-scope.js';
+import { catalogScope, catalogDocumentBoundary, readDocumentBoundary, sourceReadInput } from './catalog-scope.js';
 import { requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 import { sourceAvailabilityPresentation, catalogVersionRefusal } from '../vault/document-catalog-eligibility.js';
 import { RESULT_BUDGET } from './agentic-loop.js';
@@ -159,7 +159,7 @@ async function handleListProjectDocuments(
   await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId }, scope.accessibleScope);
 
   return JSON.stringify({
-    ok: true,
+    ok: true, ...(programId ? { vaultFolders: await (await import('../vault/vault-folders.js')).projectFolderChoices(scope.executor, programId, orgId) } : {}),
     scope: programId ? { programId, actorFiltered: true } : scope.admittedScope.projectId !== null
       ? { openProject: true, programId: null, actorFiltered: true } : { accessibleProjects: true, actorFiltered: true },
     // `returned` is the page; `total` is the scope. They were one field named
@@ -396,7 +396,7 @@ async function handleReadProjectDocument(input: Record<string, unknown>, ctx?: T
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
-  const boundary = catalogDocumentBoundary(scope, doc.programId);
+  const boundary = readDocumentBoundary(scope, doc, ctx);
   if (boundary) return boundary;
 
   const sourceCatalogStatus = storedCatalogStatus(doc), text = doc.extractedText ?? '';

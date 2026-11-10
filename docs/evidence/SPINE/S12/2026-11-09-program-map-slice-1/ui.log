@@ -1,0 +1,8 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 148ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 22ms
+      Tests  7 passed (7)

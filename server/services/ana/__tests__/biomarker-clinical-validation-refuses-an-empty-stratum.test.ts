@@ -39,7 +39,8 @@ async function call(input: Record<string, unknown>): Promise<Record<string, any>
 describe('assessBiomarkerClinicalValidation — an empty stratum is refused, not reported as 0%', () => {
   it('does not establish validity or presume a cutoff when prespecification is unstated', () => {
     const out = assessBiomarkerClinicalValidation({ ...COMPLETE, cutoffPrespecified: undefined });
-    expect(out.validityEstablished).toBe(false);
+    // Rule 2 S5b (2026-11-08): null, not false: a stated true cutoff would establish it.
+    expect(out.validityEstablished).toBeNull();
     expect(out.cutoffNote).toMatch(/not stated/i);
     expect(out.findings.some(f => /cutoff.*not stated/i.test(f.message))).toBe(true);
   });
@@ -131,7 +132,7 @@ describe('assess_biomarker_clinical_validation — the tool asks for what the ta
   it('an intended-use prevalence outside [0, 1]: needs_parameters, not clamped', async () => {
     const out = await call({ ...COMPLETE, intendedUsePrevalence: 1.5 });
     expect(out.status).toBe('needs_parameters');
-    expect(String(out.message)).toMatch(/prevalence must be in \[0, 1\]/);
+    expect(String(out.message)).toMatch(/[Pp]revalence must be in \[0, 1\]/);
   });
 
   it('a complete table is computed, with exact intervals on both metrics', async () => {

@@ -12,7 +12,9 @@ import { tmpdir } from 'node:os';
 const root=dirname(fileURLToPath(import.meta.url));
 const repository=join(root,'../../..');
 const FILES=['server/services/authoring/csr-scientific-review-core.ts','server/services/authoring/csr-scientific-review.ts',
- 'shared/authoring/csr-scientific-review.ts','shared/canonical-json.ts'];
+ 'shared/authoring/csr-scientific-review.ts','shared/canonical-json.ts',
+ // The core's looksLikeHtml, imported since c88d89239.
+ 'shared/authoring/plain-text-html.ts'];
 
 export function buildCandidate(){
  const require=createRequire(import.meta.url);

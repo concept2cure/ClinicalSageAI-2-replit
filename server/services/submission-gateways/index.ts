@@ -180,7 +180,7 @@ function markRefusedBeforeWire(err: unknown): unknown {
  *    declared error classes carrying the literal `transmitted === false` —
  *    UnverifiedTransportError always; ValidationError and TransportError when
  *    their throw site passed NOTHING_TRANSMITTED (requiredAgencyMetadata's
- *    refusals; the FDA SFTP client-module refusal; FDA ESG's AS2
+ *    refusals; FDA ESG's launch-ceiling refusal, P-93; FDA ESG's AS2
  *    NOT_DELIVERED verdict from the delivery classifier — 2026-09-23, W5/D7,
  *    MDN close); or
  *  - a CredentialError, which every site raises from a credential check before

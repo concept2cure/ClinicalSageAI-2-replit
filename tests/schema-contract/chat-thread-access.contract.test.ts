@@ -40,9 +40,11 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MIGRATION = path.join(REPO_ROOT, 'migrations/20260728_chat_thread_store.sql');
+const AUDIT_CHAIN_ORDER = path.join(REPO_ROOT, 'migrations/20260921_audit_logs_chain_seq.sql');
 /** The program spine and the thread's program key (PF-10 S1), which the mint now writes. */
 const PROGRAMS = path.join(REPO_ROOT, 'migrations/20260524_program_workbench_schema.sql');
 const THREAD_PROGRAM_KEY = path.join(REPO_ROOT, 'migrations/20261001c_chat_threads_program_key.sql');
@@ -93,6 +95,11 @@ async function messagesOf(id: string): Promise<string[]> {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT); CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);`);
+  // Every message save asks whether its thread is owner-private (P-104, e464ee0c): the marker is an
+  // `ana.run.owner_private` audit event read in chain order, so the store production always has, with
+  // its chain order key as the deployed set adds it, is part of the fixture.
+  await pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pg.exec(fs.readFileSync(AUDIT_CHAIN_ORDER, 'utf8'));
   await pg.exec(fs.readFileSync(PROGRAMS, 'utf8'));
   await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
   await pg.exec(fs.readFileSync(THREAD_PROGRAM_KEY, 'utf8'));

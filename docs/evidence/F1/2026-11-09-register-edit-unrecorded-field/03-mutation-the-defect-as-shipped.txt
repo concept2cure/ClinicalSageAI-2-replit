@@ -1,0 +1,13 @@
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > refuses 400 and names the field — the seeder’s measured case 72ms
+   → expected 200 to be 400 // Object.is equality
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > writes nothing — the refusal is not a partial application 17ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > refuses BEFORE reading the record, so a wrong field never depends on the row 11ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/api/cmc/__tests__/register-edit-unrecorded-fields.contract.test.ts > every register edit refuses a field it does not record > PUT /stability-studies/:id asks refuseUnrecordedFields 9ms
+   → expected 'router.put(\'/stability-studies/:id\'…' to contain 'refuseUnrecordedFields('
+ × server/api/cmc/__tests__/register-edit-unrecorded-fields.contract.test.ts > every register edit refuses a field it does not record > asks it with the same schema it then parses with 2ms
+   → PUT /stability-studies/:id asks the question: expected null to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 17 passed (22)

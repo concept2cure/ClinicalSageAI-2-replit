@@ -1,0 +1,19 @@
+# npm run --silent ci:check-phantom-tokens, working tree with this change, HEAD c4fcb90a7
+[ci:phantom-tokens] 9 phantom token(s) across 52 site(s) (baseline 9).
+
+  1 baseline token(s) now resolve: --accent-050
+  Regenerate so the ratchet holds:
+    node scripts/ci/check-phantom-tokens.mjs --write-baseline
+
+[ci:phantom-tokens] FAIL — new phantom token(s):
+
+  --danger-000  — declared nowhere, 1 use(s):
+      client/src/concept2cure/v2/styles/project-home-v2.css:447
+
+This renders the fallback every time — the var() is decoration, and the style is
+immune to any change in the token layer while reading as token-driven in review.
+Point it at a real token from design-system/colors_and_type.css. If no token fits,
+add one there first: an invented local literal is how one concept ends up with six
+different colours (see --danger).
+
+exit 1

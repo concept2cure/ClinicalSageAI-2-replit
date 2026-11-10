@@ -35,6 +35,7 @@
  * @module server/services/submission-service/filed-sequence-baseline
  */
 import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
+import { isFiledDispatchStatus } from './filed-dispatch';
 import { canMutateProgram } from '../c2c/program-access';
 import { resolveSignerOrgRole } from '../part11/resolve-signer-role';
 import { readVaultSource } from '../regulatory/lifecycle-signature';
@@ -195,10 +196,8 @@ export async function declareFiledBaseline(q: BaselineQueryable, orgId: number, 
       evidence.id, evidenceSha256, d.reason, userId],
   );
   if (replaced.length > 0) {
-    await q.query(
-      `UPDATE ectd_sequences SET deleted_at = NOW(), updated_at = NOW() WHERE organization_id = $1 AND id = ANY($2::int[])`,
-      [orgId, replaced.map((s) => s.id)],
-    );
+    const removal = liveSetRemoval(orgId, replaced.map((s) => s.id));
+    await q.query(removal.text, removal.params);
   }
   const facts = {
     submissionId: String(d.submissionId),
@@ -240,4 +239,299 @@ export function sequenceCreationRefusal(
 /** The number after `sequence`, four digits. */
 export function nextAfter(sequence: string): string {
   return String(Number.parseInt(sequence, 10) + 1).padStart(4, '0');
+}
+
+// ── P-86: a sequence that was never filed may be retired, by signature ─────────
+//
+// The founder, 2026-11-01 (docs/LAUNCH_DEFINITION_OF_DONE.md, P-86): such a
+// sequence "may be retired by a signed, audited act, which frees its number,
+// only while no production send is bound to it and it is not filed. The act
+// reuses the filed-elsewhere baseline's existing removal of drafts." The rules
+// live here, beside that removal (the coordinating session's ruling of
+// 2026-11-02: no new module); submission-service.ts runs the act
+// (retireSequence) on the sequence's own signing chain. Design:
+// docs/evidence/RIM/2026-11-08-designs/p86-retire-unfiled-sequence.design.md.
+
+/** The intent a retirement's signature declares (Gate 1). */
+export const SEQUENCE_RETIREMENT_INTENT = 'retire' as const;
+/** The audit row that records a retirement and spends its signature. */
+export const ECTD_SEQUENCE_RETIRED_ACTION = 'ECTD_SEQUENCE_RETIRED';
+
+/**
+ * The one way a sequence leaves the live set: the drafts a filed-elsewhere
+ * declaration replaces, and a retired sequence (P-86). `at` is the instant a
+ * retirement takes after its locks, so the row's deleted_at equals its sealed
+ * audit time; the declaration passes none and keeps NOW().
+ * migrations/20261109_ectd_sequence_removal_guard.sql admits only these two.
+ */
+export function liveSetRemoval(organizationId: number, ids: readonly number[], at: string | null = null) {
+  return {
+    text: `UPDATE ectd_sequences
+              SET deleted_at = COALESCE($3::timestamptz, NOW()), updated_at = COALESCE($3::timestamptz, NOW())
+            WHERE organization_id = $1 AND id = ANY($2::int[]) AND deleted_at IS NULL
+        RETURNING id, deleted_at`,
+    params: [organizationId, [...ids], at] as unknown[],
+  };
+}
+
+/** What the signer states, word for word: the platform cannot see an export or a courier, so the signer answers for them. */
+export function retirementStatement(sequenceNumber: string): string {
+  return `Sequence ${sequenceNumber} has not been filed with the agency by any route: not by a send from this sequence, ` +
+    'not as a package sent from this platform, not from an export, and not by courier or any other route.';
+}
+
+/** A retirement is signed with the meaning responsibility, and only it. */
+export function retirementMeaningRefusal(meaning: unknown): string | null {
+  return meaning === 'responsibility' ? null : 'retiring a sequence is signed with the meaning responsibility';
+}
+
+/**
+ * Who may sign the retirement, as the precheck tells it before anyone signs (C2): the answer of
+ * separation-of-duties.ts signerIndependenceOf, which the act's own check gives too. A creator who cannot be
+ * resolved, or a check that failed, is said so; neither is taken as independence, nor called authorship.
+ */
+export function retirementSignerRefusal(sequenceNumber: string, state: 'independent' | 'author' | 'unresolved' | 'unverified'): string | null {
+  if (state === 'independent') return null;
+  if (state === 'author') {
+    return `You created sequence ${sequenceNumber}, so you cannot sign its retirement. Another person with signing authority signs it.`;
+  }
+  if (state === 'unresolved') {
+    return `Who created sequence ${sequenceNumber} cannot be resolved from its record, so no one can be shown to be independent of its creator, ` +
+      'and its retirement cannot be signed.';
+  }
+  return `Whether you created sequence ${sequenceNumber} could not be checked, so its retirement cannot be signed now. Try again.`;
+}
+
+/** Gate 1's payload check: the signature carries the statement for this sequence, exactly. */
+export function retirementPayloadRefusal(sequenceNumber: string) {
+  const statement = retirementStatement(sequenceNumber);
+  return (payload: Record<string, unknown> | null): string | null =>
+    payload?.notFiledElsewhere === true && payload?.statement === statement
+      ? null
+      : `the signature does not carry the statement for sequence ${sequenceNumber}, word for word: "${statement}"`;
+}
+
+/** The facts about one sequence that keep its number, read on one queryable. */
+export interface RetirementSequence {
+  id: number;
+  submissionId: number;
+  sequenceNumber: string;
+  region: string;
+  dispatchStatus: string | null;
+}
+interface SendOnRecord { at: string | null; environmentNamed: boolean }
+interface KeptFacts {
+  sequenceNumber: string;
+  dispatchStatus: string | null;
+  /** Check 3 or 4: a send bound to it, or recorded as transmitted, outside staging, and not proven blocked. */
+  productionSend: SendOnRecord | null;
+  /** Check 3b: its number sent to production as a package for the same application. */
+  packageSend: boolean;
+  /** Check 6: IND records filed in it, by kind. */
+  filedIndRecords: { safetyReports: number; amendments: number; annualReports: number };
+}
+export interface RetirementFacts extends KeptFacts {
+  /** Check 5: the live sequences numbered after it, with what keeps each (null: none). */
+  later: Array<{ sequenceNumber: string; kept: string | null }>;
+  /** Check 5b: a filed sequence of the same number whose record is read from compiles. */
+  compileReadTwin: boolean;
+  stagingTransmittalIds: number[];
+  /** The same sends, by the UTC day each was recorded, for the precheck to show (C2). */
+  stagingSends: Array<{ sentOn: string }>;
+  numberFreed: boolean;
+}
+
+const day = (v: unknown): string => (v ? new Date(String(v)).toISOString().slice(0, 10) : 'an unrecorded date');
+
+/** Check 3, under P-108 2(a) (the coordinating session, 2026-11-09): a non-staging transmittal bound to the sequence
+ *  blocks retirement unless a chained TRANSMIT_BLOCKED with transmitted false names that attempt's signature, or P-92's
+ *  signed settlement released it as not received (on FDA's letter or the platform's own proof). A missing environment
+ *  counts as production, and a blocked row naming no signature proves nothing. Check 4 excludes the same release. */
+async function boundProductionSend(q: BaselineQueryable, org: number, id: number): Promise<SendOnRecord | null> {
+  const { rows } = await q.query(
+    `SELECT t.created_at, t.metadata->>'environment' AS environment FROM submission_transmittals t
+      WHERE t.organization_id = $1 AND t.metadata->'dispatchBinding'->>'sequenceId' = $2::text
+        AND COALESCE(t.metadata->>'environment', '') <> 'staging'
+        AND COALESCE(t.metadata->'heldSendSettlement'->>'outcome', '') <> 'not-received'
+        AND NOT EXISTS (SELECT 1 FROM audit_logs a
+              WHERE a.tenant_id = $1 AND a.table_name = 'ectd_sequence' AND a.record_id = $2::text
+                AND a.action = 'TRANSMIT_BLOCKED' AND a.new_values::jsonb->>'transmitted' = 'false'
+                AND a.new_values::jsonb->>'signatureActionId' IS NOT NULL
+                AND a.new_values::jsonb->>'signatureActionId' = t.metadata->'dispatchBinding'->>'signatureActionId')
+      ORDER BY t.id LIMIT 1`,
+    [org, id],
+  );
+  if (rows[0]) return { at: rows[0].created_at as string | null, environmentNamed: rows[0].environment != null };
+  // Check 4: a send recorded as transmitted before sends carried a binding.
+  const sent = await q.query(
+    `SELECT occurred_at, new_values::jsonb->>'environment' AS environment FROM audit_logs
+      WHERE tenant_id = $1 AND table_name = 'ectd_sequence' AND record_id = $2::text AND action = 'ECTD_TRANSMITTED'
+        AND COALESCE(new_values::jsonb->>'environment', '') <> 'staging'
+        AND NOT (COALESCE(new_values::jsonb->>'source', '') = 'held-send-settlement' AND COALESCE(new_values::jsonb->>'status', '') = 'not-received')
+      ORDER BY occurred_at LIMIT 1`,
+    [org, id],
+  );
+  return sent.rows[0] ? { at: sent.rows[0].occurred_at as string | null, environmentNamed: sent.rows[0].environment != null } : null;
+}
+
+/** Check 3b, failing closed (the coordinating session, 2026-11-09): a package-spine production attempt naming this
+ *  number for this application keeps it, because nothing on that spine records that the agency did not receive it. */
+async function packageSpineSend(q: BaselineQueryable, org: number, s: RetirementSequence): Promise<boolean> {
+  const identity = await q.query(
+    `SELECT s.program_id::text AS program_id, p.application_number FROM submissions s
+       LEFT JOIN regulatory_programs p ON p.id = s.program_id AND p.organization_id = s.organization_id
+      WHERE s.id = $1 AND s.organization_id = $2`,
+    [s.submissionId, org],
+  );
+  const programId = (identity.rows[0]?.program_id as string | null) ?? null;
+  const applicationNumber = (identity.rows[0]?.application_number as string | null) ?? null;
+  const { rows } = await q.query(
+    `SELECT t.region FROM submission_transmittals t
+      WHERE t.organization_id = $1 AND t.package_id IS NOT NULL
+        AND COALESCE(t.metadata->>'environment', '') <> 'staging' AND t.metadata->>'sequence' = $2
+        AND (t.program_id::text = $3 OR ($4::text IS NOT NULL AND t.metadata->>'applicationId' = $4))`,
+    [org, s.sequenceNumber, programId, applicationNumber],
+  );
+  return rows.some((r) => canonicalRegionOf(String(r.region)) === canonicalRegionOf(s.region));
+}
+
+async function keptFacts(q: BaselineQueryable, org: number, s: RetirementSequence): Promise<KeptFacts> {
+  const productionSend = await boundProductionSend(q, org, s.id);
+  const packageSend = await packageSpineSend(q, org, s);
+  const ind = await q.query(
+    `SELECT (SELECT count(*)::int FROM ind_safety_reports WHERE organization_id = $1 AND sequence_id = $2 AND status = 'filed') AS safety,
+            (SELECT count(*)::int FROM ind_amendments WHERE organization_id = $1 AND sequence_id = $2 AND status = 'filed') AS amendments,
+            (SELECT count(*)::int FROM ind_annual_reports WHERE organization_id = $1 AND sequence_id = $2 AND status = 'filed') AS annual`,
+    [org, s.id],
+  );
+  const r = ind.rows[0] ?? {};
+  return {
+    sequenceNumber: s.sequenceNumber, dispatchStatus: s.dispatchStatus, productionSend, packageSend,
+    filedIndRecords: { safetyReports: Number(r.safety ?? 0), amendments: Number(r.amendments ?? 0), annualReports: Number(r.annual ?? 0) },
+  };
+}
+
+/**
+ * Everything retirementRefusal judges, read on one queryable (the pool before
+ * the lock, the transaction's client under it). `filedTwin` is the filed
+ * fold's per-number basis (prior-sequence-loader.ts loadFiledStateBySubmission),
+ * passed in so this file never imports the fold. A read that fails throws;
+ * the act answers it as "could not be checked", never as a pass.
+ */
+export async function readRetirementFacts(
+  q: BaselineQueryable, org: number, s: RetirementSequence,
+  filedTwin: (n: string) => Promise<boolean>,
+): Promise<RetirementFacts> {
+  const own = await keptFacts(q, org, s);
+  const siblings = (await q.query(
+    `SELECT id, sequence_number, region, dispatch_status FROM ectd_sequences
+      WHERE organization_id = $1 AND submission_id = $2 AND deleted_at IS NULL AND id <> $3`,
+    [org, s.submissionId, s.id],
+  )).rows
+    .filter((r) => canonicalRegionOf(String(r.region)) === canonicalRegionOf(s.region))
+    .map((r) => ({ id: Number(r.id), submissionId: s.submissionId, sequenceNumber: String(r.sequence_number),
+      region: String(r.region), dispatchStatus: (r.dispatch_status as string | null) ?? null }));
+  const later: RetirementFacts['later'] = [];
+  for (const l of siblings.filter((x) => x.sequenceNumber > s.sequenceNumber).sort((a, b) => b.sequenceNumber.localeCompare(a.sequenceNumber))) {
+    later.push({ sequenceNumber: l.sequenceNumber, kept: keptRefusal(await keptFacts(q, org, l))?.reason ?? null });
+  }
+  const staging = await q.query(
+    `SELECT id, created_at FROM submission_transmittals
+      WHERE organization_id = $1 AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata->>'environment' = 'staging'
+      ORDER BY id`,
+    [org, s.id],
+  );
+  return {
+    ...own, later,
+    compileReadTwin: await filedTwin(s.sequenceNumber),
+    stagingTransmittalIds: staging.rows.map((r) => Number(r.id)),
+    stagingSends: staging.rows.map((r) => ({ sentOn: day(r.created_at) })),
+    numberFreed: !siblings.some((x) => x.sequenceNumber === s.sequenceNumber),
+  };
+}
+
+const IND_KINDS: Array<[keyof KeptFacts['filedIndRecords'], string, string]> = [
+  ['safetyReports', 'a safety report', 'safety reports'],
+  ['amendments', 'an amendment', 'amendments'],
+  ['annualReports', 'an annual report', 'annual reports'],
+];
+
+/** What keeps a sequence's number (checks 2a, 2b, 3, 3b, 4, 6): the full sentence, and the short reason check 5 names. */
+function keptRefusal(f: KeptFacts): { sentence: string; reason: string } | null {
+  const n = f.sequenceNumber;
+  if (isFiledDispatchStatus(f.dispatchStatus)) {
+    // In words, never the stored status (P-92 C1; the coordinating session, 2026-11-09).
+    const acknowledged = f.dispatchStatus === 'acknowledged' ? ', which acknowledged it' : '';
+    return { reason: 'it is on file with the agency',
+      sentence: `Sequence ${n} is on file with the agency${acknowledged}, so it cannot be retired. A correction is a new sequence numbered after it.` };
+  }
+  if (f.dispatchStatus === 'transmitting') {
+    return { reason: 'a send of it is in flight',
+      sentence: `A send of sequence ${n} is in flight and not yet settled, so it cannot be retired now. Record the agency's receipt, settle the held send from the Dispatch tab, or wait for the send to settle, then look again.` };
+  }
+  if (f.productionSend) {
+    const on = `${day(f.productionSend.at)} UTC`;
+    return { reason: "it was sent to the agency's production environment",
+      sentence: f.productionSend.environmentNamed
+        ? `A send of sequence ${n} to the agency's production environment is recorded on ${on}, so it cannot be retired. A correction is a new sequence numbered after it.`
+        : `A send of sequence ${n} to the agency is recorded on ${on} with no environment named, so it is treated as a production send and it cannot be retired. A correction is a new sequence numbered after it.` };
+  }
+  if (f.packageSend) {
+    return { reason: "it was sent to the agency's production gateway in a package",
+      sentence: `Sequence ${n} was sent to the agency's production gateway in a package, and nothing records that the agency did not receive it, so it is not retired.` };
+  }
+  const kinds = IND_KINDS.filter(([k]) => f.filedIndRecords[k] > 0)
+    .map(([k, one, many]) => (f.filedIndRecords[k] === 1 ? one : `${f.filedIndRecords[k]} ${many}`));
+  if (kinds.length === 0) return null;
+  const total = IND_KINDS.reduce((sum, [k]) => sum + f.filedIndRecords[k], 0);
+  return { reason: 'it holds filed IND records',
+    sentence: `${total} IND record${total === 1 ? ' is' : 's are'} recorded as filed in sequence ${n} (${kinds.join(' and ')}). ` +
+      'Retiring it would leave them filed in a sequence the agency never received, so it is not offered. Returning them to draft is not available yet.' };
+}
+
+/** Why this sequence is not retired, in one sentence, or null when it may be (checks 2a–6, in order). */
+export function retirementRefusal(f: RetirementFacts): string | null {
+  const own = keptRefusal(f);
+  if (own) return own.sentence;
+  const n = f.sequenceNumber;
+  const kept = f.later.find((l) => l.kept !== null);
+  if (kept) {
+    return `Sequence ${kept.sequenceNumber}, numbered after ${n}, is kept (${kept.kept}), so ${n}'s number cannot be freed. ` +
+      `Place the corrected content in a new sequence after ${kept.sequenceNumber}.`;
+  }
+  if (f.later.length > 0) {
+    const m = f.later[0].sequenceNumber;
+    return `Sequence ${m}, numbered after ${n} in this submission, is still in use. Retire ${m} first: a number is freed only from the highest down.`;
+  }
+  if (f.compileReadTwin) {
+    return `Another sequence ${n} of this submission is on file with the agency, and what it filed is read from the compiles numbered ${n}. ` +
+      `A compile names no sequence, so this sequence's compiles cannot be kept out of that record, and sequence ${n} cannot be retired.`;
+  }
+  return null;
+}
+
+/** A removed sequence's retirement record, or null when it was removed some other way (or is live). */
+export async function retiredSequenceRecord(q: BaselineQueryable, org: number, id: number) {
+  const { rows } = await q.query(
+    `SELECT s.sequence_number, s.region, a.occurred_at, a.actor_id, a.reason, a.new_values::jsonb ->> 'meaning' AS meaning FROM ectd_sequences s
+       JOIN audit_logs a ON a.tenant_id = s.organization_id AND a.table_name = 'ectd_sequence'
+        AND a.record_id = s.id::text AND a.action = $3
+      WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NOT NULL
+      ORDER BY a.occurred_at LIMIT 1`,
+    [id, org, ECTD_SEQUENCE_RETIRED_ACTION],
+  );
+  const r = rows[0];
+  return r ? {
+    sequenceNumber: String(r.sequence_number), region: String(r.region), retiredDay: day(r.occurred_at), actorId: Number(r.actor_id) || null,
+    meaning: (r.meaning as string | null) ?? null, reason: (r.reason as string | null) ?? null,
+  } : null;
+}
+
+/** A sequence of this organisation that is no longer in use, whatever removed it; null when it is live or not its. */
+export async function removedSequenceOf(q: BaselineQueryable, org: number, id: number) {
+  const { rows } = await q.query(
+    `SELECT sequence_number, region FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NOT NULL`,
+    [id, org],
+  );
+  return rows[0] ? { sequenceNumber: String(rows[0].sequence_number), region: String(rows[0].region) } : null;
 }

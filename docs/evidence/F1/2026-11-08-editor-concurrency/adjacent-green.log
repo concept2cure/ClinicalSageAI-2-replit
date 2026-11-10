@@ -1,0 +1,1355 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:57:18.379Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:57:19.585Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:57:19.585Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:57:19.586Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+{
+  "timestamp": "2026-11-08T16:57:26.123Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc b1133211-b448-4f8a-b7f6-ec3be35f1cb1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written 69ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document 18ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+{
+  "timestamp": "2026-11-08T16:57:26.195Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc f4cedb25-a66b-4594-9168-8ab0d7f70c42 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+{
+  "timestamp": "2026-11-08T16:57:26.231Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc d11f7205-6d4d-42b6-a9df-9beede139210 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction 60ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing 30ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction 37ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-11-08T16:57:26.298Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 6de94a4f-853a-40df-bcc6-8cbd4a930647 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-11-08T16:57:26.328Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_UPDATED on doc 6de94a4f-853a-40df-bcc6-8cbd4a930647 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-11-08T16:57:26.361Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 903ed669-93ed-4df3-aa87-6cde3afd61ec by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-11-08T16:57:26.373Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REMOVED on doc 903ed669-93ed-4df3-aa87-6cde3afd61ec by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing 66ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone 67ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+{
+  "timestamp": "2026-11-08T16:57:26.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc e53fd6f2-a618-4426-8155-24d5eab37a64 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > reads eligible recorded metadata for an unfiled document through the existing citation list
+{
+  "timestamp": "2026-11-08T16:57:26.421Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 2899e79f-56be-4279-b955-7062b09ab6b3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image 44ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction 15ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > records the authoritative source checksum and one citation audit, preserving the existing response
+{
+  "timestamp": "2026-11-08T16:57:26.562Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 66bf95ff-aa91-4f02-a3a3-a4b9d80c3380 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > reads eligible recorded metadata for an unfiled document through the existing citation list 87ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > keeps another uploader’s unbound citation recorded without metadata on an unfiled document 57ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > records the authoritative source checksum and one citation audit, preserving the existing response 31ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+{
+  "timestamp": "2026-11-08T16:57:26.626Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc b589c3b7-d07f-4a22-97d9-57ef72b3208b by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'c505c41c-ea2f-4126-a5ce-35216d825808',
+    '78cdef30-92f3-412e-a0a2-31c885375a91',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    null,
+    '{"id":"a6d0b2cd-92e6-4652-8f06-2e61c4570c0a","section_id":"78cdef30-92f3-412e-a0a2-31c885375a91","source":"cre_evidence_source","reference_id":"16","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    'ff3d4035cbbece255894593aa192354741867e0ccf516fa63ec365e427cd062f',
+    'Source cited',
+    {
+      citation_id: 'a6d0b2cd-92e6-4652-8f06-2e61c4570c0a',
+      source: 'cre_evidence_source',
+      reference_id: '16',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '36ef8713-fe11-49a7-bdd4-dc7f63014ecb',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+POST /sections/:sectionId/cite-source error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'c505c41c-ea2f-4126-a5ce-35216d825808',
+    '78cdef30-92f3-412e-a0a2-31c885375a91',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    null,
+    '{"id":"a6d0b2cd-92e6-4652-8f06-2e61c4570c0a","section_id":"78cdef30-92f3-412e-a0a2-31c885375a91","source":"cre_evidence_source","reference_id":"16","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    'ff3d4035cbbece255894593aa192354741867e0ccf516fa63ec365e427cd062f',
+    'Source cited',
+    {
+      citation_id: 'a6d0b2cd-92e6-4652-8f06-2e61c4570c0a',
+      source: 'cre_evidence_source',
+      reference_id: '16',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '36ef8713-fe11-49a7-bdd4-dc7f63014ecb',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > canonical source admission through the generic citation route > refuses a superseded canonical source through the generic entry without a citation or audit 30ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section 57ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing 9ms
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '5064ea2e-4f3c-463c-bc3d-5413ad43f36d',
+    '08c903d6-a098-4dbf-980d-5229d2f89b9a',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"ae52b107-3ece-499c-8b4d-d0f4ba22f97d","section_id":"08c903d6-a098-4dbf-980d-5229d2f89b9a","source":"cre_evidence_source","reference_id":"17","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-11-08T16:57:26.704Z"}',
+    null,
+    'ed46d8bc69aa5d2896c1320f6fe4b1761be4d643469c8be19f3e8de9afd33435',
+    null,
+    'Citation removed',
+    {
+      citation_id: 'ae52b107-3ece-499c-8b4d-d0f4ba22f97d',
+      source: 'cre_evidence_source',
+      reference_id: '17',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '8a4af417-399b-4814-9b3f-33e75f23611b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+DELETE /sections/:sectionId/cite-source/:sourceId error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '5064ea2e-4f3c-463c-bc3d-5413ad43f36d',
+    '08c903d6-a098-4dbf-980d-5229d2f89b9a',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"ae52b107-3ece-499c-8b4d-d0f4ba22f97d","section_id":"08c903d6-a098-4dbf-980d-5229d2f89b9a","source":"cre_evidence_source","reference_id":"17","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-11-08T16:57:26.704Z"}',
+    null,
+    'ed46d8bc69aa5d2896c1320f6fe4b1761be4d643469c8be19f3e8de9afd33435',
+    null,
+    'Citation removed',
+    {
+      citation_id: 'ae52b107-3ece-499c-8b4d-d0f4ba22f97d',
+      source: 'cre_evidence_source',
+      reference_id: '17',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '8a4af417-399b-4814-9b3f-33e75f23611b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'c102ee40-734d-44bd-ab0e-ec4ae28e5be9',
+    '5c2b7b91-8974-4e44-9ac5-ec47b89259d6',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"d97f7394-c40d-4bcf-a4d0-627a66863bbc","section_id":"5c2b7b91-8974-4e44-9ac5-ec47b89259d6","source":"cre_evidence_source","reference_id":"18","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"d97f7394-c40d-4bcf-a4d0-627a66863bbc","section_id":"5c2b7b91-8974-4e44-9ac5-ec47b89259d6","source":"cre_evidence_source","reference_id":"18","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    'e41284bad35cb4400aa0afeb0754fe02743d4410e8d15253a193ed627c851934',
+    '62f2506aa72d1da395f4bf9299befe1c1c8326e3ed504a71523a320b4f9791eb',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: 'd97f7394-c40d-4bcf-a4d0-627a66863bbc',
+      source: 'cre_evidence_source',
+      reference_id: '18',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '9176fa84-034a-4dd3-87f3-2f956300a2cb',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+Error refreshing token: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'c102ee40-734d-44bd-ab0e-ec4ae28e5be9',
+    '5c2b7b91-8974-4e44-9ac5-ec47b89259d6',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"d97f7394-c40d-4bcf-a4d0-627a66863bbc","section_id":"5c2b7b91-8974-4e44-9ac5-ec47b89259d6","source":"cre_evidence_source","reference_id":"18","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"d97f7394-c40d-4bcf-a4d0-627a66863bbc","section_id":"5c2b7b91-8974-4e44-9ac5-ec47b89259d6","source":"cre_evidence_source","reference_id":"18","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    'e41284bad35cb4400aa0afeb0754fe02743d4410e8d15253a193ed627c851934',
+    '62f2506aa72d1da395f4bf9299befe1c1c8326e3ed504a71523a320b4f9791eb',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: 'd97f7394-c40d-4bcf-a4d0-627a66863bbc',
+      source: 'cre_evidence_source',
+      reference_id: '18',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '9176fa84-034a-4dd3-87f3-2f956300a2cb',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-11-08T16:57:26.748Z",
+  "level": "error",
+  "message": "[authoring-router] saving refresh token failed",
+  "context": {
+    "err": "test: audit row refused for CITATION_REFRESHED",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '0b79c8e9-6eaf-42bb-ab33-f7bcb76ff457',
+    'afb07b4b-4f55-4cf4-9960-556d3f4e502a',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"995a6aed-8f73-431e-9c9a-312dfc15f683","section_id":"afb07b4b-4f55-4cf4-9960-556d3f4e502a","source":"cre_evidence_source","reference_id":"19","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"995a6aed-8f73-431e-9c9a-312dfc15f683","section_id":"afb07b4b-4f55-4cf4-9960-556d3f4e502a","source":"cre_evidence_source","reference_id":"19","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '1755f5ebc2878a0ee59e5137bbf68035d9facc2e0758db591cd6c2c40e30c46e',
+    '4a2c1ac1a6d5a2f7aea98fbe7274643d92d81044dc77e3b5a4c0204236d00e50',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '995a6aed-8f73-431e-9c9a-312dfc15f683',
+      source: 'cre_evidence_source',
+      reference_id: '19',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'cbf0557c-9b96-42cc-abec-a907ace8c2c9',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+POST /docs/:id/refresh-all error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '0b79c8e9-6eaf-42bb-ab33-f7bcb76ff457',
+    'afb07b4b-4f55-4cf4-9960-556d3f4e502a',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    '{"id":"995a6aed-8f73-431e-9c9a-312dfc15f683","section_id":"afb07b4b-4f55-4cf4-9960-556d3f4e502a","source":"cre_evidence_source","reference_id":"19","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"995a6aed-8f73-431e-9c9a-312dfc15f683","section_id":"afb07b4b-4f55-4cf4-9960-556d3f4e502a","source":"cre_evidence_source","reference_id":"19","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '1755f5ebc2878a0ee59e5137bbf68035d9facc2e0758db591cd6c2c40e30c46e',
+    '4a2c1ac1a6d5a2f7aea98fbe7274643d92d81044dc77e3b5a4c0204236d00e50',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '995a6aed-8f73-431e-9c9a-312dfc15f683',
+      source: 'cre_evidence_source',
+      reference_id: '19',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'cbf0557c-9b96-42cc-abec-a907ace8c2c9',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+{
+  "timestamp": "2026-11-08T16:57:26.808Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 22c1c3b0-a0b3-40a8-91e0-b24bd18932d6 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source 37ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite 15ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token 34ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure 36ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing 12ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+{
+  "timestamp": "2026-11-08T16:57:26.822Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 3a2112d1-82e4-464b-8d80-8a253737cab2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-11-08T16:57:26.844Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 6d42d070-e5dd-432d-b01f-1eaf70cb4f07 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-11-08T16:57:26.857Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc 6d42d070-e5dd-432d-b01f-1eaf70cb4f07 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+CRITICAL: Failed to create audit trail: error: test: audit row refused for comment_added
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '11236454-a48f-467b-99d6-ddc28248ce97',
+    '05d55b8a-bbaa-40ae-85f6-ac5c75711936',
+    'comment_added',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '642acce5-86da-444a-8931-ade676fe6b09',
+      section_id: '05d55b8a-bbaa-40ae-85f6-ac5c75711936',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'bb06b6f3-377b-44fc-b27e-b050d34d9354',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+Error adding comment: error: test: audit row refused for comment_added
+    at pe.Le (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '11236454-a48f-467b-99d6-ddc28248ce97',
+    '05d55b8a-bbaa-40ae-85f6-ac5c75711936',
+    'comment_added',
+    'author@canvas.example',
+    'MEMBER,REGULATORY-AUTHOR',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '642acce5-86da-444a-8931-ade676fe6b09',
+      section_id: '05d55b8a-bbaa-40ae-85f6-ac5c75711936',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '::ffff:127.0.0.1',
+    'unknown',
+    'bb06b6f3-377b-44fc-b27e-b050d34d9354',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-11-08T16:57:26.871Z",
+  "level": "error",
+  "message": "[authoring-router] saving comment failed",
+  "context": {
+    "err": "test: audit row refused for comment_added",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction 15ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing 21ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section 27ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic cite refuses another uploader before source checksum or mutation 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical cite refuses another uploader before source checksum or mutation 14ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit
+{
+  "timestamp": "2026-11-08T16:57:26.955Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc aff9da01-542b-4d07-81b9-0ec4c0218070 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token refuses the actual peer requester even when the recorded creator owns the original source 16ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh refuses an inactive current requester while retaining the original citation and audit 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > a denied source in refresh-all rolls back the earlier allowed checksum and audit 40ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > generic maps unavailable verification to503 without checksum or mutation 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > canonical maps unavailable verification to503 without checksum or mutation 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-token maps unavailable verification to503 without checksum or mutation 13ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > current source requester admission for every canonical citation writer > refresh-all maps unavailable verification to503 without checksum or mutation 14ms
+(node:43) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-11-08T16:57:27.881Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-11-08T16:57:28.178Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:57:28.179Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-11-08T16:57:28.179Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-11-08T16:57:31.228Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0721eff2-ac7a-4295-b7da-562e47e424e5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case)
+{
+  "timestamp": "2026-11-08T16:57:31.272Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a892fc29-a8d3-4f01-baa1-1c76e4769023 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s
+{
+  "timestamp": "2026-11-08T16:57:31.310Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 7a201b0c-eef3-49c4-8854-af70cde00259 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own
+{
+  "timestamp": "2026-11-08T16:57:31.335Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 217652c9-d16a-45b2-ab80-a8eab6b26d63 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case) 40ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s 35ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability
+{
+  "timestamp": "2026-11-08T16:57:31.369Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc cff3581b-fb58-46a2-8cfa-b9c7c3b66c3d by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses the save, names the model, and writes nothing
+{
+  "timestamp": "2026-11-08T16:57:31.388Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "26fb7fb7-dcab-40b8-8bb0-1c921f3e12f3",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > one unadmitted model among several is enough
+{
+  "timestamp": "2026-11-08T16:57:31.407Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "bacfef26-d316-45ff-be06-178f3853b11c",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-opus-5-5",
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > a record naming NO model is not approval: an empty list is not a list of admitted models
+{
+  "timestamp": "2026-11-08T16:57:31.425Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "3a85686f-8a6b-4c79-863b-6f31a5b1ed53",
+    "tenantId": 1,
+    "servedBy": [],
+    "passages": 1
+  }
+}
+
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses when only ONE of several claims names an unadmitted model
+{
+  "timestamp": "2026-11-08T16:57:31.450Z",
+  "level": "warn",
+  "message": "[authoring-router] Section save refused: a verified machine claim names a model RULE 2 does not admit",
+  "context": {
+    "sectionId": "8856798a-071b-4a19-8db8-a27ebf00c3b1",
+    "tenantId": 1,
+    "servedBy": [
+      "claude-sonnet-5"
+    ],
+    "passages": 1
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own 26ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability 32ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses the save, names the model, and writes nothing 18ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > one unadmitted model among several is enough 20ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > a record naming NO model is not approval: an empty list is not a list of admitted models 16ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > an UNVERIFIABLE claim does not refuse the save — the server cannot tell
+{
+  "timestamp": "2026-11-08T16:57:31.481Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4bbd739a-cd86-4313-916e-7142f39f27f0 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source
+{
+  "timestamp": "2026-11-08T16:57:31.505Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 53b740be-1814-4cb0-9ce0-cc1fa1192887 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim is unverifiable is not a contributor either
+{
+  "timestamp": "2026-11-08T16:57:31.537Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc ed9b4762-b2dd-4d58-9553-4cc9b14f284c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > a verified claim that credits no clause names nobody: one word is not an acceptance
+{
+  "timestamp": "2026-11-08T16:57:31.566Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 53f048fc-addd-4f19-9c26-ad76a9728b52 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > refuses when only ONE of several claims names an unadmitted model 26ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: a verified claim the rule will not admit stops the save > an UNVERIFIABLE claim does not refuse the save — the server cannot tell 33ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source 24ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim is unverifiable is not a contributor either 31ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim
+{
+  "timestamp": "2026-11-08T16:57:31.603Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e07221f0-0b83-41c9-bd5b-f600fb38389e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives
+{
+  "timestamp": "2026-11-08T16:57:31.634Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 5a233aa0-3aa2-4ae5-b72b-7dfe1f509042 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a claim naming a record this organisation does not have
+{
+  "timestamp": "2026-11-08T16:57:31.662Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc c496d3a5-089f-4f07-9f92-a049ab963f07 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > a verified claim that credits no clause names nobody: one word is not an acceptance 32ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim 33ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives 31ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a claim naming a record this organisation does not have 29ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > names the machine author from the server’s own vocabulary, never the request’s
+{
+  "timestamp": "2026-11-08T16:57:31.695Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 471dedcb-dfaf-4518-bb41-051cdf43ddae by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made
+{
+  "timestamp": "2026-11-08T16:57:31.716Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 113d4ddf-bc03-4098-8485-3d850105e723 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so
+{
+  "timestamp": "2026-11-08T16:57:31.745Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 3f2e544d-7271-41d4-ada7-602f40e3d669 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited
+{
+  "timestamp": "2026-11-08T16:57:31.773Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0093148c-6350-4c73-9d5f-1091ac701d54 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > names the machine author from the server’s own vocabulary, never the request’s 31ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made 22ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so 28ms
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > §14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC) > saves the same imported section when its receipt holds no reference
+{
+  "timestamp": "2026-11-08T16:57:31.806Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 64e7dee8-3538-457b-ac32-6f64ea822c88 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited 29ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > §14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC) > refuses a content save with 409 and its code, and the text stays as imported 10ms
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > §14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC) > saves the same imported section when its receipt holds no reference 21ms
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+{
+  "timestamp": "2026-11-08T16:57:33.702Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:57:33.703Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts
+{
+  "timestamp": "2026-11-08T16:57:33.704Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent
+{
+  "timestamp": "2026-11-08T16:57:34.347Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone
+{
+  "timestamp": "2026-11-08T16:57:34.351Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.379Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1794157054377_4fzzzx",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.383Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.385Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1794157054384_i",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.388Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 308ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 3ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 4ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 12ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 3ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.390Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1794157054389_9",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.394Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.395Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1794157054394_",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-11-08T16:57:34.398Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard)
+{
+  "timestamp": "2026-11-08T16:57:34.417Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 47ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an external address: 400 with the sentence, nothing read or written 3ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > dot segments: 400 with the sentence, nothing read or written 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > an inline SVG: 400 with the sentence, nothing read or written 3ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > refuses content that is not text, which the driver would store as JSON unchecked 2ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /sections refuses an image that is not an uploaded figure > creates a section holding a governed reference and an inline PNG, exactly as sent (guard) 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > 400 naming the template section, and no document is created 47ms
+stderr | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-11-08T16:57:34.534Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a7be4738-b5ec-4a7f-b40b-503d9138c3d7",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-11-08T16:57:34.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a7be4738-b5ec-4a7f-b40b-503d9138c3d7 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard)
+{
+  "timestamp": "2026-11-08T16:57:34.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a7be4738-b5ec-4a7f-b40b-503d9138c3d7 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > tells the person what they can do: choose another template, never "save again" 35ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > POST /docs refuses an organization template whose section holds a non-figure image > seeds a template whose sections hold only figures, as stored (guard) 37ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-11-08T16:57:35.536Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-11-08T16:57:36.584Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:57:36.585Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts
+{
+  "timestamp": "2026-11-08T16:57:36.585Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringBindingColumnStates.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound
+{
+  "timestamp": "2026-11-08T16:57:36.950Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "46f44f68-feb2-4e6f-af06-8879d15b4492",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound
+{
+  "timestamp": "2026-11-08T16:57:36.950Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "46f44f68-feb2-4e6f-af06-8879d15b4492",
+    "error": "DOCUMENT_NOT_FOUND"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not 500 — nothing can be bound, so nothing can break 29ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not consult the bound-document predicate at all 5ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the check could NOT RUN > refuses rather than guessing, and says nothing was changed 4ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the column IS present > still locks the code on a bound document 3ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > does not claim the deployment lacks the column 4ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound 5ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > DOES name the column when it is genuinely absent 4ms
+
+ Test Files  4 passed (4)
+      Tests  83 passed (83)
+   Start at  08:57:16
+   Duration  20.08s (transform 4.95s, setup 85ms, import 11.14s, tests 8.27s, environment 0ms)
+

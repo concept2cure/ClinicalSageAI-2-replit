@@ -1,0 +1,8 @@
+MUTATION 1-removed-sequence-is-a-head in server/services/projects/schedule-of-events/service.ts (on the final code and tests, 2026-11-09T02:50:02.205774Z): replaced [    WHERE s.organization_id=$1 AND p.organization_id=$1 AND s.deleted_at IS NULL] with [    WHERE s.organization_id=$1 AND p.organization_id=$1]
+ × server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a project whose only sequence was removed has no filing target, and nothing is assessed from it 3388ms
+ ✓ server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a removed sequence’s leaves are not filing heads either: changing one leaves the monitor’s input heads as they were 140ms
+      Tests  1 failed | 1 passed | 78 skipped (80)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a project whose only sequence was removed has no filing target, and nothing is assessed from it
+AssertionError: expected { state: 'blocked', …(2) } to deeply equal { state: 'not_assessed', …(2) }
+restored sha256 150d64fd387948aee8c3bd06590bc146f7ac2bc7b7168dea2b5541563f81e3ef (expected 150d64fd387948aee8c3bd06590bc146f7ac2bc7b7168dea2b5541563f81e3ef)

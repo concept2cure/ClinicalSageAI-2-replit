@@ -56,7 +56,9 @@ const BOARD = {
   meta: { scope: 'all', programId: null, total: 1, threadItemId: DOC, threadDocumentId: DOC, generatedAt: '2026-09-20T00:00:00Z' },
 };
 
-const isRead = (path: string) => path.startsWith('/api/review/board') || path === '/api/concept2cure/reviews/my-queue' || path.endsWith('/reviews');
+// reviews/pending is the Review screen's read of the AnA artifact reviews you were named for (ReviewRequests.tsx, P-95).
+const isRead = (path: string) => path.startsWith('/api/review/board') || path === '/api/concept2cure/reviews/my-queue'
+  || path === '/api/concept2cure/reviews/pending' || path.endsWith('/reviews');
 const writes = () => apiRequest.mock.calls.filter((c) => !isRead(String(c[1])));
 const boardReads = () => apiRequest.mock.calls.filter((c) => String(c[1]).startsWith('/api/review/board'));
 

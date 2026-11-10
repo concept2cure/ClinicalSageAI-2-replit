@@ -24,8 +24,8 @@ import {
   AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed, runAuthoringIndependentCheck,
 } from '../services/authoring/peer-review';
 import {
-  authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
-  routeOnVerdict, routeReviewRequest,
+  authoringApprovalReviewRefusal, authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask,
+  parseAuthoringRoute, routeOnVerdict, routeReviewRequest,
 } from '../services/authoring/authoring-review-route';
 import { ReviewRouteRefusal } from '../services/review/review-route-member';
 import { handBackMember, reassignMember, routeTxOf, senderTimeZone } from '../services/review/review-route';
@@ -1634,55 +1634,37 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       });
     }
 
-    /* LAST WRITE NO LONGER SILENTLY WINS.
-     *
-     * This UPDATE was `WHERE id = $n AND tenant_id = $n` and nothing else, and
-     * the client sent only `{ content }`. So two authors on one section — the
-     * normal case for a CTD module, where a writer and a reviewer work the same
-     * §3.2.P.5 at once — ended with whoever saved second replacing the OTHER'S
-     * ENTIRE SECTION. No 409, no warning, no merge, no "this changed while you
-     * were editing". The overwrite then entered the hash-chained revision
-     * ledger as an ordinary authored revision, so the record does not show a
-     * collision either; the only way back is for someone to notice and revert.
-     *
-     * `updated_at` is the concurrency token because it is already on the row
-     * the client loaded, already returned by every read, and already bumped by
-     * every write — no new column, no new migration, nothing to keep in sync.
-     *
-     * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
-     * the old behaviour rather than being refused: a caller that PATCHes a
-     * section without having read a timestamp cannot hit the race, and failing
-     * it closed would break saving to fix nothing. The editor sends it;
-     * anything that does not is exactly as safe as it was yesterday and no
-     * less.
-     *
-     * This comment used to name "the MDX dossier drawer" as one of those
-     * callers. It is not a caller of this route at all: it PATCHes
-     * `/api/c2c/documents/:id/sections/:key` (mdx/hooks/useSectionSave.ts),
-     * the FILING side. Correcting it is not housekeeping — the stale line said
-     * the drawer saved through this door, which is seal-guarded, and so helped
-     * hide that the door it really uses was not (round 15, the exit-path
-     * verification). The other two client PATCHes here carry `track_changes`
-     * or `code`/`title` only. */
+    /* The editor's loaded updated_at is its concurrency token. Missing tokens
+       remain supported for existing metadata/demo callers, without claiming
+       stale-editor protection for them. A supplied malformed token is not an
+       opt-out. This first comparison is only an early refusal: the authoritative
+       comparison runs again under the parent reservation and section lock. */
     const expectedUpdatedAt = req.body?.expectedUpdatedAt;
-    if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
-      const current = currentSection.rows[0]?.updated_at;
-      const currentMs = current ? new Date(current).getTime() : NaN;
-      const expectedMs = new Date(expectedUpdatedAt).getTime();
-      if (Number.isFinite(currentMs) && Number.isFinite(expectedMs) && currentMs !== expectedMs) {
-        return res.status(409).json({
-          success: false,
-          error: {
-            code: 'SECTION_CHANGED',
-            message:
-              'This section was changed by someone else while you were editing. ' +
-              'Your text has not been saved and nothing was overwritten — reload the ' +
-              'section to see their version, then reapply your changes.',
-          },
-          /* The caller can show WHEN it moved under them without another read. */
-          currentUpdatedAt: current,
-        });
-      }
+    const expectedVersionMs = expectedUpdatedAt === undefined ? null
+      : typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()
+        ? new Date(expectedUpdatedAt).getTime() : NaN;
+    if (expectedVersionMs !== null && !Number.isFinite(expectedVersionMs)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_SECTION_VERSION', message: 'The loaded section version is invalid. Reload the section before saving. Nothing was changed.' },
+        field: 'expectedUpdatedAt',
+      });
+    }
+    const versionMatches = (current: unknown) => expectedVersionMs === null
+      || ((typeof current === 'string' || current instanceof Date) && new Date(current).getTime() === expectedVersionMs);
+    const sectionChanged = (current: unknown) => res.status(409).json({
+      success: false,
+      error: {
+        code: 'SECTION_CHANGED',
+        message:
+          'This section was changed by someone else while you were editing. ' +
+          'Your text has not been saved and nothing was overwritten — reload the ' +
+          'section to see their version, then reapply your changes.',
+      },
+      currentUpdatedAt: current,
+    });
+    if (!versionMatches(currentSection.rows[0]?.updated_at)) {
+      return sectionChanged(currentSection.rows[0]?.updated_at);
     }
 
     /* ── A SECTION'S CODE IS ITS IDENTITY IN THE FILING ──
@@ -1818,8 +1800,10 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       values.push(track_changes);
     }
 
-    // Always update the updated_at timestamp
-    updates.push('updated_at = NOW()');
+    // NOW() is transaction-start time, which can predate a lock wait. The
+    // browser receives millisecond Dates, so even same-millisecond saves must
+    // advance that observable token from the row we hold locked below.
+    updates.push("updated_at = GREATEST(clock_timestamp(), date_trunc('milliseconds', updated_at) + interval '1 millisecond')");
 
     // Add section_id and tenant_id to values
     values.push(sectionId, tenantId);
@@ -1904,13 +1888,22 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       await reserveWritableSection(client, String(sectionId), tenantId);
       if (content !== undefined) await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
-      // The previous body is a transaction-held fact, read after the parent
-      // reservation and before this update. Client-supplied text and the
-      // pre-reservation lookup cannot establish a retained span's integrity.
-      const previous = content === undefined ? null : await client.query<{ content: string | null }>(
-        'SELECT content FROM authoring_sections WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
+      // The version and all before-images belong to the same locked row,
+      // after the parent reservation. Two overlapping callers can both pass
+      // the earlier lookup; only this check can authorize their actual write.
+      const previous = await client.query<{
+        content: string | null; updated_at: Date | string | null;
+        title: string | null; code: string | null; track_changes: boolean | null;
+      }>(
+        'SELECT content, updated_at, title, code, track_changes FROM authoring_sections WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
         [String(sectionId), tenantId],
       );
+      const before = previous.rows[0];
+      if (!before) throw new DocumentWriteReservationError(404, 'SECTION_NOT_FOUND', 'Section not found. Nothing was changed.');
+      if (!versionMatches(before.updated_at)) {
+        await client.query('ROLLBACK');
+        return sectionChanged(before.updated_at);
+      }
 
       result = await client.query(updateQuery, values);
 
@@ -1927,7 +1920,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
         content,
         updatedByUser,
         {
-          previousContent: previous ? previous.rows[0]?.content ?? '' : undefined,
+          previousContent: content !== undefined ? before.content ?? '' : undefined,
           /* Only the claims a record vouched for. An unverifiable claim's
              clause is not dropped — no accepted-machine text matches it, so
              the gate records it as this person's own assertion, which is what
@@ -2009,7 +2002,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
           result.rows[0]?.doc_id,
           sectionId,
           'UPDATE',
-          currentSection.rows[0].content ?? null,
+          before.content ?? null,
           content ?? null,
           changeReason,
           {
@@ -2040,7 +2033,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
          * a metadata change and its audit row commit together or neither does —
          * and because it goes through createAuditTrail on the caller's client,
          * it lands in the hash-chained ledger too, not only the soft table. */
-        const cur = currentSection.rows[0] ?? {};
+        const cur = before;
         const metaChanges: Array<{ field: string; from: unknown; to: unknown }> = [];
         if (title !== undefined && String(title) !== String(cur.title ?? '')) {
           metaChanges.push({ field: 'title', from: cur.title ?? null, to: title });
@@ -5064,6 +5057,7 @@ async function approvalRefused(
   ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
   if (await signingRefused(client, req, res, ids)) return true;
+  if (await reviewRefused(client, req, res, current, ids)) return true; // P-95
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
   if (openCommentCount > 0 || pendingEdits > 0) {
     if (req.body?.acknowledgeUnresolved !== true) {
@@ -5075,6 +5069,32 @@ async function approvalRefused(
       { openCommentCount, pendingEdits, acknowledged: true }, client);
   }
   return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+}
+
+/* ── P-95: A REGULATED DOCUMENT IS APPROVED ONLY AFTER ITS REVIEW ──
+ *
+ * The founder, 2026-11-02, clarified 2026-11-09 (docs/LAUNCH_DEFINITION_OF_DONE.md
+ * P-95). An APPROVER signature, by E-sign or by the workflow /sign, is taken only
+ * when the document's RR5 review route is complete over the text being approved
+ * (authoringApprovalReviewRefusal, services/authoring/authoring-review-route.ts).
+ * Every document is treated as regulated until the document-type catalog says
+ * otherwise (fail closed). Nothing is retroactive.
+ *
+ * Before the credential, so a refusal spends no password or code; on the
+ * signing transaction, after the document's row lock. A route read failure
+ * throws and is answered as the transaction's error, never as "no review needed".
+ */
+async function reviewRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number },
+): Promise<boolean> {
+  const refusal = await authoringApprovalReviewRefusal(client, {
+    tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
+  });
+  if (!refusal) return false;
+  res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
+  return true;
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -7761,6 +7781,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
       if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await reviewRefused(client, req, res, current, { docId, tenantId })) return; // P-95
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
 
       const signer = await reverifyAuthoringSigner(req, res);

@@ -82,6 +82,61 @@ describe('findUnclaimedNumbers (evidence-bound sections)', () => {
   it('does not let a reference word hide a percentage', () => {
     expect(findUnclaimedNumbers('section 11.5% of patients', known).map(f => f.text)).toEqual(['11.5']);
   });
+
+  // Walked 2026-11-10: the builder tells the model to head a section with its canonical ICH E3 title, and §12.4.1's
+  // title is "Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value
+  // (14.3.4)". The scan read those part numbers as the figures 16.2, 0.8, 14.3 and 0.4, so a draft that obeyed the
+  // instruction was refused, and every whole-report build ended "failed at 98%: §12.4.1 has no saved text".
+  it('reads a number with two or more points as a report part, with or without a word before it', () => {
+    const title = 'Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)';
+    expect(findUnclaimedNumbers(title, known)).toEqual([]);
+    expect(findUnclaimedNumbers('The listings are in 16.2.8 and 12.4.2.1.', known)).toEqual([]);
+  });
+  it('still refuses a one-point number, a percentage on a part number and a figure beside a part number', () => {
+    expect(findUnclaimedNumbers('Values of 16.2 and 14.3 were seen (16.2.8).', known).map(f => f.text)).toEqual(['16.2', '14.3']);
+    expect(findUnclaimedNumbers('16.2.8% of patients', known).length).toBeGreaterThan(0);
+    expect(findUnclaimedNumbers('In 16.2.8, 13 patients are listed.', known).map(f => f.text)).toEqual(['13']);
+  });
+
+  it.each([
+    ['<0.001', 'p=0.001'], ['0.001', 'p<0.001'], ['>0.999', 'p≥0.999'],
+    ['-2.50', 'The difference was 2.50.'], ['2.50', 'The difference was 2.5.'],
+    ['12%', '12 patients completed.'], ['12', '12% completed.'], ['0.001', 'p=0.001e-3'],
+  ])('does not let the supplied display %s authorize %s', (value, prose) => {
+    expect(findUnclaimedNumbers(prose, { claimed: [value] })).not.toEqual([]);
+  });
+
+  it('checks a conflicting occurrence even when an exact occurrence is also present', () => {
+    expect(findUnclaimedNumbers('p<0.001 in the table; p=0.001 in the conclusion.', { claimed: ['<0.001'] })).not.toEqual([]);
+  });
+
+  it('reads encoded operators as visible figures and ignores digits in markup', () => {
+    expect(findUnclaimedNumbers('<p data-run="99">p &lt; 0.001 and a difference of &#8722;2.50.</p>',
+      { claimed: ['<0.001', '-2.50'] })).toEqual([]);
+    expect(findUnclaimedNumbers('<p>p &gt; 0.001.</p>', { claimed: ['<0.001'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('<p title="x>99">p &lt;0.001.</p>', { claimed: ['<0.001'] })).toEqual([]);
+  });
+
+  it.each(['p&Lt;0.001', 'p&ne;0.001', 'p≈0.001', 'p=0.001&unknownunit;', 'p=0.001abc',
+    'p=0.001%3', 'p=0.001mg/mL'])('does not borrow supplied scalars across the boundary in %s', prose => {
+    expect(findUnclaimedNumbers(prose, { claimed: ['0.001', '0.001%', '0.001mg', '3'] })).not.toEqual([]);
+  });
+
+  it.each(['constructor', 'toString'])('refuses unknown entity &%s; without throwing', entity => {
+    expect(findUnclaimedNumbers(`<p>p &${entity};0.001.</p>`, { claimed: ['0.001'] })).not.toEqual([]);
+  });
+
+  it('decodes original draft prose once and never promotes a literal entity spelling to a threshold', () => {
+    expect(findUnclaimedNumbers('<p>p &amp;lt;0.001.</p>', { claimed: ['<0.001'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('<p>p &lt;0.001.</p>', { claimed: ['<0.001'] })).toEqual([]);
+  });
+
+  it.each(['ng/mL', 'µg/mL', 'pg/mL', 'copies/mL'])('keeps a separated %s concentration distinct from a count', unit => {
+    expect(findUnclaimedNumbers(`Concentration: 5 ${unit}.`, { claimed: ['5'] })).not.toEqual([]);
+    expect(findUnclaimedNumbers('5 subjects.', { claimed: [`5 ${unit}`] })).not.toEqual([]);
+    expect(findUnclaimedNumbers(`Concentration: 5 ${unit}.`, { claimed: [`5 ${unit}`] })).toEqual([]);
+    expect(findUnclaimedNumbers('5 subjects.', { claimed: ['5'] })).toEqual([]);
+  });
 });
 
 describe('findUnsuppliedStatistics', () => {
@@ -164,6 +219,15 @@ describe('evidence-bound clinical result figures cannot borrow planned numbers',
       accepted: true,
       lineage: { reconciliation: { status: 'matches', basis: 'exact_retained_table_cell' } },
     });
+  });
+
+  it.each([['Response (%)', true], ['95% CI', false], ['n (%)', false], ['Count (%)', false]])(
+    'requires a percent-only column for an implicit percentage unit (%s)', (header, accepted) => {
+    const percentageEvidence = { ...evidence, tables: [{ key: 'primaryEfficacy', title: 'Synthetic efficacy',
+      headers: ['Endpoint', header], rows: [['Response', '83.3']], sha256: 'a'.repeat(64) }] } as unknown as Parameters<typeof acceptEvidenceBoundDraft>[1];
+    const lineage: Record<string, unknown> = {};
+    expect(acceptEvidenceBoundDraft({ sectionNumber: '11.4', prose: 'The response rate was 83.3%.',
+      claims: [{ table: 'primaryEfficacy', row: 0, column: 1, value: '83.3' }] }, percentageEvidence, {}, lineage)).toBe(accepted);
   });
 
   it('does not prevent the documented planned enrollment in the statistical-methods section', () => {

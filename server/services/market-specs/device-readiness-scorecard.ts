@@ -55,12 +55,35 @@ export interface ScorecardInput {
   evidence: Array<{ id: string; label: string; applicable: boolean; ready?: boolean; present?: number; total?: number; missingFacts?: string[] }>;
 }
 
-function levelFor(score: number): ReadinessLevel {
+function scoreBand(score: number): ReadinessLevel {
   if (score >= 100) return 'ready';
   if (score >= 80) return 'nearly_ready';
   if (score >= 60) return 'in_progress';
   if (score >= 40) return 'early';
   return 'not_ready';
+}
+
+/** An applicable dimension that is shown in full, or does not apply. */
+const COMPLETE: ReadonlySet<DimensionStatus> = new Set(['ready', 'n/a']);
+
+/**
+ * The level: the score's band, except that any applicable dimension short of
+ * ready (not started, not assessed, or only partly present) caps it at
+ * 'in_progress'. P-114 (2026-11-09, decided under the founder's delegation):
+ * "nearly ready" is never said while a required item is missing. FDA's eSTAR
+ * technical screening holds a submission whose required content is absent,
+ * and the regulatory evaluator (server/services/regulatory/readinessEvaluator.ts)
+ * answers 'nearly_ready' only when no gap is critical. Every dimension here is
+ * required, so the scorecard has no non-critical gap and never says
+ * 'nearly_ready'. Until 2026-11-09 the band was the level, so with six
+ * applicable modules one not started still scored 90, 'nearly_ready', and
+ * AnA's build_device_blueprint and POST /device/blueprint said so. Below the
+ * cap the bands are unchanged: they describe progress, not readiness.
+ */
+function levelFor(score: number, dimensions: ReadonlyArray<ScorecardDimension>): ReadinessLevel {
+  const band = scoreBand(score);
+  const capped = band === 'ready' || band === 'nearly_ready';
+  return capped && dimensions.some((d) => !COMPLETE.has(d.status)) ? 'in_progress' : band;
 }
 
 /** Score one evidence module: ready→100, partial via present/total, else not started. */
@@ -161,7 +184,7 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
   const totalWeight = dimensions.reduce((s, d) => s + d.weight, 0) || 1;
   const score = Math.round(dimensions.reduce((s, d) => s + d.weight * d.score, 0) / totalWeight);
 
-  return { score, level: levelFor(score), dimensions, topGaps };
+  return { score, level: levelFor(score, dimensions), dimensions, topGaps };
 }
 
 /** The strings in a `missingFacts` value; [] for anything else. */

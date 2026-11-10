@@ -118,3 +118,91 @@ describe('assessProcessCapability — refusals', () => {
     expect(r.excludedBatches).toEqual(['B-002']);
   });
 });
+
+/* ── The distribution the index presumes ─────────────────────────────────────
+   Cpk and Ppk from a standard deviation are the NORMAL-theory formulae:
+   (USL − x̄) / 3σ converts the margin to a tail probability only if the series
+   is approximately normal. The engine cited ISO 22514-2 and said nothing about
+   that presumption, so a skewed series got an index that reads as a tail
+   probability it does not carry.
+
+   This matters most in exactly the CMC case: an impurity or degradation
+   product has a one-sided upper limit, is bounded below at zero, and is
+   usually right-skewed near the limit of quantitation. There the normal-theory
+   index is OPTIMISTIC — it understates the chance of exceeding the limit — and
+   that number reaches §3.2.S.4.5 / §3.2.P.5.6 justification of specification
+   and the CPV report.
+
+   The repair says so. It does NOT change the index or the verdict: moving to
+   the percentile method (ISO 22514-2's non-normal families) changes filed
+   numbers and is a methodological decision, not a session's.
+
+   Found while studying the external market for P-113: a CPV source noted that
+   Cpk cannot be estimated for non-normal data and Ppk on percentiles is used
+   instead (docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/). */
+describe('the distribution the index presumes', () => {
+  /** Twelve impurity results, right-skewed: most near 0.10, a tail to 0.34. */
+  const skewed = [0.08, 0.09, 0.09, 0.10, 0.10, 0.10, 0.11, 0.11, 0.12, 0.18, 0.26, 0.34];
+  /** Twelve near-symmetric results around 0.25 against the same NMT 0.5% limit. */
+  const symmetric = [0.22, 0.24, 0.25, 0.26, 0.23, 0.27, 0.25, 0.24, 0.26, 0.25, 0.23, 0.26];
+
+  it('reports the sample skewness it measured', () => {
+    const r = assessProcessCapability(batches(skewed), upperOnly);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.skewness, 'no skewness was reported for a visibly skewed series').not.toBeNull();
+    expect(r.skewness!).toBeGreaterThan(1);
+  });
+
+  it('says the index presumes approximate normality, and that this series is not', () => {
+    const r = assessProcessCapability(batches(skewed), upperOnly);
+    if (!r.ok) return;
+    expect(r.materiallySkewed, 'a right-skewed impurity series was reported as if normal').toBe(true);
+    const note = r.notes.join(' ');
+    expect(note).toMatch(/approximately normal/i);
+    /* And the DIRECTION, which is the actionable half: with an upper limit a
+       right-skewed series makes the index optimistic, not merely uncertain. */
+    expect(note).toMatch(/optimistic/i);
+  });
+
+  it('leaves the index and the verdict exactly as they were', () => {
+    /* The note is a statement about the number, not a different number.
+       Changing the arithmetic would change filed values. */
+    const r = assessProcessCapability(batches(skewed), upperOnly);
+    if (!r.ok) return;
+    const mean = skewed.reduce((a, b) => a + b, 0) / skewed.length;
+    const sd = Math.sqrt(skewed.reduce((a, v) => a + (v - mean) ** 2, 0) / (skewed.length - 1));
+    expect(r.ppk).toBeCloseTo((0.5 - mean) / (3 * sd), 3);
+  });
+
+  it('says nothing of the kind about a symmetric series', () => {
+    const r = assessProcessCapability(batches(symmetric), upperOnly);
+    if (!r.ok) return;
+    expect(r.materiallySkewed).toBe(false);
+    expect(r.notes.join(' ')).not.toMatch(/approximately normal/i);
+  });
+
+  it('declines to judge the shape when there are too few batches to tell', () => {
+    /* Six results cannot establish a distribution. The honest answer is that
+       the shape was not assessed — not that the series is normal, which is the
+       assumption the whole note exists to stop being made silently. */
+    const r = assessProcessCapability(batches([0.08, 0.09, 0.10, 0.11, 0.18, 0.34]), upperOnly);
+    if (!r.ok) return;
+    expect(r.materiallySkewed).toBe(false);
+    expect(r.notes.join(' '), 'a six-batch series was called normal').toMatch(/not assessed|too few/i);
+  });
+
+  it('names the direction for a LOWER limit too, where right-skew is conservative', () => {
+    /* An assay with NLT 98.0% skewed to the right has its margin on the low
+       side: the skew moves mass AWAY from the limit, so the index is
+       conservative rather than optimistic. Saying "optimistic" there would be
+       wrong. */
+    const r = assessProcessCapability(
+      batches([98.5, 98.6, 98.6, 98.7, 98.7, 98.7, 98.8, 98.8, 98.9, 99.4, 99.9, 100.4]),
+      lowerOnly,
+    );
+    if (!r.ok) return;
+    expect(r.materiallySkewed).toBe(true);
+    expect(r.notes.join(' ')).toMatch(/conservative/i);
+  });
+});

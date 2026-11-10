@@ -19,7 +19,7 @@ function efficacyRow(endpoint: string, r: EfficacyResult, armIdToName: Map<strin
     r.armId === undefined ? '—' : armIdToName.get(r.armId) || r.armId,
     r.display,
     r.ci ? interval(r.ci) : '—',
-    r.pValue !== undefined ? r.pValue.toFixed(3) : '—',
+    r.pValue !== undefined ? probability(r.pValue) : '—',
     ...(bayesian ? [
       r.credibleInterval ? interval(r.credibleInterval) : '—',
       r.posteriorProbability ? probability(r.posteriorProbability.value) : '—',

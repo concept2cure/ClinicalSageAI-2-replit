@@ -35,6 +35,7 @@ import type { ToolContext } from '../AnaToolExecutor.js';
 
 const loadDocumentForOrg = vi.hoisted(() => vi.fn());
 const placeVaultDocument = vi.hoisted(() => vi.fn());
+const createProgramFolder = vi.hoisted(() => vi.fn());
 
 // This fixture supplies the current member and request executor. The cases
 // isolate tool presentation/provenance; native access suites prove sharing/RLS.
@@ -49,6 +50,7 @@ vi.mock('../../c2c/current-program-access.js', async importOriginal => ({
   requireProgramScopeStillCurrent: async () => undefined,
 }));
 vi.mock('../../vault/vault-placement.service.js', () => ({ placeVaultDocument }));
+vi.mock('../../vault/vault-folders.js', () => ({ createProgramFolder }));
 vi.mock('../../vault/document-catalog.service.js', () => ({
   // Placement attribution/comprehension fixture assumes this active actor’s source access.
   withAnaSourceReadScope: async (input: any, run: any) => run({}, { organizationId: input.organizationId, userId: input.userId, role: 'member', projectId: null, programId: null, accessibleProgramIds: ['11111111-1111-4111-8111-111111111111'], actorFiltered: true }),
@@ -327,5 +329,57 @@ describe('the inputs it will not act on', () => {
     expect(out.ok).toBe(false);
     expect(out.error).toBe('INVALID_FOLDER');
     expect(out.message).toContain('pharma vault taxonomy');
+  });
+});
+
+/* S6 step 4 (2026-11-10): AnA files into the filing's binder and the folders people made, and can make a
+   folder when none fits. The folder is made through the Vault's governed writer with her provenance; the
+   document in it is still her suggestion, which a person confirms. */
+describe('folders AnA names or makes', () => {
+  beforeEach(() => {
+    createProgramFolder.mockReset();
+    createProgramFolder.mockResolvedValue({ ok: true, folder: { folderId: 'uf:9', name: 'Pivotal study', parentFolderId: 'bn:5.3', label: 'Pivotal study' } });
+  });
+
+  it('passes a binder heading or a person\'s folder through to the governed placement', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    await call({ document_id: VAULT_ID, folder_id: 'bn:4.2.3.2', rationale: 'A 28-day repeat-dose study.' });
+    expect(placeVaultDocument.mock.calls[0][0]).toMatchObject({ folderId: 'bn:4.2.3.2' });
+    expect(createProgramFolder).not.toHaveBeenCalled();
+  });
+
+  it('makes the folder under her provenance, then suggests the document into it', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study', parent_folder_id: 'bn:5.3' }, rationale: 'The pivotal study needs its own folder.' });
+    expect(createProgramFolder).toHaveBeenCalledTimes(1);
+    expect(createProgramFolder.mock.calls[0][0]).toMatchObject({
+      name: 'Pivotal study', parentFolderId: 'bn:5.3', organizationId: 42, userId: 7,
+      reason: 'The pivotal study needs its own folder.', agent: expect.objectContaining({ actorKind: 'agent:ana' }),
+    });
+    expect(placeVaultDocument.mock.calls[0][0]).toMatchObject({ folderId: 'uf:9', agent: expect.objectContaining({ actorKind: 'agent:ana' }) });
+    expect(out.madeFolder).toEqual({ folderId: 'uf:9', name: 'Pivotal study' });
+  });
+
+  it('makes no folder for a document she has not read', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('extracted'));
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'X' }, rationale: 'r' });
+    expect(out.refused).toBe(true);
+    expect(createProgramFolder).not.toHaveBeenCalled();
+    expect(placeVaultDocument).not.toHaveBeenCalled();
+  });
+
+  it('says the Vault\'s refusal, and places nothing, when the folder cannot be made', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    createProgramFolder.mockResolvedValue({ ok: false, status: 409, code: 'FOLDER_EXISTS', message: 'A folder of that name is already there.' });
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'r' });
+    expect(out).toMatchObject({ ok: false, error: 'FOLDER_EXISTS' });
+    expect(placeVaultDocument).not.toHaveBeenCalled();
+  });
+
+  it('refuses folder_id and new_folder together', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    const out = await call({ document_id: VAULT_ID, folder_id: 'module-4', new_folder: { name: 'X' }, rationale: 'r' });
+    expect(out.error).toMatch(/not both/);
+    expect(createProgramFolder).not.toHaveBeenCalled();
   });
 });

@@ -53,7 +53,8 @@ import { readMyWork } from '../services/tasking/my-work';
 import { routeRemindRefusal } from '../services/review/review-route';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
-  admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
+  admitParentTask, admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
+import { requireAssignedVaultFamily, VaultFamilyRefusal } from '../services/clinical-regulatory-evidence/vault-citation-changes';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -104,6 +105,8 @@ const createTaskSchema = z.object({
   moduleSource: z.string().optional(),
   moduleData: jsonValueSchema.optional(),
   projectId: z.number().optional(),
+  /** P-111 item 4: one level of subtasks; tasking/task-project.ts admitParentTask decides. */
+  parentTaskId: z.number().int().positive().max(2_147_483_647).optional(),
   category: z.string().optional(),
   taskType: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
@@ -297,6 +300,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       } else {
         await admitTaskCreationActor(q, ctx);
       }
+      const attached = await admitTaskAttachments(q, organizationId, project.projectId, validatedData);
       if (!assigneeId) {
         const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
         if (optimalAssignee) {
@@ -328,7 +332,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           status: validatedData.status ?? 'pending',
           assigneeId: assigneeId ?? null,
           sourceEntityType: validatedData.sourceEntityType ?? null,
-          sourceEntityId: validatedData.sourceEntityId ?? null,
+          sourceEntityId: validatedData.sourceEntityId ?? null, ...attached,
         },
         reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
       });
@@ -347,6 +351,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     if (commitInFlight) return unconfirmedTaskCreation(req, res);
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
     if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
+    if (error instanceof VaultFamilyRefusal) return res.status(error.status).json({ success: false, code: error.code, error: error.message });
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
     console.error('Error creating task:', error);
     res.status(400).json({
@@ -814,6 +819,18 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
     res.status(500).json({ success: false, error: 'Failed to bulk create tasks' });
   }
 });
+
+/** What a new task names beyond its project, each checked against the admitted project (never the body's), on the
+ *  create's own transaction, and returned for the audit row. Absent fields: unchanged.
+ *  - S12 gap 5 (2026-11-09): a Vault family a work project is assigned to produce is one in its project's program.
+ *  - P-111 item 4: a subtask's parent is the same project's, live, and not itself a subtask. */
+async function admitTaskAttachments(q: Parameters<typeof admitParentTask>[0], organizationId: number, projectId: number | undefined,
+  data: { moduleData?: unknown; parentTaskId?: number }): Promise<{ parentTaskId?: number }> {
+  await requireAssignedVaultFamily(q, organizationId, projectId, data.moduleData);
+  if (data.parentTaskId === undefined) return {};
+  /* The audit row names the admitted parent. */
+  return { parentTaskId: await admitParentTask(q, { organizationId, projectId, parentTaskId: data.parentTaskId }) };
+}
 
 // Create tasks from template
 type TemplateShape = { templateId: string; name: string; tasks: unknown; dependencies?: unknown };

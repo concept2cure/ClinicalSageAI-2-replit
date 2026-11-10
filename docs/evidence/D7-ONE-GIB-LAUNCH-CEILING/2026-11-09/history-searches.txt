@@ -1,0 +1,29 @@
+# History searches (design §1.8), on full history in a separate clone (not shallow: false), at concept2cure-v2 b672bc5b6, 2026-11-09T01:09:30Z
+
+$ git log --all --diff-filter=D --name-only --format='%h %ad %s' --date=short -- '*sftp*' '*Sftp*' '*SFTP*' '*ESGSubmission*' '*esg-submission*'
+89c83f58a 2026-08-14 feat(esg): the device transmit affordance reaches the real gateway, or refuses
+
+server/services/ESGSubmissionService.ts
+server/services/__tests__/esg-submission-status.test.ts
+
+$ git log --all -S'transmitViaSftp' --format='%h %ad %s' --date=short -- server scripts docs/runbooks
+62f57b83e14d 2026-09-23 FDA ESG and ICSR: one rule decides whether a send reached the agency
+
+$ git log --all -S'ssh2-sftp-client' --format='%h %ad %s' --date=short -- server scripts package.json package-lock.json
+e1f3fd425e 2026-10-17 Land audited service, governance, and UI integration remedies
+879818bd5b 2026-09-24 D1: production Terraform renders a task that can boot, and the image can load its bundle
+62f57b83e1 2026-09-23 FDA ESG and ICSR: one rule decides whether a send reached the agency
+
+# What completed, and what did not (2026-11-09T01:35Z):
+# - The deletion search ran to the end: the only deletions matching those names are ESGSubmissionService.ts and its
+#   test (89c83f58a, 2026-08-14), the parallel ESG service that commit retired. No SFTP-named file was ever deleted.
+# - The two pickaxe (-S) searches did NOT complete. This clone is blobless (blob:none), so every candidate blob is
+#   fetched on demand. The transmitViaSftp search hit its 25-minute limit with one hit printed (above), and the
+#   ssh2-sftp-client search was stopped. Their output above is partial and is not a full list.
+# - The design's own full-history runs of the same two searches (2026-11-02, a full clone) are recorded in
+#   docs/evidence/RIM/2026-11-08-designs/p93-sequence-size-limit-retire-sftp.design.md §1.8:
+#     transmitViaSftp: 1f8fd9839, cc4171c45, a811b0d83, fb80c5d10, bba77ef21, f304c87d9, 8e2d0bd98, 7f3b84ca5,
+#                      62ff3edc3, e5cf44624
+#     ssh2-sftp-client: 1f8fd9839, c60cdcac2, 8d5bbef3b, 7696a007b, 008fef640, cc4171c45, 748ef32df, e1f3fd425,
+#                       a811b0d83, … (records, evidence and the 2026-10-17 integration)
+#   None of those commits deleted a file that delivered SFTP, and package.json never declared the module.

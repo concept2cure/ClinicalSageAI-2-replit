@@ -1,0 +1,55 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-08T23:03:12.038Z",
+  "steps": [
+    {
+      "name": "Protocol door /^Open in Study & Protocol Design/ opens /concept2cure/protocol-dev?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "img": "screenshots/interact-protocol-protocol-dev.png"
+    },
+    {
+      "name": "Protocol door /^Open Biostatistics/ opens /concept2cure/biostatistics?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "img": "screenshots/interact-protocol-biostatistics.png"
+    },
+    {
+      "name": "Tasks handoff (stage review + workId) opens Plan with the requested row first and focused",
+      "workId": "board:TASK-1794176477477-77d2178a",
+      "title": "Draft the Investigator's Brochure summary of nonclinical findings",
+      "img": "screenshots/interact-tasks-handoff.png"
+    },
+    {
+      "name": "Respond lists the commitment; \"Record fulfilment\" opens the fulfilment dialog",
+      "projectId": 1,
+      "letter": "ace_1794176483552_3a125a0f",
+      "listed": "screenshots/interact-respond-commitment.png",
+      "opened": "screenshots/interact-respond-fulfil-dialog.png",
+      "options": 3
+    }
+  ],
+  "requests": [
+    {
+      "create": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": 6,
+          "commitmentType": "pmc",
+          "status": "open"
+        },
+        "governance": {
+          "actionId": "act_0560d3a0075742ae89e974ce873edb09",
+          "auditId": "85f12d4d-d51b-4199-b3a3-d3ada0025634",
+          "sha256Chain": "8e4068247cdb785e041d96b3793f770ad5288813a8e4af82006c37a1ced914b2"
+        }
+      }
+    },
+    {
+      "fulfilmentOptions": "/api/concept2cure/projects/1/commitments/6/fulfilment-options"
+    },
+    {
+      "fulfilmentOptions": "/api/concept2cure/projects/1/commitments/6/fulfilment-options"
+    }
+  ],
+  "failed": [],
+  "finishedAt": "2026-11-08T23:03:37.412Z"
+}

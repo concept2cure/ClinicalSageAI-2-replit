@@ -1,0 +1,6 @@
+ESLint warning counts, base (HEAD 5d80faf5d) and now, 2026-11-09T11:45:13Z
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx: base 7, now 7 (errors 0)
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx: base 5, now 5 (errors 0)
+client/src/concept2cure/v2/__tests__/dossierTransmissions.test.tsx: base 0, now 0 (errors 0)
+client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx: base 0, now 0 (errors 0)
+client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx (new): 0 (errors 0)

@@ -1,0 +1,6 @@
+ok  a fresh work project, through the one intake
+ok  a code not in the program's Vault is refused, nothing assigned
+ok  the picker lists the program's current families by title, code and version
+ok  Assign posts the Plan's task with the chosen family
+ok  the row says who delivers it, when, and what it was assigned to produce, read back
+ok  the same at 390 dark, the picker starting from the assigned family

@@ -1,0 +1,278 @@
+# S5b medical device red: server/services/ana/__tests__/medical-device-unstated-inputs.test.ts on 089047f7a (the digital-health commit; the medical-device files are trunk's), in the working tree before the change. 132 of 141 fail; the 9 controls pass.
+
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five device worksheets keep their stated results > 'select_device_pathway' reaches its engine with a stated basis 6ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five device worksheets keep their stated results > 'assess_substantial_equivalence' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five device worksheets keep their stated results > 'design_device_clinical_evidence' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five device worksheets keep their stated results > 'assess_essential_principles' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five device worksheets keep their stated results > 'plan_device_submission' reaches its engine with a stated basis 2ms
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > novelLowModerateRisk reads not_stated when omitted or null 11ms
+   → expected { usPathway: '510(k)', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > humanitarianUseDevice reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > exempt reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > isBiologic reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > isIVD reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > sterile reads not_stated when omitted or null 1ms
+   → expected { usPathway: '510(k)', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > measuringFunction reads not_stated when omitted or null 1ms
+   → expected { usPathway: '510(k)', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > reusableSurgicalInstrument reads not_stated when omitted or null 1ms
+   → expected { usPathway: '510(k)', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > novelLowModerateRisk is refused by field when malformed 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > humanitarianUseDevice is refused by field when malformed 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > exempt is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > isBiologic is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > isIVD is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > sterile is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > measuringFunction is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > reusableSurgicalInstrument is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'select_device_pathway' keeps each boolean answer as stated > predicateExists is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > differentQuestionsOfSafetyEffectiveness reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > performanceDataDemonstratesEquivalence reads not_stated when omitted or null 2ms
+   → expected { Object (determination, determinationRationale, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > predicateRecalledForSafety reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > usesReferenceDevice reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > isIVD reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > hasSoftware reads not_stated when omitted or null 14ms
+   → expected { determination: 'SE', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > patientContacting reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > sterile reads not_stated when omitted or null 2ms
+   → expected { determination: 'SE', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > differentQuestionsOfSafetyEffectiveness is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > performanceDataDemonstratesEquivalence is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > predicateRecalledForSafety is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > usesReferenceDevice is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > isIVD is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > hasSoftware is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > patientContacting is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > sterile is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > predicateIdentified is refused by field when malformed 2ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > sameIntendedUse is refused by field when malformed 1ms
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_substantial_equivalence' keeps each boolean answer as stated > sameTechnologicalCharacteristics is refused by field when malformed 1ms
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > novelTechnology reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > clinicalDataNeededForSE reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: null, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > implantable reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > lifeSustaining reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > isIVD reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > existingLiterature reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > realWorldDataAvailable reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > euMarket reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > significantRisk reads not_stated when omitted or null 1ms
+   → expected { clinicalDataRequired: true, …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > novelTechnology is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > clinicalDataNeededForSE is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > implantable is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > lifeSustaining is refused by field when malformed 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > isIVD is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > existingLiterature is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > realWorldDataAvailable is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > euMarket is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'design_device_clinical_evidence' keeps each boolean answer as stated > significantRisk is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > active reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > hasSoftware reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > patientContacting reads not_stated when omitted or null 4ms
+   → expected { …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > sterile reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > measuringFunction reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > incorporatesMedicinalSubstance reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > emitsRadiation reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > implantable reads not_stated when omitted or null 5ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > qmsInPlace reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > riskManagementFile reads not_stated when omitted or null 2ms
+   → expected { …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > active is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > hasSoftware is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > patientContacting is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > sterile is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > measuringFunction is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > incorporatesMedicinalSubstance is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > emitsRadiation is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > implantable is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > qmsInPlace is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > riskManagementFile is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'assess_essential_principles' keeps each boolean answer as stated > isIVD is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > isIVD reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > hasSoftware reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > sterile reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > patientContacting reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > clinicalDataIncluded reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > euMarket reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > preSubmissionDone reads not_stated when omitted or null 2ms
+   → expected { usPathway: '510(k)', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > isIVD is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > hasSoftware is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > sterile is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > patientContacting is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > clinicalDataIncluded is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > euMarket is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > 'plan_device_submission' keeps each boolean answer as stated > preSubmissionDone is refused by field when malformed 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'usClass' = 'Class II' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'usClass' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'predicateExists' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'euMdrClass' = 'Class IIa' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'euIvdrClass' = 'b' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'estimatedAnnualUSPopulation' = '5000' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'select_device_pathway' refuses 'estimatedAnnualUSPopulation' = -1 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'design_device_clinical_evidence' refuses 'usClass' = 'Class III' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'design_device_clinical_evidence' refuses 'usPathway' = 'pma' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'design_device_clinical_evidence' refuses 'euMdrClass' = 'IIA' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'assess_essential_principles' refuses 'isIVD' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'assess_essential_principles' refuses 'standardsClaimed' = 'ISO 14971' 3ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'plan_device_submission' refuses 'usPathway' = '510k' 4ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'plan_device_submission' refuses 'usPathway' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > 'plan_device_submission' refuses 'asOf' = 'tomorrow' 1ms
+   → expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > a missing or malformed class, pathway, list, date or number is refused by field, never read > refuses a standards entry that is not an ID, by index 1ms
+   → expected TypeError: s.trim is not a function to match object { code: 'invalid_input', …(1) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > does not route a device whose biologic and exemption status were not stated 1ms
+   → expected { usPathway: '510(k)', …(8) } to match object { usPathway: 'undetermined', …(1) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > isBiologic left out leaves a class III, no-predicate pathway undetermined 2ms
+   → expected 'IDE-then-PMA' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > novelLowModerateRisk left out leaves a class III, no-predicate pathway undetermined 1ms
+   → expected 'IDE-then-PMA' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > humanitarianUseDevice left out leaves a class III, no-predicate pathway undetermined 0ms
+   → expected 'IDE-then-PMA' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > keeps a pathway no answer to the unstated fact could change 1ms
+   → expected { usPathway: 'IDE-then-PMA', …(8) } to match object { usPathway: 'IDE-then-PMA', …(1) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > does not read a null HUD population as one within the 8,000 limit 0ms
+   → expected 'HDE' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > gives no clinical-evidence answer while the pathway is undetermined 1ms
+   → expected { usPathway: 'undetermined', …(8) } to match object { usPathway: 'undetermined', …(1) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > does not self-certify an MDR Class I device whose sterile, measuring or reusable aspect was not stated 1ms
+   → expected 'self-certification (no NB)' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > routes a stated IVDR class without isIVD, and does not choose between two stated classes 1ms
+   → expected 'undetermined' to be 'notified body — full QMS + technical …' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > select_device_pathway gives a pathway only when no unstated deciding fact could change it > sends an IVDR Class A device to a notified body for sterility only 1ms
+   → expected 'notified body involvement' to be 'self-certification (no NB)' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_substantial_equivalence finds no SE and picks no 510(k) type from an unstated fact > does not find SE while the predicate recall was not stated 1ms
+   → expected 'SE' to be 'indeterminate' // Object.is equality
+ ✓ server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_substantial_equivalence finds no SE and picks no 510(k) type from an unstated fact > still ends at a stated NSE whatever the recall 0ms
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_substantial_equivalence finds no SE and picks no 510(k) type from an unstated fact > names the performance data an unstated device property decides 1ms
+   → expected 'undefined' to match /PERF-STERILE \(sterile\), PERF-IVD \(…/
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_substantial_equivalence finds no SE and picks no 510(k) type from an unstated fact > names no 510(k) type while an unstated recall or different-questions answer could make it NSE 0ms
+   → expected '510(k)-Abbreviated' to be null
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_substantial_equivalence finds no SE and picks no 510(k) type from an unstated fact > does not choose an Abbreviated 510(k) on an unstated software or IVD fact 0ms
+   → expected '510(k)-Abbreviated' to be null
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > design_device_clinical_evidence chooses no study or EU evaluation from an unstated fact > does not choose a pivotal investigation for an unstated isIVD 1ms
+   → expected [ 'pivotal' ] to deeply equal []
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > design_device_clinical_evidence chooses no study or EU evaluation from an unstated fact > names the feasibility, literature and real-world routes an unstated fact decides 0ms
+   → expected 'Frame the evidence around a benefit-r…' to match /feasibility \(first-in-human\) study …/
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > design_device_clinical_evidence chooses no study or EU evaluation from an unstated fact > does not read an implant stated as a string as stated 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > design_device_clinical_evidence chooses no study or EU evaluation from an unstated fact > scopes no EU evaluation from an unstated market, IVD status, class or implant 1ms
+   → expected 'EU market not indicated; MDR/IVDR cli…' to match /^Not scoped: .*\(euMarket\)/
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_essential_principles grades no row from an unstated fact > does not build an MDR matrix for a device not said to be an IVD or not 1ms
+   → expected {} to match object { code: 'missing_input', …(1) }
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_essential_principles grades no row from an unstated fact > raises no gap or "missing" finding for an unstated QMS or risk file 1ms
+   → GSPR 1: expected 'gap' to be 'not-assessed' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > assess_essential_principles grades no row from an unstated fact > keeps the stated answers 1ms
+   → expected 'gap' to be 'not-assessed' // Object.is equality
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > plan_device_submission plans nothing from an unstated fact without saying so > says when the Pre-Submission was not stated 1ms
+   → expected 'A Pre-Submission is optional but usef…' to match /^Whether a Pre-Submission has already…/
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > plan_device_submission plans nothing from an unstated fact without saying so > says when the EU market was not stated, and names both regulations for an unstated IVD 1ms
+   → expected [ 'ESTAR', 'TOC' ] to include 'EU-NOT-STATED'
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > plan_device_submission plans nothing from an unstated fact without saying so > keeps the IVD eSTAR questions on a plan whose IVD status was not stated, marked undetermined 0ms
+   → expected 'undefined' to match /^Undetermined: an IVD eSTAR question/
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'select_device_pathway' 1ms
+   → expected 1329 to be less than or equal to 1024
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_substantial_equivalence' 0ms
+   → expected 1527 to be less than or equal to 1024
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'design_device_clinical_evidence' 0ms
+   → expected 1226 to be less than or equal to 1024
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_essential_principles' 0ms
+   → expected 1511 to be less than or equal to 1024
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'plan_device_submission' 0ms
+   → expected 1077 to be less than or equal to 1024
+ × server/services/ana/__tests__/medical-device-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > names the inputs no function reads 0ms
+   → expected 'Whether the device is intended for la…' to match /Not read/
+⎯⎯⎯⎯⎯⎯ Failed Tests 132 ⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  132 failed | 9 passed (141)

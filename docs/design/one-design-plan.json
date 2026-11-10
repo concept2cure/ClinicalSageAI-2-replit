@@ -28,7 +28,15 @@
     "P-101",
     "P-102",
     "P-103",
-    "P-104"
+    "P-104",
+    "P-105",
+    "P-106",
+    "P-107",
+    "P-108",
+    "P-109",
+    "P-110",
+    "P-111",
+    "P-112"
   ],
   "alwaysAllowed": [
     "**/__tests__/**",
@@ -612,12 +620,14 @@
     },
     {
       "id": "S12",
-      "title": "Spine 12: work projects (CMC, biostatistics, RBM, data management, clin pharm, nonclinical) and their deliverables mapped downstream, versioned with lineage, with change flags (P-83)",
+      "title": "Spine 12: work projects (CMC, biostatistics, RBM, data management, clin pharm, nonclinical) and their deliverables mapped downstream, versioned with lineage, with change flags (P-83); a CMC or Quality work project manages its own smaller tasks inside its work area (P-111)",
       "status": "open",
       "dependsOn": [],
       "paths": [
         "server/services/project-rollup-service.ts",
         "server/routes/project-hierarchy.ts",
+        "server/services/c2c/program-project-anchor.ts",
+        "server/routes/c2c/projects.ts",
         "server/services/ana/changePropagationTools.ts",
         "server/services/cmc/**",
         "server/api/cmc/**",
@@ -637,7 +647,14 @@
         "migrations/**",
         "db/migrations/**",
         "scripts/db/migration-set.mjs",
-        "shared/schema/**"
+        "shared/schema/**",
+        "client/src/concept2cure/quality/**",
+        "client/src/concept2cure/v2/surfaces/Quality*.tsx",
+        "server/services/qms/**",
+        "server/services/capa-mdr/**",
+        "server/services/tasking/**",
+        "server/services/unified-work/**",
+        "shared/schema.ts"
       ]
     },
     {
@@ -690,7 +707,11 @@
       "id": "anna-runtime",
       "decision": "P-104",
       "title": "Extend the existing Anna runtime \u2014 Multi-Agent Architecture Spec v0.5",
-      "source": "MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf \u00a7\u00a71\u201332",
+      "source": "docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf \u00a7\u00a71\u201332",
+      "sourceSha256": "4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4",
+      "supersededSource": "MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md (v0.4, \u00a7\u00a71\u201315, unchanged in v0.5); superseded by v0.5 on the founder's correction of 2026-11-08 (P-105)",
+      "ownerDecision": "P-105",
+      "owner": "session_01KZK3jgtmQBgNepqLjXjS3k (sole owner; other packages keep their file holds)",
       "planSection": "docs/design/ONE_DESIGN_PLAN.md \u00a71d",
       "status": "acceptance_pending",
       "newFilesApproved": false,

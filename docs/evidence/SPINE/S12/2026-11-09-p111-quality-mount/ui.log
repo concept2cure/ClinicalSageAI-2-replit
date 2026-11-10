@@ -1,0 +1,594 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > shows nothing and reads nothing when the area was not opened from a work project 17ms
+stderr | client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > stays bound when the area consumes the hand-off itself and passes it on (QualityModule), before or after the panel mounts
+An update to WorkProjectTasks inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > is bound by the door, keeps the binding on its URL, and lists the work project's own tasks 177ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > stays bound when the area consumes the hand-off itself and passes it on (QualityModule), before or after the panel mounts 18ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > adds a task to the work project, never as its Deliver task 51ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > says a refused binding and a failed task read, never "no tasks" 11ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > offers no add to a person who may not write, and binds only the areas that show tasks 12ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide 27ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it 5ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change 5ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > authors an empty template section, saves it through the canonical revision path and reloads its saved text 690ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > honors the canonical current-version read-only decision before offering edits 73ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledDocumentWorkbench.integration.test.tsx > Quality → actual Authoring workbench > uses the canonical unsaved-work decision before returning to the register 491ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the exact notification record even when the register has no matching row 394ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the training reader, not the editor, for a training notice (qmsIntent read) 187ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > preserves a refused exact notification target without opening a different register row 89ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > queues a new notification target while the current canonical editing copy remains open 82ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > shows the exact unbound controlled record before offering its explicit authored revision 39ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates a controlled document with a real program and reason, then opens its editing copy 92ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > passes the selected library template to the create route 70ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > sends the periodic review date chosen at create, which review-due reads 74ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens the bound record directly and forwards workbench navigation to the host 50ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > binds an unbound legacy draft explicitly before opening its new editing copy 64ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > Send for review opens the review route form; nothing is sent until it is complete (RR4) 40ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > creates and opens a controlled revision through the real revision route 65ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content 68ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > keeps a refused create visible and shows the server reason without claiming success 78ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > renders a failed editor read as an error and supports retry without creating another record 44ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > the Quality shell forwards navigation and holds its tabs while the workbench is open 90ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > opens retained signed sections through the versions service as read-only content 348ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx > QMS controls reach the canonical authoring workbench > does not present an unreadable history as no signed versions 46ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > saves all current sections with version, digest, reason and canonical transport 133ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > requires the stated reason on button and keyboard save paths 33ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not save under another account whose token replaces storage before the reader rerenders 25ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a effective record 2ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a superseded record 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not edit a retired record 2ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > does not offer viewers a governed edit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > controlled text stays in the existing governed editor > uses the existing standard skeleton only when sections have not been provided 5ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits a supported legacy section with its canonical label 14ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > preserves an untouched sibling body exactly instead of reserializing it 14ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > edits bodies without submitting server-owned provenance attributes 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body 7 without replacing its structure 4ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body null without replacing its structure 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body {} without replacing its structure 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > legacy controlled sections preserve canonical data > refuses a malformed existing section body undefined without replacing its structure 3ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps edits on cancel and explicitly discards the scoped device drafts 28ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > keeps focus inside the nested discard dialog and Escape cancels the pending close 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > unsaved controlled text requires a decision > clears cached sibling drafts only after their whole snapshot is confirmed 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not save when a dirty editor unmounts 4ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm missing audit in a successful transport response 19ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign document in a successful transport response 19ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm foreign tenant in a successful transport response 19ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm wrong saved body in a successful transport response 18ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not confirm stale digest in a successful transport response 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a stale-write refusal distinct from confirmation and preserves the draft 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 0 as an unconfirmed outcome 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 408 as an unconfirmed outcome 16ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats thrown status 503 as an unconfirmed outcome 15ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > treats a returned timeout as unconfirmed too 12ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > keeps a confirmed save distinct from a failed subsequent refresh 13ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > only a confirmed controlled-text snapshot refreshes the record > does not let repeated clicks or a late old-scope response refresh another record 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ControlledTextEditor.test.tsx > the actual canonical editor has no implicit save in Quality > mounts the canonical text editor and leaves a dirty unmount unwritten 351ms
+stderr | client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a library card opens the same create form with its template chosen
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 312ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a library card opens the same create form with its template chosen 109ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 63ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 79ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 65ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the pre-inspection check says it is a request to AnA 58ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 181ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 85ms
+stderr | client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the forms gallery is the server library, and a card opens the create form
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ControlledDocumentSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 162ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the forms gallery is the server library, and a card opens the create form 125ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a gallery document with the selected program and reason, then opens its bound editing copy 160ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the health check says it is a request to AnA 101ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > renders exact section text escaped, names its revision, and requires an unchecked personal declaration 153ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > allows a viewer to personally acknowledge without requesting a password or signature 96ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > shows a current server receipt without offering a duplicate acknowledgement 15ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > refuses a token account swap before React rerenders without posting the checked declaration under another actor 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > prevents same-tick duplicate submissions and closing during a pending write 28ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when outline only has no verified released bodies 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when artifact only has no verified released bodies 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > offers no declaration when unverified release has no verified released bodies 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > does not let a viewer edit an unreleased document 13ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a in-review reader read recorded text without a release claim or acknowledgement 8ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > lets a read-only standing reader read recorded text without a release claim or acknowledgement 8ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > gives an authorized writer the existing controlled-text editor for a draft 21ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > keeps a controlled-text save confirmed while independently rereading after a coverage-refresh failure 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > recorded controlled text and writer availability > requires fresh server editing availability even when the cached session has a writer permission 11ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after missing audit 31ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after unchained audit 30ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after foreign actor 29ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different revision 34ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after different digest 30ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > does not invent success or refresh coverage after malformed success 26ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > shows a stale-release refusal and requires rereading rather than retrying a stale declaration 25ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > reconciles a lost write response by explicitly reloading the authoritative current receipt 37ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal acknowledgement refusals and reconciliation > keeps a confirmed receipt when the following refresh fails 27ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > treats a refused initial read as unreadable, including a resolved session 401 7ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > rejects a foreign user receipt returned by a successful GET 7ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a delayed old-document read after the selected document changes 8ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-organization write result and never refreshes the replacement scope 27ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > ignores a late old-user write result and never refreshes the replacement scope 25ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > reader identities and late responses > does not refresh or render a confirmed old-document write after switching documents 23ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens on the version in force and offers the next version with the day it takes effect 24ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > acknowledges the version selected, and says the acknowledgement counts from the day it takes effect 58ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > keeps a confirmed receipt on the next version, and only there, when the following refresh fails 52ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > does not carry a declaration made on one version over to the other 29ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > shows why a next version may not be read, with none of its text and no declaration 17ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opened from a training notice, starts on the version approved for a later day, and on the version in force when none waits 16ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > opens a document whose next version is being drafted on the version in force 9ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a row that is neither the version read nor its successor as unverifiable 6ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a successor that is not the row as unverifiable 6ms
+ ✓ client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > the version in force and the version approved for a later day > refuses a receipt of another person on the next version as unverifiable 7ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > no longer hands approval to AnA 48ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > opens the e-signature dialog, offering the approval meaning only 153ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > posts the signature to the signed route and shows the server’s time 102ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — approval is a signature taken here > shows a refused password as not signed 103ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead 14ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a draft is sent for review before it can be approved > Send for review opens the review route form, which names the QMS approver before anything is sent (RR4) 57ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > opens the e-signature dialog for Retire, offering the retirement meaning only (P-51) 43ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > posts the signature to the signed retire route and shows the server’s time 96ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — retirement is a signature taken here (P1-29 / DP-32) > shows a refused password as not retired 93ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed register read as a failure, with no count and no all-clear 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > claims nothing while the register is still loading 11ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows a register that answered empty as empty, not as a failure 7ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > renders a failed training read as a failure, not "no training-controlled documents" 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > shows no training compliance figure when nothing is training-controlled, instead of a red 0% 11ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > shows who approved the version in force, when in UTC, and with what meaning 21ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > never shows a changed, withdrawn or unread approval as standing 15ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the signature block (§11.50; MR-12 Stage 5 step 4) > shows who retired a retired document, and says when no retirement signature is on record 10ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says effective today leaves the people assigned no training period 40ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says a later day lets them read it ahead, until the day it takes effect 40ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody is assigned, with no count 37ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when nobody assigned is an active member, with no count 34ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — the approve dialog names who it reaches > says so when the read failed, with no count 39ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > offers Approve only on the change under assessment 251ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > opens the e-signature dialog with the approval meaning only, and posts to the signed route 106ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > ChangeControl — approving a change is a signature taken here > no longer tells AnA to capture an e-signature it cannot capture 95ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > holds until browser hash verification AND the named human invariant checkbox 185ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > refuses a one-byte hash change and never posts an approval 104ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControlApproval.test.tsx > the exact aggregate artifact is an additional explicit signature invariant > prepares an unsigned candidate with controlled bins and real reauthentication, then opens its existing editor 239ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > offers Record review on an effective document only, and says when each was last reviewed, in UTC 145ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > says what is wrong with the date, on the field, and keeps the dialog open 97ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "remains current" with meaning review, posts the decision, and names what was attested once signed 107ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the Periodic review panel records a signed review of the version in force > signs "revision required" with no date, saying the document keeps the date its approval set 105ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a refused password signed nothing, said once, and nothing is refreshed as if it had 107ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a review the server refuses as the document now stands reads the register again 103ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > refusals and failures say what happened > a dropped connection is not "nothing was signed": it says to check before signing again 103ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > the register row shows and takes a review beyond the panel > names the last review on the Next review cell and offers Record review there 49ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPeriodicReview.test.tsx > focus returns where the review started > to the Record review control on Cancel, and to the panel heading once a review from the panel is recorded 140ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > lists nonconformances and dispositions one only through a signature, its reason the rationale 203ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a deviation's investigation along the server lifecycle, and closes it only by a signature (P-57) 119ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows a failed supplier read as a failure, not an empty register 6ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > names a supplier's quality agreement by its controlled document, and records a new one by id 43ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > signs a supplier's standing, and sends nothing before the signature 68ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a supplier's quality agreement is unread when the controlled documents could not be read 7ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > moves a CAPA only along the server lifecycle, and closes it only with its effectiveness result 70ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > refuses to raise a CAPA with no project open 56ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > raises a CAPA from a nonconformance, in the open project, with the record as its source 44ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > completes a CAPA action only with its evidence, along the server action lifecycle 82ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > records a management-review action and closes it only with its note 64ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > shows the CAPA raised from a nonconformance, from the CAPA register, and never "none" over an unread register 16ms
+ ✓ client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > tells the shell for AnA what the register read, and that a failed read is a failure 13ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 83ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the lifecycle flowchart with a node per stage 207ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 90ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 48ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > explains raising changes without asking AnA to attest for a person
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn 113ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > explains raising changes without asking AnA to attest for a person 88ms
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty
+An update to ChangeControlSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 31ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 10ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 13ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > lists them by the project's verified id and program, with their kind in words 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says none, and a failed read is an error, never "none" 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > adds one with its kind and name, then lists it 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > says a refusal, and offers no add to a person who may not change the project, nor anything before the id is known 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a work project on its work area where the project offers it, and says when its kind has none (P-83 (b)) 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > opens a Quality work project on the organisation's Quality area wherever the person may, whatever the track (P-111 item 5) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the project's work projects (S12) > gives a work project its owner and due date through the Plan's assign, and says when its assignment cannot be read 66ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > beside the work projects, names the filing's sections drafted from the Vault with their standing, unattributed (S12 gap 5) 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never as lineage (S12 gap 5) 96ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > lets an active viewer read the actual release instead of delegating a team acknowledgement to AnA 357ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > opens the same personal reader from a real training row 82ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > qualifies unavailable releases instead of presenting them as assessed roster coverage 19ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > distinguishes a document whose assigned people are none active from an empty controlled-document list 15ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a document assigned to nobody says so, with no bar and no fraction; the KPI says nothing is assigned 19ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > an assigned document shows how many of the people assigned are current, and the reader's own line; the KPI is the server's average 16ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > a reader who is not assigned has no line of their own; one who is current is told so 27ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > rows without a summary from the server show no figure, and say so 13ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterPersonalTraining.test.tsx > the existing Quality register personal training handoff > closes the selected reader immediately when the authenticated organization changes 74ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > waits for a QMS approver, the approval date and a reason; reviewers are optional; then PATCHes the route 262ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > Send for review names the route (RR4, §2.7) > says the server’s refusal and keeps the form open 68ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > shows the round under the status, every member in the sheet, and the sender’s acts; Approve is not the sender’s 67ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the reviewer whose turn it is signs the review with meaning REVIEWED; they may hand back, not approve 29ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > the approver at their turn approves through the existing signed approval 28ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > a document in review with no route keeps today’s Approve and offers Name reviewers; an unread route says so 48ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a failed read says so, never "No job roles yet" 31ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a verified empty list says there are none; while loading it says so 98ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > lists each role and its holders; someone who is not an administrator is offered no change 25ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > an administrator creates a role with its reason, through the governed route, and the list is read again 82ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a refused change shows the server's sentence and keeps the form 53ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Job roles > a role assigned to a document cannot be deleted, and says why; removing a holder sends a DELETE with its reason 38ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > reads this document's assignments; a failed read says so, never "Nobody is assigned" 4ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a verified empty list says nobody is assigned, and that training opens with the version in force 4ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > an assigner sees every person and how each is covered 5ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > anyone else sees the count and their own line, not the names (P-50) 8ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when whether you may change them could not be checked, it says so and offers nothing 8ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > a version approved for a later day is named 4ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > assigns a job role not yet assigned, with its reason; the role already assigned is not offered 35ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > withdraws an assignment with its reason; a refusal is shown in the server's words 38ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingAssignments.test.tsx > Who must train on a document > when the roles and people cannot be read, nothing can be assigned, and it says so 17ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > orders the reviewers, dates each step, names two QMS approvers, and PATCHes the sequential route 338ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > the sender adds a reviewer to the open route 74ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsReviewRouteRR2.test.tsx > QMS: reviewers one after another and two QMS approvers (RR2) > an approver whose approval is not the last is told so before signing 43ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links the CAPA chosen from the register, with its own number and title 154ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > links a deviation chosen from the deviation register (P-57) 31ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeLinkForm.test.tsx > Link a record > says so when the register could not be read, and keeps the typed reference 27ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > clears previously loaded procedure and roster rows before the replacement tenant reads settle 142ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterIdentity.test.tsx > the register retires all tenant-owned reads when identity changes > aborts old reads and ignores their late successful bodies after the new tenant renders 51ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > passes the initial exact record and a later same-surface request through QualityRoute 110ms
+ ✓ client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx > Quality adapter consumes exact notification handoffs > carries a training notice’s reading intent, and only that intent (MR-12 Stage 4 slice 4b) 5ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > takes integer session identities without a fallback organization 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":""} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":" 42 "} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"07","organizationId":"42"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":true,"organizationId":"42"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"1.5"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > does not invent a scope from incomplete or invalid session {"id":"7","organizationId":"2147483648"} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 0 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id -1 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 1.5 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id NaN 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id Infinity 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > personal training uses an explicit authenticated scope > rejects an invalid document id 2147483648 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > uses canonical authenticated GET and retains exact released text 4ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > accepts this person’s unexpired receipt for the exact released revision 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision being drafted 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force while the row is a revision under review 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > reads the version in force and its successor when the row is the version approved for a later day 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a draft row beside a version not said to be in force 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a later effective row with no successor read 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor that is not the row 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a successor of another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects another person’s receipt on the successor 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > treats the canonical transport’s resolved 401 as a failed read 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record null 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":[]} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a malformed read without inventing an empty record {"data":{"id":31,"organization_id":42,"version":"2.0","status":"effective"},"meta":{}} 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an unreadable JSON response 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign tenant 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a foreign document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different version 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a document envelope from a different release status 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with foreign document 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unreleased state 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unverified content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with no readable bodies 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with outline only 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with blank body 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects an eligible context with unavailable release 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > returns unavailable controlled content honestly without making it eligible 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another person 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another document 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to another revision 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to other content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expired receipt 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to expiry at the present instant 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > reading a verified personal training context > rejects a read that claims this acknowledgement belongs to unverified legacy method 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > posts only the exact released version, digest and personal declaration through canonical transport 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unavailable content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for foreign document 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > makes no write for unverified content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing audit confirmation unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unpersisted audit unconfirmed rather than declaring success 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps unchained audit unconfirmed rather than declaring success 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps malformed data unconfirmed rather than declaring success 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps missing envelope unconfirmed rather than declaring success 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a successful status with lost JSON unconfirmed 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another person 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another document 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for another revision 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for other content 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not confirm a receipt for an expired receipt 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > accepts an already-current receipt without claiming another audited insertion 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > does not accept the already-current flag for another person 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 400 refusal distinct from an unknown commit 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 403 refusal distinct from an unknown commit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 404 refusal distinct from an unknown commit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 409 refusal distinct from an unknown commit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps an explicit HTTP 422 refusal distinct from an unknown commit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > recognizes the canonical transport’s resolved 401 as a refusal 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > keeps a confirmed audit rollback as a refusal even at HTTP 500 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a network failure 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after a request timeout 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an upstream failure 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 500 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTraining.test.ts > recording a personal acknowledgement > requires reconciliation after an unknown commit at HTTP 409 0ms
+ ✓ client/src/concept2cure/quality/__tests__/SopRegisterInForce.test.tsx > a controlled document under revision > shows the version in force beside its draft, dated by that version 74ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > names the person, the document and when their training lapses 26ms
+ ✓ client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says a failed read failed, and never that no one lapses 7ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > uses fresh bearer and organization headers with cookies for reads and the strict personal write 12ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > rejects the actual transport’s resolved session refusal before displaying controlled content 3ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not equate an actual successful HTTP response with a confirmed audit record 2ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another account in the same organization before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses another organization before dispatch even when React still holds the old checked declaration 1ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses missing identity claims before dispatch even when React still holds the old checked declaration 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > refuses malformed bearer before dispatch even when React still holds the old checked declaration 0ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsPersonalTrainingAuth.test.ts > personal training through the actual authenticated client transport > does not dispatch a personal write after the canonical token is removed 1ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > retains the canonical binding and program rather than losing them between the service and Open control 11ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > QMS document adapter > keeps legacy absence explicit so an unbound draft opens binding setup 2ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the date due after the last signed review, not the date the approval signed 4ms
+ ✓ client/src/concept2cure/quality/__tests__/hooksDocumentBinding.test.tsx > the next periodic review the register shows (gap 5.2) > is the row date when the server sends no review 2ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > flags a proposed change the server says is past its target 2ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say 1ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > isImplementationOverdue > claims nothing for a row that carries no verdict 0ms
+ ✓ client/src/concept2cure/quality/__tests__/changeOverdueFlag.test.ts > useChangeRegister > carries the server verdict and the linked records onto each row 18ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > names the rows and counts read 2ms
+ ✓ client/src/concept2cure/quality/__tests__/recordTabContext.test.tsx > Quality record tab context for AnA > never reads a failed register as empty, and never borrows another tab's rows 1ms
+ ✓ client/src/concept2cure/quality/__tests__/reviewOverdueToday.test.ts > review overdue is judged against today > marks a review due 2026-07-01 overdue on 2026-10-29, in the register and in the Record review row 3ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > keeps `minmax(0, 1fr)` whole rather than splitting it on its inner space 1ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > gives every flexible track the floor, not just the first 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > is the sum of fixed tracks, floors, gaps and padding for the SOP register 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > does not need a minimum when the tracks already fit 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > SOP register asks for more than a surface pane gives, so the title needs the floor 0ms
+ ✓ client/src/concept2cure/quality/__tests__/registerGrid.test.ts > registerRowMinWidth > change control asks for more than a surface pane gives, so the title needs the floor 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers the open project beside an organisation-wide change, and starts on organisation-wide
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends the open project when the person files the change under it
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > sends no project for an organisation-wide change
+ FAIL  client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > Raise change request — the project a change belongs to > offers no project when none is open, and sends none
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ captureAuthoringSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:15:19
+     13| /** Keep one account/session owner across ordinary bearer refreshes. */
+     14| export function captureAuthoringSession() {
+     15|   const account = authService.getUser();
+       |                   ^
+     16|   const guard = authService.captureSessionReadGuard();
+     17|   return { sameRevision: () => guard.sameRevision() && authService.get…
+ ❯ mintAuthoringReadSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:26:17
+ ❯ useAuthoringReadSession client/src/concept2cure/v2/editor/authoringCurrentRead.ts:42:31
+ ❯ ReviewedLearningPreparation client/src/concept2cure/quality/ChangeControl.tsx:672:17
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed | 28 passed (29)
+      Tests  4 failed | 326 passed (330)
+   Start at  11:49:46
+   Duration  36.64s (transform 3.33s, setup 1.41s, import 6.58s, tests 17.13s, environment 8.60s)
+

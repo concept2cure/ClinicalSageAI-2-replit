@@ -372,3 +372,42 @@ describe('every format the Vault admits is checked by its bytes and bound to its
     expect(verifyDeclaredTypeForName(Buffer.from('<html><script>x</script></html>'), 'page.html', 'application/xslt+xml').ok).toBe(false);
   });
 });
+
+/*
+ * P-112 (2026-11-09): the Vault admits a .zip, stored as one file. A name the
+ * table does not bind is left alone by verifyDeclaredTypeForName, so before the
+ * binding a "filing.zip" declared text/html with HTML bytes passed both checks
+ * (SEC-A-3's case under a new name), and so did a .zip whose bytes are no
+ * archive at all. The binding makes a .zip name promise a zip container.
+ */
+describe('a .zip name binds a zip container (P-112)', () => {
+  const ZIP = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(60, 0)]);
+  const HTML = Buffer.from('<!doctype html><script>alert(document.domain)</script>');
+
+  it('refuses a .zip declared text/html, naming the types a .zip may be declared as', () => {
+    const res = verifyDeclaredTypeForName(HTML, 'filing.zip', 'text/html');
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/\.zip file must be declared as application\/zip/);
+  });
+
+  it('refuses a .zip whose bytes are not a zip container, whatever zip type was declared', () => {
+    for (const declared of ['application/zip', 'application/x-zip-compressed', 'application/octet-stream']) {
+      expect(verifyDeclaredTypeForName(HTML, 'filing.zip', declared).ok).toBe(false);
+    }
+  });
+
+  it('accepts a zip container under each type a browser sends one as, and checks it as a zip', async () => {
+    const { signatureTypeFor } = await import('../fileSignature');
+    for (const declared of ['application/zip', 'application/x-zip-compressed', 'application/octet-stream']) {
+      expect(verifyDeclaredTypeForName(ZIP, 'filing.zip', declared).ok).toBe(true);
+      expect(verifyDeclaredTypeForName(ZIP, 'FILING.ZIP', declared).ok).toBe(true);
+      expect(signatureTypeFor('filing.zip', declared)).toBe('application/zip');
+    }
+  });
+
+  it('admits octet-stream as a zip for a .zip name only', async () => {
+    const { signatureTypeFor } = await import('../fileSignature');
+    expect(signatureTypeFor('report.pdf', 'application/octet-stream')).toBe('application/octet-stream');
+    expect(verifyDeclaredTypeForName(ZIP, 'report.pdf', 'application/zip').ok).toBe(false);
+  });
+});

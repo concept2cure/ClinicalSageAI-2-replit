@@ -1,0 +1,43 @@
+Start 00-discover: full-program context, 0 semantic targets, heap 7168 MB
+Resource 00-discover 0.0s: pid 84, RSS 88 kB, HWM 88 kB
+Resource 00-discover 20.0s: pid 84, RSS 3378480 kB, HWM 3378480 kB
+Resource 00-discover 40.0s: pid 84, RSS 6002268 kB, HWM 6002268 kB
+Worker exit 00-discover: {"phase": "00-discover", "exitCode": 0, "elapsedSeconds": 47.738, "cumulativeCompletedChildPeakRssKiB": 6200084}
+Completed 00-discover: 0 diagnostics
+Discovery: 15470 full-program files; 65 changed targets; 10 changed files outside the configured program; snapshot 1782d06122c228aa613bc7f791f39241ab2e040350101a04f58da631bed3ac33
+Start 01-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 01-check 0.0s: pid 92, RSS 24 kB, HWM 24 kB
+Resource 01-check 20.0s: pid 92, RSS 3404328 kB, HWM 3404328 kB
+Resource 01-check 40.0s: pid 92, RSS 5901424 kB, HWM 5901424 kB
+Resource 01-check 60.0s: pid 92, RSS 6689736 kB, HWM 6689736 kB
+Worker exit 01-check: {"phase": "01-check", "exitCode": 0, "elapsedSeconds": 67.887, "cumulativeCompletedChildPeakRssKiB": 6896560}
+Completed 01-check: 0 diagnostics
+Supplemental changed-target progress 20/65; full publication gate remains separate
+Start 02-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 02-check 0.0s: pid 100, RSS 8 kB, HWM 8 kB
+Resource 02-check 20.0s: pid 100, RSS 3402416 kB, HWM 3402416 kB
+Resource 02-check 40.0s: pid 100, RSS 6086776 kB, HWM 6088628 kB
+Worker exit 02-check: {"phase": "02-check", "exitCode": 0, "elapsedSeconds": 48.99, "cumulativeCompletedChildPeakRssKiB": 6896560}
+Completed 02-check: 0 diagnostics
+Supplemental changed-target progress 40/65; full publication gate remains separate
+Start 03-check: full-program context, 20 semantic targets, heap 7168 MB
+Resource 03-check 0.0s: pid 108, RSS 68 kB, HWM 68 kB
+Resource 03-check 20.0s: pid 108, RSS 3341472 kB, HWM 3341472 kB
+Resource 03-check 40.0s: pid 108, RSS 6044060 kB, HWM 6044060 kB
+Worker exit 03-check: {"phase": "03-check", "exitCode": 0, "elapsedSeconds": 48.639, "cumulativeCompletedChildPeakRssKiB": 6896560}
+Completed 03-check: 6 diagnostics
+ERROR TS18046 /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/__tests__/authoringCsrImportIntoDocument.pglite.integration.test.ts:328:43: 'row' is of type 'unknown'.
+ERROR TS2571 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:84:21: Object is of type 'unknown'.
+ERROR TS18046 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:120:12: 'row' is of type 'unknown'.
+ERROR TS18046 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:122:12: 'audit' is of type 'unknown'.
+ERROR TS2769 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:125:26: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => value is unknown, thisArg?: any): this is unknown[]', gave the following error.
+    Argument of type '(row: { machine_author_id: string; }) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => value is unknown'.
+      Types of parameters 'row' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '{ machine_author_id: string; }'.
+  Overload 2 of 2, '(predicate: (value: unknown, index: number, array: unknown[]) => unknown, thisArg?: any): boolean', gave the following error.
+    Argument of type '(row: { machine_author_id: string; }) => boolean' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => unknown'.
+      Types of parameters 'row' and 'value' are incompatible.
+        Type 'unknown' is not assignable to type '{ machine_author_id: string; }'.
+ERROR TS18046 /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:168:66: 'bad' is of type 'unknown'.
+Stopped immediately after the first completed worker with actual errors. This is not a full gate result.

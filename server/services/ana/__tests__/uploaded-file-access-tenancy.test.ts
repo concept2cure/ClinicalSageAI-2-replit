@@ -33,7 +33,11 @@ function row(overrides: Record<string, unknown> = {}) {
 }
 
 async function lookup(rows: unknown[], orgId: number | null, ids = ['file_1']) {
-  query.mockResolvedValueOnce({ rows });
+  // The rows answer the file_uploads lookup only. The module's import graph constructs
+  // AuditService (services/auditService.ts), whose constructor runs its one-time store
+  // probe on this pool; a queue-ordered answer went to that probe on the first cold
+  // import, and the lookup got nothing.
+  query.mockImplementation(async (sql: unknown) => (/\bFROM file_uploads\b/.test(String(sql)) ? { rows } : { rows: [] }));
   const { loadUploadedFileMetadata } = await import('../uploaded-file-access');
   return loadUploadedFileMetadata(ids, orgId);
 }

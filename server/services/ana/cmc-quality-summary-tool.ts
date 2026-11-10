@@ -118,9 +118,18 @@ export async function draftQualityOverallSummary(
       tables: summary.tables,
       completeness: summary.completeness,
       gaps: summary.gaps,
+      /* The SAME atoms and procedures Module 3 composed from — derived from the
+         sections above, not read again, so the 2.3 and the 3.2 cite one record
+         set rather than two reads that agree today (roadmap phase 4, S7). A
+         draft that reached authoring without them left the 2.3 untraceable
+         while the identical figure in 3.2 could be traced to its record. */
+      lineage: summary.lineage,
+      methodReferences: summary.methodReferences,
       instruction:
         'This is a draft the author promotes through the governed authoring flow. State the completeness and the ' +
-        'missing Module 3 sections (gaps) honestly, and do not add figures the record does not hold.',
+        'missing Module 3 sections (gaps) honestly, and do not add figures the record does not hold. The analytical ' +
+        'procedures are those in methodReferences, with the validation status recorded for each; name no other, and ' +
+        'do not describe a procedure as validated when its status says otherwise.',
     });
   } catch (err) {
     // The driver's message names tables; it goes to the log. The model is told the read failed.

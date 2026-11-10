@@ -31,7 +31,22 @@ import { writeChainedAuditRow } from '../auditService.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultDocKindLabel } from '../../../shared/constants/domain/vault-taxonomy.js';
-import { stableHash } from '../../../shared/canonical-json.js';
+import { createHash } from 'node:crypto';
+/* `stableStringify` only. `shared/canonical-json`'s `stableHash` reaches
+   node:crypto through a dynamic `require`, which does not exist in this
+   server's ESM runtime: calling it answers
+   `ReferenceError: require is not defined` from inside a hash, the moment the
+   path is used. Measured on the CMC batch-release path on 2026-11-09
+   (`docs/evidence/F1/2026-11-09-batch-release-fingerprint/`); this was the
+   other live caller, found by the contract case in that evidence rather than
+   by anyone reaching it. Hashed here the way
+   `services/ana/skills/library/index.ts` already does. */
+import { stableStringify } from '../../../shared/canonical-json.js';
+
+/** sha256 of a value's canonical JSON, lowercase hex. */
+function stableHash(value: unknown): string {
+  return createHash('sha256').update(stableStringify(value), 'utf8').digest('hex');
+}
 import { LEGACY_CATALOG_VERIFICATION_SCOPE, type LegacyCatalogVerificationScope } from '../../../shared/ana/catalog-facts.js';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership.js';
 import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';

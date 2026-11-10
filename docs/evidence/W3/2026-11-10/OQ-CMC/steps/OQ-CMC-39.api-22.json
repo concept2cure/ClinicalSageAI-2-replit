@@ -1,0 +1,46 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/container-closures",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+      "systemName": "OQ CCS 20261110020703b",
+      "containerDescription": "HDPE bottle",
+      "closureDescription": "CR cap",
+      "status": "draft"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 27,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 1,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "scope": "drug_product",
+        "systemName": "OQ CCS 20261110020703b",
+        "componentType": "primary",
+        "containerDescription": "HDPE bottle",
+        "closureDescription": "CR cap",
+        "materialsOfConstruction": null,
+        "compendialStandards": null,
+        "suitabilityJustification": null,
+        "extractablesLeachables": null,
+        "integrityTesting": null,
+        "supplier": null,
+        "status": "draft",
+        "qualifiedBy": null,
+        "qualificationDate": null,
+        "createdAt": "2026-11-10T02:09:06.053Z",
+        "updatedAt": "2026-11-10T02:09:06.053Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

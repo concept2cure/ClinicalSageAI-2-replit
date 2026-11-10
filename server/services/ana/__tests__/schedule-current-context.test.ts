@@ -1,6 +1,9 @@
 /** Registered schedule callers must carry the server actor/executor and never
  * replace current scope with model fields. Real policy is qualified separately. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 const H = vi.hoisted(() => ({
   admit: vi.fn(), generate: vi.fn(), amend: vi.fn(), review: vi.fn(), reset: vi.fn(),
   role: vi.fn(async (): Promise<string | null> => 'member'),

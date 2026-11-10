@@ -1,0 +1,11 @@
+BEGIN
+DO
+INSERT 0 1
+INSERT 0 1
+ id | sequence_number | dispatch_status | transmittal_id |   status   | transport 
+----+-----------------+-----------------+----------------+------------+-----------
+ 31 | 0001            | transmitting    |              1 | rejected   | as2
+ 32 | 0002            | transmitting    |              2 | in_transit | as2
+(2 rows)
+
+COMMIT

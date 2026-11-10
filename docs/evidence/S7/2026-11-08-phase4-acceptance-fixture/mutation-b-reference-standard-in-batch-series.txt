@@ -1,0 +1,8 @@
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the batch-analyses tables match expected cells > §3.2.S.4.4 files both substance results, the second as the contradiction it is 9ms
+   → expected { …(3) } to deeply equal { …(3) }
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the batch-analyses tables match expected cells > files the reference-standard qualification in neither batch table 2ms
+   → expected [ 'DS-2601-A', 'in-process', …(26) ] to not include 'RS-114-02'
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > OOS is explicitly flagged, in the prose as well as the table > §3.2.S.4 counts the comparisons, names the contradicting record, and asserts no investigation 7ms
+   → expected 'The drug substance specification defi…' to contain '2 carry both a numeric result and an …'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 15 passed (18)

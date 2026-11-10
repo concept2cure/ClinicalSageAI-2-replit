@@ -1,0 +1,446 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > is stated when the cell is verbatim, or every number of it survives a reformat 5ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names the changed figure in the cell's shape, or an n/N with its denominator 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not take another claimed cell for a changed figure 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > names an n/N whose numerator coincides with another claimed cell's number 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > gives a one-number cell no shape: a different number is left to the unclaimed check 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > checks all conflicting shapes and ratios before accepting an exact occurrence 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call <0.001 stated after its numeric meaning changes to p=0.001. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 0.001 stated after its numeric meaning changes to p<0.001. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call -2.50 stated after its numeric meaning changes to The difference was 2.50. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 2.50 stated after its numeric meaning changes to The difference was 2.5. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 12% stated after its numeric meaning changes to 12 patients completed. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not call 12 stated after its numeric meaning changes to 12% completed. 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not find a scalar count merely inside a ratio, suffix or longer number 1ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > preserves a correctly encoded figure and independently claimed aggregates 1ms
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Response (%)) 6ms
+   → expected [ '83.3' ] to deeply equal []
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (%) 1ms
+   → expected [ '83.3' ] to deeply equal []
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Percentage) 1ms
+   → expected [ '83.3' ] to deeply equal []
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (95% CI) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (n (%)) 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Count (%)) 0ms
+ × server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > retains an explicitly supplied percentage unit while rechecking the edited claim 1ms
+   → expected { state: 'changed', stated: '83.3%' } to deeply equal { state: 'stated' }
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat 95% CI as a percent-only column for an edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat n (%) as a percent-only column for an edited claim 0ms
+ ✓ server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > does not treat Count (%) as a percent-only column for an edited claim 0ms
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > passes claimed numbers and cross-references to report parts 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > refuses any other number, however it is written 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let a reference word hide a percentage 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display <0.001 authorize p=0.001 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 0.001 authorize p<0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display >0.999 authorize p≥0.999 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display -2.50 authorize The difference was 2.50. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 2.50 authorize The difference was 2.5. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 12% authorize 12 patients completed. 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 12 authorize 12% completed. 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not let the supplied display 0.001 authorize p=0.001e-3 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > checks a conflicting occurrence even when an exact occurrence is also present 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > reads encoded operators as visible figures and ignores digits in markup 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p&Lt;0.001 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p&ne;0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p≈0.001 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001&unknownunit; 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001abc 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001%3 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnclaimedNumbers (evidence-bound sections) > does not borrow supplied scalars across the boundary in p=0.001mg/mL 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds each kind of figure a model could invent 2ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a figure the study information supplied, and a confidence level 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > finds a Bayesian result a model could invent: a posterior, an n/N and an unbracketed interval 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits a supplied phase written n/N, a date and a posterior placeholder 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > admits placeholder prose 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > findUnsuppliedStatistics > treats methods and results sections as statistical, and ethics as not 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §10.1 3ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §11.4.1 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §12.2 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not use planned metadata to support observed clinical facts in §13 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > allows a result figure only when a claimed cell matches the retained table 1ms
+ × server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (Response (%)) 8ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (95% CI) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (n (%)) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (Count (%)) 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > does not prevent the documented planned enrollment in the statistical-methods section 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §12.3 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §12.2 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §11.4.1 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §13 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §13 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > refuses unsubstantiated §2 categorical assertion 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > retains truthful unknown-source prose rather than claiming no events 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > qualitative clinical outcome claims require independent source-backed interpretation > still accepts an exact source-backed count rather than an ungrounded absence verdict 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > does not mistake planned enrollment for observed completion even when both use 300 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > permits clearly planned recruitment but requires current completion receipts 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > ICH E3 synopsis separates planned study numbers from actual outcomes > preserves study identifiers and reference numbers when inspecting actual outcomes 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > does not present the safety population as the number of deaths 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > permits exact fatal-event counts from the correct source row 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > death count semantic receipts > does not infer zero deaths from an absence of data 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > does not store a statistical-plan model draft that states figures nobody supplied 6ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > keeps a statistical-plan draft that states only the supplied planned sample size 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > retains non-statistical source-limited narrative drafting 0ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > draftCSRSectionWithProvenance > the §9.7 template no longer asserts an analysis population or alpha nobody supplied 1ms
+ ✓ server/services/csr/__tests__/unsupplied-statistics.test.ts > loadCsrInputsForProject — the Module 2 primary result > quotes the pointer to §11.4, never §11.4 text, even when the section states a result 1ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > finds each reported figure that is exactly a retained cell, with every cell it could be 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > never offers markup, or a figure inside a longer number ("12" in "10/12", "190" in "1190", "100" in a style) 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences > a section with no matching figure offers none 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > finds every encoded threshold with its raw entity and spacing intact 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p<0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&#60;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&gt;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p≤0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p>=0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=-0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.0010 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001e3 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001%3 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001mg 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&Lt;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p&ne;0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p≈0.001 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not offer the scalar 0.001 inside p=0.001&unknownunit; 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > includes an encoded sign and a percentage header’s unit in their raw spans 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not expose attribute digits after a quoted greater-than sign or hide a second operator 0ms
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% CI 9ms
+   → expected [ { …(6) } ] to deeply equal []
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% confidence interval 1ms
+   → expected [ { …(6) } ] to deeply equal []
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from n (%) 1ms
+   → expected [ { …(6) } ] to deeply equal []
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Count (%) 1ms
+   → expected [ { …(6) } ] to deeply equal []
+ × client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Number (%) 1ms
+   → expected [ { …(6) } ] to deeply equal []
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > keeps all exact candidate studies instead of choosing whichever was first 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > WebCrypto and node:crypto agree on the same text 6ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > a confirmed map passes the server verifier, which checks every claim 3ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > the map the screen builds is the map the server accepts > an edited section after mapping is refused by the server, so a stale map cannot approve 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > undecided figures, missing statements, no mapped result and both attestations 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > mapGaps says what still stops approval, and buildSubmission refuses while any remains > a blank section is named: the server approves a CSR only when every section is written 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > names the section and the placeholder, and the map cannot be submitted 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > a section still holding a data placeholder is named > a section without one is not named 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > offers no trial phase, scheduled week or instrument item count 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > still offers every result: counts, a percentage, a difference and a p-value, including a count after an arm name 0ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > reads only the word before the number: a count in brackets after an arm or a population is a result 0ms
+(node:58) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "190" claimed inside "1190" 6ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses "12" claimed inside "12.5" 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses digits inside markup 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > refuses a count followed by "%" when its column is not a percentage 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a mapped figure is verified where it stands in the saved text > accepts a whole figure, and a percentage-column value reported with its unit (controls) 2ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > refuses the "2" of "Phase 2" and the "12" of "Week 12", and verifies the "36" reported after them 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > still verifies a real result beside them (control) 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > accepts encoded signs/operators only when the quote includes their complete raw span 2ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not bind a scalar to digits after a comparator or sign outside the claimed quote 2ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > requires an implicit percentage unit to remain inside the raw quoted span 1ms
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% CI as a percent-only column 4ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% confidence interval as a percent-only column 1ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret n (%) as a percent-only column 1ms
+   → expected function to throw an error, but it didn't
+ × server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret Count (%) as a percent-only column 2ms
+   → expected function to throw an error, but it didn't
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% CI as a percent-only column
+ FAIL  server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret 95% confidence interval as a percent-only column
+ FAIL  server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret n (%) as a percent-only column
+ FAIL  server/services/authoring/__tests__/csr-claim-in-context.test.ts > a review quote must enclose the whole raw figure > does not interpret Count (%) as a percent-only column
+AssertionError: expected function to throw an error, but it didn't
+ ❯ server/services/authoring/__tests__/csr-claim-in-context.test.ts:152:8
+    150|     const start = content.indexOf('83.3');
+    151|     expect(review(content, start, start + '83.3&#37;'.length, '83.3', …
+    152|       .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHA…
+       |        ^
+    153|   });
+    154| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Response (%))
+ FAIL  server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (%)
+ FAIL  server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > rechecks saved percentage text only with percent-only column context (Percentage)
+AssertionError: expected [ '83.3' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "83.3",
++ ]
+
+ ❯ server/services/ana/__tests__/csr-edited-section.test.ts:78:32
+     76|       claims: [{ table: 'primaryEfficacy', row: 0, column: 2, value: '…
+     77|     const plans = planSections([{ code: '11.4', text, content: text }]…
+     78|     expect(plans[0].unclaimed).toEqual(accepted ? [] : ['83.3']);
+       |                                ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/services/ana/__tests__/csr-edited-section.test.ts > editedClaimOutcome > retains an explicitly supplied percentage unit while rechecking the edited claim
+AssertionError: expected { state: 'changed', stated: '83.3%' } to deeply equal { state: 'stated' }
+
+- Expected
++ Received
+
+  {
+-   "state": "stated",
++   "state": "changed",
++   "stated": "83.3%",
+  }
+
+ ❯ server/services/ana/__tests__/csr-edited-section.test.ts:83:81
+     81|   it('retains an explicitly supplied percentage unit while rechecking …
+     82|     const claim = { value: '83.3', population: 'Response (%)' };
+     83|     expect(editedClaimOutcome('The response rate was 83.3%.', claim, […
+       |                                                                                 ^
+     84|   });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/services/csr/__tests__/unsupplied-statistics.test.ts > evidence-bound clinical result figures cannot borrow planned numbers > requires a percent-only column for an implicit percentage unit (Response (%))
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/csr/__tests__/unsupplied-statistics.test.ts:199:117
+    197|     const lineage: Record<string, unknown> = {};
+    198|     expect(acceptEvidenceBoundDraft({ sectionNumber: '11.4', prose: 'T…
+    199|       claims: [{ table: 'primaryEfficacy', row: 0, column: 1, value: '…
+       |                                                                                                                     ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% CI
+AssertionError: expected [ { …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "candidates": [
++       {
++         "column": 1,
++         "header": "95% CI",
++         "row": 0,
++         "rowLabel": "LMN-201",
++         "runId": "0b6f2f5e-8a1c-4d3e-9f20-1a2b3c4d5e6f",
++         "studyId": "CDI02",
++         "table": "disposition",
++         "tableTitle": "Disposition",
++         "value": "83.3",
++       },
++     ],
++     "display": "83.3",
++     "end": 22,
++     "key": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:13:22",
++     "sectionId": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
++     "start": 13,
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts:103:93
+    101|
+    102|   it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', …
+    103|     expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [ce…
+       |                                                                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from 95% confidence interval
+AssertionError: expected [ { …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "candidates": [
++       {
++         "column": 1,
++         "header": "95% confidence interval",
++         "row": 0,
++         "rowLabel": "LMN-201",
++         "runId": "0b6f2f5e-8a1c-4d3e-9f20-1a2b3c4d5e6f",
++         "studyId": "CDI02",
++         "table": "disposition",
++         "tableTitle": "Disposition",
++         "value": "83.3",
++       },
++     ],
++     "display": "83.3",
++     "end": 22,
++     "key": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:13:22",
++     "sectionId": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
++     "start": 13,
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts:103:93
+    101|
+    102|   it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', …
+    103|     expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [ce…
+       |                                                                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from n (%)
+AssertionError: expected [ { …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "candidates": [
++       {
++         "column": 1,
++         "header": "n (%)",
++         "row": 0,
++         "rowLabel": "LMN-201",
++         "runId": "0b6f2f5e-8a1c-4d3e-9f20-1a2b3c4d5e6f",
++         "studyId": "CDI02",
++         "table": "disposition",
++         "tableTitle": "Disposition",
++         "value": "83.3",
++       },
++     ],
++     "display": "83.3",
++     "end": 22,
++     "key": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:13:22",
++     "sectionId": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
++     "start": 13,
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts:103:93
+    101|
+    102|   it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', …
+    103|     expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [ce…
+       |                                                                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Count (%)
+AssertionError: expected [ { …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "candidates": [
++       {
++         "column": 1,
++         "header": "Count (%)",
++         "row": 0,
++         "rowLabel": "LMN-201",
++         "runId": "0b6f2f5e-8a1c-4d3e-9f20-1a2b3c4d5e6f",
++         "studyId": "CDI02",
++         "table": "disposition",
++         "tableTitle": "Disposition",
++         "value": "83.3",
++       },
++     ],
++     "display": "83.3",
++     "end": 22,
++     "key": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:13:22",
++     "sectionId": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
++     "start": 13,
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts:103:93
+    101|
+    102|   it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', …
+    103|     expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [ce…
+       |                                                                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences preserve the full raw numerical display > does not borrow a percentage unit from Number (%)
+AssertionError: expected [ { …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "candidates": [
++       {
++         "column": 1,
++         "header": "Number (%)",
++         "row": 0,
++         "rowLabel": "LMN-201",
++         "runId": "0b6f2f5e-8a1c-4d3e-9f20-1a2b3c4d5e6f",
++         "studyId": "CDI02",
++         "table": "disposition",
++         "tableTitle": "Disposition",
++         "value": "83.3",
++       },
++     ],
++     "display": "83.3",
++     "end": 22,
++     "key": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d:13:22",
++     "sectionId": "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
++     "start": 13,
++   },
++ ]
+
+ ❯ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts:103:93
+    101|
+    102|   it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)', …
+    103|     expect(figureOccurrences(saved('<p>Response: 83.3&#37;.</p>'), [ce…
+       |                                                                                             ^
+    104|   });
+    105|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  14 failed | 115 passed (129)
+   Start at  09:27:37
+   Duration  2.64s (transform 1.12s, setup 103ms, import 1.76s, tests 141ms, environment 0ms)
+

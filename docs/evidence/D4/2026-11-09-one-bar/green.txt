@@ -1,0 +1,7 @@
+Canvas suites (documentCanvas, editorPageCss, documentCanvasPolish, canvasDocumentsList, conversationThreadCanvas, canvasRetainedEditorRefresh, authoringConversationScopeLive):
+ Test Files  7 passed (7)
+      Tests  103 passed (103)
+
+Every suite that renders the editor, the canvas or the thread, or reads its stylesheet (124 files listed, 122 with tests):
+ Test Files  122 passed (122)
+      Tests  1432 passed (1432)

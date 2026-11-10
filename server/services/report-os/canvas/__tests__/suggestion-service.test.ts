@@ -65,15 +65,25 @@ describe('rankReportSuggestions', () => {
     expect(out.indexOf(fresh[0])).toBeLessThan(out.indexOf(readiness));
   });
 
-  it('does not suggest regional, prediction or assurance types with no implemented engine', () => {
+  it('does not suggest regional or prediction types with no implemented engine', () => {
     const unsupported = [
       cand({ typeId: 'prediction.regulatory_forecast', family: 'prediction' }),
       cand({ typeId: 'ema.rmp_psur_signal_alignment', family: 'ema_rmp' }),
-      cand({ typeId: 'compliance.audit_assurance_pack', family: 'compliance_audit' }),
     ];
     const out = rankReportSuggestions({ types: [...TYPES, ...unsupported], usedTypeIds: new Set(), subscribedTypeIds: new Set(), programs: [] });
     expect(out.map((s) => s.typeId)).toEqual(expect.arrayContaining(TYPES.map((t) => t.typeId)));
     expect(out.some((s) => unsupported.some((t) => s.typeId === t.typeId))).toBe(false);
+  });
+
+  /* The assurance pack was in the case above while it had no engine. It has one
+     since 98661f418b (2026-11-06, R1): Quality evidence, computed for one project
+     or the organization (report-engine.ts DOMAIN_REPORT_TYPE_IDS,
+     computeQualityEvidenceReport). The filter follows the engine, not the family
+     name, so it is now suggested at project scope. */
+  it('suggests the assurance pack now that an engine computes it for a project', () => {
+    const assurance = cand({ typeId: 'compliance.audit_assurance_pack', family: 'compliance_audit' });
+    const out = rankReportSuggestions({ types: [...TYPES, assurance], usedTypeIds: new Set(), subscribedTypeIds: new Set(), programs: [] });
+    expect(out.map((s) => s.typeId)).toContain('compliance.audit_assurance_pack');
   });
 
   it('only suggests a report when at least one registry scope is actually computed', () => {

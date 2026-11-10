@@ -58,6 +58,17 @@ afterEach(cleanup);
 beforeEach(() => apiRequest.mockReset());
 
 describe("Validation explain: the validator's verdict, the model's prose", () => {
+  /* One orange fill per view (D0 §7 check 2; the coordinating session, 2026-11-09): the page's own primary is in its
+     header, so the Validation workspace carries none. The request to the model is a ghost button with its spark. */
+  it('the request to explain is a ghost button with its spark, and the workspace carries no orange fill', async () => {
+    serve({ narrative: null, narrativeUnavailable: { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is configured.' } });
+    render(<ValidationWorkspace sub={{ id: 7 } as never} seq={{ id: 21, sequenceNumber: '0000', region: 'fda', status: 'draft' } as never} />);
+    const button = await screen.findByRole('button', { name: /Explain the findings \(AI\)/ });
+    expect(button.className).toBe('btn ghost small');
+    expect(button.querySelector('svg')).not.toBeNull();
+    expect(document.querySelectorAll('.sp-primary, .btn.primary')).toHaveLength(0);
+  });
+
   it('shows the explanation under its model label, with each severity from the validator, and no "Blocking."', async () => {
     serve({
       narrative: {

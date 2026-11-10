@@ -1,0 +1,57 @@
+# User administration and authenticator enrolment, 2026-11-10 (setup/identities.mjs; no password, code, secret or token)
+
+## Attempt 1 (stopped)
+oq-runner@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+The next sign-in with a code from the same 30-second step was refused 401: the server refuses a TOTP step it has
+already accepted (users.mfa_totp_last_step), correctly. The script had not kept the issued secret, so the run
+identity's enrolment was cleared AS THE DATABASE OWNER on this disposable validation database:
+  UPDATE public.users SET mfa_enabled=false, mfa_secret=NULL, mfa_backup_codes=NULL, mfa_verified_at=NULL,
+         mfa_totp_last_step=NULL, mfa_method=NULL WHERE lower(email)='oq-runner@validation.local'  -- UPDATE 1
+The script was changed to keep each secret as it is issued and to wait for a new step before the next sign-in.
+
+## Attempt 2 (stopped at the seventh identity)
+oq-runner@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-signer@validation.local as admin: 201; activation link handed to the admin (keys: id, email, name, role, createdNewUser, quotaInfo, invitation)
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-signer@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-approver@validation.local as admin: 201; activation link handed to the admin
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-approver@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-platform@validation.local as member: 201; activation link handed to the admin
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-platform@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-standing@validation.local as member: 201; activation link handed to the admin
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-standing@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-member@validation.local as member: 201; activation link handed to the admin
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-member@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+add oq-viewer@validation.local as viewer: 201; activation link handed to the admin
+  activation: set own password 429; the same link again: 429 RATE_LIMIT
+  "Too many invalid or expired password links were tried from this network. Try again in 58 minutes."
+The six deliberate reuse checks above counted as refused links from one address, and the seventh activation was
+refused: the brute-force control on password links (server/middleware/password-reset-limits.ts) working. Its store
+is in memory, so the qualification server was restarted to clear it, and the script now checks reuse once per run.
+
+## Attempt 3 (resumed: identities already enrolled are skipped)
+add oq-viewer@validation.local as viewer: 200 {reissued: true}: the product re-issued the invitation of a member who never activated; the script then stopped, because it accepted only 201. Changed to accept the re-issue.
+## Attempt 4 (resumed)
+Attempt 4 stopped at the run identity's sign-in: 401, a TOTP step the previous process had just used (the replay rule again, across processes). Each run now starts at the next step.
+## Attempt 5 (resumed)
+add oq-viewer@validation.local as viewer: 200; activation link handed to the admin (keys: reissued, id, email, name, role, invitation)
+  activation: set own password 200; the same link again: 400 AUTH_006
+oq-viewer@validation.local: sign-in 200 (challenge offers ["email"]), emailed code 200, authenticator setup 200, enable 200, backup codes 10
+members of the run organisation: 404
+
+members (read as the database owner, after setup):
+ id |            email             | org |  role  | status | mfa_enabled 
+----+------------------------------+-----+--------+--------+-------------
+  1 | oq-runner@validation.local   |   2 | admin  | active | t
+  2 | oq-signer@validation.local   |   2 | admin  | active | t
+  3 | oq-approver@validation.local |   2 | admin  | active | t
+  4 | oq-platform@validation.local |   2 | member | active | t
+  5 | oq-standing@validation.local |   2 | member | active | t
+  6 | oq-member@validation.local   |   2 | member | active | t
+  7 | oq-viewer@validation.local   |   2 | viewer | active | t
+(7 rows)
+

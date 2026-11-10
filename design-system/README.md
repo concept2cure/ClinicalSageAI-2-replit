@@ -36,7 +36,7 @@ Primitives (Button, Badge, Input, Textarea, Card, Dialog, Tabs, Select, Alert, T
 **Voice is reviewer-grade, not marketing-grade.** The product speaks to regulatory professionals whose work is audited under 21 CFR Part 11 / GxP. Every string must feel factual enough to survive an FDA inspection.
 
 - **Second person, direct.** "You". Avoid "we" unless referring to the company.
-- **Sentence case everywhere** — titles, headings, buttons, menu items, labels, chips and table headers. Never Title Case. Never ALL CAPS. No stylesheet uppercases text (`client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts`). The guard allows one rule, `.rd-chip::first-letter`, which capitalises only a chip's first letter so that a printed value reads in sentence case. Text that must read in capitals, such as an agency acronym or a code, is written in capitals.
+- **Sentence case everywhere** — titles, headings, buttons, menu items, labels, chips and table headers. Never Title Case. Never ALL CAPS. No stylesheet uppercases text (`client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts`). The guard allows one rule, `.rd-chip::first-letter`, which capitalises only a chip's first letter so that a printed value reads in sentence case. Text that must read in capitals, such as an agency acronym or a code, is written in capitals. Title Case is the target too: 25 `text-transform: capitalize` rules remain in 12 sheets (2026-11-09), held so the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 - **Active voice, specific verbs.** "Draft Section 2.5", not "Let's get started with drafting!".
 - **No exclamation marks. No emoji.** Ever. Not in UI, not in copy, not in empty states. Emoji in a regulatory tool reads as unprofessional and will break client trust.
 - **No cheerleading.** No "", "Awesome!", "You're all set!". The system never celebrates — it confirms.
@@ -79,7 +79,7 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 - **Chrome** (buttons, menus, labels, nav) — the system sans (`--font-sans`: `system-ui, -apple-system, …`). Deliberate: chrome disappears.
 - **Long-form reading** (AnA's answers, the document, page titles) — the serif (`--font-serif`: Lora). Brings gravitas.
 - **Mono** — JetBrains Mono (`--font-mono`), only for a regulatory code the person reads (CTD §3.2.S.4.1, a sequence number), never for an internal id.
-- **The root is 14px.** `.c2c-v2` sets `font-size: var(--fs-body); line-height: 1.5` (`client/src/concept2cure/v2/styles/app-v2.css`). Every size is a `--fs-*` token, declared once, in `colors_and_type.css` §3. `app-v2.css` reads them and declares none.
+- **The root is 14px.** `.c2c-v2` sets `font-size: var(--fs-body); line-height: 1.5` (`client/src/concept2cure/v2/styles/app-v2.css`). The `--fs-*` tokens below are declared once, in `colors_and_type.css` §3, and `app-v2.css` declares none. Every size being a token is the target, not yet the fact: 1,200 `font-size` literals of 9–11.5px remain in 29 sheets (2026-11-09), held so the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 
 | Token | Size / line-height | Family, weight | Use |
 |---|---|---|---|
@@ -88,7 +88,7 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 | `--fs-section` | 15px / 1.4 | sans 600 | Section heading (`.pj-sec-h h2`) |
 | `--fs-body` | 14px / 1.5 | sans 400 | UI body, the root of `.c2c-v2`, `p`, inputs, tabs |
 | `--fs-small` | 13px / 1.5 | sans 400–500 | Secondary lines, table cells, buttons, labels |
-| `--fs-caption` | 12px / 1.4 | sans 400–500 | Chips, timestamps, table headers. **The floor:** no text below 12px |
+| `--fs-caption` | 12px / 1.4 | sans 400–500 | Chips, timestamps, table headers. **The floor:** no new text below 12px; the remaining literals are ratcheted down |
 | `--fs-prose` | 16px / 1.65 | Lora 400 | AnA's prose (`.prose-reading`) and documents (`.doc-content`, 1.7) |
 
 - **Weight** stops at 600. 700+ is forbidden in chrome.
@@ -98,10 +98,10 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 ### Spacing, radius, borders
 - **4px grid.** Tokens: 2/4/6/8/12/16/20/24/32/40/48/64/80.
 - **Radius**: 6px chips (`--radius-md`) / 8px buttons, inputs and tabs' focus (`--radius-lg`) / 10px the segmented track, its items 8px / 12px cards, menus and the artifact panel (`--radius-xl`) / 16px the centered dialog (`--radius-2xl`) / 20px the composer / full (avatars).
-- **Borders are barely visible** — `--border` (`#dad9d4`) for hairlines, `--border-strong` on a hover. A control's edge is `--border-control` (`#7f7d75`), which clears 3:1. The content is the interface; frames don't compete with it.
+- **Borders are barely visible** — `--border` (`#dad9d4`) for hairlines, `--border-strong` on a hover. A control's edge is `--border-control` (`#7f7d75`), which clears 3:1; the composer rests on it too (D0.md §8.4). The content is the interface; frames don't compete with it.
 
 ### Shadows & elevation
-- Warm, subtle, never dramatic. Cards have none: a hairline only, and they do not lift on hover.
+- Warm, subtle, never dramatic. Cards have none: a hairline only, and they do not lift on hover (38 `:hover` rules still declare a transform, 2026-11-09; see *Animation & motion*).
 - The composer: `0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10)`; in dark, `rgb(0 0 0 / .30)` and `/ .45`. Menus, dialogs and drawers: `--v2-shadow-lg` (`app-v2.css`).
 - No colored drop-shadows. No inner shadows except `inset 0 2px 4px` on form fields if at all.
 - No glow. `--shadow-glow` is still declared and no v2 stylesheet uses it: focus is an edge, never a glow (see *Hover / press / focus*).
@@ -112,17 +112,18 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 
 ### Animation & motion
 Per the `motion-discipline` skill: **200ms ease-out by default. No bounce. No spring. No overshoot.**
-- Every transition is `var(--dur)` (200ms) with `var(--ease)` (`cubic-bezier(0, 0, 0.2, 1)`), on the properties it changes, never `all`.
+- A transition is `var(--dur)` (200ms) with `var(--ease)` (`cubic-bezier(0, 0, 0.2, 1)`), on the properties it changes, never `all`. 110 transitions still name `var(--dur)` without `var(--ease)` (2026-11-09); the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 - Entrances: fade + 4–16px of slide, 200ms.
 - `prefers-reduced-motion` kills all animation to 1ms.
 - Typing dots on AnA use a 2s pulse — the only rhythmic motion in the product.
-- Nothing moves on hover: no `transform`, no scale, no lift, on buttons, cards or avatars. A hover changes fill, edge or ink only.
+- Nothing new moves on hover: no `transform`, no scale, no lift, on buttons, cards or avatars. A hover changes fill, edge or ink only. 38 older `:hover` rules still declare a transform (2026-11-09); the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 
 ### Hover / press / focus
 - **Hover**: background shifts one stone step darker (`--canvas` → `--canvas-muted`), or ink lightens one step. Never opacity-based.
 - **Press** (buttons): no visible down-state beyond `:active` darker-bg. No scale.
 - **Focus**: a button takes a 2px `--accent-200` outline, offset 2px. A field shows **one** ring: its own `--border-focus` edge plus a 3px `--accent-000` halo, and the global outline steps aside. The composer shows its `--border-focus` edge alone. Never removed.
-- **Disabled**: a button at `opacity: .5` with `cursor: not-allowed`; a field at `.6`; the composer's send button at `.4`.
+- **Disabled**: a primary turns grey and stays opaque (`--bg-200` fill, `--text-400` ink; D0.md §8.2), so it is never read as the view's one orange action; any other button at `opacity: .5` with `cursor: not-allowed`; a field at `.6`; the composer's send button at `.4`.
+- **Touch**: on a coarse pointer, tabs, segmented items, the composer's send and a drawer's close reach 44px (D0.md §8.5).
 
 ### Iconography
 See **ICONOGRAPHY** section below.

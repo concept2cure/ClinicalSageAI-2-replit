@@ -12,7 +12,7 @@ import { declineOwnInvitation, listOwnPendingInvitations } from '../services/ten
 import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import { stopPersonsRuns } from '../services/account-standing';
+import { stopPersonsRuns } from '../services/ana/run-session-end';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { mountQmsApproverDesignation } from './tenant-users-qms-approver';

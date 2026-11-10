@@ -46,9 +46,12 @@
  * through the same act (server/services/artifact-signed-act.ts).
  */
 
+import { sql, type SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { concept2cureArtifacts } from '../../shared/schema';
 import type { GovernedSignMeaning } from './part11/signature-meanings';
 import { artifactApproval } from './ectd/package-content-fingerprint';
-import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from './governance/separation-of-duties';
+import { assertSignerIsNotAuthor, resolveTargetAuthors, separationOfDutiesRefusal } from './governance/separation-of-duties';
 
 /**
  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
@@ -64,16 +67,25 @@ export interface ApprovalActQueryable {
   query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 }
 
-export type ReviewQuorumVerdict = { met: true } | { met: false; message: string };
+/**
+ * A refusal that carries `REVIEW_REQUIRED` holds no review at all (P-95): no
+ * reviewer was named, or every one was withdrawn. The doors answer it 409, as
+ * the editor's door answers its own (authoring.router.ts, 2026-11-09).
+ */
+export type ReviewQuorumVerdict = { met: true } | { met: false; message: string; code?: 'REVIEW_REQUIRED' };
+
+/** Where a reviewer is named: the Review step of the artifact's card (ConversationArtifactReview.tsx). */
+const NAME_A_REVIEWER = "Name a reviewer in the artifact's Review section; once every named reviewer has approved this version, it can be approved.";
 
 /**
  * P12 review quorum: when reviewers are assigned, every active reviewer of the
  * latest round must have completed and have exactly one decision attributed
  * to that assignment's reviewer, approving the current version. Withdrawn
- * assignments and their decisions are excluded; no assignments at all has no
- * quorum to enforce. A latest round whose assignments were all withdrawn is
- * refused (2026-11-02, F1, P-95: it holds no review). This policy is not
- * scientific source qualification or evidence of source review.
+ * assignments and their decisions are excluded. No assignment at all, and a
+ * latest round whose assignments were all withdrawn, hold no review and are
+ * refused REVIEW_REQUIRED (P-95: review is mandatory before a regulated
+ * document is approved, and every artifact counts as regulated). This policy
+ * is not scientific source qualification or evidence of source review.
  *
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
@@ -91,7 +103,9 @@ export async function reviewQuorumVerdict(
   q: ApprovalActQueryable,
   artifactPk: number,
   organizationId: number,
-  currentVersion: number
+  currentVersion: number,
+  /** Who would sign the approval. Both approval doors pass it (P-95 Q1). */
+  signerId?: number
 ): Promise<ReviewQuorumVerdict> {
   // Invalid scope/version must not become an empty query and a clearance.
   const validId = (value: number) => Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
@@ -107,7 +121,16 @@ export async function reviewQuorumVerdict(
       [artifactPk, organizationId]
     )
   ).rows as Array<{ id: number; reviewer_id: number; review_round: number; status: string }>;
-  if (assignments.length === 0) return { met: true };
+  // 2026-11-09 (F1, P-95): review is mandatory before a regulated document is
+  // approved, and an artifact counts as regulated: no catalog class has a
+  // zero-review path and none is resolvable from the row, and P-95 reads an
+  // unknown as regulated (docs/evidence/W5/2026-11-01/p95/README.md). The
+  // artifact card's Review step reaches the reviewer routes (2b092fd1d9).
+  // Until 2026-11-09 no assignment at all met the quorum. Nothing is
+  // retroactive: an approval already recorded stays approved.
+  if (assignments.length === 0) {
+    return { met: false, code: 'REVIEW_REQUIRED', message: `Cannot approve: no one has reviewed this document, and it is approved only after its review. ${NAME_A_REVIEWER}` };
+  }
 
   const latestRound = Number(assignments[0].review_round);
   if (!validId(latestRound)) {
@@ -120,13 +143,13 @@ export async function reviewQuorumVerdict(
   // reviewer was withdrawn holds no review, so it does not meet the quorum.
   // Once a closed round opens the next one, assigning a reviewer and then
   // withdrawing them would otherwise approve over an earlier round's request
-  // for changes with no approval on record. No assignment at all (above)
-  // still meets it until the editor's Review panel reaches the reviewer route
-  // (docs/evidence/W5/2026-11-01/p95/README.md, the sequencing hazard).
+  // for changes with no approval on record. Like no assignment at all
+  // (above), it is REVIEW_REQUIRED.
   if (active.length === 0) {
     return {
       met: false,
-      message: 'Cannot approve: every reviewer in the latest review round was withdrawn. Assign a reviewer; once they approve this version, it can be approved.',
+      code: 'REVIEW_REQUIRED',
+      message: `Cannot approve: every reviewer in the latest review round was withdrawn. ${NAME_A_REVIEWER}`,
     };
   }
 
@@ -191,7 +214,148 @@ export async function reviewQuorumVerdict(
       message: `Cannot approve: ${stale.length} reviewer decision(s) were recorded against version ${seen}; the artifact is now version ${currentVersion}. Route it for review again so reviewers decide on what would be approved.`,
     };
   }
+  return reviewIndependenceVerdict(q, { artifactPk, organizationId, currentVersion }, active, signerId);
+}
+
+/**
+ * What counts as a review (P-95 Q1, decided 2026-11-09 under the founder's
+ * delegation): the reviewer is neither the approving signer nor an author, read
+ * as P-18 reads authors (the creator and every version's writer:
+ * resolveTargetAuthors, `artifact:` target). So an approver who recorded a
+ * decision on this version, in any round, cannot sign its approval: a closed
+ * round followed by a colleague's new one does not launder their review. And an
+ * author's decision in the latest round does not count, including one recorded
+ * before its reviewer wrote a version. Asked once the round would otherwise be
+ * met, so every earlier refusal keeps its words. Met when the review is
+ * independent.
+ */
+async function reviewIndependenceVerdict(
+  q: ApprovalActQueryable,
+  { artifactPk, organizationId, currentVersion }: { artifactPk: number; organizationId: number; currentVersion: number },
+  active: Array<{ reviewer_id: number }>,
+  signerId: number | undefined
+): Promise<ReviewQuorumVerdict> {
+  if (signerId !== undefined) {
+    const [reviewedBySigner] = (
+      await q.query(
+        `SELECT review_round FROM concept2cure_review_decisions
+          WHERE artifact_id = $1 AND organization_id = $2 AND reviewer_id = $3 AND version_reviewed = $4
+          ORDER BY review_round DESC LIMIT 1`,
+        [artifactPk, organizationId, signerId, currentVersion]
+      )
+    ).rows as Array<{ review_round: number }>;
+    if (reviewedBySigner) {
+      return {
+        met: false,
+        message: `Cannot approve: you reviewed this version in review round ${reviewedBySigner.review_round}, and an approval is signed by someone who did not review it. Ask another approver to sign.`,
+      };
+    }
+  }
+  const [artifact] = (
+    await q.query(
+      `SELECT artifact_id, type, ctd_section FROM concept2cure_artifacts WHERE id = $1 AND organization_id = $2`,
+      [artifactPk, organizationId]
+    )
+  ).rows as Array<{ artifact_id: string; type: string | null; ctd_section: string | null }>;
+  if (!artifact) return { met: false, message: 'Cannot approve: the artifact could not be read in this organization.' };
+  const { authors } = await resolveTargetAuthors(`artifact:${artifact.artifact_id}`, organizationId, q);
+  const authorReviewers = active.filter(a => authors.map(Number).includes(Number(a.reviewer_id)));
+  if (authorReviewers.length > 0) {
+    return {
+      met: false,
+      message: `Cannot approve: ${authorReviewers.length} reviewer(s) in the latest review round wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`,
+    };
+  }
+  const floor = reviewFloor(artifact);
+  if (active.length < floor.reviewers) {
+    return {
+      met: false,
+      code: 'REVIEW_REQUIRED',
+      message: `Cannot approve: this document needs ${floor.reviewers} independent reviewers, because ${floor.because}; ${active.length} has approved this version. ${NAME_A_REVIEWER}`,
+    };
+  }
   return { met: true };
+}
+
+/**
+ * The values AnA writes into ctd_section to mean "no section": 'unassigned'
+ * (ana-ri/command-executor.ts, which itself reads it as unplaced) and
+ * 'ana-ri.<action>' (ana-ri/artifact-generator.ts). Any other value is a
+ * section the artifact was placed in, recognised or not (fail closed).
+ */
+function placedSection(ctdSection: string | null): string | null {
+  const section = (ctdSection ?? '').trim();
+  if (!section || section === 'unassigned' || section.startsWith('ana-ri.')) return null;
+  return section;
+}
+
+/**
+ * P-95 Q2 (ruled 2026-11-09 by the coordinating session under P-107,
+ * COORDINATION.md): how many independent reviewers must approve this version.
+ * Two where the contract names regulated_dual_review, read only from fields
+ * no request can lower: a CTD section is set, in any module (a placed
+ * artifact is a submission_component, which documentClassSemantics.ts makes
+ * dual), or the type is 'section' (type is never updated). Every other
+ * artifact keeps one, as the single classes (memos, summaries) do. The class
+ * re-resolved per request (metadata.harness.documentClass) is not read: any
+ * writer can lower it (docs/evidence/W5/2026-11-01/p95-q2/README.md).
+ */
+export function reviewFloor(artifact: { type: string | null; ctd_section: string | null }): { reviewers: number; because: string } {
+  const section = placedSection(artifact.ctd_section);
+  if (section) return { reviewers: 2, because: `it is placed in CTD ${section}` };
+  if (artifact.type === 'section') return { reviewers: 2, because: 'it is a dossier section' };
+  return { reviewers: 1, because: 'it is not placed in a filing' };
+}
+
+/**
+ * P-95 Q2: moving an artifact voids its review decisions, as an edit does.
+ * Every UPDATE of concept2cure_artifacts that may change ctd_section adds this
+ * to version: 1 when the section changes, the artifact is not locked and a
+ * review decision is recorded on its current version, else 0. Decisions on an
+ * earlier version are already void, so an edit and a move in one transaction
+ * move it once. The version moves on, so every decision is on an earlier
+ * version and the quorum refuses it ("Route it for review again"); an approval
+ * no longer covers the version, as after an edit. The reviewers judged the
+ * text at its place. SET expressions read the row as it was, so ctd_section
+ * here is the section it is moving from. A drizzle template: the new section
+ * is a bound parameter and the columns are quoted identifiers, so no value
+ * reaches the SQL text (ci:sql-interpolation).
+ */
+export function moveVoidsReview(newSection: string | null): SQL {
+  const a = concept2cureArtifacts;
+  return sql`(CASE WHEN ${a.ctdSection} IS DISTINCT FROM ${newSection}::text
+      AND ${a.status} IS DISTINCT FROM 'locked'
+      AND EXISTS (SELECT 1 FROM concept2cure_review_decisions d
+                   WHERE d.artifact_id = ${a.id}
+                     AND d.organization_id = ${a.organizationId}
+                     AND d.version_reviewed = ${a.version})
+    THEN 1 ELSE 0 END)`;
+}
+
+const pgDialect = new PgDialect();
+
+/**
+ * The move for a writer on a pg client (AnA's spine and its signed
+ * place_in_dossier): ctd_section set and the version moved on by
+ * moveVoidsReview, in one statement, rendered to text and bound parameters.
+ * Null when the row is not this organization's.
+ */
+export async function moveArtifactToSection(
+  q: ApprovalActQueryable,
+  artifactPk: number,
+  organizationId: number,
+  section: string
+): Promise<{ ctd_section: string | null; version: number } | null> {
+  const a = concept2cureArtifacts;
+  const query = pgDialect.sqlToQuery(sql`UPDATE ${a}
+       SET ${sql.identifier(a.ctdSection.name)} = ${section},
+           ${sql.identifier(a.version.name)} = ${a.version} + ${moveVoidsReview(section)},
+           ${sql.identifier(a.updatedAt.name)} = now()
+     WHERE ${a.id} = ${artifactPk} AND ${a.organizationId} = ${organizationId}
+     RETURNING ${a.ctdSection}, ${a.version}`);
+  const { rows } = await q.query(query.sql, query.params);
+  const row = rows[0] as { ctd_section: string | null; version: number | string } | undefined;
+  return row ? { ctd_section: row.ctd_section, version: Number(row.version) } : null;
 }
 
 /** The governed approval act — the only writer of approved_version_id. */
@@ -363,10 +527,15 @@ export async function refuseSignedArtifactAct(input: {
   if (author) return author;
 
   if (previousStatus === 'review' && status === 'approved') {
-    const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version);
-    if (!quorum.met) return { httpStatus: 400, message: quorum.message };
+    const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version, input.signerId);
+    if (!quorum.met) return quorumRefusal(quorum);
   }
   return null;
+}
+
+/** No review at all is 409 REVIEW_REQUIRED (P-95), as the editor's door answers it; every other quorum refusal stays 400. */
+function quorumRefusal(quorum: { message: string; code?: 'REVIEW_REQUIRED' }): ArtifactActRefusal {
+  return quorum.code ? { httpStatus: 409, code: quorum.code, message: quorum.message } : { httpStatus: 400, message: quorum.message };
 }
 
 /** The P-18 refusal, in the one separation-of-duties mapping's status, code and words; null when independent. */

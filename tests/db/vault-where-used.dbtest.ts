@@ -146,7 +146,18 @@ beforeAll(async () => {
   const removedLeaf = await place(mine, seq.first, ids.other, '2.5');
   await owner.query('UPDATE submission_leaves SET deleted_at = now() WHERE id = $1', [removedLeaf]);
   await place(mine, seq.removed, ids.v2, '3.2.P.8.3');
-  await owner.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [seq.removed]);
+  // A removed sequence is made only by a recorded act (P-86's retirement, or the filed-elsewhere baseline's removal of
+  // drafts): migrations/20261109_ectd_sequence_removal_guard.sql refuses any other removal at COMMIT. This fixture stands
+  // in for one, with triggers off for its own transaction only (as review-route-guard.dbtest.ts lays a row).
+  const lay = await owner.connect();
+  try {
+    await lay.query('BEGIN');
+    await lay.query('SET LOCAL session_replication_role = replica');
+    await lay.query('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [seq.removed]);
+    await lay.query('COMMIT');
+  } finally {
+    lay.release();
+  }
   // Another organisation's leaf naming this version: the writer refuses it, so a
   // legacy or forged row stands in for one.
   const theirSub = await submission(theirs, 'their IND');

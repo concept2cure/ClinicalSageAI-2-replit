@@ -1,0 +1,98 @@
+{
+  "schema": "concept2cure.publication-verification.v1",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "originalBase": "f9631c065af8760d8b879232385fb94663d19a24",
+  "integratedBase": "7eb7346c54020ad68ac07fd6bb9c8b4116f6e62b",
+  "testedLocalCommit": "51e0d82b3d03f80043cc3ca37f6baa3cc2cb2f47",
+  "exactTestedTree": "a6b2ba7cc6f311ef2a17940e1e686aa0d33a750b",
+  "sourcePublicationCommit": "c88d892390a15f01d258f7a72fb597858aaf4497",
+  "ordinaryPrePush": {
+    "exitCode": 0,
+    "log": "prepush-merged.log",
+    "logSha256": "650e27d708ee52c7833ad716690e294ca72d0653c9a871456bf4060b5e5556dd",
+    "sourceTargets": 15475,
+    "workers": 33,
+    "typeErrors": 0,
+    "baseline": 0,
+    "filesPerProcess": 500,
+    "heapLimitMb": 7168,
+    "snapshot": "8767312020833fa1ec04f8a747ca8e89f74c2a0e2a521a3e7ca914ce1963bbb0",
+    "snapshotUnchanged": true
+  },
+  "productionBuild": {
+    "exitCode": 0,
+    "log": "build-merged.log"
+  },
+  "sourceManifest": {
+    "path": "source-sha256.txt",
+    "changedCodeConfigurationPaths": 76,
+    "sha256": "313818a087bc2ce445eaf15809d3ec00cec3ad5fecff046187913716ef101b99"
+  },
+  "publication": {
+    "method": "Connected GitHub Git objects and expected-head non-forced ref update",
+    "remoteTreeVerified": true,
+    "remoteHeadVerified": true,
+    "changedPaths": 210
+  },
+  "limits": [
+    "Scoped test counts are not a platform-wide test total.",
+    "No complete two-person browser rehearsal, real-model CSR generation, final clinical approval or regulatory transmission is claimed.",
+    "Owner-held task/agency/submission work and recorded scientific applicability gaps remain open."
+  ],
+  "browserSeedFollowUp": {
+    "source": "tests/e2e/seed-governed-workflow.cjs",
+    "sourceSha256": "bd4cb477be9169042dd65807b4e09064126a6644521021dd47aca51d0fc2b467",
+    "applicationSourceChanged": false,
+    "nativeVerification": {
+      "script": "verify-tier5-seed.cjs",
+      "log": "tier5-native-seed.log",
+      "logSha256": "b2b3ccdec564cabf96f5e3eb52972dc7ac429d0988ce4539d66c5629b45e0a7c",
+      "exitCode": 0,
+      "baselineRefusedBy": "organization_users_role_known",
+      "repairedSeedRuns": 2,
+      "stableIdentities": true,
+      "constraintUnchanged": true,
+      "negativeUpdateSqlstate": "23514",
+      "trackedFixtureRestored": true,
+      "authority": "ordinary synthetic seed provisioning connection",
+      "scriptSha256": "59f727293372536f5e8cfc9e89caacd5b67784192a1fe6864dc4f216be55e3b9"
+    },
+    "roleControls": {
+      "log": "tier5-role-controls.log",
+      "testsPassed": 26,
+      "filesPassed": 2
+    },
+    "localBrowser": {
+      "log": "tier5-local-browser-attempt.txt",
+      "status": "launch blocked before any browser context",
+      "error": "socket() failed: Operation not permitted (1)"
+    },
+    "remoteBaseline": {
+      "sourceRunId": 42515637802,
+      "parentRunId": 42509830621,
+      "sameSeedFailureBeforeBrowser": true
+    }
+  },
+  "separateCiFindings": {
+    "fullyGreen": false,
+    "lineage": {
+      "log": "tier5-lineage-gate.log",
+      "localExitCode": 1,
+      "parentFailureReproduced": true,
+      "unchangedSourceSha256": {
+        "server/services/chat-thread-helpers.ts": "63294c569cff811f22eebfa5c229e967b3be426c3bdd34f24b4ebfa190027e38",
+        "server/services/c2c/charter-objectives.ts": "5cf12cc5a9125a7f46c1247f315d1ee9fc7de4f725bf71188600e49ba553398f",
+        "scripts/ci/check-lineage-save-gate.mjs": "a6794817ecc9e21ad11a54865dbc6d75505ca263badb072d20c0175604e30843"
+      }
+    },
+    "fullHistorySecretScan": {
+      "sourceFindings": 8,
+      "sourceCommitsScanned": 13099,
+      "parentFindings": 8,
+      "parentCommitsScanned": 13098,
+      "individualFindingIdentitiesAvailable": false,
+      "identicalFindingsEstablished": false
+    }
+  }
+}

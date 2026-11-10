@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/task-management-vault-family.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-vault-family.test.ts
+{
+  "timestamp": "2026-11-09T12:51:40.087Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-management-vault-family.test.ts > POST /tasks — a work project assigned to produce a Vault family (S12 gap 5) > asks the shared check on the request's transaction, with the admitted project and the body's moduleData 55ms
+ ✓ server/routes/__tests__/task-management-vault-family.test.ts > POST /tasks — a work project assigned to produce a Vault family (S12 gap 5) > refuses a family that is not in the project's program: 409 in its own words, nothing written 12ms
+stderr | server/routes/__tests__/task-management-parent-task.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-parent-task.test.ts
+{
+  "timestamp": "2026-11-09T12:51:41.474Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > asks the one decider on the request's transaction, with the admitted project and the body's parent 67ms
+ ✓ server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > refuses a parent the decider refuses: 409 in its own words, nothing written 22ms
+stderr | server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > never asks for a task with no parent, and refuses a malformed parent before anything is read
+Error creating task: ZodError: [
+  {
+    "origin": "number",
+    "code": "too_small",
+    "minimum": 0,
+    "inclusive": false,
+    "path": [
+      "parentTaskId"
+    ],
+    "message": "Too small: expected number to be >0"
+  }
+]
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:257:44
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at requireEditorAccess (/home/user/ClinicalSageAI-2-replit/server/middleware/orgMembership.ts:602:10)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+
+ ✓ server/routes/__tests__/task-management-parent-task.test.ts > POST /tasks — a subtask under its parent (P-111 item 4) > never asks for a task with no parent, and refuses a malformed parent before anything is read 24ms
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  12:51:38
+   Duration  3.14s (transform 1.24s, setup 85ms, import 2.57s, tests 188ms, environment 0ms)
+

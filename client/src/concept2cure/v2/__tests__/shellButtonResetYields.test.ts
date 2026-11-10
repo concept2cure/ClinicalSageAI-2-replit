@@ -94,7 +94,9 @@ describe('the shell’s button reset', () => {
     expect(font.length, 'no full font reset outranks one class outside Quality').toBeGreaterThan(0);
   });
 
-  it.each(['.qms-tab', '.qms-btn', '.qms-chip', '.qms-tpl-card', '.qms-tb-btn'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
+  /* D7-B (2026-11-06) deleted .qms-tab, .qms-tpl-card and .qms-tb-btn with the topbar, the type cards and the icon
+     tabs (Quality's tabs are D0's .tabs/.tab now); the buttons Quality still styles itself are these two. */
+  it.each(['.qms-btn', '.qms-chip'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
     const own = topLevelRules(qualityCss).filter((r) => r.selectors.includes(cls) && /padding:/.test(r.decls));
     expect(own.length, `${cls} has no padding rule in quality/app.css`).toBeGreaterThan(0);
     expect(outranks(specificity(cls), specificity(reset!.selectors[0])), `${cls} vs ${reset!.selectors[0]}`).toBe(true);

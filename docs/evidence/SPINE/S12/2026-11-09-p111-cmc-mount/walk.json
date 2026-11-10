@@ -1,0 +1,42 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T12:02:10.649Z",
+  "steps": [
+    {
+      "name": "the CMC work project, through the one intake",
+      "status": 201,
+      "id": 20
+    },
+    {
+      "name": "the door opens CMC bound to the work project, its records the whole project's",
+      "url": "/concept2cure/cmc?program=6065271c-d4b0-4936-aad1-02855423a738&workProject=20",
+      "heading": "Drug substance CMC · JM Smith"
+    },
+    {
+      "name": "a task is added on the work project and read back",
+      "status": 200,
+      "line": "Confirm the drug substance specification 12:02:22 · JM Smith · due Dec 4, 2026 · Open"
+    },
+    {
+      "name": "a reload stays bound"
+    },
+    {
+      "name": "\"Show the whole project\" unbinds"
+    },
+    {
+      "name": "the same at 390 dark, from a copied link",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks",
+      "status": 200,
+      "projectId": 20,
+      "sourceEntityType": "work_project_task",
+      "moduleType": "CMC"
+    }
+  ],
+  "finishedAt": "2026-11-09T12:02:27.725Z"
+}

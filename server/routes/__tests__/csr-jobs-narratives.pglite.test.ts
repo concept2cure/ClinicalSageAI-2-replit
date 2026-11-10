@@ -17,10 +17,21 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ database: null as unknown, client: null as unknown, tables: vi.fn(), adam: vi.fn(),
+const h = vi.hoisted(() => ({ database: null as unknown, client: null as unknown, sharedDbUses: 0, tables: vi.fn(), adam: vi.fn(),
   afterNarrativePage: null as null | (() => Promise<void>), afterNarrativeQc: null as null | (() => Promise<void>),
   afterLandedHeader: null as null | (() => Promise<void>), afterLandedSlice: null as null | (() => Promise<void>) }));
-vi.mock('../../db', () => ({ get db() { return h.database; } }));
+// Every use of the shared Drizzle instance is counted: the narrative routes read on the request's own connection
+// (requestDb), so their reads must not reach it. ci:requestdb-coverage holds the same rule statically.
+vi.mock('../../db', () => ({ get db() { h.sharedDbUses += 1; return h.database; } }));
+// The request's connection is the test database, as requireTenantContext attaches it (req.dbClient); a request
+// without one is refused as the real helper refuses it, never served from the shared pool.
+vi.mock('../../db/requestDb', async original => {
+  const actual = await original<typeof import('../../db/requestDb')>();
+  return { ...actual, requestDb: (req: { dbClient?: unknown }) => {
+    if (!req.dbClient) throw new actual.MissingRequestDbContextError();
+    return h.database as ReturnType<typeof actual.requestDb>;
+  } };
+});
 // Observe the real page query after Drizzle executed it. Mutations use the same
 // native test database; no page result or digest is supplied by the harness.
 vi.mock('../../db/drizzle-queryable', async original => {
@@ -74,8 +85,16 @@ const receipt = { documentId: '11111111-2222-4333-8444-000000000099', sha256: 'e
 
 const app = express();
 app.use(express.json());
-app.use((req, _res, next) => { (req as unknown as { user: unknown }).user = { organizationId: 7, id: 5 }; next(); });
+app.use((req, _res, next) => {
+  (req as unknown as { user: unknown; dbClient: unknown }).user = { organizationId: 7, id: 5 };
+  (req as unknown as { dbClient: unknown }).dbClient = h.client;
+  next();
+});
 app.use('/api/csr/jobs', router);
+/** The same routes with no request connection attached. */
+const noContext = express();
+noContext.use((req, _res, next) => { (req as unknown as { user: unknown }).user = { organizationId: 7, id: 5 }; next(); });
+noContext.use('/api/csr/jobs', router);
 
 let pg: PGlite;
 beforeAll(async () => {
@@ -340,6 +359,26 @@ async function settled(jobId: number) {
   }
   throw new Error('the narrative run did not settle');
 }
+
+/* ci:requestdb-coverage found this file on the shared pool (red since 2026-10-29); its reads now run on the
+   request's own tenant-scoped connection, and a request without one is refused rather than served from the pool. */
+describe('the narrative reads run on the request connection, never the shared pool', () => {
+  it('reads status, QC and text through requestDb and touches the shared Drizzle instance not at all', async () => {
+    h.sharedDbUses = 0;
+    for (const path of ['narratives/status', 'narratives', 'narratives/text']) {
+      expect((await request(app).get(`/api/csr/jobs/1/${path}`)).status).toBeLessThan(500);
+    }
+    expect(h.sharedDbUses).toBe(0);
+  });
+
+  it('refuses a read with no request connection instead of falling back to the shared pool', async () => {
+    h.sharedDbUses = 0;
+    const res = await request(noContext).get('/api/csr/jobs/1/narratives/status');
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Could not read the narrative build.' });
+    expect(h.sharedDbUses).toBe(0);
+  });
+});
 
 describe('POST /api/csr/jobs/:jobId/narratives (SYNTHETIC data)', () => {
   it('returns 202 with a run id at once; the worker composes as the user and lands §14.3.3 and §12.3.2', async () => {

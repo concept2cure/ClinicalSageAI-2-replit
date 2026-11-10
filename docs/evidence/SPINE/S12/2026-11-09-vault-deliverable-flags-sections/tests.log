@@ -1,0 +1,5 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > is listed, naming the cited version and the approved one; a later draft alone does not list it 55ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > names the latest approved version across several, and a section citing it is not listed 34ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > is not listed once its span is retired, nor through a link the family rule refuses 39ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > reads only its own organization's sections and versions 51ms
+      Tests  4 passed (4)

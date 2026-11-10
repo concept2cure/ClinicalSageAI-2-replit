@@ -335,18 +335,30 @@ describe('navigate_to — project-scope screens and programs', () => {
   const ctx = (): ToolContext => ({ organizationId: 5, userId: 1, projectId: null });
 
   it('with no program open and none named, asks which — listing this org\'s programs', async () => {
-    const out = await call('navigate_to', { target: 'vault' }, ctx());
+    // Project Home, not the Vault: the Vault went global on 2026-11-06 (5144702d21, the founder) and with none open
+    // shows its organization view, not an "open a program" state; `documents`, its alias, followed (67e7720ace).
+    // A program named for either still opens (below).
+    const out = await call('navigate_to', { target: 'project-home' }, ctx());
     expect(out.status, 'moved onto an empty "open a program" state').toBe('needs_project');
     expect(out.directive).toBeUndefined();
     expect(out.programs.map((p: { code?: string }) => p.code)).toContain('BX-301');
     // Scoped to the person's organisation — never a cross-tenant list.
     expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('organization_id = $1'), expect.arrayContaining([5]));
+
+    for (const target of ['vault', 'documents']) {
+      const global = await call('navigate_to', { target }, ctx());
+      expect(global.status, target).toBe('navigation_ready');
+      expect(global.directive.program, target).toBeUndefined();
+    }
   });
 
   it('opens the named program — by code — on the directive', async () => {
-    const out = await call('navigate_to', { target: 'vault', program: 'BX-301' }, ctx());
-    expect(out.status).toBe('navigation_ready');
-    expect(out.directive.program).toEqual({ id: 'prog-301', name: 'Bexarotene Phase 2', code: 'BX-301' });
+    // `documents` is the Vault's alias, so the program named for it is kept too.
+    for (const target of ['vault', 'documents']) {
+      const out = await call('navigate_to', { target, program: 'BX-301' }, ctx());
+      expect(out.status, target).toBe('navigation_ready');
+      expect(out.directive.program, target).toEqual({ id: 'prog-301', name: 'Bexarotene Phase 2', code: 'BX-301' });
+    }
   });
 
   it('refuses to guess between several matches', async () => {

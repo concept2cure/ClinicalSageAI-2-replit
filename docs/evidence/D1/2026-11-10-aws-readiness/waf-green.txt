@@ -1,0 +1,20 @@
+tests/alb_origin.tftest.hcl... in progress
+  run "api_errors_reach_the_browser_as_errors"... pass
+  run "every_server_path_routes_to_the_alb"... pass
+  run "the_alb_sees_the_viewers_headers"... pass
+  run "the_alb_origin_carries_the_secret"... pass
+  run "client_routes_are_rewritten_on_the_bucket_behaviour_only"... pass
+  run "api_routing_needs_a_custom_domain"... pass
+  run "api_routing_needs_the_secret"... pass
+  run "without_an_api_origin_nothing_routes_to_it"... pass
+  run "the_alb_origin_waits_as_long_as_the_alb_does"... pass
+  run "the_spa_is_served_from_the_bucket_alone"... pass
+  run "a_bad_publish_can_be_reverted"... pass
+  run "the_distribution_is_behind_the_decided_web_acl"... pass
+  run "the_common_set_can_block_but_its_body_size_rule_still_counts"... pass
+  run "a_web_acl_outside_us_east_1_is_refused"... pass
+  run "an_unknown_common_set_action_is_refused"... pass
+tests/alb_origin.tftest.hcl... tearing down
+tests/alb_origin.tftest.hcl... pass
+
+Success! 15 passed, 0 failed.

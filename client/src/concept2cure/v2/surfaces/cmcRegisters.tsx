@@ -22,7 +22,7 @@ import {
   formulationRecordForm, formulationRecordBody, formulationRecordPatch,
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
-  qualifyForm, qualifyBody, SIGNED_ACTS, type SignedWord,
+  qualifyForm, qualifyBody, SIGNED_ACTS, METHOD_VALIDATION_OUTCOMES, type SignedWord,
   signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -655,7 +655,10 @@ export function CmMethodLibrary() {
              completed exercise: §3.2.S.4.3's Validation Status column, the Q2
              engine's shortfall check and the contradiction sweep. */
           when: (r) => String(r.status || '').toLowerCase() !== 'validated',
-          form: (r) => qualifyForm('analytical method', `${r.methodCode} — ${r.title}`, SIGNED_ACTS.validate),
+          /* The act records WHICH outcome (P-110 item 1): full ICH Q2(R2)
+             validation, or suitability for a stated phase. One ceremony, one
+             route; the outcome is part of what is signed. */
+          form: (r) => qualifyForm('analytical method', `${r.methodCode} — ${r.title}`, SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES),
           path: (r) => `/api/cmc/analytical-methods/${r.id}/validate`,
           method: 'POST',
           toBody: (v) => qualifyBody(v),

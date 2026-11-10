@@ -86,7 +86,12 @@ beforeAll(async () => {
     INSERT INTO organizations VALUES (7),(8);
     INSERT INTO users VALUES (3,'R. Patel','r.patel@example.test','Reviewer'),(8,'A. Author','a.author@example.test','Author'),(9,'Earlier Reviewer','prior@example.test','Reviewer');
     INSERT INTO organization_users VALUES (3,7),(8,7),(9,7);
-    CREATE TABLE audit_logs(id serial PRIMARY KEY, target text, payload jsonb);
+    -- The ledger double writes target and payload; the audit writer's columns are here too, so a chained write
+    -- this route reaches commits rather than rolling the approval back (ci:audit-logs-fixture).
+    CREATE TABLE audit_logs(id serial PRIMARY KEY, target text, payload jsonb,
+      tenant_id integer, user_id integer, action text, table_name text, record_id text, actor_id integer,
+      payload_hash text, sha256_chain text, occurred_at timestamptz NOT NULL DEFAULT now(), hmac_seal text,
+      old_values json, new_values json, ip_address text, user_agent text, reason text);
     CREATE TABLE c2c_ana_actions(id serial PRIMARY KEY, target text, command text, payload jsonb);
     CREATE TABLE electronic_signatures (
       id serial PRIMARY KEY, document_id integer, version_id integer, signed_target text, binding_basis text,
@@ -167,6 +172,51 @@ describe('mounted RBM approvals persist their electronic signature', () => {
     expect(audit.payload).toMatchObject({ twoPersonRule: 'not_applicable_no_author_recorded' });
     expect(await row(item)).toMatchObject({ created_by: null, approved_by: 3 });
     expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(1);
+  });
+});
+
+describe('generated monitoring plans keep their actual author and risk basis', () => {
+  const generate = async () => {
+    await db.exec("DELETE FROM rbm_monitoring_plans WHERE status='draft'");
+    return request(app()).post('/api/mdx/rbm-monitoring-plans/generate')
+      .send({ programId: PROGRAM, createdBy: 8 });
+  };
+
+  it('retains the authenticated generator and ignores a body-supplied author', async () => {
+    const out = await generate();
+    expect(out.status).toBe(201);
+    expect(out.body.data).toMatchObject({ created_by: 3, status: 'draft', assessment_id: 10 });
+    expect((await rows('SELECT created_by FROM rbm_monitoring_plans WHERE id=$1', [out.body.data.id]))[0])
+      .toEqual({ created_by: 3 });
+  });
+
+  it('refuses the generator as approver, then permits an independent signed approval', async () => {
+    const out = await generate();
+    expect(out.status).toBe(201);
+    const item = { ...KINDS[1], id: Number(out.body.data.id) };
+    const refused = await approve(item);
+    expect(refused.status).toBe(403);
+    expect(refused.body.details?.code).toBe('RBM_SELF_APPROVAL');
+    expect(await rows('SELECT * FROM electronic_signatures')).toHaveLength(0);
+    expect((await approve(item, {}, 9)).status).toBe(200);
+    expect(await row(item)).toMatchObject({ created_by: 3, approved_by: 9, status: 'active' });
+    expect((await rows('SELECT * FROM audit_logs'))[0].payload).toMatchObject({ twoPersonRule: 'enforced' });
+  });
+
+  it('uses the request-pinned connection throughout generation', async () => {
+    h.poolForbidden = true;
+    const out = await generate();
+    expect(out.status).toBe(201);
+  });
+
+  it('refuses an approved assessment with no overall risk without persisting anything', async () => {
+    await db.query('UPDATE rbm_risk_assessments SET overall_risk=NULL WHERE id=$1', [10]);
+    const out = await generate();
+    expect(out.status).toBe(409);
+    expect(out.body.error).toMatch(/overall risk/i);
+    expect(out.body.error).not.toMatch(/No risk assessment exists/i);
+    expect(await rows("SELECT * FROM rbm_monitoring_plans WHERE status='draft'")).toHaveLength(0);
+    expect(await rows('SELECT * FROM rbm_monitoring_actions WHERE plan_id <> 20')).toHaveLength(0);
   });
 });
 

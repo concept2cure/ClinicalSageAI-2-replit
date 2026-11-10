@@ -185,6 +185,35 @@ if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_V
   fi
 fi
 
+# A demonstration is a conversation: the default 15-minute idle sign-out
+# would end it mid-sentence. The development organisation's idle window is set
+# to 120 minutes once, through the governed settings route an administrator
+# uses (PATCH /api/tenant-config/:id/settings, audited as
+# tenant_settings_changed). Real tenants keep their own setting.
+c2c_set_idle_window() {
+  local email="$1" minutes="$2" marker="$C2C_CODESPACE_STATE/idle-window.done"
+  grep -qx "$email=$minutes" "$marker" 2>/dev/null && return 0
+  if C2C_BASE="http://127.0.0.1:$C2C_PORT" C2C_EMAIL="$email" C2C_MINUTES="$minutes" node -e '
+    (async () => {
+      const base = process.env.C2C_BASE;
+      const l = await (await fetch(base + "/api/auth/dev-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.C2C_EMAIL }) })).json();
+      const org = l?.user?.organizationId;
+      if (!l?.accessToken || !org) process.exit(1);
+      const r = await fetch(base + "/api/tenant-config/" + org + "/settings", { method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + l.accessToken },
+        body: JSON.stringify({ security: { sessionTimeoutMinutes: Number(process.env.C2C_MINUTES) } }) });
+      const j = await r.json().catch(() => null);
+      process.exit(r.status === 200 && j?.security?.sessionTimeoutMinutes === Number(process.env.C2C_MINUTES) ? 0 : 1);
+    })().catch(() => process.exit(1));' 2>/dev/null; then
+    echo "$email=$minutes" >>"$marker"
+    c2c_log "Idle sign-out for $email's organisation: $minutes minutes."
+  else
+    c2c_log "Could not set the idle sign-out for $email's organisation; it stays at the default (15 minutes)."
+  fi
+}
+c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
+
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
 # altering them), uploaded and approved in Vault by three people, and the CSR
@@ -195,6 +224,16 @@ if [[ ! -f "$C2C_CODESPACE_STATE/csr-study.done" ]]; then
     c2c_log "Fetching the CDISC pilot ADaM files into $C2C_CDISC_DIR (verified by SHA-256)."
     node scripts/cre/fetch-cdisc-pilot-adam.mjs "$C2C_CDISC_DIR" >"$C2C_CODESPACE_STATE/cdisc-fetch.log" 2>&1 ||
       c2c_log "The CDISC pilot files could not be fetched; see $C2C_CODESPACE_STATE/cdisc-fetch.log."
+  fi
+  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]] && ! node -e "require.resolve('playwright')" >/dev/null 2>&1; then
+    # The preparation walk drives a browser with playwright, which is not a project dependency: without it every
+    # fresh Codespace stopped here with "Cannot find module 'playwright'" (2026-11-09). Installed for this checkout
+    # only (--no-save), with its browser; a failure leaves the app running and the preparation re-tried next start.
+    c2c_log "Installing playwright for the CSR study preparation; log: $C2C_CODESPACE_STATE/playwright-install.log"
+    { timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 &&
+      timeout 900 npx playwright install chromium &&
+      c2c_sudo timeout 900 "$(command -v npx)" playwright install-deps chromium; } >"$C2C_CODESPACE_STATE/playwright-install.log" 2>&1 ||
+      c2c_log "playwright could not be installed; see $C2C_CODESPACE_STATE/playwright-install.log."
   fi
   if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]]; then
     c2c_log "Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data)."
@@ -228,6 +267,20 @@ else
         : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the key check did not run")}})'
   )"
   c2c_log "ANTHROPIC_API_KEY: $C2C_ANTHROPIC_LINE"
+  # The model list above is answered for an account with no credit, and for a key whose workspace cannot call a
+  # model it can see: this start said "key accepted" while every drafting call was refused (2026-11-10). One small
+  # billable request (about 60 tokens) to an approved drafting model says whether the key can draft, and if not, why.
+  if [[ "$C2C_ANTHROPIC_LINE" == "key accepted"* ]]; then
+    C2C_DRAFTING_LINE="$(
+      set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
+      env "${C2C_UNSET[@]}" node scripts/ops/codespaces-doctor.mjs --json --probe-anthropic-usage \
+        "--expect-anthropic-models=$C2C_DRAFTING_MODELS" 2>/dev/null |
+      node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const a=JSON.parse(s.slice(s.indexOf("{"),s.lastIndexOf("}")+1)).anthropicDrafting;
+        console.log(a.status==="passed" ? "answered by " + a.model + ((a.modelsRefused||[]).length ? " (not offered to this key: " + a.modelsRefused.join(", ") + ")" : "")
+          : "BLOCKED " + a.code + ": " + a.explanation)}catch{console.log("the check did not run")}})'
+    )"
+    c2c_log "A drafting call with this key (one small billable request): $C2C_DRAFTING_LINE"
+  fi
 fi
 if [[ -z "${OPENAI_API_KEY:-}" ]]; then
   c2c_log "No OPENAI_API_KEY secret: search (Vault, knowledge base, AnA's project memory) uses OpenAI embeddings and will fail."
@@ -242,6 +295,11 @@ case "$C2C_APP_ANA" in
       c2c_log "This start has no ANTHROPIC_API_KEY. A Codespaces secret reaches a Codespace when it starts:"
       c2c_log "after adding one, stop and start the Codespace (Codespaces menu: Stop Current Codespace), not just reload the page."
     fi ;;
+  embedding_lane_down|no_embedding_lane)
+    # /readyz is red for search only. Read as "AnA is down", it sent a person holding a working Anthropic key
+    # looking for a fault in that key.
+    c2c_log "AnA in the running app answers and drafts with the Anthropic key (see the drafting call above)."
+    c2c_log "Search is off ($C2C_APP_ANA): Vault search, the knowledge base and AnA's project memory need OPENAI_API_KEY for embeddings." ;;
   *) c2c_log "AnA in the running app: $C2C_APP_ANA. $(c2c_ana_detail)" ;;
 esac
 

@@ -22,6 +22,17 @@
  * @module server/services/cmc/batch-release-evidence
  */
 
+import { createHash } from 'node:crypto';
+/* `stableStringify` only. `shared/canonical-json`'s own `sha256Hex` reaches
+   `node:crypto` through a dynamic `require` — deliberately, so that a module
+   five client files import does not pull crypto into the browser bundle — and
+   `require` does not exist in this server's ESM runtime. Calling it here made
+   every batch release answer 500 `ReferenceError: require is not defined`,
+   measured against `npm run dev` on 2026-11-09, on the one path that reaches a
+   signature. `services/ana/skills/library/index.ts` hashes by hand for the same
+   reason and says so. */
+import { stableStringify } from '../../../shared/canonical-json';
+
 export type ReleaseDecision = 'approved' | 'rejected' | 'conditional';
 export type ReleaseStatus = 'released' | 'conditional-release' | 'rejected';
 
@@ -34,27 +45,49 @@ export interface RecordedReleaseTest {
   passFail: string;
   reviewed: boolean;
   passed: boolean;
+  sampleType: string;
+  analystId: number | null;
+  reviewerId: number | null;
+  testDate: string | null;
+  releaseDate: string | null;
+  certificateOfAnalysis: string | null;
+  recordRevision: string | null;
 }
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
-/** The QC results recorded against this batch, in its program when it has one. */
+function recordedDate(value: unknown): string | null {
+  if (value == null) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+/** QC results in the batch's exact scope. Null is an unassigned programme,
+ * never a wildcard across all programmes sharing a batch label. */
 export async function readRecordedReleaseTests(
   q: Queryable,
   orgId: number,
   batch: { batch_number?: unknown; project_id?: unknown },
+  options: { forShare?: boolean } = {},
 ): Promise<RecordedReleaseTest[]> {
   const batchNumber = String(batch.batch_number ?? '').trim();
   if (!batchNumber) return [];
-  const projectId = batch.project_id ? String(batch.project_id) : null;
-  const { rows } = await q.query(
-    `SELECT id, sample_id, test_method, test_results, specifications, pass_fail_status, reviewed_by
+  const projectId = batch.project_id == null ? null : String(batch.project_id);
+  // Both statements are fixed SQL; only the final signing read locks the
+  // selected evidence rows. Scope values remain bound in either branch.
+  const statement = options.forShare
+    ? `SELECT id, sample_id, sample_type, test_method, test_results, specifications, pass_fail_status,
+            analyst, reviewed_by, test_date, release_date, certificate_of_analysis, updated_at::text AS record_revision
        FROM qc_testing
       WHERE organization_id = $1 AND batch_number = $2
-        AND ($3::text IS NULL OR project_id = $3::text)
-      ORDER BY id`,
-    [orgId, batchNumber, projectId],
-  );
+        AND project_id IS NOT DISTINCT FROM $3::text
+      ORDER BY id FOR SHARE`
+    : `SELECT id, sample_id, sample_type, test_method, test_results, specifications, pass_fail_status,
+            analyst, reviewed_by, test_date, release_date, certificate_of_analysis, updated_at::text AS record_revision
+       FROM qc_testing
+      WHERE organization_id = $1 AND batch_number = $2
+        AND project_id IS NOT DISTINCT FROM $3::text
+      ORDER BY id`;
+  const { rows } = await q.query(statement, [orgId, batchNumber, projectId]);
   return rows.map((r) => {
     const passFail = String(r.pass_fail_status ?? '').trim().toLowerCase();
     return {
@@ -66,6 +99,13 @@ export async function readRecordedReleaseTests(
       passFail,
       reviewed: r.reviewed_by != null,
       passed: passFail === 'pass' || passFail === 'passed',
+      sampleType: String(r.sample_type ?? ''),
+      analystId: r.analyst == null ? null : Number(r.analyst),
+      reviewerId: r.reviewed_by == null ? null : Number(r.reviewed_by),
+      testDate: recordedDate(r.test_date),
+      releaseDate: recordedDate(r.release_date),
+      certificateOfAnalysis: r.certificate_of_analysis == null ? null : String(r.certificate_of_analysis),
+      recordRevision: r.record_revision == null ? null : String(r.record_revision),
     };
   });
 }
@@ -137,5 +177,8 @@ export function evaluateRecordedRelease(
 
 /** What the evaluation read, so the signing transaction can tell if it changed. */
 export function evidenceFingerprint(tests: RecordedReleaseTest[]): string {
-  return tests.map((t) => `${t.qcId}:${t.passFail}:${t.reviewed ? 'r' : '-'}`).join('|');
+  // A passing/reviewed flag does not identify the result, its acceptance
+  // criterion, attribution or reviewer. This is a transient comparison across
+  // reauthentication, not a rewrite of any previously signed digest.
+  return createHash('sha256').update(stableStringify(tests), 'utf8').digest('hex');
 }

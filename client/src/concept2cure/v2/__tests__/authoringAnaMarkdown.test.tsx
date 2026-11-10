@@ -42,6 +42,11 @@ vi.mock('@/services/portal/authService', async original => {
 import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill, toolbarDraftButton } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 const DOCS = {
   success: true,
@@ -106,7 +111,7 @@ beforeEach(() => {
   setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     // The current read names its project (`?programId=`, authoringCurrentReadPath); the route is the path.
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);

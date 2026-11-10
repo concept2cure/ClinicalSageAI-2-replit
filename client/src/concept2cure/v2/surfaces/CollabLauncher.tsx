@@ -44,6 +44,9 @@ interface C2CContext {
   entityId: string | null;
   entityLabel: string | null;
   moduleType: string;
+  /** P-111: the work project a work area is bound to (ProjectWorkTasks.tsx sets it once the binding is proven, and
+   *  clears it on unbind). A task made there is filed on it. */
+  workProjectId?: string | null;
 }
 
 interface QuickTaskForm {
@@ -232,6 +235,20 @@ export function taskProjectFor(
   if (listed) return String(listed.id);
   const anchored = rows.filter((r) => typeof r.programId === 'string' && r.programId.toLowerCase() === id.toLowerCase());
   return anchored.length === 1 ? String(anchored[0].id) : '';
+}
+
+/**
+ * The task project for a context: the work project a work area is bound to, when it is a listed project (P-111);
+ * otherwise the open project (taskProjectFor). A bound work project is a child `projects` row, so it is listed by
+ * GET /api/projects like any other, and the server's task admission decides who may file on it.
+ */
+export function contextTaskProject(
+  rows: ReadonlyArray<{ id: string | number; programId?: string | null }>,
+  context: { project: unknown; workProjectId?: string | null },
+): string {
+  const bound = typeof context.workProjectId === 'string' ? context.workProjectId.trim() : '';
+  if (bound && rows.some((r) => String(r.id) === bound)) return bound;
+  return taskProjectFor(rows, context.project);
 }
 
 /** Fired after a task is saved from the header Task form, so an open task board re-reads. */
@@ -423,7 +440,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   // match the form starts on "Choose a project", never on whichever row happens
   // to be first. `C2C.projects` loads on first open, so the seed is applied
   // again when it arrives — unless the person has already chosen.
-  const openProject = taskProjectFor(C2C.projects, surfaceCtx.project);
+  const openProject = contextTaskProject(C2C.projects, surfaceCtx);
 
   const [f, setF] = useState<QuickTaskForm>({
     title: '', project: openProject, moduleType: surfaceCtx.moduleType || 'Regulatory',
@@ -838,7 +855,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       };
       /* The open project is a program id; the board files a task under the
          task-board project that names it (taskProjectFor), or under none. */
-      const projectIdNum = Number(taskProjectFor(C2C.projects, surfaceCtx.project));
+      const projectIdNum = Number(contextTaskProject(C2C.projects, surfaceCtx));
       if (Number.isInteger(projectIdNum) && projectIdNum > 0) {
         taskBody.projectId = projectIdNum;
       }

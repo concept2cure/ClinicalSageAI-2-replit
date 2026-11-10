@@ -1,0 +1,9 @@
+not ok 1 - biotech (C2C-101): records the drug substance §3.2.S is written about
+not ok 8 - the substance carries the modality the boundary reads, as stated
+# tests 9
+# pass 7
+# fail 2
+ × server/services/cmc/__tests__/demo-packs-composition-boundary.test.ts > the demo packs against the shipped composition boundary > biotech (C2C-101) states its modality rather than leaving it to the route heuristic 4ms
+   → expected undefined to be 'biologic' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)

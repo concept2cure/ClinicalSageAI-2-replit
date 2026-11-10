@@ -15,6 +15,8 @@ interface TrainingCoverageProps {
   refresh: () => void;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
+  /** The coverage figure as one sentence: the server's average, or why there is none (D7-B: was the fourth tile). */
+  figure: string;
 }
 
 /** Existing roster coverage, qualified by the exact verified release. */
@@ -23,7 +25,7 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
   return <section className="qms-sec">
     <div className="qms-sec-head">
       <h2>Read-and-understood training</h2>
-      <span className="meta">Version in force · people assigned</span>
+      <span className="meta" data-testid="qms-coverage-figure">{props.figure}</span>
       <span className="spacer" />
       <button type="button" className="qms-chip" title="The job functions people hold, which documents require them to train"
         onClick={() => setRolesOpen(true)}>{I.users} Job roles</button>
@@ -76,14 +78,6 @@ function CoverageFigure({ current, of, lastCycle }: { current: number; of: numbe
     <span className="qms-train-pct mono" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current}/{of}</span>
     <span className="qms-train-when" title="Most recent acknowledgement by the people assigned">Latest {lastCycle}</span>
   </>;
-}
-
-export function DocumentReadButton({ doc, disabled, onOpen }: {
-  doc: QmsDoc; disabled: boolean; onOpen: (documentId: number) => void;
-}) {
-  return <button className="qms-chip" disabled={disabled}
-    title="Read this controlled revision and check your personal acknowledgement"
-    onClick={() => onOpen(doc.id)}>{I.bookOpen} {doc.status === 'effective' ? 'Read and acknowledge' : 'Open document'}</button>;
 }
 
 /* ── Job roles and who must train (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12) ──

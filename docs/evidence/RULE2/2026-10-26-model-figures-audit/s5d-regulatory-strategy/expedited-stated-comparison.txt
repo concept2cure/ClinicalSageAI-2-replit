@@ -1,0 +1,15 @@
+Expedited programs: 270 fully stated inputs (2 indications x 3 therapy landscapes x 5 evidence levels x 9 product types).
+Inputs with at least one changed verdict: 266
+accelerated_approval   False -> None    80  adequate therapy: unmet need or meaningful advantage not stated (coordinating session)
+accelerated_approval    True -> False   20  a 351(k) biosimilar (PHS Act 351(i)(2), 351(k); FD&C 506(c)(1)(A))
+accelerated_approval    True -> None   160  a criterion no input states (BT substantial improvement, AA surrogate endpoint, PR significant improvement)
+breakthrough_therapy   False -> None    48  a criterion no input states (BT substantial improvement, AA surrogate endpoint, PR significant improvement)
+breakthrough_therapy    True -> False   18  a 351(k) biosimilar (PHS Act 351(i)(2), 351(k); FD&C 506(c)(1)(A))
+breakthrough_therapy    True -> None   144  a criterion no input states (BT substantial improvement, AA surrogate endpoint, PR significant improvement)
+fast_track             False -> None    80  adequate therapy: unmet need or meaningful advantage not stated (coordinating session)
+fast_track              True -> False   20  a 351(k) biosimilar (PHS Act 351(i)(2), 351(k); FD&C 506(c)(1)(A))
+priority_review        False -> None    80  a criterion no input states (BT substantial improvement, AA surrogate endpoint, PR significant improvement)
+priority_review         True -> False   20  a 351(k) biosimilar (PHS Act 351(i)(2), 351(k); FD&C 506(c)(1)(A))
+priority_review         True -> None   160  a criterion no input states (BT substantial improvement, AA surrogate endpoint, PR significant improvement)
+rmat                   False -> None    24  a combination product: whether it uses a regenerative therapy is not stated
+rmat                    True -> None    24  adequate therapy: unmet need or meaningful advantage not stated (coordinating session)

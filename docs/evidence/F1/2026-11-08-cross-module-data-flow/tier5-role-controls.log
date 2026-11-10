@@ -1,0 +1,100 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/middleware/__tests__/role-claims.test.ts
+{
+  "timestamp": "2026-11-08T19:44:14.137Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T19:44:14.138Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/role-claims.test.ts
+{
+  "timestamp": "2026-11-08T19:44:14.138Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/role-claims.test.ts
+[database] Database connection successful
+
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants regulatory-author to every org role that does the work 2ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does NOT grant it to viewer — read-only is the point of that role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does not grant it to an unknown role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants nothing beyond the functional role — a member does not become an admin 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > keeps the declared roles, and does not duplicate a role already present 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > reads the roles array when the token carries one, and the role claim otherwise 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > is case-insensitive about the stored role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > requireRole(regulatory-author) admits a member and refuses a viewer 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > a member still cannot pass a guard that asks for admin or a platform role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > admits every organization role except viewer 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > names no role the platform cannot grant 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > is the ONE implementation — no route file keeps a private copy 25ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > refuses a viewer, admits a member, and requires a usable org context 1ms
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/middleware/__tests__/signing-roles-p18.test.ts
+{
+  "timestamp": "2026-11-08T19:44:14.998Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T19:44:14.999Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/middleware/__tests__/signing-roles-p18.test.ts
+{
+  "timestamp": "2026-11-08T19:44:14.999Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/middleware/__tests__/signing-roles-p18.test.ts
+[database] Database connection successful
+
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > approver holds manager, reviewer holds member; manager and member gain nothing 2ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > an administrator can assign both 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > signs (policy unchanged: a manager still does not) 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > writes governed records and finalizes reports, which needs both the manager tier and signing 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > passes every requireRole that admits a manager, and gets the regulatory-author grant 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > administers programs and projects, reads the audit trail, and is reported as privileged 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > meets the manager tier of the RBAC hierarchy (AnA command minimum roles) 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > holds every governance action a manager holds 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > writes governed records, does not finalize reports (a member does not) 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > gets the regulatory-author grant a member gets, and creates programs 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > meets the member tier, not the manager tier 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > holds every governance action a member holds, and sign 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > is not a manager anywhere 0ms
+
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+   Start at  11:44:12
+   Duration  2.63s (transform 717ms, setup 69ms, import 2.08s, tests 46ms, environment 0ms)
+

@@ -342,3 +342,19 @@ describe('what P-33 did not carry stays uncarried', () => {
     expect(a.gate.cleared, a.gate.blockers.join(' | ')).toBe(true);
   });
 });
+
+/* F1 repair B (re-plan step 8, 2026-11-08): readiness answers only for a live
+   sequence. The sequence read had no deleted_at filter, so a sequence the filed
+   baseline's removal of drafts had taken out (filed-sequence-baseline.ts) could
+   still be assessed, and reported ready, to AnA, MCP and the IND route. */
+describe('a removed sequence has no dispatch readiness (F1 repair B)', () => {
+  it('a complete amendment, once removed, is answered as not found, by its number, never as ready', async () => {
+    const sequenceId = await seedSequence(await seedSubmission(), '0002', 'amendment');
+    await placeCompleteAmendment(sequenceId);
+    expect((await assess(sequenceId)).gate.cleared).toBe(true);
+    await q('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [sequenceId]);
+    await expect(assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF })).rejects.toMatchObject({
+      code: 'NOT_FOUND', message: 'Sequence 0002 was removed from this submission, so it has no dispatch readiness.',
+    });
+  });
+});

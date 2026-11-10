@@ -1,0 +1,6 @@
+ × server/api/cmc/__tests__/register-edit-unrecorded-field-route.test.ts > PUT /api/cmc/stability-studies/:id and a field the register does not record > refuses 400 and names the field — the seeder’s measured case 28ms
+   → expected 409 to be 400 // Object.is equality
+ × server/services/cmc/__tests__/unrecorded-register-fields.test.ts > the refusal the route answers > refuses with 400 — a wrong field is a wrong request, not a state conflict 5ms
+   → expected 409 to be 400 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 12 passed (14)

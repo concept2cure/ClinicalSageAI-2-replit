@@ -1,0 +1,41 @@
+{
+  "purpose": "Restricted supplemental diagnostic of exactly two repaired test fixtures; not the required full publication gate",
+  "scope": "Two repaired test fixtures only; no semantic recheck of the 63 other previously checked configured changed targets",
+  "previousDiagnosticSummary": "/workspace/scratch/3002d574f952/changed-ts-diagnostic-12ab32bd/summary.json",
+  "previousHeadCommit": "12ab32bd6047237672a463de2a2302c9b602e748",
+  "repairTypeScriptPaths": [
+    "server/services/csr/__tests__/csr-table-rounding.test.ts",
+    "server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+  ],
+  "initialGitStatus": "",
+  "headCommit": "20451df2f3fc3037d131cb9bcc4651e5f8651603",
+  "headTree": "2b912d03665ab97df6860db35c79e2dafff26c89",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "/workspace/scratch/3002d574f952/concept2cure-v2/node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo"
+  },
+  "heapMb": 7168,
+  "resourceSamplingSeconds": 20,
+  "driverPid": 6,
+  "groupSize": 2,
+  "requestedChangedFileCount": 2,
+  "checkedFiles": [
+    "/workspace/scratch/3002d574f952/concept2cure-v2/server/services/csr/__tests__/csr-table-rounding.test.ts",
+    "/workspace/scratch/3002d574f952/concept2cure-v2/server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+  ],
+  "excludedChangedFiles": [],
+  "diagnostics": [],
+  "status": "completed_no_repaired_fixture_errors",
+  "fullProgramSourceCount": 15470,
+  "manifestHash": "1657748ffc5baeb82cf196de2392244fc1a0d0eba07c20fa27fe81e47443cb49",
+  "compilerVersion": "5.6.3",
+  "targetFiles": [
+    "/workspace/scratch/3002d574f952/concept2cure-v2/server/services/csr/__tests__/csr-table-rounding.test.ts",
+    "/workspace/scratch/3002d574f952/concept2cure-v2/server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+  ],
+  "finalHeadCommit": "20451df2f3fc3037d131cb9bcc4651e5f8651603",
+  "finalHeadTree": "2b912d03665ab97df6860db35c79e2dafff26c89",
+  "finalGitStatus": "",
+  "snapshotVerifiedAfterChecks": true
+}

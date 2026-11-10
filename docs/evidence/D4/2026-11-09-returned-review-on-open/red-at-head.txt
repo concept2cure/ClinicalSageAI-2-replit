@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > says who returned it and why, in the route's words, with the way to Review tasks 5407ms
+ × client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a route that is open 5142ms
+ × client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a route that is complete 5139ms
+ × client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > adds nothing for a document never sent for review 5128ms
+ × client/src/concept2cure/v2/__tests__/authoringReturnedReviewOnOpen.test.tsx > a returned review, where the document opens (J3 R2) > a route that could not be read says so, never that nothing was returned 5130ms
+TestingLibraryElementError: Unable to find an element by: [data-testid="ed-review-returned"]
+AssertionError: expected false to be true // Object.is equality
+TestingLibraryElementError: Unable to find an element by: [data-testid="ed-review-unread"]
+      Tests  5 failed (5)

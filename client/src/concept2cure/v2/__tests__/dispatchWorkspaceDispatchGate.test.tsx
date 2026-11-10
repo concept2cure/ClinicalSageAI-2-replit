@@ -80,7 +80,7 @@ const dispatchButton = () => button(/Dispatch sequence \(Part 11|Sign the releas
 const mount = async (status: string, assessment: unknown) => {
   serve(assessment);
   render(<DispatchWorkspace {...({ sub: SUB, seq: seqAt(status), onGoverned: vi.fn() } as any)} />);
-  await waitFor(() => expect(text()).toMatch(/Dispatch gate|Dispatch blocked/));
+  await waitFor(() => expect(text()).toMatch(/Cleared to dispatch\?/));
 };
 
 beforeEach(() => apiRequest.mockReset());
@@ -97,10 +97,11 @@ describe('DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b)',
 
   it('says what the gate is waiting for — not "Dispatch blocked", and not "clear"', async () => {
     await mount('frozen', assessmentAt('frozen'));
-    expect(text()).toMatch(/clear except for the release signature/);
+    // D7-A2: the verdict names what is waiting, and who supplies it.
+    expect(text()).toMatch(/Only its release signature stands between sequence 0000 and dispatch, and the dispatch e-signature applies it\./);
     expect(text()).toMatch(/dispatch e-signature is\s+recorded as that release signature/);
-    expect(text()).not.toMatch(/Dispatch blocked/);
-    expect(text()).not.toMatch(/Dispatch gate clear(?! except)/);
+    expect(text()).not.toMatch(/Not yet\. /);
+    expect(text()).not.toMatch(/is cleared to dispatch/);
     expect(text(), 'a lock note under a live Dispatch button').not.toMatch(/stays locked/);
   });
 
@@ -111,7 +112,7 @@ describe('DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b)',
     }));
     expect(button(/Dispatch sequence \(Part 11/)).toBeTruthy();
     expect(button(/Sign the release/)).toBeFalsy();
-    expect(text()).toMatch(/Dispatch gate clear/);
+    expect(text()).toMatch(/is cleared to dispatch/);
   });
 
   it('HIDES Dispatch when signing cannot clear the gate — an orchestrator run awaiting its signer', async () => {
@@ -125,7 +126,7 @@ describe('DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b)',
       releaseSignature: { required: true, verdict: 'awaiting', cleared: false },
     }));
     expect(dispatchButton(), 'a button that records a signature the resolver will never read').toBeFalsy();
-    expect(text()).toMatch(/Dispatch blocked — 1 blocker/);
+    expect(text()).toMatch(/Not yet\. One thing stands between sequence/);
     expect(text()).toMatch(/Dispatch stays locked while the gate blocks/);
   });
 
@@ -148,7 +149,7 @@ describe('DispatchWorkspace — Dispatch reads dispatchGateOnSigning (P11-28b)',
       expect(dispatchButton()).toBeFalsy();
       expect(errors.join('\n')).not.toMatch(/Cannot read propert|TypeError/);
       // And it never falls back to `gate`, which is the defect.
-      expect(text()).toMatch(/Dispatch blocked/);
+      expect(text()).toMatch(/Not yet\. /);
     } finally {
       window.removeEventListener('error', onError);
     }

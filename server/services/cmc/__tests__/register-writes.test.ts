@@ -75,6 +75,9 @@ vi.mock('../../cmc-write-through', () => ({
 
 import {
   RegisterWriteRefusal,
+  characterizationStudyBody,
+  clearableDate,
+  optionalDate,
   createContainerClosure,
   createDrugSubstance,
   createFormulationRecord,
@@ -210,7 +213,67 @@ describe('ungovernedQualificationRefusal — one rule, three vocabularies', () =
     expect(ungovernedQualificationRefusal('approved', 'comparability-studies')).toMatch(/comparability-studies\/:id\/approve/);
     /* ...and the words themselves, so a message cannot drift from the column
        the ceremony writes. */
-    expect(vocabFor('analytical-methods')).toEqual({ signedValue: 'validated', verb: 'Method validation (ICH Q2)', path: 'validate' });
+    /* `governedValues` joined the vocabulary with P-110 item 1 (2026-11-09):
+       every word only this register's signed act may write. The analytical
+       method register has the whole approval-gate vocabulary here, because the
+       gate honours more words than the act writes and an unsigned one must not
+       unlock an approval. */
+    expect(vocabFor('analytical-methods')).toEqual({
+      signedValue: 'validated',
+      verb: 'Method validation (ICH Q2)',
+      path: 'validate',
+      governedValues: [
+        'fit for purpose', 'phase appropriate', 'phase-appropriate', 'qualified',
+        'suitability confirmed', 'suitable', 'transferred', 'validated', 'verified',
+      ],
+    });
     expect(() => vocabFor('qc-testing')).toThrow(/no signed register is registered/);
+  });
+});
+
+/**
+ * Clearing a date, as distinct from leaving it unset.
+ *
+ * Every register PUT parses its body `.partial()`, where `undefined` means
+ * "this key was not sent" and the column is left alone. `optionalDate` folded
+ * an explicit `null` into `undefined`, so the *Patch builders — which send
+ * `?? null` for every nullable field, and exist precisely so a cleared field
+ * reaches the column — cleared no date at all. The PUT answered 200 and the old
+ * date came back on reload: a silent write failure on a GxP register.
+ *
+ * Shown end to end against the running app in
+ * `docs/evidence/S7/2026-11-09-register-get-and-clearable-dates/`.
+ */
+describe('clearableDate distinguishes "clear this" from "not sent"', () => {
+  const parse = (schema: z.ZodTypeAny, v: unknown) => schema.parse(v);
+
+  it('passes an explicit null through, so the patch writes NULL', () => {
+    expect(parse(clearableDate, null)).toBeNull();
+  });
+
+  it('leaves absent and blank as "not sent", which .partial() skips', () => {
+    expect(parse(clearableDate, undefined)).toBeUndefined();
+    expect(parse(clearableDate, '')).toBeUndefined();
+  });
+
+  it('still coerces a date, and does not turn null into the epoch', () => {
+    expect((parse(clearableDate, '2027-06-30T00:00:00.000Z') as Date).toISOString())
+      .toBe('2027-06-30T00:00:00.000Z');
+    // `.nullable()` is checked before the coercion; `new Date(null)` is 1970.
+    expect(parse(clearableDate, null)).not.toBeInstanceOf(Date);
+  });
+
+  // The defect, as optionalDate still behaves — deliberately, for the columns
+  // that are NOT NULL or whose date only a signature writes.
+  it('optionalDate still folds null into undefined, which is why it is not used here', () => {
+    expect(parse(optionalDate, null)).toBeUndefined();
+  });
+
+  /* The three fields a drawer can clear, by the register's own body schema.
+     A fourth would need its column to be nullable: qc_testing.test_date is NOT
+     NULL, and widening it would turn a clean 400 into a 500 from the database. */
+  it('is used on the characterization study’s performedDate, and not on its signed date', () => {
+    expect(characterizationStudyBody.shape.performedDate.parse(null)).toBeNull();
+    expect(characterizationStudyBody.shape.qualificationDate.parse(null)).toBeUndefined();
   });
 });

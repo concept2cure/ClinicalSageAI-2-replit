@@ -11,8 +11,9 @@
 import { describe, it, expect } from 'vitest';
 import { getToolHandler } from '../AnaToolExecutor.js';
 
+// An integer tenant, as ToolContext types it: since P-104 the standing-rule gate refuses a string one before any tool runs.
 const run = async (input: Record<string, unknown>) =>
-  JSON.parse(await getToolHandler('check_regulatory_compliance')!(input, { organizationId: 'org_1' } as any));
+  JSON.parse(await getToolHandler('check_regulatory_compliance')!(input, { organizationId: 7 } as any));
 
 describe('check_regulatory_compliance', () => {
   it('never returns a compliance verdict, even when every topic is mentioned', async () => {

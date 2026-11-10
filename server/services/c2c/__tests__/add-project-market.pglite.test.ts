@@ -14,6 +14,7 @@ import { createJourneyDb, extractTableDdl, type JourneyDb } from '../../../../te
 import { addProjectMarket, AddMarketRefusal, marketSubtree } from '../add-project-market';
 import { resolveGovernedDocument } from '../governed-document-binding';
 import { REGIONAL_DEVICE_APPLICATION_CLASSES, resolveFilingCatalogEntry } from '../../../../shared/regulatory/filing-catalog';
+import { ensureSubmissionSpine } from '../../../routes/c2c/project-intake';
 
 vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
@@ -121,7 +122,91 @@ async function marketState() {
   };
 }
 
-describe('add a market (F22)', () => {
+describe('canonical market identity (F22)', () => {
+  it.each([['unmapped', 'Unspecified'], ['', '']])('refuses unresolved requested market %j/%j before reading or writing filings', async (applicationType, primaryAgency) => {
+    const before = await marketState();
+    const query = vi.fn((sql: string, params?: unknown[]) => jdb.pool.query(sql, params));
+    await expect(ensureSubmissionSpine({ client: { query } as never, orgId: ORG, userId: USER,
+      programId: NDA, name: 'Unresolved filing', productName: 'Vorelinib', applicationType,
+      productType: 'drug', primaryAgency })).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect(query).not.toHaveBeenCalled();
+    expect(await marketState()).toEqual(before);
+  });
+
+  it.each([['ind', '', 'fda'], ['cta', 'Unspecified', 'eu']])('preserves the application region fallback for %s/%j', async (applicationType, primaryAgency, primaryRegion) => {
+    const client = await jdb.pool.connect();
+    try {
+      const out = await ensureSubmissionSpine({ client: client as never, orgId: ORG, userId: USER,
+        programId: NDA, name: 'Application fallback', productName: 'Vorelinib', applicationType,
+        productType: 'drug', primaryAgency });
+      expect(out.created).toBe(true);
+      expect(await one('SELECT primary_region FROM submissions WHERE id=$1', [out.id]))
+        .toEqual({ primary_region: primaryRegion });
+    } finally { client.release(); }
+  });
+
+  it.each(['Europe', ''])('refuses unresolved recorded region %j before adding or reusing a filing', async region => {
+    await jdb.pool.query(`INSERT INTO submissions
+      (organization_id,program_id,title,product_name,application_type,primary_region,client_type,status,created_by)
+      VALUES ($1,$2,'Legacy filing','Vorelinib','maa',$3,'pharma','draft',11)`, [ORG, NDA, region]);
+    const before = await marketState();
+    await expect(add(NDA, 'EMA', 'maa')).rejects.toMatchObject({ status: 409, code: 'MARKET_IDENTITY_UNVERIFIED' });
+    const client = await jdb.pool.connect();
+    try {
+      await expect(ensureSubmissionSpine({ client: client as never, orgId: ORG, userId: USER,
+        programId: NDA, name: 'Replay', productName: 'Vorelinib', applicationType: 'maa',
+        productType: 'drug', primaryAgency: 'EMA' })).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    } finally { client.release(); }
+    expect(await marketState()).toEqual(before);
+  });
+
+  it('adds an offered EU market even when this program has the same application type in another region', async () => {
+    await jdb.pool.query(`INSERT INTO submissions
+      (organization_id,program_id,title,product_name,application_type,primary_region,client_type,status,created_by)
+      VALUES ($1,$2,'Other market','Vorelinib','maa','uk','pharma','draft',11)`, [ORG, NDA]);
+    const out = await add(NDA, 'EMA', 'maa');
+    expect(await one('SELECT primary_region,program_id FROM submissions WHERE id=$1', [out.submissionId]))
+      .toEqual({ primary_region: 'eu', program_id: NDA });
+    expect(await count('SELECT count(*) AS n FROM submissions WHERE program_id=$1', [NDA])).toBe(2);
+    await expect(add(NDA, 'EMA', 'maa')).rejects.toMatchObject({ status: 409, code: 'MARKET_EXISTS' });
+  });
+
+  it.each(['eu', 'EU', 'ema', 'EMA'])('reuses an existing %s region alias only for that market', async region => {
+    const existing = await one(`INSERT INTO submissions
+      (organization_id,program_id,title,product_name,application_type,primary_region,client_type,status,created_by)
+      VALUES ($1,$2,'EU filing','Vorelinib','cta',$3,'pharma','draft',11) RETURNING id`, [ORG, NDA, region]);
+    // A newer filing in another region must not hide the matching older one.
+    await jdb.pool.query(`INSERT INTO submissions
+      (organization_id,program_id,title,product_name,application_type,primary_region,client_type,status,created_by)
+      VALUES ($1,$2,'UK filing','Vorelinib','cta','uk','pharma','draft',11)`, [ORG, NDA]);
+    const client = await jdb.pool.connect();
+    try {
+      const out = await ensureSubmissionSpine({ client: client as never, orgId: ORG, userId: USER,
+        programId: NDA, name: 'Replay', productName: 'Vorelinib', applicationType: 'cta',
+        productType: 'drug', primaryAgency: 'EMA' });
+      expect(out).toEqual({ id: Number(existing.id), created: false });
+      expect(await count('SELECT count(*) AS n FROM submissions WHERE program_id=$1', [NDA])).toBe(2);
+    } finally { client.release(); }
+  });
+
+  it('keeps separately created EU and UK clinical application spines on the same program', async () => {
+    const client = await jdb.pool.connect();
+    try {
+      const base = { client: client as never, orgId: ORG, userId: USER, programId: NDA,
+        name: 'Clinical application', productName: 'Vorelinib', applicationType: 'cta', productType: 'drug' };
+      const eu = await ensureSubmissionSpine({ ...base, primaryAgency: 'EMA' });
+      const uk = await ensureSubmissionSpine({ ...base, primaryAgency: 'MHRA' });
+      expect(uk.created).toBe(true);
+      expect(uk.id).not.toBe(eu.id);
+      expect(await rows('SELECT primary_region FROM submissions WHERE program_id=$1 ORDER BY primary_region', [NDA]))
+        .toEqual([{ primary_region: 'eu' }, { primary_region: 'uk' }]);
+      expect(await ensureSubmissionSpine({ ...base, primaryAgency: 'uk' })).toEqual({ id: uk.id, created: false });
+    } finally { client.release(); }
+  });
+
+});
+
+describe('market pathway eligibility (F22)', () => {
   it.each(['510k', 'pma', 'de_novo', 'ide', 'mdr', 'ivdr', 'cer', 'device', 'ivd'])(
     'refuses a known %s home pathway with an inconsistent medicinal product before any write', async (programType) => {
       await jdb.pool.query('UPDATE regulatory_programs SET program_type=$1 WHERE id=$2', [programType, NDA]);
@@ -147,7 +232,11 @@ describe('add a market (F22)', () => {
     expect(writes).toEqual([]);
     expect(await marketState()).toEqual(before);
   });
+});
+
+describe('add a market (F22)', () => {
   it("adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action", async () => {
+    const auditBefore = await count(`SELECT count(*) AS n FROM audit_logs WHERE reason=$1 AND target=$2`, [REASON, `project:${NDA}`]);
     const pack = (await one(
       `SELECT required_sections FROM c2c_rule_packs WHERE doc_type = 'maa' AND agency = 'ema' AND superseded_by IS NULL LIMIT 1`,
     )).required_sections;
@@ -167,7 +256,7 @@ describe('add a market (F22)', () => {
     expect(sub).toEqual({ application_type: 'maa', primary_region: 'eu', program_id: NDA });
     const agencies = (await one(`SELECT target_agencies FROM regulatory_programs WHERE id = $1`, [NDA])).target_agencies;
     expect(agencies).toEqual(['EMA']);
-    expect(await count(`SELECT count(*) AS n FROM audit_logs WHERE reason = $1 AND target = $2`, [REASON, `project:${NDA}`])).toBe(1);
+    expect(await count(`SELECT count(*) AS n FROM audit_logs WHERE reason = $1 AND target = $2`, [REASON, `project:${NDA}`])).toBe(auditBefore + 1);
   });
 
   it('the home filing is still the one an authored section binds to', async () => {

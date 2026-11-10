@@ -34,7 +34,9 @@ vi.mock('../../vault/document-catalog.service.js', () => ({ isDocumentCatalogEna
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { governedToolsetFor } from '../governed-toolset.js';
-import { getConnectorCatalog, storeCredentials } from '../../connectors/connector-registry.js';
+import { getConnectorCatalog } from '../../connectors/connector-registry.js';
+import type { ConnectorCredentials } from '../../connectors/connector-interface.js';
+import { encryptCredential } from '../../security/credential-cipher.js';
 import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../../ai-gateway/providers/org-placement.js';
 
 const REPOSITORIES = ['google_drive', 'box', 'onedrive', 'sharepoint', 'veeva_vault'];
@@ -55,15 +57,15 @@ beforeEach(() => {
       h.store.set(`${params[0]}:${params[1]}`, params[2] as string);
       return { rows: [] };
     }
-    if (/SELECT connector_id, is_valid FROM connector_credentials/.test(sql)) {
+    if (/SELECT connector_id, is_valid(?:, credentials)? FROM connector_credentials/.test(sql)) {
       const prefix = `${params[0]}:`;
       return {
-        rows: [...h.store.keys()]
-          .filter((k) => k.startsWith(prefix))
-          .map((k) => ({ connector_id: k.slice(prefix.length), is_valid: true })),
+        rows: [...h.store.entries()]
+          .filter(([k]) => k.startsWith(prefix))
+          .map(([k, credentials]) => ({ connector_id: k.slice(prefix.length), is_valid: true, credentials })),
       };
     }
-    if (/SELECT credentials FROM connector_credentials/.test(sql)) {
+    if (/SELECT credentials(?:, is_valid)? FROM connector_credentials/.test(sql)) {
       const v = h.store.get(`${params[0]}:${params[1]}`);
       return { rows: v ? [{ credentials: v }] : [] };
     }
@@ -93,7 +95,14 @@ afterEach(() => {
 const privateKey = () =>
   generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
 
-const connectDrive = (org: number) => storeCredentials(org, 'google_drive', { clientId: `svc-${org}@test.iam`, clientSecret: privateKey() });
+/** Since 5992db35 a repository's credential is captured only through the administrator's credential card, and
+ * storeCredentials refuses it. Historical raw rows remain readable, so the fixture seeds one, as
+ * connector-tenant-isolation.test.ts does. */
+async function seedLegacyCredentials(organizationId: number, connectorId: string, credentials: ConnectorCredentials) {
+  await h.query('INSERT INTO connector_credentials (organization_id,connector_id,credentials) VALUES ($1,$2,$3)', [organizationId, connectorId, encryptCredential(JSON.stringify(credentials))]);
+}
+
+const connectDrive = (org: number) => seedLegacyCredentials(org, 'google_drive', { clientId: `svc-${org}@test.iam`, clientSecret: privateKey() });
 
 async function run(org: number, input: Record<string, unknown>) {
   return JSON.parse(await getToolHandler('search_connected_repositories')!(input, { organizationId: org } as never));
@@ -163,7 +172,7 @@ describe('search_connected_repositories — an organisation without Drive', () =
   });
 
   it('is told the same when Drive is asked for beside a repository that is connected', async () => {
-    await storeCredentials(BOX_ORG, 'box', { clientId: 'box-id', clientSecret: 'box-secret', baseUrl: '123' });
+    await seedLegacyCredentials(BOX_ORG, 'box', { clientId: 'box-id', clientSecret: 'box-secret', baseUrl: '123' });
     const out = await run(BOX_ORG, { query: 'protocol', connectors: ['google-drive', 'box'] });
     expect(out.note).toContain('Google Drive is not connected for your organisation.');
     expect(out.skipped).toContainEqual({ connector: 'google_drive', reason: 'not connected for this organization' });
@@ -182,7 +191,7 @@ describe('search_connected_repositories — the schema', () => {
 
   it('is byte-identical for two tenants with different connectors configured, and lists the five repositories', async () => {
     await connectDrive(DRIVE_ORG);
-    await storeCredentials(BOX_ORG, 'box', { clientId: 'box-id', clientSecret: 'box-secret', baseUrl: '123' });
+    await seedLegacyCredentials(BOX_ORG, 'box', { clientId: 'box-id', clientSecret: 'box-secret', baseUrl: '123' });
     const drive = await schemaFor(DRIVE_ORG);
     const box = await schemaFor(BOX_ORG);
 

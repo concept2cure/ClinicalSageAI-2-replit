@@ -163,9 +163,41 @@ async function freshDb(extraMigrations: string[] = []): Promise<PGlite> {
   // contract is about. Canonical DDL, not a hand-written subset
   // (ci:audit-logs-fixture).
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  /* The analytical-method register the approval's ICH Q2 precondition resolves
+     a specification's named method against (`specificationMethodVerdict`,
+     services/cmc/analytical-method-source.ts). Since 2026-11-08 a limit is
+     approved only on a procedure the register shows is fit, so without this
+     table every approve case here answered 409 — for a precondition this
+     contract is not about, and with a log line about a failed register read
+     that sent a reader looking in the wrong place.
+
+     `cmc_source_objects` has no CREATE in migrations/ (it is modelled in
+     shared/schema/cmc-os.ts and only indexed by 0016), so this is the same
+     minimal shape the other CMC PGlite harnesses build, with the columns this
+     read selects. */
+  await pg.exec(CMC_SOURCE_OBJECTS_DDL);
   for (const rel of extraMigrations) await pg.exec(read(rel));
   return pg;
 }
+
+/** The columns `loadProjectAnalyticalMethods` selects, and nothing else. */
+const CMC_SOURCE_OBJECTS_DDL = `
+CREATE TABLE IF NOT EXISTS cmc_source_objects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id INTEGER NOT NULL,
+  project_id TEXT NOT NULL,
+  source_type TEXT NOT NULL,
+  source_key TEXT NOT NULL,
+  source_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  source_hash TEXT,
+  version INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+`;
+
+/** The validated procedure the owned specification's limits are measured by. */
+const METHOD_NAME = 'HPLC-UV assay (AM-114)';
 
 let ownedId = '';
 let orphanId = '';
@@ -178,10 +210,23 @@ beforeEach(async () => {
   gov.signatureRows = 0;
   currentTenant = 1;
 
+  /* The method register for tenant 1's project: one validated procedure, so
+     the owned row below is approvable and the approve cases test what this
+     contract is about. Recorded under the register's own canonical shape —
+     source_type 'method', the payload key `methodName` the write-through
+     emits — rather than a shape invented here. */
+  await pg.query(
+    `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload)
+     VALUES (1, $1, 'method', 'method:1', $2::jsonb)`,
+    [PROJECT, JSON.stringify({ methodName: METHOD_NAME, validationStatus: 'validated' })],
+  );
+
+  /* `test_methods` names that procedure. A specification that names no method
+     cannot be approved, which is the gate working and not a defect here. */
   const owned = await pg.query<{ id: string }>(
-    `INSERT INTO quality_specifications (project_id, tenant_id, material_type, material_name)
-     VALUES ($1, 1, 'drug-substance', $2) RETURNING id`,
-    [PROJECT, OWNED_NAME],
+    `INSERT INTO quality_specifications (project_id, tenant_id, material_type, material_name, test_methods)
+     VALUES ($1, 1, 'drug-substance', $2, $3::jsonb) RETURNING id`,
+    [PROJECT, OWNED_NAME, JSON.stringify({ method: METHOD_NAME })],
   );
   ownedId = owned.rows[0].id;
 

@@ -19,6 +19,8 @@ import { CSR_EVIDENCE_DRAFTING_RULES, csrSectionTableKeys, splitCsrClaims, type 
 import { buildCsrClaimReceipts } from './csr/csr-claim-receipts.js';
 import { resolveCsrBuildContext } from './csr/project-scope';
 import { hasUnresolvedPlaceholders } from './csr/csr-placeholders.js';
+import { isTruncated } from '../../shared/ai/finish-reason.js';
+import { callDraftingModel } from './csr/csr-draft-refusal.js';
 import { csrWritingBrief, csrWritingGuidance } from './ana/medical-writing-csr.js';
 
 // Load the canonical gateway client only when an async drafting operation
@@ -373,6 +375,8 @@ interface SectionReply {
   usage?: { totalTokens?: number };
   /** The gateway's fixed reply when no provider serves (demo mode, model 'demo-mode'): never a draft. */
   deterministic?: boolean;
+  /** Why generation ended, as the gateway reports it ('max_tokens' when the reply was cut off). */
+  finishReason?: string;
 }
 
 /** Whether a retained evidence pack actually carries tables for this section. */
@@ -442,6 +446,9 @@ function acceptSectionReply(
   if (!reply.content?.trim()) return null;
   const unserved = unservedReply(reply, model);
   if (unserved) { lineage.rejectedModelDraft = { reason: unserved }; return null; }
+  // A reply cut off at the token ceiling is not a section: it ends mid-sentence, and an evidence-bound one has lost
+  // the claims block every figure is checked against (shared/ai/finish-reason.ts).
+  if (isTruncated(reply.finishReason)) { lineage.rejectedModelDraft = { reason: 'draft_truncated' }; return null; }
   if (!acceptsConductClaims(reply.content, lineage)) return null;
   let content = reply.content;
   if (usableEvidence(evidence)) {
@@ -457,6 +464,13 @@ function acceptSectionReply(
   const tokens = Number(reply.usage?.totalTokens);
   return { content, model, tokenCost: Number.isFinite(tokens) && tokens > 0 ? Math.round(tokens) : 0 };
 }
+
+/**
+ * Room for one heading. The drafting models reason before they write, and that reasoning is billed against the same
+ * ceiling as the text (Opus 5.5 cannot run without it). At 4,096 a results heading that lists a claim for every
+ * figure could be cut off before its claims block, and then every figure in it was unreconciled.
+ */
+const CSR_SECTION_MAX_TOKENS = 16_000;
 
 /**
  * Draft one section with its provenance, for the async job runner: the model
@@ -497,23 +511,22 @@ export async function draftCSRSectionWithProvenance(
 
   const ai = await loadCSRClient();
   if (ai) {
-    try {
-      const reply = await ai.chat(sectionMessages(section, info, evidence), {
-        taskType: 'document_drafting',
-        maxTokens: 4096,
-        temperature: 0.3,
-        callerModule: 'csr-builder/section-draft',
-        organizationId: aiContext?.organizationId ?? request.organizationId,
-        projectId: aiContext?.projectId ?? request.projectId,
-        userId: aiContext?.userId ?? request.userId,
-      });
-      const accepted = acceptSectionReply(section.number, reply, info, lineage, evidence);
+    // A limit or an overload is waited out; a refusal waiting cannot change stops the build (csr-draft-refusal.ts).
+    const outcome = await callDraftingModel(section.number, () => ai.chat(sectionMessages(section, info, evidence), {
+      taskType: 'document_drafting',
+      maxTokens: CSR_SECTION_MAX_TOKENS,
+      temperature: 0.3,
+      callerModule: 'csr-builder/section-draft',
+      organizationId: aiContext?.organizationId ?? request.organizationId,
+      projectId: aiContext?.projectId ?? request.projectId,
+      userId: aiContext?.userId ?? request.userId,
+    }));
+    if ('reply' in outcome) {
+      const accepted = acceptSectionReply(section.number, outcome.reply, info, lineage, evidence);
       if (accepted) return done(accepted.content, 'ai', accepted.model, accepted.tokenCost);
-    } catch {
-      // Never log an SDK error object: its message/response may contain
-      // the clinical prompt, source-table cells or provider credentials.
+    } else if (outcome.refused) {
       // The source-grounded template below explicitly marks missing data.
-      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; a needs-data template will be used.`);
+      lineage.rejectedModelDraft = { reason: outcome.refused };
     }
   }
   // Template fallback. ai_generated MUST be false for this row.

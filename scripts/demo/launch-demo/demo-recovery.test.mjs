@@ -31,7 +31,7 @@ async function fixture(t) {
   for (const file of ['lib.mjs', 'seed.mjs', 'packs/biotech.mjs']) {
     await write(`scripts/demo/launch-demo/${file}`, await fs.readFile(path.join(sourceRoot, 'scripts/demo/launch-demo', file)));
   }
-  await write('state.mjs', 'export const state = { clients: [], requests: [], loginCalls: [], downstream: [] };\n');
+  await write('state.mjs', 'export const state = { clients: [], requests: [], loginCalls: [], downstream: [], created: [] };\n');
   const { state } = await import(pathToFileURL(path.join(root, 'state.mjs')));
   state.body = session();
   state.portfolio = { data: [], meta: { hasMore: false, pendingStore: false } };
@@ -44,10 +44,25 @@ async function fixture(t) {
     if (url === '/api/task-management/board') return ok(state.board);
     if (url === '/api/audit-trail/ledger?limit=500') return ok({ data: [], meta: { chain: { ok: true } } });
     if (url === '/api/c2c/projects' && method === 'POST') {
-      if (body.productType !== 'biologic') return { status: 400, text: 'State whether this IND is for a drug or a biologic.' };
-      return { status: 201, json: { data: { id: 'demo-program', title: body.name }, meta: { submissionId: 12 } } };
+      /* The canonical intake needs the product class stated — an IND alone
+         cannot determine it. The pack now seeds TWO programmes, a biologic and
+         a small molecule, so the fixture accepts both words and still refuses
+         a create that states neither. */
+      if (!['biologic', 'drug'].includes(body.productType)) {
+        return { status: 400, text: 'State whether this IND is for a drug or a biologic.' };
+      }
+      const id = body.productType === 'drug' ? 'demo-program-sm' : 'demo-program';
+      state.created.push({ id, productType: body.productType, name: body.name });
+      return { status: 201, json: { data: { id, title: body.name }, meta: { submissionId: 12 } } };
     }
     if (url === '/api/c2c/projects/demo-program') return ok({ data: { id: 'demo-program', name: '[Demo · Biotech] C2C-101', client_workspace_id: 7 } });
+    if (url === '/api/c2c/projects/demo-program-sm') return ok({ data: { id: 'demo-program-sm', name: '[Demo · Biotech] C2C-201', client_workspace_id: 7 } });
+    /* The Module 3 build the pack runs on the small-molecule programme. */
+    if (url.startsWith('/api/cmc/module3-os/compile/') && method === 'POST') {
+      state.downstream.push('ensureModule3Build');
+      return { status: 200, json: { success: true, data: { sections: [] } } };
+    }
+    if (url.startsWith('/api/cmc/module3-os/sections/')) return ok({ data: [] });
     if (url === '/api/c2c/project-vault/demo-program') return ok({ data: { documentCount: 0 } });
     throw new Error(`Unexpected test request: ${method} ${url}`);
   };
@@ -75,15 +90,22 @@ export const makePdfBuffer = () => { throw new Error('PDF generation is not part
   // rather than testing its actual identity, scoping and seed behavior.
   await write('scripts/demo/launch-demo/packs/biotech-work-content.mjs', `
 export const BIOTECH_CMC = { specs: [], stability: [], batches: [] };
+export const BIOTECH_SM = { molecule: 'C2C-201', programName: 'C2C-201', productName: 'C2C-201', indication: 'Fictional test indication' };
+export const BIOTECH_SM_CMC = { specs: [], stability: [], batches: [] };
 export const BIOTECH_STUDY_DESIGN = {};
+export const BIOTECH_ADAPTIVE_PLAN = { title: 'stub', designType: 'group_sequential', adaptations: [], interimLooks: [], stoppingRules: [], snapshots: [] };
 export const BIOTECH_TASKS = [];
+export const BIOTECH_IR_LETTER = {};
 `);
   await write('scripts/demo/launch-demo/packs/work-areas.mjs', `
 import { state } from '../../../../state.mjs';
 export async function ensureStudyDesign() { state.downstream.push('ensureStudyDesign'); }
+export async function ensureAdaptivePlan() { state.downstream.push('ensureAdaptivePlan'); }
+export async function ensureDesignTasks() { state.downstream.push('ensureDesignTasks'); }
 export async function ensureCmc() { state.downstream.push('ensureCmc'); }
 export async function ensureTasks() { state.downstream.push('ensureTasks'); }
 export async function ensurePlanDocuments() { state.downstream.push('ensurePlanDocuments'); }
+export async function ensureAgencyLetter() { state.downstream.push('ensureAgencyLetter'); }
 `);
   await write('scripts/demo/launch-demo/packs/biotech-content.mjs', `
 export const INDICATION = 'Fictional test indication', MOLECULE = 'C2C-101', PRODUCT_NAME = 'C2C-101', PROGRAM_NAME = 'C2C-101';
@@ -213,12 +235,47 @@ test('the biotech pack refuses an unread project list without attempting creatio
   assert.ok(!state.requests.some(r => r.method === 'POST'));
 });
 
-test('an existing demo project is reused without a second create', async t => {
+/* The pack seeds TWO programmes: C2C-101 (the biologic) and C2C-201 (the small
+   molecule, whose Module 3 composes — J5-13). Both must be found rather than
+   re-created. */
+const EXISTING_DEMO_PROJECTS = [
+  { id: 'demo-program', title: '[Demo · Biotech] C2C-101' },
+  { id: 'demo-program-sm', title: '[Demo · Biotech] C2C-201' },
+];
+
+test('existing demo projects are reused without a second create', async t => {
   const { lib, pack, state } = await fixture(t);
-  state.portfolio = { data: [{ id: 'demo-program', title: '[Demo · Biotech] C2C-101' }], meta: { hasMore: false } };
+  state.portfolio = { data: EXISTING_DEMO_PROJECTS, meta: { hasMore: false } };
   await pack.seed({ api: (...args) => state.api(...args), run: lib.makeRun('biotech'),
     baseUrl: connectOptions.baseUrl, identity: { email: 'demo@example.test', userId: '17', organizationId: '42' } });
   assert.ok(!state.requests.some(r => r.method === 'POST' && r.url === '/api/c2c/projects'));
+});
+
+test('the Module 3 build runs after the registers it compiles from', async t => {
+  /* `POST /module3-os/compile/:projectId` refuses a project with no canonical
+     sources with a 409 ("No canonical source objects for this project —
+     nothing to compile"), so a build before the registers would fail the step
+     on every real run. The fixture records each helper as it runs, so the order
+     is asserted rather than assumed. */
+  const { lib, pack, state } = await fixture(t);
+  await pack.seed({ api: (...args) => state.api(...args), run: lib.makeRun('biotech'),
+    baseUrl: connectOptions.baseUrl, identity: { email: 'demo@example.test', userId: '17', organizationId: '42' } });
+  const build = state.downstream.indexOf('ensureModule3Build');
+  assert.ok(build >= 0, 'the pack did not compile Module 3 for the small-molecule programme');
+  assert.ok(state.downstream.lastIndexOf('ensureCmc') < build,
+    `the build ran before the registers: ${state.downstream.join(' → ')}`);
+});
+
+test('a pack whose second programme is missing creates only that one', async t => {
+  /* The case above says "nothing is created twice"; this one says the find is
+     per programme, not a single flag — with C2C-101 present and C2C-201 absent,
+     exactly one create happens and it is the small molecule's. */
+  const { lib, pack, state } = await fixture(t);
+  state.portfolio = { data: [EXISTING_DEMO_PROJECTS[0]], meta: { hasMore: false } };
+  await pack.seed({ api: (...args) => state.api(...args), run: lib.makeRun('biotech'),
+    baseUrl: connectOptions.baseUrl, identity: { email: 'demo@example.test', userId: '17', organizationId: '42' } });
+  assert.deepEqual(state.created.map(c => c.productType), ['drug']);
+  assert.match(state.created[0].name, /C2C-201/);
 });
 
 test('CLI refuses a mixed valid/invalid pack list before connecting', async t => {
@@ -241,14 +298,18 @@ test('an existing demo on a later portfolio page is reused, not duplicated', asy
     }
     if (url === '/api/c2c/projects?limit=200&offset=1') {
       state.requests.push({ method, url, body });
-      return ok({ data: [{ id: 'demo-program', title: '[Demo · Biotech] C2C-101' }], meta: { hasMore: false } });
+      return ok({ data: EXISTING_DEMO_PROJECTS, meta: { hasMore: false } });
     }
     return originalApi(method, url, body);
   };
   await pack.seed({ api: (...args) => state.api(...args), run: lib.makeRun('biotech'),
     baseUrl: connectOptions.baseUrl, identity: { email: 'demo@example.test', userId: '17', organizationId: '42' } });
   assert.ok(state.requests.some(r => r.url.includes('offset=1')));
-  assert.ok(!state.requests.some(r => r.method === 'POST'));
+  /* No project is CREATED. The pack does post elsewhere — it compiles the
+     small-molecule programme's Module 3 — so the assertion names the create
+     rather than every POST, which is what this case is about. */
+  assert.ok(!state.requests.some(r => r.method === 'POST' && r.url === '/api/c2c/projects'));
+  assert.deepEqual(state.created, []);
 });
 
 test('a stalled paginated project read cannot create a duplicate', async t => {

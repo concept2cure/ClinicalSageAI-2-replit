@@ -1,0 +1,290 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:04:43.202Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:04:43.204Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:04:43.204Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:04:43.474Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal)
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > links only a record of this organisation, and keeps a removed link with who removed it and why
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > removes only the owned active change through an executor that supplies rows alone
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: undefined
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: null
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: ""
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "   "
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not record anonymous closure
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current role admission 20ms
+   → promise resolved "{ id: 7, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current membership admission 8ms
+   → promise resolved "{ id: 8, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current account admission 6ms
+   → promise resolved "{ id: 9, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current organization admission 7ms
+   → promise resolved "{ id: 10, organization_id: 1, …(27) }" instead of rejecting
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a live document status or typed validation reference as exact accepted completion
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > rechecks native prerequisite state in the same statement that records closure
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved state change
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved content change
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved link change
+ ↓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not attach or erase a requirement after closure
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current role admission
+AssertionError: promise resolved "{ id: 7, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-1",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T17:04:45.593Z,
++   "created_at": 2026-11-08T17:04:45.586Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 7,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T17:04:45.587Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T17:04:45.595Z,
++   "verified_at": 2026-11-08T17:04:45.593Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:332:36
+    330|     if (kind === 'organization') await pglite.query("UPDATE organizati…
+    331|     try {
+    332|       await expect(close(change.id)).rejects.toBeInstanceOf(svc.Invali…
+       |                                    ^
+    333|       expect(await svc.getChange(ORG, change.id)).toEqual(before);
+    334|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current membership admission
+AssertionError: promise resolved "{ id: 8, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-2",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T17:04:45.610Z,
++   "created_at": 2026-11-08T17:04:45.604Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 8,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T17:04:45.605Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T17:04:45.611Z,
++   "verified_at": 2026-11-08T17:04:45.610Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:332:36
+    330|     if (kind === 'organization') await pglite.query("UPDATE organizati…
+    331|     try {
+    332|       await expect(close(change.id)).rejects.toBeInstanceOf(svc.Invali…
+       |                                    ^
+    333|       expect(await svc.getChange(ORG, change.id)).toEqual(before);
+    334|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current account admission
+AssertionError: promise resolved "{ id: 9, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-3",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T17:04:45.617Z,
++   "created_at": 2026-11-08T17:04:45.613Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 9,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T17:04:45.614Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T17:04:45.617Z,
++   "verified_at": 2026-11-08T17:04:45.617Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:332:36
+    330|     if (kind === 'organization') await pglite.query("UPDATE organizati…
+    331|     try {
+    332|       await expect(close(change.id)).rejects.toBeInstanceOf(svc.Invali…
+       |                                    ^
+    333|       expect(await svc.getChange(ORG, change.id)).toEqual(before);
+    334|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > holds closure when the verifier loses current organization admission
+AssertionError: promise resolved "{ id: 10, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-4",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T17:04:45.623Z,
++   "created_at": 2026-11-08T17:04:45.619Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 10,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T17:04:45.620Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T17:04:45.624Z,
++   "verified_at": 2026-11-08T17:04:45.623Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:332:36
+    330|     if (kind === 'organization') await pglite.query("UPDATE organizati…
+    331|     try {
+    332|       await expect(close(change.id)).rejects.toBeInstanceOf(svc.Invali…
+       |                                    ^
+    333|       expect(await svc.getChange(ORG, change.id)).toEqual(before);
+    334|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 26 skipped (30)
+   Start at  09:04:41
+   Duration  3.89s (transform 1.05s, setup 59ms, import 1.95s, tests 1.67s, environment 0ms)
+

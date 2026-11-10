@@ -55,6 +55,34 @@ beforeEach(() => {
 });
 
 describe('saveToAuthoring', () => {
+  it('saves a statistical draft and its verified basis in one atomic request', async () => {
+    const statisticalDraft = { documentType: 'sample_size_rationale', input: { effectSize: 0.5 },
+      expectedMarkdown: 'Calculated rationale', basis: { kind: 'worked_example' as const, label: 'Sizing example' } };
+    const origin = { organizationId: 1, programId: PROGRAM, projectId: 7, documentType: statisticalDraft.documentType,
+      basis: statisticalDraft.basis, design: null, sizingRun: { state: 'not_applicable' }, contentSha256: 'a'.repeat(64),
+      computation: { execution: 'server_recomputed', computationInputs: statisticalDraft.input, inputsSha256: 'b'.repeat(64), outputsSha256: 'c'.repeat(64) } };
+    apiRequest.mockResolvedValueOnce(res(201, { success: true, data: {
+      doc: { ...document, provenance: { source: 'import', statisticalSource: origin } },
+      sections: [{ ...section, code: statisticalDraft.documentType, content: '<p>Calculated rationale</p>' }],
+    }, governance: { bound: false, reason: 'Working document' } }));
+    const result = await saveToAuthoring({ ...HANDOFF, code: statisticalDraft.documentType, statisticalDraft });
+    expect(result).toMatchObject({ ok: true, docId: DOC, bound: false });
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    expect(apiRequest).toHaveBeenCalledWith('POST', '/api/ana-biostats/document', expect.objectContaining({
+      action: 'save_to_authoring', programId: PROGRAM, input: statisticalDraft.input, basis: statisticalDraft.basis,
+    }));
+  });
+
+  it('never reports a statistical save whose receipt drops the calculation basis', async () => {
+    apiRequest.mockResolvedValue(res(201, { success: true, document, section }));
+    const result = await saveToAuthoring({ ...HANDOFF, statisticalDraft: { documentType: 'sample_size_rationale',
+      input: { effectSize: 0.5 }, expectedMarkdown: 'Calculated rationale', basis: { kind: 'worked_example', label: 'Example' } } });
+    expect(result).toMatchObject({ ok: false, phase: 'unknown' });
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('saveToAuthoring document and section receipts', () => {
   it('writes the document and its section, then reports ok', async () => {
     apiRequest
       .mockResolvedValueOnce(res(200, { success: true, document }))

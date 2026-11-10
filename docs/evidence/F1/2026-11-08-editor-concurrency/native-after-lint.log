@@ -1,0 +1,41 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:57:07.251Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:57:07.252Z","pid":37,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:57:07.252Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-11-08T17:57:11.924Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:57:11.954Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over 68ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 36ms
+{"level":30,"time":"2026-11-08T17:57:11.983Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:57:12.064Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 22ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > ordinary saves preserve concurrent edits and version ordering > commits one overlapping save and refuses the other after both passed their pre-read 87ms
+{"level":30,"time":"2026-11-08T17:57:12.100Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:57:12.123Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:57:12.142Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 2e3f8be0-92e9-46d7-8352-ea27bc5ab7ab by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > ordinary saves preserve concurrent edits and version ordering > advances the observable millisecond version when transaction time is behind the stored version 52ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > ordinary saves preserve concurrent edits and version ordering > leaves a caller that sends no token exactly as it was 19ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  09:57:04
+   Duration  7.82s (transform 4.93s, setup 48ms, import 116ms, tests 7.43s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

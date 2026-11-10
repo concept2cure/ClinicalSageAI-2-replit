@@ -109,7 +109,7 @@ export function ProjectDiscoveryHandoff({ fields, isDeviceFiling, disabled, onAp
     <section className="npw-field npw-field-wide" aria-label="Saved onboarding discovery">
       <h3 className="npw-seg-t">Start from your saved discovery</h3>
       <p className="npw-field-help">Review your organization&apos;s recorded project context, then choose whether to copy it. Your entered fields stay as you wrote them.</p>
-      {read.state !== 'ready' && <button type="button" className="sp-ask" disabled={disabled || read.state === 'loading'} onClick={() => void load()}>
+      {read.state !== 'ready' && <button type="button" className="btn ghost small" disabled={disabled || read.state === 'loading'} onClick={() => void load()}>
         {read.state === 'loading' ? 'Reading saved discovery…' : read.state === 'error' ? 'Retry saved discovery' : 'Review saved discovery'}
       </button>}
       {read.state === 'error' && <p className="npw-field-help" role="alert">Saved discovery could not be read. Try again, or enter the project details yourself.</p>}

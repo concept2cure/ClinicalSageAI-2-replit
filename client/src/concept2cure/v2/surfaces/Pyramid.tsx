@@ -225,7 +225,39 @@ function PyramidDeliverables({ task, onWorkDocument, projectOpen }: {
   </div>;
 }
 
-export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, projectOpen, plan }: {
+/** A task's document bindings by module: each opens its section in the editor and, in a project, its folder in the Vault. */
+function PyBindings({ task, onOpenSection, onOpenVaultFolder, projectOpen }: {
+  task: PyTask;
+  onOpenSection?: (code: string, title: string) => void;
+  onOpenVaultFolder?: (code: string) => void;
+  projectOpen?: boolean;
+}) {
+  const byMod: Record<string, string[]> = {};
+  (task.ctd || []).forEach(c => { const m = pyModOf(c); (byMod[m] = byMod[m] || []).push(c); });
+  return (
+    <>
+      {Object.keys(byMod).length > 0 && (
+        <div className="py-sheet-sec">
+          <div className="py-sheet-sec-l">Document bindings</div>
+          {Object.keys(byMod).sort().map(m => (
+            <div key={m} className="py-sheet-mod">
+              <span className="mod">Module {m}</span>
+              {byMod[m].map(c => <React.Fragment key={c}>
+                {onOpenSection ? <button className="py-ctd mono" disabled={!projectOpen}
+                  onClick={() => onOpenSection(c, task.name)} aria-label={`Open ${c} in document editor`}>{c} {I.penLine}</button>
+                  : <span className="py-ctd mono">{c}</span>}
+                {onOpenVaultFolder && projectOpen ? <button className="py-ctd mono" data-testid="py-open-vault-folder"
+                  onClick={() => onOpenVaultFolder(c)} aria-label={`Open ${c}'s folder in the Vault`} title="Open its folder in the Vault">{I.folder}</button> : null}
+              </React.Fragment>)}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWorkDocument, onOpenSection, onOpenVaultFolder, projectOpen, plan }: {
   pyr: PyPyramid; task: PyTask; tasks: PyTask[];
   /** A project's schedule and owner for the task (S11 step 3, PyramidProject.tsx). */
   plan?: React.ReactNode;
@@ -233,14 +265,14 @@ export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWor
   onStatus: (id: string, status: string) => void;
   onWorkDocument?: (title: string) => void;
   onOpenSection?: (code: string, title: string) => void;
+  /** Opens the project's Vault at the binder folder for a CTD code (S6 step 3). */
+  onOpenVaultFolder?: (code: string) => void;
   projectOpen?: boolean;
 }) {
   const dlgRef = useDialog(onClose);
   const ph = pyr.phases.find(p => p.id === task.phase);
   const deps = task.deps.map(d => tasks.find(t => t.id === d)).filter(Boolean) as PyTask[];
   const dependents = tasks.filter(t => t.deps.includes(task.id));
-  const byMod: Record<string, string[]> = {};
-  (task.ctd || []).forEach(c => { const m = pyModOf(c); (byMod[m] = byMod[m] || []).push(c); });
   const g = task.guidance || {};
   return (
     <div className="py-sheet-scrim" onClick={onClose}>
@@ -289,19 +321,7 @@ export function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus, onWor
             </div>
           )}
 
-          {Object.keys(byMod).length > 0 && (
-            <div className="py-sheet-sec">
-              <div className="py-sheet-sec-l">Document bindings</div>
-              {Object.keys(byMod).sort().map(m => (
-                <div key={m} className="py-sheet-mod">
-                  <span className="mod">Module {m}</span>
-                  {byMod[m].map(c => onOpenSection ? <button key={c} className="py-ctd mono" disabled={!projectOpen}
-                    onClick={() => onOpenSection(c, task.name)} aria-label={`Open ${c} in document editor`}>{c} {I.penLine}</button>
-                    : <span key={c} className="py-ctd mono">{c}</span>)}
-                </div>
-              ))}
-            </div>
-          )}
+          <PyBindings task={task} onOpenSection={onOpenSection} onOpenVaultFolder={onOpenVaultFolder} projectOpen={projectOpen} />
 
           {(g.fda || g.ich || g.cfr || g.keyConsiderations) && (
             <div className="py-sheet-sec">

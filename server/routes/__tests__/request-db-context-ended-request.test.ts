@@ -206,7 +206,8 @@ describe('a read the caller waits for is served on its tenant-scoped request con
       // One connection, opened with this caller's tenant session variables, then the handler's own SQL on it.
       expect(conn.connections).toBe(1);
       expect(conn.statements[0].text).toContain("set_config('app.current_tenant_id'");
-      expect(conn.statements[0].params).toEqual([String(ORG), 'admin', ORG_UUID]);
+      // The caller's verified account joins the scope (fd04214563, P-104): the owner wall private rules read.
+      expect(conn.statements[0].params).toEqual([String(ORG), 'admin', ORG_UUID, String(USER)]);
       expect(conn.statements.length).toBeGreaterThan(1);
       if (sqlMark) expect(conn.statements.slice(1).some((s) => s.text.includes(sqlMark)), conn.statements.map((s) => s.text).join('\n')).toBe(true);
       await vi.waitFor(() => expect(conn.releases).toBe(1));

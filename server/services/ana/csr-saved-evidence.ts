@@ -24,6 +24,7 @@ import { buildCsrAuthoringEvidence, type CsrAuthoringEvidence, type RetainedCsrT
 import { parseImportedCsrSectionEvidence, type CsrImportedSectionEvidence } from '../csr/csr-claim-receipts';
 import { findUnclaimedNumbers, isCsrObservedResultsSection, unclaimedCsrSynopsisResults } from '../csr/unsupplied-statistics';
 import { editedClaimOutcome } from './csr-edited-section';
+import { numericalClaimDisplays, numericalText } from '../../../shared/authoring/csr-scientific-review';
 
 export interface SavedCsrSection { code: string | null; content: string; text: string; title?: string }
 export type RetainedRunRead = { ok: true; tables: RetainedCsrTables } | { ok: false; code: string };
@@ -103,19 +104,20 @@ export interface SectionPlan {
 }
 
 function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImportedSectionEvidence | undefined): SectionPlan {
-  const claimed = receipts?.claims.map(c => c.value) ?? [];
+  const currentText = figureText(s.text);
+  const view = numericalText(currentText, 'text');
+  const claimed = numericalClaimDisplays(currentText, receipts?.claims.map(c => ({ value: c.value, header: c.population })) ?? [], view);
   // Re-review legacy imported CSR sections against today's Rule 2, not the
   // metadata-exemption list they once carried. For §§10–13, the only numeric
   // results the analysis can substantiate are exact claimed table cells.
   // No stored provenance flag can authorize an unclaimed observed result.
   const info = isCsrObservedResultsSection(s.code) ? [] : receipts?.studyInformationNumbers ?? [];
-  const currentText = figureText(s.text);
   const unclaimed = [...new Set([
-    ...findUnclaimedNumbers(currentText, { claimed, info }).map(n => n.text),
+    ...findUnclaimedNumbers(currentText, { claimed, info }, 'text').map(n => n.text),
     // A legacy §2 receipt may list 300 as "planned sample size"; this does
     // not justify "300 patients completed". Revalidate observed synopsis
     // clauses without its metadata exemptions, just as drafting now does.
-    ...(s.code === '2' ? unclaimedCsrSynopsisResults(currentText, claimed) : []),
+    ...(s.code === '2' ? unclaimedCsrSynopsisResults(currentText, claimed, 'text') : []),
   ])];
   const current = receipts ? sha(s.content) : null;
   // Added sections without an E3 code have no declared regulatory purpose or
@@ -186,9 +188,10 @@ function gateEntry(plan: SectionPlan, reads: Map<string, RetainedRunRead>) {
 function unstatedClaims(plan: SectionPlan, facts: Map<string, CsrEvidenceFact>): SavedCsrEvidenceIssue[] {
   if (!plan.receipts) return [];
   const text = figureText(plan.text);
-  const values = plan.receipts.claims.map(c => c.value);
+  const view = numericalText(text, 'text');
+  const values = numericalClaimDisplays(text, plan.receipts.claims.map(c => ({ value: c.value, header: c.population })), view);
   return plan.receipts.claims.flatMap((c, i): SavedCsrEvidenceIssue[] => {
-    const outcome = editedClaimOutcome(text, c, values);
+    const outcome = editedClaimOutcome(text, c, values, view);
     if (outcome.state === 'stated') return [];
     const cell = { table: c.table, row: c.row, column: c.column, claimed: c.value, current: facts.get(cellId(plan.code, c))?.cellText ?? null };
     const base = { section: plan.code, claimId: `${plan.code}#${i}`, cell };

@@ -1,0 +1,10 @@
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > sends both retained bodies with exact-byte chained audit, saved order and real page ranges 3961ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses the entire historical packet for a private constituent without identifying it 25ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses the entire historical packet for a foreign constituent without identifying it 22ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses the entire historical packet for a missing constituent without identifying it 23ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > holds the real report reservation through rendering before the canonical finalizer can change its status 4658ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses an observed scope withdrawal during actual PDF work before any bytes leave 2774ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > refuses an observed role withdrawal during actual PDF work before any bytes leave 2687ms
+ ✓ tests/db/report-pack-export.dbtest.ts > native retained complete report packets > fails closed on a real executor fault rather than assuming a verified standard plan 6ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

@@ -26,6 +26,7 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
 
 let pglite: PGlite;
 const query = async (sql: string, params?: unknown[]) => {
@@ -63,6 +64,7 @@ import { searchFindings } from '../index';
 const ORG = 711;
 const PROGRAM = '55555555-5555-4555-8555-555555555555';
 const ACTOR = '1';
+let studyRef: number;
 
 function migration(rel: string): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -73,6 +75,7 @@ const doc = (checksum: string, over: Record<string, unknown> = {}) => ({
   sourceType: 'client_document' as const,
   visibilityClass: 'project_private' as const,
   clientProgramId: PROGRAM,
+  studyRef,
   title: 'protocol.pdf',
   checksum,
   ingestionStatus: 'ingested' as const,
@@ -115,6 +118,13 @@ beforeAll(async () => {
   // The migration under test.
   await pglite.exec(migration('migrations/20260829_cre_source_versioning.sql'));
   await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
+  await pglite.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['cdisc_prm_studies']));
+  await pglite.exec(migration('db/migrations/20260727_prm_program_link.sql'));
+  await pglite.exec(migration('migrations/20261008d_cre_source_study_ref.sql'));
+  const study = await query(`INSERT INTO cdisc_prm_studies
+    (tenant_id,study_id,protocol_id,protocol_title,protocol_version,program_id)
+    VALUES($1,'sd_versioning','VERSIONING-01','Versioning study','1.0',$2) RETURNING id`, [ORG, PROGRAM]);
+  studyRef = Number((study.rows[0] as { id: number }).id);
 }, 120_000);
 
 afterAll(async () => { await pglite?.close(); });
@@ -181,6 +191,7 @@ describe('findSupersededCandidate — declines to guess', () => {
     const v1 = await spine.createSource(ORG, doc('sha-cand-1', { title: 'unique-name.pdf' }));
     const found = await spine.findSupersededCandidate(ORG, {
       title: 'unique-name.pdf', sourceType: 'client_document', programId: PROGRAM,
+      studyRef,
     });
     expect(found?.id).toBe(v1.id);
   }, 60_000);
@@ -193,6 +204,7 @@ describe('findSupersededCandidate — declines to guess', () => {
     // strength of a filename. Declining is the honest answer.
     const found = await spine.findSupersededCandidate(ORG, {
       title: 'duplicate.pdf', sourceType: 'client_document', programId: PROGRAM,
+      studyRef,
     });
     expect(found).toBeNull();
   }, 60_000);
@@ -201,6 +213,7 @@ describe('findSupersededCandidate — declines to guess', () => {
     await spine.createSource(ORG, doc('sha-unscoped', { title: 'unscoped.pdf' }));
     const found = await spine.findSupersededCandidate(ORG, {
       title: 'unscoped.pdf', sourceType: 'client_document',
+      studyRef,
     });
     expect(found).toBeNull();
   }, 60_000);
@@ -212,6 +225,7 @@ describe('findSupersededCandidate — declines to guess', () => {
     // the already-retired original.
     const found = await spine.findSupersededCandidate(ORG, {
       title: 'chain.pdf', sourceType: 'client_document', programId: PROGRAM,
+      studyRef,
     });
     expect(found?.id).not.toBe(v1.id);
     expect(found?.checksum).toBe('sha-old-2');

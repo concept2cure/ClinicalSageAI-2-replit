@@ -140,12 +140,12 @@ Each is a repair of shipped behaviour (F1): no screen, mount or table.
 | M13 | The AnA k510 transmit is in launch scope, while the HTTP package transmit is refused 403 in production. | `ana-launch-scope.inventory.json`; `ui-surface-registry.ts:418-422` | search |
 | M14 | Found in the running app, 2026-11-02: a working document's advice, "place the document into a filing", leads to the eCTD placement dialog, which on a device project has no submission and refuses "B1" as "not a CTD section code". The home filing's own editing copy is now offered beside it (`bda1d5aed1`). | `editor/DocumentWorkbench.tsx` (the unbound working copy note), the Place into filing dialog | walk |
 | M15 | Found in the running app: a device 510(k)'s Author tab offers "Write the protocol in the protocol workspace", and its work areas list Biostatistics. | Project home, Author tab and work areas | walk |
-| M16 | Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. **The tag is P-60's reading** (the DHF panel reads the project's own document sections, every one of them), so whether a filing's administrative nodes belong in the design history file is the founder's question under P-60, not a repair. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
+| M16 | **Decided by P-114 item 2** (2026-11-09, under the founder's delegation): the design and development file holds design records, not filing paperwork, and a zero risk count with no risk file is "no risks recorded". To build after the demo. Found in the running app: Engineering's "What's blocking your documents" tags every eSTAR node "DHF", the cover letter included, and its zero "Open risks" card is red. **The tag is P-60's reading** (the DHF panel reads the project's own document sections, every one of them), so whether a filing's administrative nodes belong in the design history file is the founder's question under P-60, not a repair. | `mdx/surfaces/EngineeringSurface.tsx` | walk |
 | M17 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m17-udi-empty-state-door/`): the action is Open Labeling. Found in the running app: UDI's empty state is the passive instruction M8 fixed on Labeling ("appear here once labeling documents are created", with only "Check again"). | `mdx/surfaces/UdiSurface.tsx` | walk |
 | M18 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m18-pma-modules-own-document/`). Found in the running app: the PMA screen's "PMA modules" read "0 documents total" for a project whose B.2 was written and exported. `getPmaModules` grouped the organization's legacy 510(k) sections (`cerv2_510k_sections`, no project link) by a six-card kit taxonomy, so a project with no PMA document showed every module "complete". The cards now read the PMA mapper over the project's own PMA document, the same computation as the assembly verdict. | `server/services/regulatory-programs.service.ts`, `mdx/surfaces/PmaSurface.tsx` | walk |
 | M19 | **Fixed 2026-11-02** (`docs/evidence/MDX-JOURNEY/2026-11-02-m19-pma-mapper-places-by-key/`): a leaf with a pack key is placed by its key only; B.1, B.5 and B.6 had overcounted modules 2, 4 and 5 the same way. Found in the running app: the PMA mapper places a governed leaf by its title as well as its 814.20 letter. B.2, the SSED's "Device description summary", counts for module 2 ("Device description & indications for use") through `ti('device description')`, so once B.2 is approved the assembly verdict counts module 2 present with nothing under C. | `server/services/pathway-engines/pma/pma-mapper.ts` | walk |
-| M20 | The PMA screen's trial cards bind a study by `metadata.clinicalStudyId`, or else by a product-name `ILIKE` over the organization's studies, and do not say which study they bound. | `server/services/regulatory-programs.service.ts` (`getPmaTrialMetrics`) | read |
-| M21 | Found in the running app: the draft package is named after the class and type the kit derives (`deriveCode`): `pma_pma-content-package-draft.zip`, `Class_II_510k_content-package-draft.zip`. It is not named after the project, so two projects' packages download under one name. | `mdx/hooks/useEstarExport.ts` (`meta.id`), `mdx/hooks/useMdxPrograms.ts` (`deriveCode`) | walk |
+| M20 | **Fixed 2026-11-09** (`docs/evidence/MDX-JOURNEY/2026-11-02-m20-pma-trial-cards-linked-study/`): only the project's link binds a study; "AE rate", which counted protocol deviations, is "Serious deviations". The PMA screen's trial cards bind a study by `metadata.clinicalStudyId`, or else by a product-name `ILIKE` over the organization's studies, and do not say which study they bound. | `server/services/regulatory-programs.service.ts` (`getPmaTrialMetrics`) | read |
+| M21 | **Fixed 2026-11-09** (`docs/evidence/MDX-JOURNEY/2026-11-09-m21-package-named-after-project/`): packages are named after the project. Found in the running app: the draft package is named after the class and type the kit derives (`deriveCode`): `pma_pma-content-package-draft.zip`, `Class_II_510k_content-package-draft.zip`. It is not named after the project, so two projects' packages download under one name. | `mdx/hooks/useEstarExport.ts` (`meta.id`), `mdx/hooks/useMdxPrograms.ts` (`deriveCode`) | walk |
 | M22 | Found in the running app: an EU IVDR project's facts panel lists Product code, Regulation, Review panel and Predicate, the FDA 510(k) facts, as "not recorded". | The project home's facts panel (the coordinator's, beside M15) | walk |
 
 ## The order of work
@@ -184,6 +184,17 @@ on, not raced.
    device journey's existing screen or put to the founder for retirement.
 
 ## For the founder
+
+**2026-11-09: decided under the founder's delegation as P-114** (`docs/LAUNCH_DEFINITION_OF_DONE.md`):
+- question 2 is superseded by P-103;
+- question 3: no CDRH Portal adapter;
+- M3: the EU technical file per project;
+- M6(a): an IVD 510(k) outline;
+- M7: De Novo doors;
+- M16: the design file holds design records;
+- partial required sets are never "nearly ready".
+
+Questions 1 and 4 remain the plan's and R1's.
 
 These decide what this lane may do. The lane does not decide them.
 

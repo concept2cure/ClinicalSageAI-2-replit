@@ -1630,6 +1630,8 @@ Plan critique 15 asks for a scheduled sweep that re-hashes stored Vault bytes. T
 
 Not edited here, because the module is inside that lane's 24 hours. After 2026-10-02 08:49 this lane takes it, if it is still open.
 
+**Done 2026-11-10** by `…01QoxbLaF` (still open then; no `aws_wafv2_*` existed): the web ACL is in `terraform/modules/cloudfront/main.tf`, attached through `web_acl_id`, with the region precondition, and the Trivy exception is deleted. The body-size rule counts on every path, not only the upload and AnA paths, because 8 KB also refuses editor saves; the two weeks of counted matches decide a scoped rule. Red then green: `docs/evidence/D1/2026-11-10-aws-readiness/`.
+
 ### Handed on by the co-author save-trail lane (`…01SuVLo2`), 2026-10-01 — found, not edited
 
 Evidence for each: `docs/evidence/D5/2026-10-01-coauthor-save-trail/`.

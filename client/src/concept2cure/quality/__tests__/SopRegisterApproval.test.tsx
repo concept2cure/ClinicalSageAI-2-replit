@@ -21,7 +21,14 @@
  */
 import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
+
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
 
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
@@ -195,6 +202,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
 
   it('opens the e-signature dialog for Retire, offering the retirement meaning only (P-51)', () => {
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
     expect(dialog.getAttribute('data-meanings')).toBe('retirement');
@@ -210,6 +218,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
       }),
     });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
 
@@ -228,6 +237,7 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
   it('shows a refused password as not retired', async () => {
     H.apiRequest.mockResolvedValue({ status: 401, ok: false, json: async () => ({ error: 'Password did not verify.' }) });
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
     fireEvent.click(screen.getByText('stub-sign'));
     await waitFor(() => expect(H.signError).toBeTruthy());
@@ -241,7 +251,11 @@ describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)',
    register — "Effective documents 0", "Review overdue 0 — All current" in the
    ok tone, "No documents due for review." */
 describe('SopRegister — a failed read is not an empty register', () => {
-  const kpi = (label: string) => screen.getByText(label).closest('.qms-kpi') as HTMLElement;
+  /* D7-B (2026-11-06): the four tiles became one sentence above the register's
+     rows, and the coverage figure the training section's line; each keeps its
+     unread arm. */
+  const figures = () => screen.queryByTestId('qms-register-figures')?.textContent ?? null;
+  const coverage = () => screen.getByTestId('qms-coverage-figure').textContent ?? '';
 
   it('renders a failed register read as a failure, with no count and no all-clear', () => {
     H.docs = null;
@@ -255,8 +269,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     expect(screen.queryByText('All current')).toBeNull();
     expect(screen.queryByText('No documents due for review.')).toBeNull();
     expect(screen.queryByText(/No controlled documents in the register/)).toBeNull();
-    expect(kpi('Effective documents').querySelector('.val')?.textContent).toBe('—');
-    expect(kpi('Review overdue').getAttribute('data-tone')).toBe('');
+    expect(figures()).toBe('The register could not be read.');
     fireEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0]);
     expect(H.refresh).toHaveBeenCalled();
   });
@@ -266,6 +279,7 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.reviewRows = null;
     renderRegister();
     expect(screen.getByText('Loading the register…')).toBeTruthy();
+    expect(figures()).toBe('Reading the register…');
     expect(screen.queryByText('All current')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -274,9 +288,9 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.docs = [];
     renderRegister();
     expect(screen.getByText('No controlled documents in the register yet.')).toBeTruthy();
-    // Empty, and said as empty: not "All current", which an empty register is
-    // only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
-    expect(screen.getByText('Nothing in the register to review')).toBeTruthy();
+    // Empty, and said as empty: no figures at all, so no "none overdue", which an
+    // empty register is only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
+    expect(figures()).toBeNull();
     expect(screen.queryByTestId('sop-register-failed')).toBeNull();
   });
 
@@ -286,17 +300,15 @@ describe('SopRegister — a failed read is not an empty register', () => {
     renderRegister();
     expect(screen.getByTestId('sop-training-failed').textContent).toMatch(/Training records could not be read/);
     expect(screen.queryByText('No training-controlled documents yet.')).toBeNull();
-    expect(kpi('Acknowledgement coverage').querySelector('.val')?.textContent).toBe('—');
+    expect(coverage()).toBe('Coverage could not be read.');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(H.trainRefresh).toHaveBeenCalled();
   });
 
   it('shows no training compliance figure when nothing is training-controlled, instead of a red 0%', () => {
     renderRegister();
-    const k = kpi('Acknowledgement coverage');
-    expect(k.querySelector('.val')?.textContent).toBe('—');
-    expect(k.getAttribute('data-tone')).toBe('');
-    expect(k.textContent).toMatch(/No training-controlled documents yet/);
+    expect(coverage()).toBe('No training-controlled documents yet.');
+    expect(coverage()).not.toMatch(/%/);
   });
 });
 

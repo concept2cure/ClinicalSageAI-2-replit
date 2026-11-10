@@ -1,0 +1,2 @@
+Generated with scripts/design/generate-surface-text-ramp.mjs (output redirected to a scratch folder) twice: with this change's app-v2.css and journey-v2.css, and with HEAD's. diff -r of the two outputs:
+(no difference)

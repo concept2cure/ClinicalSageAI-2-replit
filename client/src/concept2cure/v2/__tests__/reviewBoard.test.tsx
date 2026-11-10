@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -265,8 +265,7 @@ describe('Review board — the open program', () => {
   it('widens to every program only when asked', async () => {
     apiRequest.mockImplementation(async () => ok(BOARD));
     render(<Review {...props()} />);
-    const toggle = await screen.findByRole('button', { pressed: true, name: /BX-256/ });
-    fireEvent.click(toggle);
+    fireEvent.click(await screen.findByRole('button', { pressed: false, name: 'All projects' }));
     await waitFor(() =>
       expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(true));
   });
@@ -274,19 +273,23 @@ describe('Review board — the open program', () => {
   /* RR5 acceptance (2026-10-30): opened from a link (`?program=`) the shell
      knows the program's id and nothing else, and the switch read
      "Only 099991d1-…". It names the program from the board's own rows, and
-     says "this project" when no row names it — never the id. */
+     says "this project" when no row names it — never the id. Since D4-7 the
+     name is in the "This project" item's tooltip. */
   it('a program opened from a link is named from the board, never by its id', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM };
     apiRequest.mockImplementation(async () => ok({ ...BOARD, queue: [{ ...BOARD.queue[0], programId: PROGRAM, prog: 'BX-256 program' }] }));
     render(<Review {...props()} />);
-    expect((await screen.findByRole('button', { pressed: true, name: /Only BX-256 program/ })).textContent).not.toContain(PROGRAM);
+    await waitFor(() => expect(screen.getByRole('button', { pressed: true, name: 'This project' }).getAttribute('title')).toBe('Show BX-256 program only'));
+    expect(screen.getByRole('group', { name: 'Projects' }).textContent).not.toContain(PROGRAM);
   });
 
   it('with no row naming it, the switch says "this project"', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM };
     apiRequest.mockImplementation(async () => ok(EMPTY_BOARD));
     render(<Review {...props()} />);
-    expect((await screen.findByRole('button', { pressed: true, name: /Only this project/ })).textContent).not.toContain(PROGRAM);
+    const only = await screen.findByRole('button', { pressed: true, name: 'This project' });
+    expect(only.getAttribute('title')).toBe('Show this project only');
+    expect(only.closest('[role="group"]')?.textContent).not.toContain(PROGRAM);
   });
 
   /* What QA actually saw: the board was empty, and the "Threads & change
@@ -297,7 +300,7 @@ describe('Review board — the open program', () => {
     const inbox = (u: string) => apiRequest.mock.calls.some((c) => String(c[1]) === u);
     await waitFor(() => expect(inbox(`/api/concept2cure/reviews/my-queue?programId=${PROGRAM}`)).toBe(true));
     expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(false);
-    fireEvent.click(await screen.findByRole('button', { pressed: true, name: /BX-256/ }));
+    fireEvent.click(await screen.findByRole('button', { pressed: false, name: 'All projects' }));
     await waitFor(() => expect(inbox('/api/concept2cure/reviews/my-queue')).toBe(true));
   });
 });
@@ -333,5 +336,72 @@ describe('Review view-model module — no fixtures', () => {
     expect('REVIEW_QUEUE' in reviewData).toBe(false);
     expect('REVIEW_WORKFLOWS' in reviewData).toBe(false);
     expect('REVIEW_THREAD' in reviewData).toBe(false);
+  });
+});
+
+/* D4-7 (§D4.J): the board on D0's one work-area page pattern. The context eyebrow goes (the top bar and the rail say
+   where you are), the three scopes are one segmented control, the project switch is a second one whose labels do not
+   change with its state, and the inbox heading is a section heading with its counts beside it. */
+describe('Review board — the work-area page pattern (D4-7)', () => {
+  const PROGRAM = '099991d1-dac8-43c5-b88a-8baab26194ee';
+  const INBOX = { threads: [], tasks: [], totalThreads: 2, totalTasks: 1 };
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'BX-256' };
+    apiRequest.mockImplementation(async (_m: string, url: string) => ok(String(url).includes('/reviews/my-queue') ? INBOX : BOARD));
+  });
+  afterEach(() => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('carries no context eyebrow, and its one action sits in the header\'s action slot', async () => {
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    expect(document.querySelector('.ph-eyebrow')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Project · review/i);
+    expect(screen.getByRole('button', { name: /Ask AnA/ }).closest('.ph-acts')).not.toBeNull();
+  });
+
+  it('shows the three scopes as one segmented control, and a scope still filters', async () => {
+    render(<Review {...props()} />);
+    const group = await screen.findByRole('group', { name: 'Show reviews' });
+    expect(group.classList.contains('seg')).toBe(true);
+    const scopes = within(group).getAllByRole('button');
+    expect(scopes.map((b) => b.textContent)).toEqual(['Awaiting my review', 'Requested by me', 'All open']);
+    for (const b of scopes) {
+      expect(b.className).toBe('seg-b');
+      expect(b.getAttribute('style')).toBeNull();
+    }
+    await screen.findAllByText('Clinical Overview §2.5');
+    const scopesNow = () => screen.getByRole('group', { name: 'Show reviews' });
+    fireEvent.click(within(scopesNow()).getByRole('button', { name: 'Requested by me' }));
+    await waitFor(() => expect(within(scopesNow()).getByRole('button', { name: 'Requested by me' }).getAttribute('aria-pressed')).toBe('true'));
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/review/board?scope=requested'))).toBe(true));
+  });
+
+  it('switches between this project and all projects with labels that keep their names', async () => {
+    render(<Review {...props()} />);
+    await screen.findAllByText('Clinical Overview §2.5');
+    const projects = () => screen.getByRole('group', { name: 'Projects' });
+    const group = projects();
+    expect(group.classList.contains('seg')).toBe(true);
+    const only = within(group).getByRole('button', { name: 'This project' });
+    const all = within(group).getByRole('button', { name: 'All projects' });
+    expect(only.getAttribute('aria-pressed')).toBe('true');
+    expect(all.getAttribute('aria-pressed')).toBe('false');
+    expect(only.getAttribute('title')).toContain('BX-256');
+    expect(group.textContent).not.toContain(PROGRAM);
+    fireEvent.click(all);
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/review/board?scope=all')).toBe(true));
+    await waitFor(() => expect(within(projects()).getByRole('button', { name: 'All projects' }).getAttribute('aria-pressed')).toBe('true'));
+    expect(within(projects()).getByRole('button', { name: 'This project' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('heads the inbox with a section heading and its counts, in sentence case', async () => {
+    render(<Review {...props()} />);
+    const inbox = () => screen.getByRole('region', { name: 'Review threads assigned to you' });
+    const heading = await screen.findByRole('heading', { level: 2, name: 'Threads and change requests assigned to you' });
+    expect(heading.closest('.pj-sec-h')).not.toBeNull();
+    await waitFor(() => expect(inbox().querySelector('.pj-sec-h .sec-sub')?.textContent).toBe('2 threads · 1 task'));
+    expect(inbox().querySelector('.dr-seclbl')).toBeNull();
   });
 });
