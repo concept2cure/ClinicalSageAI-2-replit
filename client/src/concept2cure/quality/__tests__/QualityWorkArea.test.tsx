@@ -120,7 +120,8 @@ describe('Quality is one work area with one header (D7-B)', () => {
     const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
     expect(header.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const tabs = within(tablist).getAllByRole('tab');
-    expect(tabs.map((t) => t.textContent)).toEqual(['SOP register', 'Change control', 'CAPA', 'Deviations', 'Nonconformances', 'Suppliers', 'Internal audits', 'Management reviews']);
+    // P-122: Complaints and MDR, beside CAPA.
+    expect(tabs.map((t) => t.textContent)).toEqual(['SOP register', 'Change control', 'CAPA', 'Complaints and MDR', 'Deviations', 'Nonconformances', 'Suppliers', 'Internal audits', 'Management reviews']);
     expect(tablist.querySelector('svg')).toBeNull();
     fireEvent.keyDown(tabs[0], { key: 'ArrowRight' });
     expect(within(tablist).getByRole('tab', { name: 'Change control' }).getAttribute('aria-selected')).toBe('true');

@@ -1,7 +1,7 @@
 /**
  * QmsRecords — the Quality registers beside controlled documents and change
- * control: CAPA, nonconformances, suppliers, internal audits and management
- * reviews.
+ * control: CAPA, complaints and MDR reports (P-122), deviations, nonconformances,
+ * suppliers, internal audits and management reviews.
  *
  * One register component, five configurations: CAPA (qmsCapaRegister.tsx) and
  * the four records (qmsRecordRegisters.tsx), built from qmsRegisterKit.tsx.
@@ -37,6 +37,7 @@ type ReportContext = (ctx: Omit<RecordRegisterContext, 'tab'>) => void;
 import { CAPAS } from './qmsCapaRegister';
 import { DEVIATIONS } from './qmsDeviationRegister';
 import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegisters';
+import { COMPLAINTS, MDR_EVENTS } from './qmsComplaintRegisters';
 
 function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
   config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
@@ -239,6 +240,8 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
 export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
   { id: 'capa', label: 'CAPA' },
+  /* P-122: complaints and MDR reports, over /api/capa-mdr, beside CAPA (qmsComplaintRegisters.tsx). */
+  { id: 'complaints', label: 'Complaints and MDR' },
   { id: 'deviations', label: 'Deviations' },
   { id: 'nonconforming', label: 'Nonconformances' },
   { id: 'suppliers', label: 'Suppliers' },
@@ -248,6 +251,7 @@ export const QMS_RECORD_TABS: { id: QmsRecordTab; label: string }[] = [
 
 export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   capa: CAPAS.ask,
+  complaints: COMPLAINTS.ask,
   deviations: DEVIATIONS.ask,
   nonconforming: NONCONFORMANCES.ask,
   suppliers: SUPPLIERS.ask,
@@ -255,12 +259,49 @@ export const QMS_RECORD_ASK: Record<QmsRecordTab, string> = {
   reviews: REVIEWS.ask,
 };
 
+/**
+ * The Complaints and MDR tab (P-122): two registers, complaints and the MDR and vigilance reports decided from them,
+ * one under the other. AnA is told both as one register context: loading until both have answered, failed when
+ * either read failed (never one register passed off as the tab), and otherwise both registers' rows and figures.
+ */
+function ComplaintsAndMdr({ onAsk, onContext }: { onAsk: (q: string) => void; onContext?: ReportContext }) {
+  type Part = Omit<RecordRegisterContext, 'tab'>;
+  const [parts, setParts] = React.useState<{ complaints?: Part; mdr?: Part }>({});
+  const fromComplaints = React.useCallback((c: Part) => setParts((p) => ({ ...p, complaints: c })), []);
+  const fromMdr = React.useCallback((c: Part) => setParts((p) => ({ ...p, mdr: c })), []);
+  React.useEffect(() => {
+    if (!onContext) return;
+    const a = parts.complaints;
+    const b = parts.mdr;
+    const base = { title: 'Complaints and MDR', noun: ['record', 'records'] as [string, string],
+      about: [a?.about, b?.about].filter(Boolean).join(' '), scope: a?.scope ?? b?.scope ?? null };
+    const state = a?.state === 'failed' || b?.state === 'failed' ? 'failed' : !a || !b || a.state === 'loading' || b.state === 'loading' ? 'loading' : 'ready';
+    if (state !== 'ready' || !a || !b) {
+      onContext({ ...base, state, count: null, counts: [], records: [], truncated: false, partial: false });
+      return;
+    }
+    onContext({
+      ...base, state, count: (a.count ?? 0) + (b.count ?? 0), partial: a.partial || b.partial, truncated: a.truncated || b.truncated,
+      counts: [...a.counts.map((c) => ({ ...c, label: `Complaints, ${c.label.toLowerCase()}` })),
+        ...b.counts.map((c) => ({ ...c, label: `MDR reports, ${c.label.toLowerCase()}` }))],
+      records: [...a.records, ...b.records],
+    });
+  }, [parts, onContext]);
+  return (
+    <>
+      <RecordRegister config={COMPLAINTS} onAsk={onAsk} onContext={fromComplaints} />
+      <RecordRegister config={MDR_EVENTS} onAsk={onAsk} onContext={fromMdr} />
+    </>
+  );
+}
+
 export function QmsRecords({ tab, onAsk, onContext }: {
   tab: QmsRecordTab; onAsk: (q: string) => void; onContext?: (ctx: RecordRegisterContext) => void;
 }) {
   const report = React.useCallback<ReportContext>((ctx) => onContext?.({ ...ctx, tab }), [onContext, tab]);
   switch (tab) {
     case 'capa': return <RecordRegister key={tab} config={CAPAS} onAsk={onAsk} onContext={report} />;
+    case 'complaints': return <ComplaintsAndMdr key={tab} onAsk={onAsk} onContext={report} />;
     case 'deviations': return <RecordRegister key={tab} config={DEVIATIONS} onAsk={onAsk} onContext={report} />;
     case 'nonconforming': return <RecordRegister key={tab} config={NONCONFORMANCES} onAsk={onAsk} onContext={report} />;
     case 'suppliers': return <RecordRegister key={tab} config={SUPPLIERS} onAsk={onAsk} onContext={report} />;

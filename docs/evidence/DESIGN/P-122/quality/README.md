@@ -139,3 +139,33 @@ The same DB test proves the reads items 3 and 5 rely on: `GET /api/mdx/qms/readi
 member with that organisation's counts only, and refuses no session (401); `GET /api/capa-mdr/complaints`,
 `/mdr-events` and `/vigilance` answer a member with their organisation's records only, and refuse another
 organisation's project (404).
+
+## Item 5 — a Complaints and MDR tab in Quality
+
+**What changed.** Quality gains one tab, "Complaints and MDR", beside CAPA, over the existing `/api/capa-mdr` routes.
+It is a tab of the existing Quality screen (`QMS_RECORD_TABS`), not a screen: no `UI_SURFACES` id, no `SURFACE_VIEWS`
+entry, no mount, no table; `ci:one-design-plan` agrees (below). It renders two registers from the existing register
+kit (`qmsRegisterKit.tsx`), configured in `quality/qmsComplaintRegisters.tsx`:
+
+| Register | Reads | Writes (each the server's audited route) | Row detail |
+|---|---|---|---|
+| Complaints | `GET /api/capa-mdr/complaints` (the organisation's; `program_id` when narrowed) | Record complaint (`POST /complaints`, in the open project, every event fact chosen, never defaulted, since the server refuses an unstated one); Move (`POST /complaints/:id/transition`, only the server's next states, with a reason); Record MDR decision (`POST /mdr-events`, in the complaint's project, linked to it) | its vigilance timeline (`GET /vigilance?program_id=&entity_type=complaint&entity_id=`) |
+| MDR and vigilance reports | `GET /api/capa-mdr/mdr-events` | Record MDR decision; Move (`POST /mdr-events/:id/transition`, with report numbers when filed) | its vigilance timeline |
+
+The preliminary reportability column is the rules engine's, computed at intake ("FDA: reportable · EU: not
+determined"): an unstated fact is said as not determined, never read as no. "Overdue" on an MDR report is the server's
+rule (due day passed, not filed). AnA is told both registers as one context, and a failure of either read as a
+failure. `quality.open-tab` (`shared/navigation/surface-actions.ts`) takes `complaints`, so AnA and a notice can open it.
+
+**One lifecycle copy.** The complaint and MDR lifecycles moved from `server/services/capa-mdr/stateMachine.ts` to
+`shared/constants/capa-lifecycle.ts`, as the CAPA lifecycle did; the server enforces, and the register offers, the same
+map.
+
+**Production.** The routes were not refused: `device-postmarket` claims `/api/capa-mdr`
+(`ui-surface-registry.ui-v2.ts:476`) and is a launch surface, so the verdict for `/complaints`, `/mdr-events` and
+`/vigilance` is `launch` (checked with `launchScopeApiVerdict`). Nothing was admitted. Item 4's DB test proves, as
+`app_service` with RLS on, that a member reads their organisation's complaints, MDR events and vigilance timeline (200)
+and that another organisation's project is refused (404) with no rows.
+
+- Red (`item5-red.txt`): 10 of 10 fail at HEAD.
+- Green (`item5-green.txt`).

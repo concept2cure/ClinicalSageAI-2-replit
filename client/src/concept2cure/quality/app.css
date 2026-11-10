@@ -54,6 +54,10 @@
 .qms-shell p.sec-sub [data-tone="warn"] { color: var(--warning); }
 .qms-shell p.qms-figures { margin: 4px 0 14px; }
 .qms-shell p.qms-figures-unread { margin: -8px 0 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* A complaint's or MDR report's vigilance timeline under its row (P-122): a plain list, the event, its day, its reason. */
+.qms-vigilance { list-style: none; margin: 0; padding: 0; }
+.qms-vigilance li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-small); }
+.qms-vigilance .qms-vigilance-why { flex-basis: 100%; color: var(--text-300); }
 /* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
 .qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
 .qms-ask-ico svg { width: 16px; height: 16px; }

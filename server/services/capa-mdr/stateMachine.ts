@@ -17,55 +17,13 @@ import type {
   ComplaintState,
   MdrState,
 } from '@shared/schema/capa-mdr';
-import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '@shared/constants/capa-lifecycle';
+import { ACTION_TRANSITIONS, CAPA_TRANSITIONS, COMPLAINT_TRANSITIONS, MDR_TRANSITIONS } from '@shared/constants/capa-lifecycle';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Complaint lifecycle (21 CFR 820.198)
+// Complaint lifecycle (21 CFR 820.198) and MDR lifecycle (21 CFR 803 / EU MDR Article 87)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * new → triaged (record triage decision)
- *           ↘ escalated_capa (route to a CAPA, complaint stays open in parallel)
- *           ↘ escalated_mdr  (route to an MDR, complaint stays open in parallel)
- * triaged → investigation (complaint requires its own investigation track)
- *         → resolved (no investigation needed; documented and resolved)
- *         → closed
- * investigation → resolved → closed
- * Any state → closed (terminal — requires closureReason).
- */
-const COMPLAINT_TRANSITIONS: Record<ComplaintState, readonly ComplaintState[]> = {
-  new: ['triaged', 'escalated_capa', 'escalated_mdr', 'closed'] as const,
-  triaged: ['investigation', 'resolved', 'escalated_capa', 'escalated_mdr', 'closed'] as const,
-  investigation: ['resolved', 'escalated_capa', 'escalated_mdr', 'closed'] as const,
-  resolved: ['closed'] as const,
-  closed: [] as const,
-  escalated_capa: ['triaged', 'investigation', 'resolved', 'closed'] as const,
-  escalated_mdr: ['triaged', 'investigation', 'resolved', 'closed'] as const,
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MDR lifecycle (21 CFR 803 / EU MDR Article 87)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * open → preparing (drafting the report)
- * preparing → filed (transmitted to FDA ESG / NCA)
- *           → open (revert if drafting paused)
- * filed → acknowledged (regulator confirmation received)
- *       → followup_required (regulator requested more info)
- * acknowledged → followup_required → preparing (next supplemental)
- * acknowledged → closed (terminal happy path)
- * followup_required → preparing → filed → ...
- * Any state → closed (terminal — requires reason).
- */
-const MDR_TRANSITIONS: Record<MdrState, readonly MdrState[]> = {
-  open: ['preparing', 'closed'] as const,
-  preparing: ['filed', 'open', 'closed'] as const,
-  filed: ['acknowledged', 'followup_required', 'closed'] as const,
-  acknowledged: ['followup_required', 'closed'] as const,
-  followup_required: ['preparing', 'closed'] as const,
-  closed: [] as const,
-};
+// The maps are shared with Quality's complaint and MDR registers (P-122): shared/constants/capa-lifecycle.ts.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CAPA lifecycle (21 CFR 820.100)
