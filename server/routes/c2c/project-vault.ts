@@ -103,9 +103,14 @@ import {
   artifactCtdSection,
   artifactGovernance,
   artifactRegistryStatus,
+  askedSponsorScope,
+  ClientRequiredError,
   formatContentBytes,
   readArtifactRegistry,
+  sponsorChoices,
+  sponsorRefusal,
   type ArtifactRegistryRow,
+  type SponsorAsk,
 } from '../../services/artifact-registry-read.js';
 import { ARTIFACT_ORIGIN_LABELS, type ArtifactOrigin, type ArtifactSignatureState } from '../../../shared/artifact-governance.js';
 import { programInOrganization } from '../../services/c2c/program-access';
@@ -586,13 +591,6 @@ function normalizeFolderId(raw: unknown): string | null | undefined {
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** The library's `sameClientAs`: a project id, none, or a value that is not a project id. */
-function sameClientAsOf(raw: unknown): string | null | 'invalid' {
-  const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value) return null;
-  return UUID_RE.test(value) ? value : 'invalid';
-}
-
 /** Two narrowings of the verified accessible set, applied together; neither ever widens it. */
 function bothNarrowings(byProject: string[] | undefined, bySponsor: string[] | undefined): string[] | undefined {
   if (!byProject || !bySponsor) return bySponsor ?? byProject;
@@ -612,11 +610,17 @@ type LibrarySponsor = { id: number; name: string };
  * narrowing only ever removes projects from the verified accessible set. A project that is not in that set is not
  * found. Every hit names its own sponsor, or none when its project has no client workspace; a sponsor whose name
  * cannot be read fails the search rather than show the hit as having none.
+ *
+ * One sponsor at a time (P-107 item 3, 2026-11-08: "No cross-sponsor library view for a CRO ... Search never spans
+ * sponsors."). Asked with no project open, the search is inside the client asked for (`client`). With none asked for,
+ * the projects searched (those named by `programId`, or every accessible one) must belong to one sponsor; when they
+ * belong to more, nothing is searched and the clients to choose from are named (ClientRequiredError). A client none
+ * of whose projects the caller can open is not found, as one that does not exist is.
  */
 async function librarySponsors(
   identity: { organizationId: number; userId: number | undefined },
   scope: CurrentAccessibleProgramScope,
-  sameClientAs: string | null,
+  ask: SponsorAsk & { programIds: readonly string[] },
 ): Promise<{ allowed?: string[]; client?: LibrarySponsor | null; sponsorOf: (programId: string) => LibrarySponsor | null }> {
   const anchors = verifiedProgramAnchors(pool, identity, scope);
   const workspaceOf = new Map(anchors.map((a) => [a.programId, a.clientWorkspaceId]));
@@ -636,14 +640,30 @@ async function librarySponsors(
     return { id, name };
   };
   const sponsorOf = (programId: string) => named(workspaceOf.get(programId.toLowerCase()));
-  if (!sameClientAs) return { sponsorOf };
-  const own = anchors.find((a) => a.programId === sameClientAs.toLowerCase());
-  if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-  return {
-    allowed: anchors.filter((a) => a.clientWorkspaceId === own.clientWorkspaceId).map((a) => a.programId),
-    client: named(own.clientWorkspaceId),
-    sponsorOf,
-  };
+  const projectsOf = (workspace: number | null) => anchors.filter((a) => a.clientWorkspaceId === workspace).map((a) => a.programId);
+  if (ask.sameClientAs) {
+    const open = ask.sameClientAs.toLowerCase();
+    const own = anchors.find((a) => a.programId === open);
+    if (!own) throw new ProgramReadAccessError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    return { allowed: projectsOf(own.clientWorkspaceId), client: named(own.clientWorkspaceId), sponsorOf };
+  }
+  if (ask.client !== undefined) {
+    const workspace = ask.client === 'none' ? null : ask.client;
+    const allowed = projectsOf(workspace);
+    if (!allowed.length) throw new ProgramReadAccessError(404, 'CLIENT_NOT_FOUND', 'Client not found.');
+    return { allowed, client: named(workspace), sponsorOf };
+  }
+  const searched = ask.programIds.map((id) => id.toLowerCase());
+  const within = searched.length ? anchors.filter((a) => searched.includes(a.programId)) : anchors;
+  const workspaces = [...new Set(within.map((a) => a.clientWorkspaceId))];
+  if (workspaces.length > 1) throw new ClientRequiredError(sponsorChoices(workspaces.map(named)));
+  return { sponsorOf };
+}
+
+/** The library's refusals. One that names a sponsor is sent as it is: every other 404 is answered as a project not found. */
+function sendLibraryAccessFailure(res: Response, err: ProgramReadAccessError): Response {
+  const sponsor = sponsorRefusal(err);
+  return sponsor ? res.status(sponsor.status).json(sponsor.body) : sendProjectAccessFailure(res, err);
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -1713,15 +1733,13 @@ export default function createProjectVaultRoutes(): Router {
     if ('refusal' in parsed) return res.status(400).json({ success: false, ...parsed.refusal });
     const { filters, programIds } = parsed;
     const narrowed: { allowedProgramIds?: string[]; programIds?: string[] } = programIds.length ? { allowedProgramIds: programIds, programIds } : {};
-    const sameClientAs = sameClientAsOf(req.query.sameClientAs);
-    if (sameClientAs === 'invalid') {
-      return res.status(400).json({ success: false, error: 'INVALID_PROJECT', message: 'The project the library is scoped by must be a project id.' });
-    }
+    const asked = askedSponsorScope(req.query, 'library');
+    if ('refusal' in asked) return res.status(400).json({ success: false, ...asked.refusal });
     try {
       const identity = { organizationId: orgId, userId: governedActorId(req) ?? undefined };
       const currentScope = await getCurrentAccessibleProgramScope(pool, identity);
-      const sponsors = await librarySponsors(identity, currentScope, sameClientAs);
-      const scoped = sameClientAs ? { client: sponsors.client } : {};
+      const sponsors = await librarySponsors(identity, currentScope, { ...asked, programIds });
+      const scoped = sponsors.client === undefined ? {} : { client: sponsors.client };
       if (!q && !hasVaultFilters(filters)) {
         return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY', scope: 'verified-accessible-programs', ...scoped } });
       }
@@ -1739,7 +1757,7 @@ export default function createProjectVaultRoutes(): Router {
         },
       });
     } catch (err) {
-      if (err instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, err);
+      if (err instanceof ProgramReadAccessError) return sendLibraryAccessFailure(res, err);
       logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({
         success: false,

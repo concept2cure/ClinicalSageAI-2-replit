@@ -18,6 +18,8 @@ export interface PaletteProject {
   code: string | null;
   ws: string | null;
   status: string | null;
+  /** The project's client (its sponsor, for a CRO), or null when it has none; absent where the list was not asked for it. */
+  client?: { id: number; name: string } | null;
 }
 
 export type PaletteProjectsRead =
@@ -35,7 +37,13 @@ function projectOf(row: unknown): PaletteProject | null {
   const r = (row ?? {}) as Record<string, unknown>;
   const id = text(r.id);
   const title = text(r.title);
-  return id && title ? { id, title, code: text(r.code), ws: text(r.ws), status: text(r.status) } : null;
+  return id && title ? { id, title, code: text(r.code), ws: text(r.ws), status: text(r.status), client: clientOf(r) } : null;
+}
+
+function clientOf(r: Record<string, unknown>): PaletteProject['client'] {
+  const id = Number(r.client_workspace_id);
+  const name = text(r.client_name);
+  return r.client_workspace_id != null && Number.isInteger(id) && id > 0 && name ? { id, name } : null;
 }
 
 const isRows = (v: unknown): v is unknown[] => Array.isArray(v);

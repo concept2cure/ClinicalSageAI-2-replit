@@ -62,6 +62,108 @@ export function artifactSponsor(id: number | string | null | undefined, name: st
   return { id: Number(id), name };
 }
 
+type ProjectSponsorRow = { id: number; program_id: string | null; client_workspace_id: number | null; client_name: string | null };
+const workspaceOf = (r: { client_workspace_id: number | null }): number | null => (r.client_workspace_id == null ? null : Number(r.client_workspace_id));
+
+/** Each of these projects with its sponsor (client workspace), as the organisation records them. */
+async function readProjectSponsors(orgId: number, projectIds: readonly number[]): Promise<ProjectSponsorRow[]> {
+  const { rows } = await pool.query<ProjectSponsorRow>(
+    `SELECT p.id, p.regulatory_program_id::text AS program_id, p.client_workspace_id, cw.name AS client_name
+       FROM projects p
+       LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = p.organization_id
+      WHERE p.organization_id = $1 AND p.id = ANY($2::int[])`,
+    [orgId, [...projectIds]],
+  );
+  return rows;
+}
+
+/** A sponsor asked for by a listing with no project open: a client workspace id, or the projects with no client. */
+export type AskedSponsor = number | 'none';
+
+const PROJECT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const textOf = (raw: unknown): string => (typeof raw === 'string' ? raw.trim() : '');
+
+/** `client`: undefined when not asked, the client workspace id or 'none' (the projects with no client), null when neither. */
+function askedSponsorOf(raw: unknown): AskedSponsor | undefined | null {
+  const value = textOf(raw);
+  if (!value) return undefined;
+  if (value === 'none') return 'none';
+  return /^[1-9][0-9]{0,9}$/.test(value) ? Number(value) : null;
+}
+
+/** How a read with no single project is scoped to one sponsor: by the open project, by a client, or by neither. */
+export type SponsorAsk = { sameClientAs: string | null; client: AskedSponsor | undefined };
+
+/**
+ * The sponsor scope a request asks for, the same words for every read that takes one (the governed-artifacts listing,
+ * the library search): `sameClientAs` is the open project's id, `client` a client id or "none"; never both. `what`
+ * names the read in the refusal ("listing", "library").
+ */
+export function askedSponsorScope(query: { sameClientAs?: unknown; client?: unknown }, what: string): SponsorAsk | { refusal: { error: string; message: string } } {
+  const sameClientAs = textOf(query.sameClientAs) || null;
+  if (sameClientAs && !PROJECT_UUID.test(sameClientAs)) {
+    return { refusal: { error: 'INVALID_PROJECT', message: `The project the ${what} is scoped by must be a project id.` } };
+  }
+  const client = askedSponsorOf(query.client);
+  if (client === null || (client !== undefined && sameClientAs)) {
+    return { refusal: { error: 'INVALID_CLIENT', message: `The ${what} is scoped by one client (a client id, or "none"), or by the open project, never both.` } };
+  }
+  return { sameClientAs, client };
+}
+
+/** Refused: these projects belong to more than one sponsor, and none was named. `clients` are the choices; null is "no client". */
+export class ClientRequiredError extends ProgramReadAccessError {
+  constructor(readonly clients: Array<ArtifactSponsor | null>) {
+    super(409, 'CLIENT_REQUIRED', 'Your projects belong to more than one client. Choose a client first: the Vault lists one client’s records at a time.');
+    this.name = 'ClientRequiredError';
+  }
+}
+
+/**
+ * One sponsor at a time (P-107 item 3, 2026-11-08: "No cross-sponsor library view for a CRO. With no project open,
+ * the Vault first asks which sponsor; every view is inside one sponsor."). The listing with no project open named each
+ * row's sponsor and listed every sponsor's together.
+ *
+ * - Projects of one sponsor (or all with none) need no choice and are returned as they are.
+ * - Projects of more than one, with none asked for, are refused (ClientRequiredError), naming the choices.
+ * - With one asked for, only its projects are returned. A sponsor none of whose projects are among these is not
+ *   found, as one that does not exist is. The projects with no client are their own choice ('none').
+ * The narrowing only ever removes projects the caller can open.
+ */
+export async function narrowToOneSponsor(orgId: number, projectIds: readonly number[], asked: AskedSponsor | undefined): Promise<{
+  projectIds: number[]; client?: ArtifactSponsor | null;
+}> {
+  if (projectIds.length === 0 && asked === undefined) return { projectIds: [] };
+  const rows = await readProjectSponsors(orgId, projectIds);
+  const groups = new Map<number | null, ProjectSponsorRow[]>();
+  for (const row of rows) groups.set(workspaceOf(row), [...(groups.get(workspaceOf(row)) ?? []), row]);
+  if (asked === undefined) {
+    if (groups.size <= 1) return { projectIds: rows.map((r) => Number(r.id)) };
+    throw new ClientRequiredError(sponsorChoices([...groups.entries()].map(([id, own]) => artifactSponsor(id, own[0].client_name))));
+  }
+  const own = groups.get(asked === 'none' ? null : asked);
+  if (!own) throw new ProgramReadAccessError(404, 'CLIENT_NOT_FOUND', 'Client not found.');
+  return { projectIds: own.map((r) => Number(r.id)), client: artifactSponsor(workspaceOf(own[0]), own[0].client_name) };
+}
+
+/** The sponsors to choose from, by name, with "no client" (null) last. */
+export function sponsorChoices(sponsors: ReadonlyArray<ArtifactSponsor | null>): Array<ArtifactSponsor | null> {
+  const named = sponsors.filter((sponsor): sponsor is ArtifactSponsor => sponsor !== null).sort((a, b) => a.name.localeCompare(b.name));
+  return sponsors.includes(null) ? [...named, null] : named;
+}
+
+/**
+ * A refusal that names a sponsor, as the response a route sends: the clients to choose from when one must be chosen
+ * (in the envelope's `meta`, where the screen that asked reads them; null is "no client"), or that the one asked for
+ * was not found. Null for any other failure, which the route answers in its own way (the Vault's project routes
+ * answer every 404 as a project not found, so this one is sent before that).
+ */
+export function sponsorRefusal(err: unknown): { status: number; body: { success: false; error: string; message: string; meta?: { clients: Array<ArtifactSponsor | null> } } } | null {
+  if (err instanceof ClientRequiredError) return { status: err.status, body: { success: false, error: err.code, message: err.message, meta: { clients: err.clients } } };
+  if (err instanceof ProgramReadAccessError && err.code === 'CLIENT_NOT_FOUND') return { status: err.status, body: { success: false, error: err.code, message: err.message } };
+  return null;
+}
+
 /**
  * A CRO's sponsors never mix (F1, S6 V4, 2026-11-05). A CRO is one organisation working for several sponsors, each a
  * client workspace, and the Vault's organization view named only each artifact's project, so inside sponsor A's
@@ -74,14 +176,7 @@ export function artifactSponsor(id: number | string | null | undefined, name: st
  * so AnA's governed-artifact tools narrow the same way, never a second copy.
  */
 export async function narrowToSponsorOf(orgId: number, projectIds: readonly number[], open: string | number): Promise<{ projectIds: number[]; client: ArtifactSponsor | null }> {
-  const { rows } = await pool.query<{ id: number; program_id: string | null; client_workspace_id: number | null; client_name: string | null }>(
-    `SELECT p.id, p.regulatory_program_id::text AS program_id, p.client_workspace_id, cw.name AS client_name
-       FROM projects p
-       LEFT JOIN client_workspaces cw ON cw.id = p.client_workspace_id AND cw.organization_id = p.organization_id
-      WHERE p.organization_id = $1 AND p.id = ANY($2::int[])`,
-    [orgId, [...projectIds]],
-  );
-  const workspaceOf = (r: { client_workspace_id: number | null }) => (r.client_workspace_id == null ? null : Number(r.client_workspace_id));
+  const rows = await readProjectSponsors(orgId, projectIds);
   const isOpen = (r: { id: number; program_id: string | null }) =>
     (typeof open === 'number' ? Number(r.id) === open : (r.program_id ?? '').toLowerCase() === open.toLowerCase());
   const own = rows.filter(isOpen);

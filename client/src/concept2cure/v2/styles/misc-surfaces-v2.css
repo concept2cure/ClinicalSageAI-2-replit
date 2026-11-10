@@ -580,6 +580,13 @@
   /* The cross-project artifacts listing's row actions. */
   .vd-org .art-acts{ display:flex; flex-wrap:wrap; gap:6px; }
   .vd-org .rd-chip{ margin-right:6px; }
+  /* An artifact's name is read in full: it wraps, and its kind and governance sit beneath it. On one line that
+     could not wrap, the name was the only part that could shrink, and at 1440px it shrank to nothing. */
+  .vd-org .art-row .vn{ flex-wrap:wrap; row-gap:2px; }
+  .vd-org .art-row .vn .ct-strong{ flex:1 1 60%; white-space:normal; overflow-wrap:anywhere; }
+  .vd-org .art-row .vn .art-kind{ margin-left:0; }
+  /* The client the page is showing, said above its lists. */
+  .vd-client{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:16px; }
 
   /* Phone: one column; the record and the structure are drawers (D6 §C.6 7). */
   @media (max-width:640px){
