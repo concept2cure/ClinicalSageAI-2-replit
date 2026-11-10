@@ -182,6 +182,8 @@ function ChangeControlSession({
   const allTemplates = tpl.templates ?? [];
   const changeForms = allTemplates.filter((t) => CHANGE_FORM_TEMPLATE_KEYS.includes(t.key));
   const openDrawer = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /** A drawer stays open while its write is in flight, so a refusal has somewhere to show (Quality review, 2026-11-10). */
+  const closeDrawer = () => { if (!writing.current) setDrawer(null); };
   /** Run a drawer's write: close and report on success, keep the drawer and its
       values with the server's sentence on refusal. */
   const runWrite = async (write: () => Promise<string>, after?: () => void) => {
@@ -422,7 +424,7 @@ function ChangeControlSession({
                 desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onSubmit={(v) => void runWrite(async () => {
             const row = await createQmsChange({
               changeNumber: v.changeNumber.trim(), title: v.title.trim(), reason: v.reason.trim(),
@@ -459,7 +461,7 @@ function ChangeControlSession({
                   : []),
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => {
               const reason = v.reason.trim();
               if (reason.length < GOVERNED_REASON_MIN) {
@@ -497,7 +499,7 @@ function ChangeControlSession({
                   desc: 'Recorded on the change\'s audit trail with each field before and after. At least 8 characters.' },
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => void runWrite(async () => {
               await updateQmsChange(c.id, {
                 riskLevel: (v.riskLevel || null) as RiskLevel | null,
@@ -514,7 +516,7 @@ function ChangeControlSession({
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
           refusal={refusal}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
@@ -527,7 +529,7 @@ function ChangeControlSession({
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
           templates={changeForms}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onNavigate={onNavigate}
           onCreated={(id) => {
             setDrawer(null);
