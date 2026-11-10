@@ -7390,7 +7390,7 @@
    "class": "conditional",
    "writes": "UPDATE invention_disclosures + audit",
    "site": "AnaToolExecutor.ts registerToolHandler('update_invention_disclosure')",
-   "rule": "input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date -> refuse; else confirm"
+   "rule": "input.status in (elected, patent_filed, licensed, released, abandoned) or input.election_date or input.decision_rationale (any string) -> refuse; else confirm"
   },
   "update_monitoring_action": {
    "class": "confirm",
