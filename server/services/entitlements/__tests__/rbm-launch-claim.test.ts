@@ -68,7 +68,7 @@ describe('RBM release admission', () => {
     '/api/mdx/rbm-patient-profiles/unrelated',
     '/api/mdx/rbm-data-runs',
     '/api/mdx/clinical-ops',
-    '/api/mdx/qms/readiness',
+    /* /api/mdx/qms/readiness: called by Quality's figure line since P-122 (quality-figures-launch-claim.test.ts). */
   ])('does not make the unrelated or uncalled path %s a launch route', path => {
     expect(verdict(path)).not.toBe('launch');
   });

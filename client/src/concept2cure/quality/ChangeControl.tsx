@@ -34,7 +34,7 @@
 import * as React from 'react';
 import { I } from '../v2/icons';
 import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
-import { RegisterBody, RegisterTable } from './SopRegisterRow';
+import { AskAnaButton, INLINE_ACTIONS, RegisterBody, RegisterTable } from './SopRegisterRow';
 import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -182,6 +182,8 @@ function ChangeControlSession({
   const allTemplates = tpl.templates ?? [];
   const changeForms = allTemplates.filter((t) => CHANGE_FORM_TEMPLATE_KEYS.includes(t.key));
   const openDrawer = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
+  /** A drawer stays open while its write is in flight, so a refusal has somewhere to show (Quality review, 2026-11-10). */
+  const closeDrawer = () => { if (!writing.current) setDrawer(null); };
   /** Run a drawer's write: close and report on success, keep the drawer and its
       values with the server's sentence on refusal. */
   const runWrite = async (write: () => Promise<string>, after?: () => void) => {
@@ -282,8 +284,10 @@ function ChangeControlSession({
               const open = openId === c.id;
               const linkCount = c.links?.length ?? 0;
               const toggle = () => onOpenIdChange(open ? null : c.id);
-              /* The row's one next step (C8): Approve while the change is under assessment, the signed route; otherwise
-                 Advance, when the server lists a move. Everything else is behind More, with the same handlers. */
+              /* The moves that fit the change's state, inline (P-122; one next step since C8): Approve while the change
+                 is under assessment, the signed route; Advance, when the server lists a move; Edit assessment while the
+                 change can be assessed; Link a record. The first two show, with Ask AnA as an icon; More keeps the
+                 rest, with the same handlers. */
               const advance = unsignedMovesOf(c).length > 0 ? (
                 <button key="advance" type="button" className="btn ghost small"
                   title="Move this change to its next lifecycle state, with a reason for the move"
@@ -301,8 +305,9 @@ function ChangeControlSession({
                   Approve
                 </button>
               ) : null;
-              const rest = [
-                ...(approve && advance ? [advance] : []),
+              const acts = [
+                approve,
+                advance,
                 ...(ASSESSABLE_STATES.includes(c.status) ? [
                   <button key="assess" type="button" className="btn ghost small"
                     title="Record the risk, impact assessment and implementation plan. They can be edited until the change is approved."
@@ -315,15 +320,13 @@ function ChangeControlSession({
                   onClick={() => openDrawer({ kind: 'link', change: c })}>
                   Link a record
                 </button>,
-                <button key="ask" type="button" className="btn ghost small" aria-label="Ask AnA about this change"
-                  title="Ask AnA about this change"
-                  onClick={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)}>
-                  Ask AnA
-                </button>,
-              ];
+              ].filter((b): b is React.ReactElement => b !== null);
+              const ask = <AskAnaButton key="ask" label="Ask AnA about this change"
+                onAsk={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)} />;
               return (
                 <RegisterBody key={c.id} name={c.changeNumber} className="qcc-change" status={c.status}
-                  columns={CHANGE_COLUMNS.length} primary={approve ?? advance} rest={rest} cells={<>
+                  columns={CHANGE_COLUMNS.length} primary={<>{acts.slice(0, INLINE_ACTIONS)}</>} ask={ask}
+                  rest={acts.slice(INLINE_ACTIONS)} cells={<>
                     <td>
                       <button type="button" className="qms-num mono" onClick={toggle} aria-expanded={open} title="Read the change: its assessment and linked records">
                         {c.changeNumber}
@@ -422,7 +425,7 @@ function ChangeControlSession({
                 desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onSubmit={(v) => void runWrite(async () => {
             const row = await createQmsChange({
               changeNumber: v.changeNumber.trim(), title: v.title.trim(), reason: v.reason.trim(),
@@ -459,7 +462,7 @@ function ChangeControlSession({
                   : []),
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => {
               const reason = v.reason.trim();
               if (reason.length < GOVERNED_REASON_MIN) {
@@ -497,7 +500,7 @@ function ChangeControlSession({
                   desc: 'Recorded on the change\'s audit trail with each field before and after. At least 8 characters.' },
               ],
             }}
-            onCancel={() => setDrawer(null)}
+            onCancel={closeDrawer}
             onSubmit={(v) => void runWrite(async () => {
               await updateQmsChange(c.id, {
                 riskLevel: (v.riskLevel || null) as RiskLevel | null,
@@ -514,7 +517,8 @@ function ChangeControlSession({
         <ChangeLinkForm
           changeNumber={drawer.change.changeNumber}
           refusal={refusal}
-          onCancel={() => setDrawer(null)}
+          reasonRequired={drawer.change.status !== 'proposed'}
+          onCancel={closeDrawer}
           onSubmit={(v) => {
             const c = drawer.change;
             void runWrite(async () => {
@@ -527,7 +531,7 @@ function ChangeControlSession({
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
           templates={changeForms}
-          onCancel={() => setDrawer(null)}
+          onCancel={closeDrawer}
           onNavigate={onNavigate}
           onCreated={(id) => {
             setDrawer(null);

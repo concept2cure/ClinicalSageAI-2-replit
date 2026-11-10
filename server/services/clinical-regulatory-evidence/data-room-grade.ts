@@ -28,6 +28,7 @@
  * carries a fingerprint of them.
  */
 import { createHash } from 'node:crypto';
+import { stableStringify } from '../../../shared/canonical-json';
 import { validateAdamDataset, validateSdtmDataset, type VariableInput } from '../cdisc/cdisc-conformance-service.js';
 
 export const DATA_ROOM_GRADE_ENGINE = 'data-room-grade v1' as const;
@@ -200,10 +201,14 @@ function conformance(f: DataRoomGradeFacts): GradeBasisLine {
 const letterOf = (score: number): DataRoomGradeLetter => (score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 55 ? 'C' : 'D');
 const RANK: Record<DataRoomGradeLetter, number> = { A: 4, B: 3, C: 2, D: 1 };
 
-/** A stable fingerprint of the facts: the same facts always give the same grade, and the same fingerprint. */
+/**
+ * A stable fingerprint of the facts: the same facts always give the same grade, and the same fingerprint.
+ * 2026-11-10: through shared/canonical-json.ts, the one serializer (ci:canonicalizers). The earlier form sorted
+ * the facts' own keys only. A fingerprint stored before this differs, so that capture's grade is stored once
+ * more on its next read (gradeSources), the same grade with a new graded_at.
+ */
 export function gradeFactsFingerprint(f: DataRoomGradeFacts): string {
-  const ordered = Object.keys(f).sort().map((k) => [k, (f as unknown as Record<string, unknown>)[k]]);
-  return createHash('sha256').update(JSON.stringify([DATA_ROOM_GRADE_ENGINE, ordered])).digest('hex');
+  return createHash('sha256').update(stableStringify([DATA_ROOM_GRADE_ENGINE, f]), 'utf8').digest('hex');
 }
 
 /** The grade of one capture from its facts. Pure and deterministic. */

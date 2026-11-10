@@ -1,0 +1,213 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/db/p122-project-management-reads.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-management-reads.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary) 78ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline) 21ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue 175ms
+   → expected 403 to be 200 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy 57ms
+   → expected 200 to be 404 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it 10ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them 18ms
+   → expected 403 to be 404 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers 7ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days 8ms
+   → {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the section list 8ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the milestone list (writes share its path) 9ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > Sentinel's status 8ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > submission-ops' workload 6ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the project cockpit read model 6ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the unified task dashboard 9ms
+ × tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing 7ms
+   → expected 403 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary)
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:140:64
+    138|   it('section owners and deadlines (/api/project-sections/summary)', a…
+    139|     const res = await get('memberA', `/api/project-sections/summary?pr…
+    140|     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(20…
+       |                                                                ^
+    141|     expect(res.body.overall).toMatchObject({ total: 2, assigned: 1, co…
+    142|     expect(res.body.teamWorkload.map((w: { user_name: string }) => w.u…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline)
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:149:64
+    147|   it('section deadlines and milestones in date order (/api/project-sec…
+    148|     const res = await get('memberA', `/api/project-sections/timeline?p…
+    149|     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(20…
+       |                                                                ^
+    150|     expect(res.body.events.map((e: { type: string; title: string }) =>…
+    151|       ['section_deadline', 'm2.5: Clinical overview'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:167:30
+    165|     expect((await get('memberB', `/api/concept2cure/projects/${project…
+    166|     const catalogue = await get('memberA', '/api/concept2cure/submissi…
+    167|     expect(catalogue.status).toBe(200);
+       |                              ^
+    168|     expect(catalogue.body.data[0]).toMatchObject({ name: 'Pre-IND Meet…
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:176:92
+    174|     expect(res.body.rollup).toMatchObject({ childCount: 0, totalTasks:…
+    175|     expect((await get('memberB', `/api/project-hierarchy/${project.ope…
+    176|     expect((await get('memberA', `/api/project-hierarchy/${project.pri…
+       |                                                                                            ^
+    177|     expect((await get('ownerA', `/api/project-hierarchy/${project.priv…
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:184:76
+    182|   it('Sentinel\'s findings: a colleague not on the private project see…
+    183|     const colleague = await get('memberA', '/api/sentinel/findings?sta…
+    184|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+       |                                                                            ^
+    185|     expect(ids(colleague.body.findings, 'finding_id')).toEqual([findin…
+    186|     const ownerRead = await get('ownerA', '/api/sentinel/findings?stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them
+AssertionError: expected 403 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:195:24
+    193|   it('a finding on a project the person cannot open is not changed by …
+    194|     const res = await request(app).patch(`/api/sentinel/findings/${fin…
+    195|     expect(res.status).toBe(404);
+       |                        ^
+    196|     expect((await owner.query('SELECT status FROM sentinel_findings WH…
+    197|     expect((await request(app).patch(`/api/sentinel/findings/${finding…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:202:76
+    200|   it('submission-ops\' open blockers', async () => {
+    201|     const colleague = await get('memberA', '/api/submission-ops/blocke…
+    202|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+       |                                                                            ^
+    203|     expect(ids(colleague.body.data, 'blockerId')).toEqual([blocker.ope…
+    204|     expect(ids((await get('ownerA', '/api/submission-ops/blockers')).b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days
+AssertionError: {"error":{"code":"LAUNCH_SCOPE","message":"This part of the product is not in this release."}}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:210:76
+    208|   it('submission-ops\' work due within seven days', async () => {
+    209|     const colleague = await get('memberA', '/api/submission-ops/due-so…
+    210|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+       |                                                                            ^
+    211|     expect(ids(colleague.body.data.canonicalTasks, 'work_item_id')).to…
+    212|     expect(ids((await get('ownerA', '/api/submission-ops/due-soon')).b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing
+AssertionError: expected 403 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 403
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:235:24
+    233|     const res = await request(app).post('/api/project-sections/timelin…
+    234|       .send({ project_id: project.open, content: 'a comment on a secti…
+    235|     expect(res.status).toBe(404);
+       |                        ^
+    236|     expect((await owner.query(`SELECT count(*)::int AS n FROM section_…
+    237|     expect((await request(app).post('/api/sentinel/scan').set(as('memb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 6 passed (15)
+   Start at  11:58:50
+   Duration  14.65s (transform 8.07s, setup 129ms, import 13.51s, tests 527ms, environment 0ms)
+

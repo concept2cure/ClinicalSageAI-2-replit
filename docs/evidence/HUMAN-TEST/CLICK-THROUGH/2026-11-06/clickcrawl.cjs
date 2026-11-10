@@ -24,7 +24,10 @@ const fs = require('fs');
 const [BASE, EMAIL, OUT, SEEDS] = process.argv.slice(2);
 fs.mkdirSync(OUT, { recursive: true });
 const LOG = `${OUT}/clicks.jsonl`;
-const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions)$/i;
+// Also skipped: a control that makes a new record and a new, differently named control each time. "Start sequence
+// 0001" leaves "Start sequence 0002" behind it, so a resumed run never ran out of them (it reached 0014 on 2026-11-10).
+// The first one, 0000, is still clicked.
+const SKIP = /^(sign out|log out|delete account|reset|revoke all|end all sessions|start sequence (?!0000$)\d{4}|type of sequence (?!0000$)\d{4})$/i;
 const FAIL_TEXT = /couldn['’]t load|could not be loaded|could not load|something went wrong|unexpected error|failed to (load|fetch)|\[object object\]|\bNaN\b|\bundefined\b|internal server error|cannot read propert|is not a function|try again later/gi;
 const LOADING_TEXT = /\b(loading|reading|fetching)(…|\.\.\.)/gi;
 // Tabs, and controls that behave as tabs: a project's lifecycle steps (.pj-lc-stage, the current one aria-current="step").

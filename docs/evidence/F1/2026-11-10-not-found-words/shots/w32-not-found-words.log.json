@@ -1,0 +1,42 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/mdx/qms/documents/1/versions",
+      "at": "/concept2cure/quality"
+    },
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/mdx/qms/documents/1/versions",
+      "at": "/concept2cure/quality"
+    },
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/capa-mdr/capa/0db07e29-1d8b-4314-83cf-5f4b6ba5f421",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "history-404",
+      "text": "Not found in your organizationThis controlled document was not found in your organization, so its version history was not read.",
+      "tryAgain": 0
+    },
+    {
+      "name": "capa-actions-404",
+      "text": "Not found in your organizationThis CAPA was not found in your organization, so its action list was not read.",
+      "tryAgain": 0
+    },
+    {
+      "name": "w32-not-found-words",
+      "ok": true
+    }
+  ]
+}

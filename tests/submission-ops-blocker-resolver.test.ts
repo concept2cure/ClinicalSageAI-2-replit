@@ -38,6 +38,13 @@ vi.mock('../server/services/intelligence/index.js', () => ({ getProjectSignals: 
 vi.mock('../server/services/regulatory-correspondence/operating-layer', () => ({ readCanonicalDueSoonAndWorkload: vi.fn() }));
 vi.mock('../server/src/services/ectd', () => ({ buildECTDZip: vi.fn() }));
 vi.mock('../server/services/ectd/package-leaf-bytes', () => ({ packageLeafBytes: vi.fn() }));
+/* The project sharing policy (P-122): the blocker's project is one the caller can open, unless a case says not. */
+const access = vi.hoisted(() => ({ readable: [1] as number[] }));
+vi.mock('../server/services/c2c/current-program-access', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  readCurrentProgramActor: vi.fn(async (_q: unknown, input: { userId?: number }) => ({ userId: input.userId, role: 'admin' })),
+}));
+vi.mock('../server/services/report-os/project-access', () => ({ getAccessibleReportProjectIds: vi.fn(async () => access.readable) }));
 
 import submissionOpsRouter from '../server/routes/submission-ops';
 
@@ -74,6 +81,7 @@ afterAll(async () => {
   await pg.close();
 });
 beforeEach(async () => {
+  access.readable = [1];
   await pg.exec(`
     DELETE FROM c2c_blockers;
     INSERT INTO c2c_blockers (blocker_id, org_id, project_id, blocker_type, title)
@@ -82,6 +90,13 @@ beforeEach(async () => {
 });
 
 describe('a blocker is closed by the session user (L195)', () => {
+  it('a blocker on a project the caller cannot open is answered as missing, and nothing is written (P-122)', async () => {
+    access.readable = [2];
+    const res = await patch(ALICE, { status: 'resolved' });
+    expect(res.status).toBe(404);
+    expect(await row()).toMatchObject({ status: 'open', resolved_by_id: null });
+  });
+
   it('a body naming another resolver is refused, and nothing is written', async () => {
     const res = await patch(ALICE, { status: 'resolved', resolvedById: BOB });
     // Leak assertion first: what was recorded.

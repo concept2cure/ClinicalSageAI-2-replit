@@ -40,15 +40,22 @@
 .c2c-v2 .landing-newproj{margin-top:4px;}
 
 /* ════ Home: where a client starts (docs/design/CLIENT_JOURNEY_2026-10-25.md) ════
-   Projects first, then tasks, Ask AnA and recent conversations, top-aligned in
-   one reading column. The page grows with the work, so it is not centred
-   vertically as the single composer was. */
-.c2c-v2 .landing.home-start{align-items:flex-start;padding-top:max(40px,22vh);}
-.c2c-v2 .home-start .landing-center{align-items:stretch;gap:28px;max-width:680px;}
-/* The composer's section on Home: full column width, as Claude's composer. */
-.c2c-v2 .home-start .home-ask{width:100%;}
+   A compact greeting and the composer, then the work, top-aligned. P-122 §3.1
+   (2026-11-10): the person's projects and due tasks are in view at 1440×900
+   without scrolling. The page started 22vh down with every section in one 680px
+   column, which put the first project at ~750px and the open items at ~1030px.
+   Now it starts near the top, the greeting and composer keep Claude's 680px
+   column, and the work below takes a wider area: the setup checklist, then
+   Your projects and Your open items side by side (one column on a phone). */
+.c2c-v2 .landing.home-start{align-items:flex-start;padding-top:28px;}
+.c2c-v2 .home-start .landing-center{align-items:stretch;gap:20px;max-width:1040px;}
+/* The greeting and the composer: Claude's centred column. */
+.c2c-v2 .home-start .landing-center>:is(.landing-greet,.home-ask){width:100%;max-width:680px;align-self:center;}
+.c2c-v2 .home-work{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:20px 32px;align-items:start;width:100%;}
+/* Both headings on one line, whether or not the head carries a button. */
+.c2c-v2 .home-work .home-sec-head{min-height:32px;}
 .c2c-v2 .home-start .landing-greet{margin-bottom:0;flex-wrap:nowrap;justify-content:center;}
-.c2c-v2 .home-start .landing-greet h1{font-family:var(--font-serif,Georgia,serif);font-size:32px;font-weight:400;letter-spacing:-.01em;flex:0 1 auto;text-align:left;overflow-wrap:anywhere;}
+.c2c-v2 .home-start .landing-greet h1{font-family:var(--font-serif,Georgia,serif);font-size:30px;font-weight:400;letter-spacing:-.01em;flex:0 1 auto;text-align:left;overflow-wrap:anywhere;}
 .c2c-v2 .home-start .landing-greet .landing-segctx-cat{margin-left:auto;}
 .c2c-v2 .home-sec{display:flex;flex-direction:column;gap:10px;width:100%;}
 .c2c-v2 .home-sec-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}

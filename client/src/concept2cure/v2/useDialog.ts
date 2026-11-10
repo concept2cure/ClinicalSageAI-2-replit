@@ -38,6 +38,11 @@ function focusable(panel: HTMLElement): HTMLElement[] {
   );
 }
 
+/* The open dialogs, oldest first. Each listens on the document, so a dialog opened over another (a reason sheet over
+   the review route) would answer the same key too: one Escape closed both, and Tab was pulled back and forth between
+   them until it could reach neither's controls (Quality review, 2026-11-10). Only the topmost answers. */
+const openDialogs: object[] = [];
+
 /**
  * @param enabled  Whether the dialog is currently open. Defaults to true, which
  *   is the shape every existing caller uses: a panel component that only mounts
@@ -54,8 +59,11 @@ export function useDialog(onClose: () => void, enabled = true) {
   useEffect(() => {
     if (!enabled) return undefined;
     const prev = document.activeElement as HTMLElement | null;
+    const me = {};
+    openDialogs.push(me);
     ref.current?.focus();
     const onKey = (e: KeyboardEvent) => {
+      if (openDialogs[openDialogs.length - 1] !== me) return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         closeRef.current();
@@ -94,6 +102,8 @@ export function useDialog(onClose: () => void, enabled = true) {
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
+      const at = openDialogs.indexOf(me);
+      if (at >= 0) openDialogs.splice(at, 1);
       prev?.focus?.();
     };
   }, [enabled]);

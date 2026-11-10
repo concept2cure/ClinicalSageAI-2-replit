@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/module3-os/compile/78731580-7719-4562-985d-a412edebff5a",
+    "url": "http://localhost:5200/api/cmc/module3-os/compile/6270d978-aff3-43f0-ad87-1e6726350bf8",
     "anonymous": false,
     "identity": null,
     "body": {}
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 231,
+    "durationMs": 662,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -98,7 +98,7 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -172,7 +172,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -242,7 +242,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -293,7 +293,7 @@
                   "principle": "",
                   "procedure": "",
                   "technique": "HPLC",
-                  "methodCode": "AM-20261110033923",
+                  "methodCode": "AM-20261110130629",
                   "methodName": "RP-HPLC Assay",
                   "methodType": "HPLC",
                   "validatedBy": "",
@@ -368,12 +368,12 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "5463e23d-6c2c-440c-9bcc-8c4c5baafbd6",
+              "sourceObjectId": "f90535a2-ad9f-458e-9a18-bec9d917d0c1",
               "sourceHashAtCompile": "02872f6d21219c87b39b177144d292f44543296c4e62fcee233fff456ce64805"
             },
             {
-              "sourceObjectId": "1dc850cf-747f-4670-8698-58d8caffa2b3",
-              "sourceHashAtCompile": "da4b0e43a370f2a378cf3b7205c358c17dd07c9303bd7645999418c2a9e9629f"
+              "sourceObjectId": "be564b58-5dfb-4f9a-91da-ff7d72285535",
+              "sourceHashAtCompile": "c14c8c7b7267c6819254c34197cbd726e36c5832e3f3220cf2c04a52d528aff1"
             }
           ]
         },
@@ -431,7 +431,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -484,7 +484,7 @@
                   "startedDate": "2026-01-01T00:00:00.000Z",
                   "completedDate": null,
                   "batchesStudied": [
-                    "B-20261110033923"
+                    "B-20261110130629"
                   ],
                   "shelfLifeClaim": null,
                   "stabilityScope": "drug_substance",
@@ -535,7 +535,7 @@
                 ],
                 [
                   "Batches Studied",
-                  "B-20261110033923"
+                  "B-20261110130629"
                 ]
               ]
             }
@@ -544,8 +544,8 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "e6a55f7a-06fa-4baf-afd1-e795e8bcbe60",
-              "sourceHashAtCompile": "a3f2dfcb16528441c9760a91d8b3caa9152118a87ff0e9456aba3fd4a430978f"
+              "sourceObjectId": "407d0f6d-2f19-450d-a0b9-a77dd223c7b6",
+              "sourceHashAtCompile": "22a6e4525d3db6320d19f7747683996b8658dac0f4e9d125fa36f1a73f40f8cd"
             }
           ]
         },
@@ -617,7 +617,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             }
           ]
@@ -717,11 +717,11 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             },
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -756,7 +756,7 @@
                   "expiryDate": null,
                   "releasedAt": null,
                   "releasedBy": "",
-                  "batchNumber": "B-20261110033923",
+                  "batchNumber": "B-20261110130629",
                   "disposition": "",
                   "formulation": null,
                   "productName": "Drug substance",
@@ -800,7 +800,7 @@
               }
             ]
           },
-          "narrativeDraft": "The drug product is manufactured according to the batch formula described below. Representative batch: B-20261110033923. ",
+          "narrativeDraft": "The drug product is manufactured according to the batch formula described below. Representative batch: B-20261110130629. ",
           "tables": [
             {
               "title": "Batch Formula",
@@ -815,7 +815,7 @@
                 ],
                 [
                   "Batch Number",
-                  "B-20261110033923"
+                  "B-20261110130629"
                 ]
               ]
             }
@@ -827,11 +827,11 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "f0a9893b-4179-4ddf-a7a2-278ae7bcd824",
-              "sourceHashAtCompile": "cef5e88a07abc04f4eae094195e8a96726c206952824fc5e887c7168347d6925"
+              "sourceObjectId": "d51e1417-5a2c-43e9-ae4e-c82e37878ee5",
+              "sourceHashAtCompile": "4ec322a736f4a4c9c8c0d8855dae0d728ec42c362d7995e3764689ad071e0df7"
             },
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             }
           ]
@@ -903,7 +903,7 @@
                   "principle": "",
                   "procedure": "",
                   "technique": "HPLC",
-                  "methodCode": "AM-20261110033923",
+                  "methodCode": "AM-20261110130629",
                   "methodName": "RP-HPLC Assay",
                   "methodType": "HPLC",
                   "validatedBy": "",
@@ -979,12 +979,12 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "5463e23d-6c2c-440c-9bcc-8c4c5baafbd6",
+              "sourceObjectId": "f90535a2-ad9f-458e-9a18-bec9d917d0c1",
               "sourceHashAtCompile": "02872f6d21219c87b39b177144d292f44543296c4e62fcee233fff456ce64805"
             },
             {
-              "sourceObjectId": "1dc850cf-747f-4670-8698-58d8caffa2b3",
-              "sourceHashAtCompile": "da4b0e43a370f2a378cf3b7205c358c17dd07c9303bd7645999418c2a9e9629f"
+              "sourceObjectId": "be564b58-5dfb-4f9a-91da-ff7d72285535",
+              "sourceHashAtCompile": "c14c8c7b7267c6819254c34197cbd726e36c5832e3f3220cf2c04a52d528aff1"
             }
           ]
         },
@@ -1036,7 +1036,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             }
           ]
@@ -1090,7 +1090,7 @@
                   "startedDate": "2026-01-01T00:00:00.000Z",
                   "completedDate": null,
                   "batchesStudied": [
-                    "B-20261110033923"
+                    "B-20261110130629"
                   ],
                   "shelfLifeClaim": null,
                   "stabilityScope": "drug_substance",
@@ -1148,8 +1148,8 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "e6a55f7a-06fa-4baf-afd1-e795e8bcbe60",
-              "sourceHashAtCompile": "a3f2dfcb16528441c9760a91d8b3caa9152118a87ff0e9456aba3fd4a430978f"
+              "sourceObjectId": "407d0f6d-2f19-450d-a0b9-a77dd223c7b6",
+              "sourceHashAtCompile": "22a6e4525d3db6320d19f7747683996b8658dac0f4e9d125fa36f1a73f40f8cd"
             }
           ]
         },
@@ -1299,11 +1299,11 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             },
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -1407,11 +1407,11 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             },
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -1524,11 +1524,11 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             },
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -1620,7 +1620,7 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -1692,7 +1692,7 @@
           ],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             }
           ]
@@ -1786,11 +1786,11 @@
           "missingInputs": [],
           "lineage": [
             {
-              "sourceObjectId": "905aacc6-1787-4a23-ab5c-5b4001a7bdb4",
+              "sourceObjectId": "2c463961-f73e-43c1-acbf-b21bc069ef44",
               "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8"
             },
             {
-              "sourceObjectId": "569b8be5-ed7a-4ac9-8c82-8e61f2e32316",
+              "sourceObjectId": "943c3072-878e-4e58-90a3-018092b1c099",
               "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e"
             }
           ]
@@ -1799,107 +1799,107 @@
       "bridgedArtifacts": [
         {
           "sectionKey": "3.2.S.1",
-          "artifactId": "m3-3.2.S.1-7b0e7224",
+          "artifactId": "m3-3.2.S.1-ba5883ac",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.2",
-          "artifactId": "m3-3.2.S.2-af23eb10",
+          "artifactId": "m3-3.2.S.2-bf28096a",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.3",
-          "artifactId": "m3-3.2.S.3-bd1fe38d",
+          "artifactId": "m3-3.2.S.3-07da5748",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.4",
-          "artifactId": "m3-3.2.S.4-388e7d70",
+          "artifactId": "m3-3.2.S.4-47608c0f",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.5",
-          "artifactId": "m3-3.2.S.5-a9924122",
+          "artifactId": "m3-3.2.S.5-a9688816",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.6",
-          "artifactId": "m3-3.2.S.6-f7cd86e2",
+          "artifactId": "m3-3.2.S.6-230ae667",
           "isNew": true
         },
         {
           "sectionKey": "3.2.S.7",
-          "artifactId": "m3-3.2.S.7-3a5abbe4",
+          "artifactId": "m3-3.2.S.7-6703f0b4",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.1",
-          "artifactId": "m3-3.2.P.1-a9a32843",
+          "artifactId": "m3-3.2.P.1-547e90d0",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.2",
-          "artifactId": "m3-3.2.P.2-3d9f3b7e",
+          "artifactId": "m3-3.2.P.2-44de6775",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.3",
-          "artifactId": "m3-3.2.P.3-5aead167",
+          "artifactId": "m3-3.2.P.3-0cce3598",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.4",
-          "artifactId": "m3-3.2.P.4-1c4cc699",
+          "artifactId": "m3-3.2.P.4-7924995d",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.5",
-          "artifactId": "m3-3.2.P.5-4f19864b",
+          "artifactId": "m3-3.2.P.5-51071cd3",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.6",
-          "artifactId": "m3-3.2.P.6-b53e5395",
+          "artifactId": "m3-3.2.P.6-6df2bb25",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.7",
-          "artifactId": "m3-3.2.P.7-7005c859",
+          "artifactId": "m3-3.2.P.7-e5ac745f",
           "isNew": true
         },
         {
           "sectionKey": "3.2.P.8",
-          "artifactId": "m3-3.2.P.8-2ac9bf26",
+          "artifactId": "m3-3.2.P.8-2382143c",
           "isNew": true
         },
         {
           "sectionKey": "3.1",
-          "artifactId": "m3-3.1-2781b1df",
+          "artifactId": "m3-3.1-787cc85e",
           "isNew": true
         },
         {
           "sectionKey": "3.3",
-          "artifactId": "m3-3.3-0117e8ed",
+          "artifactId": "m3-3.3-2f91f3c6",
           "isNew": true
         },
         {
           "sectionKey": "3.2.A.1",
-          "artifactId": "m3-3.2.A.1-8faf9a5c",
+          "artifactId": "m3-3.2.A.1-57b51153",
           "isNew": true
         },
         {
           "sectionKey": "3.2.A.2",
-          "artifactId": "m3-3.2.A.2-cbae65e1",
+          "artifactId": "m3-3.2.A.2-0139daf4",
           "isNew": true
         },
         {
           "sectionKey": "3.2.A.3",
-          "artifactId": "m3-3.2.A.3-d7da8a9a",
+          "artifactId": "m3-3.2.A.3-ad9f848b",
           "isNew": true
         },
         {
           "sectionKey": "3.2.R.1.US",
-          "artifactId": "m3-3.2.R.1.US-e8cbd6d1",
+          "artifactId": "m3-3.2.R.1.US-1b014481",
           "isNew": true
         }
       ],

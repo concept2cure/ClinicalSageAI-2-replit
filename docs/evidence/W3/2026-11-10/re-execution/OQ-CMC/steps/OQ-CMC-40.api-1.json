@@ -5,8 +5,8 @@
     "anonymous": false,
     "identity": null,
     "body": {
-      "projectId": "78731580-7719-4562-985d-a412edebff5a",
-      "productName": "OQ-CLO-20261110033923",
+      "projectId": "6270d978-aff3-43f0-ad87-1e6726350bf8",
+      "productName": "OQ-CLO-20261110130629",
       "batchNumber": "B-1",
       "dosageForm": "tablet",
       "scope": "DP",
@@ -32,7 +32,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 18,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

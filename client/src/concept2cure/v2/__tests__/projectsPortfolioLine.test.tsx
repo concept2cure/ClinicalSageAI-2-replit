@@ -23,6 +23,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 import { portfolioWords } from '../surfaces/PyramidProject';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;

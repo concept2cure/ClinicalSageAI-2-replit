@@ -42,8 +42,8 @@ Nothing new: no route, table or screen.
 | The drawer | Risk, impact assessment, implementation plan, target date | and **"Reason for this edit"** (required), "Recorded on the change's audit trail with each field before and after. At least 8 characters." The governed note says the same. |
 | `scripts/ci/sql-interpolation-baseline.json` | `changeControl.service.ts`: 6 | 5. The gate counted one fewer and asks for the lower baseline. |
 
-`mdx-qms.ts` stays at 1,500 lines, the repo-health ceiling. The refusal wording is in the service; two of the
-route's comments were shortened.
+`mdx-qms.ts` stays at 1,499 lines, under the repo-health ceiling (a27e6b061 moved one comment into the service when
+the first push counted 1,501). The refusal wording is in the service; two of the route's comments were shortened.
 
 ## Tests
 

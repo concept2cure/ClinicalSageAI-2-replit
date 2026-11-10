@@ -1,0 +1,8 @@
+not ok 1 - C2C-201: each of the eleven registers ensureCmc did not write gets a row
+    still empty after the seed: /api/cmc/reference-standards, /api/cmc/impurity-profiles, /api/cmc/dissolution-profiles, /api/cmc/characterization-studies, /api/cmc/manufacturing-processes, /api/cmc/process-validation, /api/cmc/formulation-records, /api/cmc/material-specs, /api/cmc/container-closures, /api/cmc/change-control, /api/cmc/comparability-studies
+  name: 'AssertionError'
+not ok 2 - C2C-201: the impurities cover every class the assessment routes, and dissolution can be compared
+  name: 'AssertionError'
+ok 3 - C2C-201: a second run creates nothing
+# pass 1
+# fail 2

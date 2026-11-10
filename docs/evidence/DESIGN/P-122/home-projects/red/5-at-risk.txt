@@ -1,0 +1,14 @@
+HEAD 2f27f43a7 (Projects.tsx as at HEAD)
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > one click reads Sentinel’s open findings, the blockers and the work due within 7 days 510ms
+   → Unable to find an accessible element with the role "button" and name "Which projects are at risk this week?"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > an empty register says what was looked at, never "no risk" 166ms
+   → Unable to find an accessible element with the role "button" and name "Which projects are at risk this week?"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > lists the blockers and the due work the server returned 125ms
+   → Unable to find an accessible element with the role "button" and name "Which projects are at risk this week?"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > a failed read is said, never shown as an empty answer 146ms
+   → Unable to find an accessible element with the role "button" and name "Which projects are at risk this week?"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > closes, and asks again on the next click 148ms
+   → Unable to find an accessible element with the role "button" and name "Which projects are at risk this week?"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

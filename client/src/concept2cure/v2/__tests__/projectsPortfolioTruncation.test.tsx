@@ -7,9 +7,11 @@
  * programs", the portfolio mean covered 50, search could not find the 51st, and
  * AnA was told the 50 were the portfolio. Found by the 2026-09-24 re-baseline.
  *
- * D2-1 (2026-11-01): the portfolio figures are the list view's footing
- * (.design/claude-convergence/D2.md §1.4 items 2 and 7), and the search states
- * the count it covers, so a paged read says "the first n" there too.
+ * D2-1 (2026-11-01): the search states the count it covers, so a paged read
+ * says "the first n" there too. P-122 (2026-11-10): the figures are the server's
+ * whole-portfolio counts (meta.counts), above the projects in both views; the
+ * "2+" floor counted from the page's rows is gone with the other browser counts,
+ * and a read without the server's counts says the figures could not be read.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,6 +27,9 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
@@ -36,10 +41,11 @@ const row = (i: number) => ({
   readiness: 40, status: 'active', lead: 'Rae Okafor', blocker: null, due: 'Q4',
 });
 
-function portfolio(hasMore: boolean) {
+function portfolio(hasMore: boolean, counts?: { total: number }) {
+  const full = counts && { ...counts, filingWithin60Days: 0, byWorkstream: {}, byPathway: {} };
   apiRequest.mockImplementation(async (_m: string, url: string) =>
     url === '/api/c2c/projects'
-      ? ok({ data: [row(1), row(2)], meta: { count: 2, limit: 2, offset: 0, hasMore } })
+      ? ok({ data: [row(1), row(2)], meta: { count: 2, limit: 2, offset: 0, hasMore, ...(full ? { counts: full } : {}) } })
       : ok({ data: [] }),
   );
 }
@@ -62,13 +68,23 @@ describe('Projects — a truncated portfolio read', () => {
     // The search covers the loaded page only, and says so.
     expect((screen.getByLabelText(/Search projects/i) as HTMLInputElement).placeholder).toBe('Search the first 2 projects');
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    expect(document.querySelector('.pj-summary')?.textContent).toContain('2+ active projects');
+    // No floor counted from the page: without the server's counts, the figures say they could not be read.
+    expect(document.querySelector('.pj-summary')?.textContent).toMatch(/could not be read/);
+    expect(document.querySelector('.pj-summary')?.textContent).not.toContain('2+');
     await waitFor(() => expect(seen.ctx?.summary).toMatch(/first 2 .*more exist/));
     expect((seen.ctx?.facts as { portfolioTruncated?: unknown }).portfolioTruncated).toBe(true);
   });
 
+  it('a paged read with the server’s counts states the whole portfolio, not the page', async () => {
+    portfolio(true, { total: 80 });
+    render(<Projects {...props()} />);
+    await screen.findByText(/Showing the first 2 projects/);
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('80 active projects');
+    expect(screen.getByText(/Showing the first 2 projects/).textContent).toMatch(/figures above cover all projects/);
+  });
+
   it('a complete read says nothing extra', async () => {
-    portfolio(false);
+    portfolio(false, { total: 2 });
     render(<Projects {...props()} />);
     await screen.findAllByText('Program 1');
     expect(screen.queryByText(/Showing the first/)).toBeNull();

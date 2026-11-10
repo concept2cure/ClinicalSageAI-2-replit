@@ -46,8 +46,30 @@
 .qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 
-/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. */
+/* One line: the actions that fit the row's state, Ask AnA and "More" (D7-B item 6; P-122); the rest open in .qms-row-more. */
 .qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* A figure line's overdue or unapproved number takes its status colour, and nothing else does (P-122; §2: status
+   colour only for meaning). The work area's figure line sits under the header, one line of text, not tiles. */
+.qms-shell p.sec-sub [data-tone="err"] { color: var(--error); }
+.qms-shell p.sec-sub [data-tone="warn"] { color: var(--warning); }
+.qms-shell p.qms-figures { margin: 4px 0 14px; }
+.qms-shell p.qms-figures-unread { margin: -8px 0 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* A complaint's or MDR report's vigilance timeline under its row (P-122): a plain list, the event, its day, its reason. */
+.qms-vigilance { list-style: none; margin: 0; padding: 0; }
+.qms-vigilance li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-small); }
+.qms-vigilance .qms-vigilance-why { flex-basis: 100%; color: var(--text-300); }
+/* A register scrolls inside its own box at every width (P-122), and from tablet width up its actions column is pinned
+   at the box's right edge, on the page's own background, so a wide register never clips a row's actions. At phone
+   width the column scrolls with the row: pinned, it would cover the facts. */
+.qms-reg-scroll { max-width: 100%; overflow-x: auto; }
+@media (min-width: 641px) {
+  .c2c-v2 .reg-tbl.qms-reg > thead > tr > th:last-child,
+  .c2c-v2 .reg-tbl.qms-reg > tbody > tr:first-child > td:last-child { position: sticky; right: 0; z-index: 1; background: var(--bg-000); }
+  .c2c-v2 .reg-tbl.qms-reg > tbody:is(:hover, [data-more]) > tr:first-child > td:last-child { background: var(--bg-050); }
+}
+/* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
+.qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
+.qms-ask-ico svg { width: 16px; height: 16px; }
 
 /* The review schedule's rows: a plain list under its section head, no box (C1). */
 .qms-review { border-top: 1px solid var(--border-subtle); }
@@ -89,7 +111,11 @@
 /* C15: an act inside a drawer (Rename, Add a person, Withdraw) ends in its own actions, as the drawer's footer does,
    and they are 44px on a phone, as the footer's are (journey-v2.css). */
 .qms-train-act .ph-acts { justify-content: flex-end; margin-top: var(--space-1); }
-@media (max-width: 640px) { .qms-train-act .de-btn { min-height: 44px; } }
+@media (max-width: 640px) {
+  .qms-train-act .de-btn { min-height: 44px; }
+  /* A small button or a single choice inside a drawer is a touch target too (Quality review, 2026-11-10). */
+  .qms-shell :is(.de-body .btn.small, .vr-member .btn.small, .de-seg-opt) { min-height: 44px; }
+}
 
 /* Native controlled-text reader; shared dialog behaviour owns focus/Escape. */
 .qms-training-content section + section { margin-top: var(--space-6); }

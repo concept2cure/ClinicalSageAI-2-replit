@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/cmc/stability-studies/61/close-out",
+    "url": "http://localhost:5200/api/cmc/stability-studies/79/close-out",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,14 +16,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 309,
+    "durationMs": 399,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "data": {
-        "id": 61,
+        "id": 79,
         "organizationId": 2,
-        "projectId": "818bcda1-8dfe-48ee-9674-b6d4dace5aee",
+        "projectId": "031c4bc8-7235-4862-9d75-ade3489fd988",
         "studyTitle": null,
         "productName": "PRV-signed",
         "batchNumber": "B-1",
@@ -65,17 +65,17 @@
         "notes": null,
         "shelfLife": "24 months at 25C/60%RH",
         "shelfLifeSignedBy": 1,
-        "shelfLifeSignedAt": "2026-11-10T03:48:00.617Z",
+        "shelfLifeSignedAt": "2026-11-10T13:28:30.689Z",
         "status": "COMPLETED",
         "startDate": "2026-01-01T00:00:00.000Z",
         "plannedEndDate": null,
         "studyDirector": null,
-        "createdAt": "2026-11-10T03:47:33.323Z",
-        "updatedAt": "2026-11-10T03:48:00.617Z"
+        "createdAt": "2026-11-10T13:28:03.537Z",
+        "updatedAt": "2026-11-10T13:28:30.689Z"
       },
       "governance": {
-        "actionId": "act_8819f7d7d16f4b15b2b72e5dbd6c29d5",
-        "sha256Chain": "7423119cc1d4e09b9d248b60bda3f5d2aee86f392e469920f645a47fc83a1e9f"
+        "actionId": "act_187fc277b82f4ad8a9d73ed6273949e3",
+        "sha256Chain": "bb9e185848d4dc8fbe76e6f1c38ad4f31085b8e8b1f366d826bd8ceea4766b7f"
       },
       "module3Linked": true
     }

@@ -1,0 +1,84 @@
+{
+  "apiErrors": [
+    {
+      "who": "approver",
+      "width": 1440,
+      "status": 503,
+      "url": "/api/mdx/qms/job-roles/1/members/3",
+      "at": "/concept2cure/quality"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "job-roles-read",
+      "status": 200,
+      "roles": [
+        {
+          "id": 1,
+          "name": "QA reviewer (walk)",
+          "documentCount": 1,
+          "members": 1
+        }
+      ]
+    },
+    {
+      "name": "delete-note",
+      "role": "QA reviewer (walk)",
+      "disabled": true,
+      "title": null,
+      "describedBy": "qms-role-1-delete-note",
+      "note": "Delete is unavailable while it is assigned to a document: withdraw those assignments first."
+    },
+    {
+      "name": "act-focus",
+      "focusInAct": {
+        "tag": "H3",
+        "text": "New job role",
+        "cls": "de-label"
+      },
+      "footerDisabledWhileOpen": true,
+      "footerOpacityWhileOpen": "0.5",
+      "focusAfterCancel": {
+        "tag": "BUTTON",
+        "text": "New job role",
+        "cls": "de-btn ghost"
+      }
+    },
+    {
+      "name": "act-saving",
+      "role": "QA reviewer (walk)",
+      "closeDisabledWhileSaving": true,
+      "openAfterEscape": true,
+      "refusalAfter": "Held by the walk; nothing was removed.",
+      "closeEnabledAfter": true
+    },
+    {
+      "name": "phone-touch-targets",
+      "count": 4,
+      "minHeight": 44,
+      "sample": [
+        {
+          "text": "Add a person",
+          "h": 44
+        },
+        {
+          "text": "Rename",
+          "h": 44
+        },
+        {
+          "text": "Delete",
+          "h": 44
+        },
+        {
+          "text": "Remove",
+          "h": 44
+        }
+      ]
+    },
+    {
+      "name": "w28-training-acts",
+      "ok": true
+    }
+  ]
+}

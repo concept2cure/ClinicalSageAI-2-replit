@@ -146,6 +146,41 @@ export function batchRowsFromApi(rows: readonly BatchApiRow[] | null | undefined
   return Array.isArray(rows) ? rows.map(batchRowFromApi) : [];
 }
 
+/** The edit a logged batch takes: PUT /api/cmc/batch-records/:id (P-122). */
+export interface BatchUpdateBody {
+  batchNumber: string;
+  productName: string;
+  yieldData: { percent: number };
+  deviations: { open: number };
+  /** Reason for change (§11.10(e)): recorded on the audit row beside the diff, not on the batch. */
+  reason: string;
+}
+
+/**
+ * C2CForm values → the edit body. The same four fields the batch was logged
+ * with, in the same shapes `batchCreateBody` writes them, so the round trip
+ * through `batchRowFromApi` reads back what was typed; and the reason the
+ * route records on the audit row. Status and release testing are not sent: a
+ * disposition is the signed release's alone, and the route refuses an edit
+ * that carries one.
+ */
+export function batchUpdateBody(v: Record<string, string>): BatchUpdateBody {
+  return {
+    batchNumber: (v.id ?? '').trim(),
+    productName: (v.stage ?? '').trim(),
+    yieldData: { percent: num(v.yield) },
+    deviations: { open: num(v.dev) },
+    reason: (v.reason ?? '').trim(),
+  };
+}
+
+/** Why a batch cannot be edited, or null when it can. A signed disposition closes the record (services/cmc/signed-record). */
+export function batchEditBlocked(b: Pick<CmcBatch, 'st'>): string | null {
+  return b.st === 'pending'
+    ? null
+    : 'This batch carries a signed disposition and is closed to ordinary edits.';
+}
+
 /** C2CForm values → create body. `productName` is required by the backend; the
  *  form's stage is the only descriptor, so it is carried there faithfully. */
 export function batchCreateBody(v: Record<string, string>, projectId?: string): BatchCreateBody {

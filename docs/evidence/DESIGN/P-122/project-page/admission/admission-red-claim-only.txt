@@ -1,0 +1,160 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/db/p122-project-management-reads.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/p122-project-management-reads.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section owners and deadlines (/api/project-sections/summary) 146ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > section deadlines and milestones in date order (/api/project-sections/timeline) 41ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project task list and its summary, and the milestone catalogue 157ms
+ × tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy 65ms
+   → expected 200 to be 404 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it 13ms
+   → expected [ 'p122-pm-fa11becb-f-cross', …(2) ] to deeply equal [ 'p122-pm-fa11becb-f-open' ]
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them 20ms
+   → expected 200 to be 404 // Object.is equality
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers 16ms
+   → expected [ 'p122-pm-fa11becb-b-open', …(1) ] to deeply equal [ 'p122-pm-fa11becb-b-open' ]
+ × tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days 18ms
+   → expected [ 'p122-pm-fa11becb-w-open', …(1) ] to deeply equal [ 'p122-pm-fa11becb-w-open' ]
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the section list 7ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the milestone list (writes share its path) 7ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > Sentinel's status 9ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > submission-ops' workload 7ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the project cockpit read model 16ms
+ ✓ tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > the unified task dashboard 7ms
+ × tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing 22ms
+   → expected 200 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the Plan step's reads are served for a member and refused for another organization > the project hierarchy's roll-up, admitted by the sharing policy
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:176:92
+    174|     expect(res.body.rollup).toMatchObject({ childCount: 0, totalTasks:…
+    175|     expect((await get('memberB', `/api/project-hierarchy/${project.ope…
+    176|     expect((await get('memberA', `/api/project-hierarchy/${project.pri…
+       |                                                                                            ^
+    177|     expect((await get('ownerA', `/api/project-hierarchy/${project.priv…
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > Sentinel's findings: a colleague not on the private project sees neither its finding nor one naming it
+AssertionError: expected [ 'p122-pm-fa11becb-f-cross', …(2) ] to deeply equal [ 'p122-pm-fa11becb-f-open' ]
+
+- Expected
++ Received
+
+  [
++   "p122-pm-fa11becb-f-cross",
+    "p122-pm-fa11becb-f-open",
++   "p122-pm-fa11becb-f-priv",
+  ]
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:185:56
+    183|     const colleague = await get('memberA', '/api/sentinel/findings?sta…
+    184|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+    185|     expect(ids(colleague.body.findings, 'finding_id')).toEqual([findin…
+       |                                                        ^
+    186|     const ownerRead = await get('ownerA', '/api/sentinel/findings?stat…
+    187|     expect(ids(ownerRead.body.findings, 'finding_id')).toEqual([findin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > a finding on a project the person cannot open is not changed by them
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:195:24
+    193|   it('a finding on a project the person cannot open is not changed by …
+    194|     const res = await request(app).patch(`/api/sentinel/findings/${fin…
+    195|     expect(res.status).toBe(404);
+       |                        ^
+    196|     expect((await owner.query('SELECT status FROM sentinel_findings WH…
+    197|     expect((await request(app).patch(`/api/sentinel/findings/${finding…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' open blockers
+AssertionError: expected [ 'p122-pm-fa11becb-b-open', …(1) ] to deeply equal [ 'p122-pm-fa11becb-b-open' ]
+
+- Expected
++ Received
+
+  [
+    "p122-pm-fa11becb-b-open",
++   "p122-pm-fa11becb-b-priv",
+  ]
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:203:51
+    201|     const colleague = await get('memberA', '/api/submission-ops/blocke…
+    202|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+    203|     expect(ids(colleague.body.data, 'blockerId')).toEqual([blocker.ope…
+       |                                                   ^
+    204|     expect(ids((await get('ownerA', '/api/submission-ops/blockers')).b…
+    205|     expect(ids((await get('memberB', '/api/submission-ops/blockers')).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > the "at risk" reads list only the projects the person can open > submission-ops' work due within seven days
+AssertionError: expected [ 'p122-pm-fa11becb-w-open', …(1) ] to deeply equal [ 'p122-pm-fa11becb-w-open' ]
+
+- Expected
++ Received
+
+  [
+    "p122-pm-fa11becb-w-open",
++   "p122-pm-fa11becb-w-priv",
+  ]
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:211:69
+    209|     const colleague = await get('memberA', '/api/submission-ops/due-so…
+    210|     expect(colleague.status, JSON.stringify(colleague.body).slice(0, 3…
+    211|     expect(ids(colleague.body.data.canonicalTasks, 'work_item_id')).to…
+       |                                                                     ^
+    212|     expect(ids((await get('ownerA', '/api/submission-ops/due-soon')).b…
+    213|     expect(ids((await get('memberB', '/api/submission-ops/due-soon')).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/db/p122-project-management-reads.dbtest.ts > what was not admitted is still refused in production > a section route reached under an admitted path answers as no section, and writes nothing
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ tests/db/p122-project-management-reads.dbtest.ts:235:24
+    233|     const res = await request(app).post('/api/project-sections/timelin…
+    234|       .send({ project_id: project.open, content: 'a comment on a secti…
+    235|     expect(res.status).toBe(404);
+       |                        ^
+    236|     expect((await owner.query(`SELECT count(*)::int AS n FROM section_…
+    237|     expect((await request(app).post('/api/sentinel/scan').set(as('memb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+   Start at  11:59:16
+   Duration  13.18s (transform 8.33s, setup 103ms, import 11.85s, tests 637ms, environment 0ms)
+

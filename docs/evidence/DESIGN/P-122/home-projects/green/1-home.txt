@@ -1,0 +1,23 @@
+After the Home change (working tree on 98d2f1975)
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > lists the org’s REAL projects (not a constant), each opening its Project home 326ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > with no projects, says what a project is and offers one way to start — never a fixture 89ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > says the read failed rather than falling back to a sample programme or an empty portfolio 31ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > Home — your projects are real or absent, never invented > renders no sample programme for ANY segment 115ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > SEGMENT_CONTEXT is reference config, not programme data > carries no `program` field on any segment 1ms
+ ✓ client/src/concept2cure/v2/__tests__/homeNoFixtureProgram.test.tsx > SEGMENT_CONTEXT is reference config, not programme data > still carries the category label and its regulatory pathways 1ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > Ask AnA first, then your projects and your open items; no conversation list 258ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > lists five projects and names how many there are in all 138ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > New project opens the new-project wizard, not the portfolio behind it 84ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Home, in the order a client reads it > your tasks opens the task board 39ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > keeps AnA’s run controls behind one AnA settings button 57ms
+ ✓ client/src/concept2cure/v2/__tests__/homeStartHere.test.tsx > Ask AnA > the composer is named by its heading 40ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > shows the client-type welcome, and a starter starts a conversation with it 286ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once dismissed 26ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home while there is no project > is not shown once the organization has a project: the project is the next step 29ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home > offers no destination this release does not carry 77ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 129ms
+ ✓ client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > puts Your projects and Your open items side by side in one row, after the composer 217ms
+ ✓ client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > starts Home near the top: no viewport-height pad above the greeting 1ms
+ ✓ client/src/concept2cure/v2/__tests__/p122HomeWorkInView.test.tsx > Home: your projects and your open items, in view beneath the composer (P-122 §3.1) > lays the row out in two columns wherever two fit, and one on a phone 1ms
+ Test Files  4 passed (4)
+      Tests  20 passed (20)

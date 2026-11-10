@@ -1,0 +1,97 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > the register keys project_id as TEXT and is policied, and the runtime role is not exempt 106ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the fixture is the deployed shape > a recorded drug substance lands under the program UUID the CMC surface sends 151ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a device program is given no CMC action, and the boundary’s refusal says why 206ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a diagnostic (IVD) program is given no CMC action, and the boundary’s refusal says why 107ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a biologic program is given no CMC action, and the boundary’s refusal says why 94ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an EU CTA is given no CMC action, and the boundary’s refusal says why 106ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug program filing an NDA is given no CMC action, and the boundary’s refusal says why 101ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug-substance record in the register is read as recorded, and only the drug product is asked for 123ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a register that holds both gives no CMC action 125ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > an empty register on a US IND drug program asks for both, naming what each feeds 90ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a drug substance kept only in project metadata is not read as recorded 103ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > a tracking record anchored to no program is answered by the boundary, with no CMC action 95ms
+stderr | server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing
+[module3-compile] submission spine unreadable; refused at the composition boundary: the database could not run this statement
+
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the register read fails, readiness is said to be unreadable: neither complete nor missing 114ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the task assessment reads CMC readiness from the register > when the program read the boundary judges (CMC_APPLICATION_NOT_READABLE) fails, readiness is said to be unreadable: neither complete nor missing 126ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states what the register holds, and not what project metadata says 109ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project context reads CMC readiness from the register > states the boundary’s refusal for a device program 127ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > get …/cmc is not served, and the project record is untouched 65ms
+ ✓ server/routes/c2c/__tests__/project-cmc-one-home.pglite.test.ts > the project-metadata CMC routes are retired > put …/cmc is not served, and the project record is untouched 48ms
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them
+{
+  "timestamp": "2026-11-10T12:37:43.875Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 4884ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+stdout | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-11-10T12:37:47.468Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-10T12:37:47.469Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+{
+  "timestamp": "2026-11-10T12:37:47.469Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 3897ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 97ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 17ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 63ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 870ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 104ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the HAQ session store is retired onto the project inbox (P-39 step 4) > no router answers the HAQ session paths, and /reviews/pending is on the reviews router 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 4ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > serves no project-metadata CMC route, on any router that mounts at /api/concept2cure 6ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 225ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 25ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 20ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 73ms
+stderr | server/routes/c2c/__tests__/tasks-tenant-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks constrains organization_id 25ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary constrains organization_id 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary measures nothing when there are no tasks 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — reads > GET /projects/:id/tasks/summary still measures the tasks there are 3ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks resolves the project within the org 14ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks 404s on a project belonging to another org 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > POST /projects/:id/tasks/bulk resolves the project within the org 4ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > PUT /projects/:id/tasks/:taskId constrains organization_id 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — writes > DELETE /projects/:id/tasks/:taskId constrains organization_id 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess constrains organization_id on both reads 5ms
+ ✓ server/routes/c2c/__tests__/tasks-tenant-scope.test.ts > routes/c2c/tasks — assessment > POST /projects/:id/tasks/assess gives no health score or completion rate when there are no tasks 8ms
+
+ Test Files  3 passed (3)
+      Tests  44 passed (44)
+   Start at  12:37:28
+   Duration  26.38s (transform 9.42s, setup 191ms, import 7.97s, tests 17.51s, environment 0ms)
+

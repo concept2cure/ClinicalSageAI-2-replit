@@ -1,0 +1,12 @@
+{
+  "create": 409,
+  "byEdit": 409,
+  "noReason": 400,
+  "noReauth": 401,
+  "noClaim": 409,
+  "noData": 409,
+  "signed": 200,
+  "signatures": 1,
+  "editAfter": 409,
+  "secondCloseOut": 409
+}

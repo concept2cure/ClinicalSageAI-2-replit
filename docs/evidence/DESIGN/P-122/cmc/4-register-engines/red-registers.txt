@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > the impurity register says what each impurity is against its guideline > shows the M7 class, control and intake, a Q3A verdict, and a refusal in the engine’s words 5061ms
+   → Unable to find an element with the text: /M7 class 3 \(Alerting structure, no mutagenicity data\): acceptable intake 20 µg\/day \(1,333\.333 ppm\) · within · control: Control at or below/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > posts the two ids and shows the server’s f2, similarity and scope 5015ms
+   → Unable to find a label with the text of: Reference profile
+ × client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > shows the engine’s refusal and what it needs 5013ms
+   → Unable to find a label with the text of: Reference profile
+ × client/src/concept2cure/v2/__tests__/cmcRegisterEngines.test.tsx > two recorded dissolution profiles can be compared > cannot compare a profile with itself 5025ms
+   → Unable to find a label with the text of: Reference profile
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

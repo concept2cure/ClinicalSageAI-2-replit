@@ -21,6 +21,8 @@ import { getTenantContext } from '../utils/tenantContext';
 import { authedUserId } from '../utils/authedActor';
 import { getSentinelScheduler } from '../services/sentinel/scheduler';
 import type { SentinelAnalyzerType } from '../services/sentinel/types';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access';
+import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -36,6 +38,35 @@ const analyzerTypes: SentinelAnalyzerType[] = [
   'quality_drift',
   'budget_burn',
 ];
+
+/* The projects the person can open, by the project sharing policy Projects lists by (P-122, 2026-11-10). Production
+   serves the findings read and the finding update for the Projects page's "at risk" answer, so a finding is shown
+   or changed only when every project it names is one the person can open. A check that cannot run answers 503, never
+   the organization's whole list. */
+async function readableProjectIds(req: Request, organizationId: number): Promise<number[]> {
+  const userId = authedUserId(req);
+  const actor = await readCurrentProgramActor(pool, { organizationId, userId: userId ?? undefined });
+  return getAccessibleReportProjectIds(organizationId, actor, pool);
+}
+
+/** Whether the finding exists and every project it names is one the person can open. Throws when that cannot be read. */
+async function findingIsReadable(
+  req: Request,
+  sentinel: { findingProjectIds(findingId: string, organizationId: number): Promise<number[] | null> },
+  findingId: string,
+  organizationId: number,
+): Promise<boolean> {
+  const named = await sentinel.findingProjectIds(findingId, organizationId);
+  if (!named) return false;
+  const readable = await readableProjectIds(req, organizationId);
+  return named.every((id) => readable.includes(id));
+}
+
+function projectAccessFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
+  logger.error('Project access could not be read', { err: error instanceof Error ? error.message : String(error) });
+  return res.status(503).json({ error: 'Current project access could not be verified. Nothing was read or changed.', code: 'PROJECT_ACCESS_UNAVAILABLE' });
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/sentinel/status — Health + summary
@@ -75,10 +106,18 @@ router.get('/findings', async (req: Request, res: Response) => {
     if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
     const { organizationId } = tenantContext;
 
+    let readable: number[];
+    try {
+      readable = await readableProjectIds(req, organizationId);
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+
     const scheduler = getSentinelScheduler(pool);
     const sentinel = scheduler.getSentinel();
 
     const result = await sentinel.getFindings(organizationId, {
+      readableProjectIds: readable,
       projectId: req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined,
       analyzerType: req.query.analyzerType as string | undefined,
       status: req.query.status as string | undefined,
@@ -123,6 +162,15 @@ router.patch('/findings/:findingId', async (req: Request, res: Response) => {
     }
     const scheduler = getSentinelScheduler(pool);
     const sentinel = scheduler.getSentinel();
+
+    /* A finding on a project the person cannot open is answered as one that does not exist (P-122). */
+    let admitted: boolean;
+    try {
+      admitted = await findingIsReadable(req, sentinel, String(req.params.findingId), organizationId);
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+    if (!admitted) return res.status(404).json({ error: 'Finding not found' });
 
     const updated = await sentinel.updateFindingStatus(
       String(req.params.findingId),

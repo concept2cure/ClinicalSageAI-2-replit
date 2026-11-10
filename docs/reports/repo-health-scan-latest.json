@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-10T09:34:51.584Z",
+  "generatedAt": "2026-11-10T13:49:55.487Z",
   "git": {
-    "sha": "c9e9fdefdd701ddee0726319e14fd7a9be8e0452",
+    "sha": "ecd64c52d58a740542bfb6662960d57d9d009ea2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 257,
+    "duplicateBasenames": 256,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 54,
@@ -410,16 +410,6 @@
         ]
       },
       {
-        "basename": "etmf",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/v2/fixtures/etmf.ts",
-          "client/src/concept2cure/v2/surfaces/Etmf.tsx",
-          "server/routes/etmf.ts",
-          "shared/schema/etmf.ts"
-        ]
-      },
-      {
         "basename": "generate",
         "count": 4,
         "paths": [
@@ -626,6 +616,15 @@
           "client/src/concept2cure/mdx/data/engineering.ts",
           "ui_kits/mdx/data/engineering.js",
           "ui_kits/mdx/surfaces/Engineering.jsx"
+        ]
+      },
+      {
+        "basename": "etmf",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Etmf.tsx",
+          "server/routes/etmf.ts",
+          "shared/schema/etmf.ts"
         ]
       },
       {
@@ -1349,14 +1348,6 @@
         "paths": [
           "server/config/environment.js",
           "server/config/environment.ts"
-        ]
-      },
-      {
-        "basename": "errorhandler",
-        "count": 2,
-        "paths": [
-          "server/middleware/errorHandler.js",
-          "server/middleware/errorHandler.ts"
         ]
       },
       {
@@ -2432,7 +2423,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 190815
+        "bytes": 190796
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2440,7 +2431,7 @@
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "bytes": 174313
+        "bytes": 177862
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2452,7 +2443,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 168426
+        "bytes": 168489
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2515,12 +2506,12 @@
         "bytes": 138245
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "bytes": 133654
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 134079
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 133349
+        "file": "server/routes/c2c/projects.ts",
+        "bytes": 133654
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2575,12 +2566,12 @@
         "bytes": 120123
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "bytes": 116456
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "bytes": 116615
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 116173
+        "file": "server/services/intelligent-report-engine.ts",
+        "bytes": 116456
       },
       {
         "file": "server/routes/auth.ts",
@@ -2673,16 +2664,16 @@
         "lines": 3524
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 3459
+      },
+      {
         "file": "server/services/module3Composer.ts",
         "lines": 3426
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 3407
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 3396
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2765,12 +2756,12 @@
         "lines": 2435
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2386
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2394
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2379
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2386
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2822,7 +2813,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "lines": 2195
+        "lines": 2201
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
@@ -2997,16 +2988,16 @@
         "lines": 1756
       },
       {
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1719
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1715
       },
       {
         "file": "tests/services/ana-biostats.test.ts",
         "lines": 1712
-      },
-      {
-        "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1708
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
@@ -3062,7 +3053,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 467,
+      "duplicateGroups": 465,
       "largeByBytes": 39,
       "largeByLines": 89
     },
@@ -3080,7 +3071,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 58,
+      "duplicateGroups": 57,
       "largeByBytes": 12,
       "largeByLines": 17
     },

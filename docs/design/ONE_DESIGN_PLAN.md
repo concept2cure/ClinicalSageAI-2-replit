@@ -1735,9 +1735,20 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   `tests/validation/oq/reporting/`. 17 pass, 0 fail, 1 deviation.
 - **TM-001** regenerated: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered. RA-001 v0.25 assesses
   Reporting (`4c7ded950c`).
+- **Later on 2026-11-10: the CMC protocol executes an approvable Module 3 end to end** (`345b5fef0a`, OQ-008 v0.13,
+  VSR-001 §21.8). **41 pass, 0 fail, 2 deviation, 0 not executed, of 43**; the package is 175 / 0 / 6 / 0 of 181;
+  TM-001 124 pass, 2 partial, 4 open, 2 uncovered.
+  - A second programme's 23 records, each entered through its register route, compose 21 complete sections. Every
+    section is approved by the second signer, the final-export gate passes, and Module 3 is placed into the IND
+    sequence. The critical finding, the release signature and the dispatch verdict are observed as URS-007 states
+    them. OQ-CMC-17, -19, -27 and -28 ran for the first time.
+  - Two of those steps had been calling routes the product does not serve. No product regression; no product file
+    changed.
+  - For the CMC owner: a repeat of an identical placement writes 21 new filing documents and stops a release
+    signature clearing the sequence, although no content changed.
 - **D4 stays red.** The package is unsigned and is not ready for signature. It still needs: execution on a production
-  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; three fixtures (a
-  critical CMC contradiction, a Module 3 whose every section can be approved, an organisation on a lower plan); the
+  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; one fixture (an
+  organisation on a lower plan; the two CMC fixtures exist since v0.13); the
   URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
@@ -2566,19 +2577,38 @@ under `docs/evidence/DESIGN/D7/`.
 | C18a: a register's sentence is the line under its head; dates stay on one line | `e3131458b` | Every register's head at 1440 and 1280 |
 | C18: Quality's root and type are the product's | `df4e7013a` | Quality in dark mode: the product's #262624; no Quality-only buttons |
 | F1: the GA ledger row L97 cites the evidence that now proves it | `e9876d85e` | `docs/GA_COMPLETION_LEDGER_2026-08.md` |
+| L1 (MR-12 Stage 4, slice 5): the per-person view lists who has not yet acknowledged, overdue first | `4bea9553d` | "Training overdue, due or lapsing" |
+| F1 (Part 11 review L-2): a change's edit records its reason and each field before and after; an approved change is kept | `ea718c177`, `a27e6b061`, `d435eeead` | "Edit assessment"; `DELETE /qms/changes/:id` answers 409 `QMS_CHANGE_KEPT` past assessment |
+| Independent review of 2026-11-10, repaired, each red first and walked: | | |
+| — F1: only the topmost open dialog answers Escape and Tab | `c17711527` | A reason sheet over the review route |
+| — F1: every disabled drawer button reads as disabled | `f5d5bd8e0` | New job role while an act is open; Cancel while a write saves |
+| — D7: a training drawer holds while its act saves; focus goes into the act and back; a disabled Delete says why | `098e99e17`, `36d498ed5` | Job roles; Who must train; the change log's drawers |
+| — L1: the training all-clear says only what was assessed, and speaks for a reader who sees only their own rows | `edff941e1` | "Training overdue, due or lapsing" |
+| — D7: a scoped Quality never shows another scope's rows; periodic review waits for the project's documents | `d9b10b751` | Show the whole organisation, and back |
+| — F1: a record linked to a change past proposal says why; the audit row keeps how it relates | `979554ff6` | "Link a record": Why it is linked |
+| — F1: a record's 404 names the record in the one refusal panel (`readSubject`); Quality's two local 404 overrides converge onto it | `94c4c6699` | Version history, notification target, editing copy, CAPA action items |
+| — D7: the capped CAPA figures read as one line | `c9c0b5409` | The CAPA register's figures |
 
-The sweep's C1–C18 are done, except C7.
+The sweep's C1–C18 are done, except C7. Every other `readWhat` in the product names a project-scoped read (CMC's
+registers, the data room, the project team, its records), for which "this project" is the right subject, so no other
+caller needs `readSubject`. The review of 2026-11-10 is repaired; its evidence is under
+`docs/evidence/DESIGN/D7/2026-11-10-*`, `docs/evidence/MR-12/2026-11-10-training-assessed/` and
+`docs/evidence/F1/2026-11-10-not-found-words/`.
 
 **Open:**
 - C7 waits on a decision: 48 px rows. The routine signature line and the route line would leave the row, and MR-12
   Stage 5 and RR4 §2.12 placed them there.
 - dialogs-3 waits on a decision: "Edit controlled text", a second editor inside the reader.
-- Outside D7, from the review of F1 (Part 11 review L-2): an edit while a change is still editable records no reason
-  or before-and-after values, and `DELETE /qms/changes/:id` soft-deletes an approved change.
+- A change's `assessed_by` is set by any edit, even one that changes only the target date. The edit's audit row says
+  exactly what changed and by whom; the column's meaning is what is off.
 - Outside D7, found walking:
-  - D0's refusal words name "this project" for every 404 shown through `ErrorState`'s `read`
-    (`describeReadFailure`'s default subject);
-  - the shared reassign sheet keeps the bottom-sheet variant and its eyebrow;
+  - D0's table at a phone's width: a register row's next step and More sit past the right edge until the table is
+    scrolled sideways (w35, x≈700–1000 at 390). Pinning the actions cell would cover the Title column; the phone
+    table is D0's to change;
+  - any other `ErrorState` whose read is of a record still says "this project" on a 404 until its caller passes
+    `readSubject` (found by `readWhat=` naming a record);
+  - the shared review-route sheets (`RouteReassignSheet`, `AddReviewer`, Vault's two) keep the bottom-sheet variant
+    and its eyebrow; the Vault's test asserts it;
   - the editor's project-sources read answered 409 and 503 in the walk environment.
 
 ## 4. How everyone works

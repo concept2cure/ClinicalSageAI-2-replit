@@ -40,7 +40,9 @@ Four runs on the fresh Codespace, all against the same app: A (projects, project
 conversation) and B (communication, Vault, Submission Center, tasks) and C (work areas and administration, with every
 rail button and account-menu item from Home) as Ana Author; D (every area of two Lumen projects, with the rail) as the
 Lumen lead, where "Demo access" lands. They were stopped twice to push fixes, and restarted from the start each time.
-The crawler now resumes from its own log, so a stop no longer starts a run again.
+The crawler now resumes from its own log, so a stop no longer starts a run again. It also skips "Start sequence 000N" past
+0000: each one leaves a new, differently named button behind it, and a resumed run had made fourteen sequences on the
+sandbox's CSR study before this was seen.
 
 | Run | State at this entry | Result |
 |---|---|---|
@@ -67,8 +69,10 @@ The crawler now resumes from its own log, so a stop no longer starts a run again
 | K | Biostatistics → **Assess defensibility** on the untouched form: a red error toast in developer words ("…the inputs listed in errors are missing or invalid. No verdict was formed. Missing or invalid: effectSize."). | **Fixed** (this change, `BiostatWorkbench.tsx`): a field not yet filled is named by its label beside the button ("To assess this design, enter: Effect size (standardized)."), with no error. Any other refusal is still shown in the engine's words. Shown red then green in `biostatWorkbench.test.tsx`; walked (the note, then a verdict once 0.5 is entered). |
 | — | Authoring showed "Loading…" as it opened; the rail's Home, account and "Organizations and invitations" clicks timed out. | **The run's own.** "Loading…" is gone within a second; the rail buttons click when addressed directly (the crawler's text match misses an icon-only button and a multi-line label). |
 | — | Shadow Review and AnA's starters: 503. | **Correct without a key.** |
+| — | Submission Center → Sequences → **Validated** on a sequence with nothing placed: 422, shown as "Transition refused — Sequence 0000 was not marked Validated: its validation found 10 errors…", each with what clears it. | **Correct.** **Open, minor** (Submission Center's owner): the tab's helper text is written for developers ("Transitions POST the real lifecycle endpoint and the server's verdict is shown verbatim…"). |
+| — | Project home → Respond showed "Reading…" as it opened. | **The run's own.** Gone within a second. |
 | — | 429 on Quality's and the Vault's document reads. | **The run's own.** One page open makes 40 to 70 API requests (measured: Vault 47, Quality 44, Project home 70, Submission Center 41), so a person needs about ten full page loads a minute to reach the 600-a-minute ceiling; the crawler reopens the page for every click. Noted for the shell's owner: each open reads the session six times and the project five. |
-| — | The app stopped once mid-run (`uncaughtException: ENOSPC` on a log write). | **The run's own.** The crawler's browser kept every file it downloaded until it closed (3.6 GB), which filled the sandbox's disk. The crawler now discards each download. The app's log holds no token: request logging records allowlisted metadata only. |
+| — | The app stopped three times mid-run (`uncaughtException: ENOSPC` on a log write). | **The run's own.** Measured: a headless browser reloading Submission Center on the dev server holds up to 7.6 GB of temporary shared-memory files until its own collection runs (about 1 GB a reload), so three browsers together exhausted the sandbox's disk. The areas now run one at a time, each browser for 20 clicks, with a guard that pauses the runs under 5 GB free. Not verified against a production build; noted for whoever owns Submission Center's load weight. The app's log holds no token: request logging records allowlisted metadata only. |
 
 ### Not this lane's, seen red on trunk
 

@@ -1827,12 +1827,67 @@ reason, on a development build. What remains:
    and the compliance reports sealed with a development fallback key. The audit export signing key, the audit seal key
    and the anchor store need to be configured where the package is executed for signature.
 2. **An AI provider.** OQ-AUTH-16 and OQ-CMC-26, with a PQ-passed model.
-3. **Fixtures.** A critical contradiction for OQ-CMC-17. A Module 3 whose every section can be approved, for the
-   positive placement (OQ-CMC-19) and the two steps behind it (OQ-CMC-27, -28). An organisation on a lower plan for
-   OQ-RPT-16.
+3. **Fixtures.** An organisation on a lower plan for OQ-RPT-16. (The two CMC fixtures this item named, a critical
+   contradiction and a Module 3 whose every section can be approved, exist since §21.8, and OQ-CMC-17, -19, -27 and
+   -28 are executed.)
 4. **Steps that do not exist yet.** URS-PROJ-014 (§19) has no OQ step. OQ-007 has none for the
    bundle export, the report package or the tenant attestation. OQ-CMC-18 verifies the unapproved case only.
 5. **The URS revisions of §21.5**, through change control, and TM-001 regenerated after them.
 6. **PQ.** No performance qualification has been executed for this package.
 7. **Review and signature.** A qualified reviewer's reading of the unscripted and ad-hoc steps, expert signature on
    the CMC reference records (P-28), and the system owner's signature on every document. All are unsigned.
+
+### 21.8 Later on 2026-11-10: OQ-008 v0.13, the steps behind an approvable Module 3
+
+§21.4 listed four CMC steps as deviations or not executed because the reference records compose a Module 3 no one can
+approve. They are now executed. Evidence: `docs/evidence/W3/2026-11-10/re-execution/OQ-CMC/` (the v0.12 record is
+kept at `re-execution/v0.12/OQ-CMC/`).
+
+**OQ-008 v0.13: 41 pass, 0 fail, 2 deviation, 0 not executed, of 43 steps** (v0.12: 36 / 0 / 4 / 2 of 42).
+**The package: 175 pass, 0 fail, 6 deviation, 0 not executed, of 181 steps.** TM-001, regenerated: 132 requirements,
+124 pass, 2 partial, 0 fail, 4 open, 2 uncovered.
+
+What was done:
+- **A second programme (OQ-CMC-03b).** 23 records, each entered through the register route the CMC screens call,
+  compose 21 sections, each complete with nothing missing. Before writing it, every input the compiler asks for was
+  traced to its route: none lacks one. The first programme and the steps that run on it are unchanged.
+- **OQ-CMC-17.** A batch rejected under signature raises one critical finding at the sweep. The final-export gate
+  answers 409 while it is open. A member's resolve is refused 403 `ESIGNATURE_NO_AUTHORITY`; the signer's, with no
+  reason, 422 `REASON_REQUIRED`; the row stays open and no audit row names it. The signer's resolve with a reason is
+  recorded in the chain.
+- **OQ-CMC-19.** The method validated under signature; all 21 sections approved by the second signer; the gate 200. A
+  placement naming another submission is refused and writes nothing. The placement writes 21 leaves, one per
+  section; a repeat adds none.
+- **OQ-CMC-27.** A release signature is bound to the sequence's leaf manifest and clears the release. After a further
+  placement it no longer does, and the verdict says to sign the current content.
+- **OQ-CMC-28.** An original IND sequence with no Module 3 is blocked for 3.2.S and for 3.2.P, each finding citing
+  21 CFR 312.23(a)(7) and (b) and naming both remedies. With Module 3 placed there is no such finding.
+
+Dispositions (proposed):
+- **Class B, runner defects, two.** OQ-CMC-17 and OQ-CMC-27 each called a route the product does not serve
+  (`POST …/contradictions/:project/:id/resolve`; `POST /api/submissions/sequences/:id/sign-release`). Both had been
+  hidden behind "not executed". The steps now use the routes the screens use.
+- **No product regression, and no product file changed.**
+- **The runner after the execution.** Two edits were made for the lint limits and change nothing it sends: an escape
+  character removed from three failure messages, and the record list split into two functions. The list is the same
+  23 records in the same order (its SHA-256 is unchanged).
+
+Still deviations: OQ-AUTH-16 and OQ-CMC-26 (a PQ-passed model); OQ-SUBC-16 and OQ-CMC-30 (a production build);
+OQ-SRDY-06b (outside the release); OQ-RPT-16 (an organisation on a lower plan). Still owed by OQ-008's rows: the gate
+with an approved section made stale (OQ-CMC-18), and clearance by a cross-referenced DMF with its Letter of
+Authorization (OQ-CMC-28).
+
+**The package is no longer at one commit.** OQ-008 ran on server code `d8ab1a1922`; IQ-001 and the other seven
+protocols ran on `97a0fec5cf`. No migration changed between the two. The execution for signature (§21.7 item 1) is
+one run at one commit in any case.
+
+Observations for the CMC owner (not dispositioned here):
+- **A repeat of an identical placement is not a no-op.** It adds no leaf, but it writes a new filing document for
+  every section and points each leaf at it. The earlier 21 documents stay, unreferenced. And a release signature
+  made before the repeat stops clearing the sequence, although no content changed (seen in OQ-CMC-27).
+  URS-CMC-011 says the placement "is idempotent on retry"; that holds for leaves only.
+- The QC sample types have no drug-substance value. A drug-substance batch result is filed as `raw-material`.
+- §3.2.S.3 asks every programme for a biological-activity study, a small molecule included.
+- Read from the code, not run: of the eight finding kinds the contradiction engine defines, the sweep can raise four.
+  `impurity_exceedance`, `dissolution_failure` and `change_control_open` are not among the records it reads, and
+  `comparability_risk` reads a column nothing writes (`cmc_comparability_assessments.regulatory_risk_level`).

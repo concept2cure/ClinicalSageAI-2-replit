@@ -120,6 +120,16 @@ async function admitMilestoneProject(req: Request, res: Response, next: NextFunc
 
 router.use(admitNamedProject);
 
+/* The project page reads /summary and /timeline, and production serves those two paths alone (P-122, 2026-11-10;
+   shared/constants/ui-surface-registry.ts). The launch claim is a path prefix, so it also served every `/:code` route
+   under them, "/timeline/comments" among them, which wrote a comment on a section named "timeline". No section is
+   named by one of this router's own words, so such a code is answered as a section that does not exist. */
+const ROUTE_WORDS = new Set(['initialize', 'summary', 'timeline', 'milestones', 'dependencies', 'notifications']);
+router.param('code', (req: Request, res: Response, next: NextFunction, code: string) => {
+  if (ROUTE_WORDS.has(String(code).toLowerCase())) return res.status(404).json({ error: 'Section not found' });
+  return next();
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
