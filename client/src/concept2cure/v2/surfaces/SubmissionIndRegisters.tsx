@@ -11,6 +11,9 @@
  *   - Annual reports (21 CFR 312.33): each tracked report with the due date and open sections the server computed, its
  *     state from the server's overdue feed (overdue, or no due date because no IND effective date was recorded), and
  *     tracking one. A tracked report is filed from the annual report on the Lifecycle tab.
+ *   - Amendments (21 CFR 312.30, 312.31): each tracked amendment with its kind, the leaves the server planned, its
+ *     advisories and state, and tracking one from a changed document. Amendments have no statutory deadline, so there
+ *     is no overdue feed.
  * Production serves exactly these paths (the `ind-checklist` claim in ui-surface-registry.ts), and each route admits
  * the submission's project for the person first. Counts and verdicts are the server's; this only shows them. A read
  * that fails says so, never "none recorded".
@@ -38,6 +41,20 @@ interface AnnualReport {
   dueDate: string | null; status: string; gapCount: number; filedAt: string | null;
 }
 type OverdueReport = AnnualReport & { overdueState: 'overdue' | 'deadline_unknown' };
+
+interface Amendment {
+  id: string; indNumber: string; amendmentClasses: string[]; status: string; leafCount: number; warningCount: number;
+  filedAt: string | null; createdAt: string;
+}
+/** The planner's content categories and change kinds (ind-amendment-service.ts), in words. */
+const CATEGORIES: Array<[string, string]> = [
+  ['protocol', 'Protocol'], ['protocol_amendment_summary', 'Protocol amendment summary'], ['new_investigator', 'New investigator'],
+  ['cmc', 'Chemistry, manufacturing and controls'], ['pharmacology_toxicology', 'Pharmacology and toxicology'],
+  ['clinical_summary', 'Clinical summary'], ['clinical_study_report', 'Clinical study report'],
+  ['investigators_brochure', "Investigator's brochure"], ['other', 'Other'],
+];
+const CHANGES: Array<[string, string]> = [['added', 'Added'], ['revised', 'Revised'], ['appended', 'Appended'], ['withdrawn', 'Withdrawn']];
+const CLASS_WORDS: Record<string, string> = { protocol: 'protocol (312.30)', information: 'information (312.31)' };
 
 const isList = <T,>(v: unknown): v is T[] => Array.isArray(v);
 /** A stored calendar date (UTC midnight), as the date it is. */
@@ -362,6 +379,98 @@ function AnnualReports({ submissionId, productName }: { submissionId: number; pr
   );
 }
 
+function TrackAmendment({ submissionId, onDone }: { submissionId: number; onDone: (note: string | null) => void }) {
+  const [f, setF] = useState({ ind: '', title: '', ref: '', category: '', change: '', guid: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    const r = await send('POST', `/api/ind-lifecycle/submission/${submissionId}/amendments`, {
+      indNumber: f.ind.trim(),
+      changedDocuments: [{ documentId: f.ref.trim(), title: f.title.trim(), category: f.category, changeKind: f.change,
+        ...(f.guid.trim() ? { replacesLeafGuid: f.guid.trim() } : {}) }],
+    });
+    setBusy(false);
+    if (r.ok) onDone(`The amendment for ${f.title.trim()} is tracked.`); else setError(r.message);
+  };
+  const choose = (k: 'category' | 'change', options: Array<[string, string]>) => (
+    <select className="c2c-input" value={f[k]} onChange={set(k)} required>
+      <option value="">Choose</option>
+      {options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+    </select>
+  );
+  return (
+    <form onSubmit={(e) => void submit(e)} style={{ display: 'grid', gap: 8, margin: '8px 0 12px', maxWidth: 520 }} data-testid="indl-amendment-form">
+      <Field label="IND number"><input className="c2c-input" value={f.ind} onChange={set('ind')} required /></Field>
+      <Field label="Document title"><input className="c2c-input" value={f.title} onChange={set('title')} required /></Field>
+      <Field label="Document reference"><input className="c2c-input" value={f.ref} onChange={set('ref')} required /></Field>
+      <Field label="What changed">{choose('category', CATEGORIES)}</Field>
+      <Field label="Change">{choose('change', CHANGES)}</Field>
+      <Field label="Earlier leaf it replaces (its GUID)"><input className="c2c-input" value={f.guid} onChange={set('guid')} placeholder="Needed to revise, append or withdraw" /></Field>
+      {error && <p role="alert" className="sec-sub">{error}</p>}
+      <span className="pj-sec-acts">
+        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
+        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+      </span>
+    </form>
+  );
+}
+
+/** "Protocol (312.30); information (312.31)": the classes the server planned, in words. */
+function classesOf(classes: string[]): string {
+  const words = classes.map((c) => CLASS_WORDS[c] ?? c).join('; ');
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : 'Not planned';
+}
+
+function AmendmentTable({ rows }: { rows: Amendment[] }) {
+  return (
+    <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+      <table className="reg-tbl">
+        <thead><tr><th scope="col">Tracked</th><th scope="col">IND</th><th scope="col">Kind</th><th scope="col">Leaves planned</th><th scope="col">Advisories</th><th scope="col">State</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td>{day(r.createdAt)}</td>
+              <td className="mono">{r.indNumber}</td>
+              <td>{classesOf(r.amendmentClasses)}</td>
+              <td>{r.leafCount.toLocaleString()}</td>
+              <td>{r.warningCount.toLocaleString()}</td>
+              <td>{r.status === 'filed' ? (r.filedAt ? `Filed ${day(r.filedAt)}` : 'Filed') : 'Draft'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Amendments({ submissionId }: { submissionId: number }) {
+  const [version, setVersion] = useState(0);
+  const [tracking, setTracking] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const rows = useLiveData<Amendment[]>(`/api/ind-lifecycle/submission/${submissionId}/amendments`, [submissionId, version], isList<Amendment>);
+  const done = (text: string | null) => { setTracking(false); if (text) { setNote(text); setVersion((v) => v + 1); } };
+  let body: React.ReactNode;
+  if (rows.loading && !rows.data) body = <p role="status" className="sec-sub">Reading the amendment tracker…</p>;
+  else if (rows.error || !rows.data) {
+    body = <p role="alert" className="sec-sub">The amendment tracker could not be read, so nothing is shown. <button type="button" className="btn ghost sm" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
+  } else if (rows.data.length === 0) body = tracking ? null : <p className="sec-sub">No amendment is tracked for this IND yet.</p>;
+  else body = <AmendmentTable rows={rows.data} />;
+  return (
+    <div data-testid="indl-amendment-register" style={{ marginTop: 16 }}>
+      <div className="pj-sec-h">
+        <h3>Amendments (21 CFR 312.30, 312.31)</h3>
+        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost sm" onClick={() => { setNote(null); setTracking(true); }}>Track an amendment</button></span>}
+      </div>
+      {note && <p role="status" className="sec-sub">{note}</p>}
+      {tracking && <TrackAmendment submissionId={submissionId} onDone={done} />}
+      {body}
+    </div>
+  );
+}
+
 export function SubmissionIndRegisters({ submissionId, sponsorName, productName }: {
   submissionId: number | null; sponsorName: string | null; productName: string | null;
 }) {
@@ -375,6 +484,7 @@ export function SubmissionIndRegisters({ submissionId, sponsorName, productName 
             <>
               <CrossReferences submissionId={submissionId} sponsorName={sponsorName} />
               <AnnualReports submissionId={submissionId} productName={productName} />
+              <Amendments submissionId={submissionId} />
             </>
           )}
       </div>

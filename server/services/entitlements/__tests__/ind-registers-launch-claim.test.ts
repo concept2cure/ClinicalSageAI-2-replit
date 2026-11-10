@@ -53,6 +53,20 @@ describe('the annual-report tracker is served on the IND screen', () => {
   });
 });
 
+describe('the amendment tracker is served on the IND screen', () => {
+  it.each([
+    '/api/ind-lifecycle/submission/7/amendments', //  the tracked amendments, and tracking one
+    '/api/ind-lifecycle/submission/:p/amendments',
+  ])('%s', (path) => {
+    expect(verdict(path)).toBe('launch');
+    expect(claimedBy(path)).toEqual(['ind-checklist']);
+  });
+
+  it('one stored amendment by its id has no screen caller, and stays unattributed', () => {
+    expect(verdict('/api/ind-lifecycle/amendments/0b6d2c8e-1111-4c4c-8c8c-123456789abc')).toBe('unmapped');
+  });
+});
+
 describe('nothing beside the registers the screen calls is admitted', () => {
   it.each([
     // P-32: the IND safety-report and ICSR registers stay shut.

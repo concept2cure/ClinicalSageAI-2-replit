@@ -459,13 +459,14 @@ router.post('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (r
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'indNumber and changedDocuments[] are required.' } });
   }
   try {
+    await admitSubmission(req, ctx, submissionId, true);
     const row = await createAmendmentDraft(
       { submissionId, amendment: { indNumber: String(b.indNumber), projectId: String(b.projectId ?? ''), changedDocuments: b.changedDocuments } },
       ctx,
     );
     res.status(201).json({ ...row, meta: { auditTrail: row.auditTrail } });
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -476,9 +477,10 @@ router.get('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (re
   const submissionId = submissionIdOf(req.params.id);
   if (!submissionId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid submission id.' } });
   try {
+    await admitSubmission(req, ctx, submissionId, false);
     res.json(await listAmendments(submissionId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 

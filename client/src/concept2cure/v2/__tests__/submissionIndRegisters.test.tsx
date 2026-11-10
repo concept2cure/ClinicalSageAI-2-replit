@@ -45,6 +45,12 @@ const ANNUAL = [
   { id: 'b3', indNumber: '999101', productName: 'ZX-9', reportingPeriodStart: '2023-01-01T00:00:00.000Z', reportingPeriodEnd: '2023-12-31T00:00:00.000Z',
     dueDate: '2024-03-16T00:00:00.000Z', status: 'filed', gapCount: 1, sequenceId: 7, filedAt: '2024-03-01T00:00:00.000Z' },
 ];
+const AMENDMENTS = [
+  { id: 'c1', indNumber: '999101', amendmentClasses: ['protocol'], status: 'draft', leafCount: 2, warningCount: 1, filedAt: null,
+    createdAt: '2026-10-01T09:00:00.000Z' },
+  { id: 'c2', indNumber: '999101', amendmentClasses: ['protocol', 'information'], status: 'filed', leafCount: 3, warningCount: 0,
+    filedAt: '2026-10-20T09:00:00.000Z', createdAt: '2026-10-02T09:00:00.000Z' },
+];
 const OVERDUE = [{ ...ANNUAL[0], overdueState: 'overdue' }, { ...ANNUAL[1], overdueState: 'deadline_unknown' }];
 
 type Handler = (method: string, url: string, body?: unknown) => Response | undefined;
@@ -57,6 +63,7 @@ function serve(over: Handler = () => undefined) {
     if (url === `${SUB}/cross-reference-register`) return ok(REGISTER);
     if (url === `${SUB}/annual-reports`) return ok(ANNUAL);
     if (url === `${SUB}/annual-reports/overdue`) return ok(OVERDUE);
+    if (url === `${SUB}/amendments`) return ok(AMENDMENTS);
     return ok({});
   });
 }
@@ -205,6 +212,52 @@ describe('the annual-report tracker', () => {
     const reg = await screen.findByTestId('indl-annual-register');
     await waitFor(() => expect(within(reg).getByRole('alert').textContent).toContain('The annual-report tracker could not be read'));
     expect(within(reg).queryByRole('table')).toBeNull();
+  });
+});
+
+describe('the amendment tracker', () => {
+  it('lists each tracked amendment with its kind, the leaves the server planned, its advisories and state', async () => {
+    render(<SubmissionIndRegisters submissionId={41} sponsorName={null} productName={null} />);
+    const reg = await screen.findByTestId('indl-amendment-register');
+    await waitFor(() => expect(within(reg).getAllByRole('row')).toHaveLength(3));
+    const rows = within(reg).getAllByRole('row').slice(1).map((r) => [...r.querySelectorAll('td')].map((td) => td.textContent));
+    expect(rows).toEqual([
+      ['1 Oct 2026', '999101', 'Protocol (312.30)', '2', '1', 'Draft'],
+      ['2 Oct 2026', '999101', 'Protocol (312.30); information (312.31)', '3', '0', 'Filed 20 Oct 2026'],
+    ]);
+  });
+
+  it('tracks an amendment from one changed document, in words, never the planner\'s codes', async () => {
+    serve((method, url) => (method === 'POST' && url === `${SUB}/amendments` ? ok({ id: 'new' }, 201) : undefined));
+    render(<SubmissionIndRegisters submissionId={41} sponsorName={null} productName={null} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Track an amendment' }));
+    const form = screen.getByTestId('indl-amendment-form');
+    const category = within(form).getByLabelText('What changed') as HTMLSelectElement;
+    expect([...category.options].map((o) => o.textContent)).toContain('Chemistry, manufacturing and controls');
+    expect([...category.options].map((o) => o.textContent)).not.toContain('cmc');
+    fireEvent.change(within(form).getByLabelText('IND number'), { target: { value: '999101' } });
+    fireEvent.change(within(form).getByLabelText('Document title'), { target: { value: 'Protocol, version 2' } });
+    fireEvent.change(within(form).getByLabelText('Document reference'), { target: { value: 'PROT-002' } });
+    fireEvent.change(category, { target: { value: 'protocol' } });
+    fireEvent.change(within(form).getByLabelText('Change'), { target: { value: 'revised' } });
+    fireEvent.change(within(form).getByLabelText('Earlier leaf it replaces (its GUID)'), { target: { value: 'leaf-1' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Track' }));
+    expect(await screen.findByText('The amendment for Protocol, version 2 is tracked.')).toBeTruthy();
+    expect(apiRequest).toHaveBeenCalledWith('POST', `${SUB}/amendments`, {
+      indNumber: '999101',
+      changedDocuments: [{ documentId: 'PROT-002', title: 'Protocol, version 2', category: 'protocol', changeKind: 'revised', replacesLeafGuid: 'leaf-1' }],
+    });
+  });
+
+  it('an empty tracker says so in one sentence; a failed read says so', async () => {
+    serve((_m, url) => (url === `${SUB}/amendments` ? ok([]) : undefined));
+    render(<SubmissionIndRegisters submissionId={41} sponsorName={null} productName={null} />);
+    expect(await screen.findByText('No amendment is tracked for this IND yet.')).toBeTruthy();
+    cleanup();
+    serve((_m, url) => (url === `${SUB}/amendments` ? ok({ error: 'down' }, 503) : undefined));
+    render(<SubmissionIndRegisters submissionId={41} sponsorName={null} productName={null} />);
+    const reg = await screen.findByTestId('indl-amendment-register');
+    await waitFor(() => expect(within(reg).getByRole('alert').textContent).toContain('The amendment tracker could not be read'));
   });
 });
 

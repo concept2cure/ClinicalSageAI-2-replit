@@ -723,6 +723,9 @@ export const UI_SURFACES: UiSurface[] = [
       // The annual-report tracker (21 CFR 312.33): the tracked reports and tracking one, and the server's overdue
       // feed beneath it. One report by its id (/annual-reports/:id) has no caller and stays unclaimed.
       '/api/ind-lifecycle/submission/:id/annual-reports',
+      // The amendment tracker (21 CFR 312.30, 312.31): the tracked amendments and tracking one. One amendment by its
+      // id (/amendments/:id) has no caller and stays unclaimed.
+      '/api/ind-lifecycle/submission/:id/amendments',
     ],
     anaToolFamilies: [],
     sharedContract: null,

@@ -320,6 +320,66 @@ describe('the annual-report tracker is refused to anyone who cannot open the pro
   });
 });
 
+/** A 312.30(b) protocol change: one revised protocol, replacing its earlier leaf. */
+const amendmentOf = (label: string) => ({
+  indNumber: '999001',
+  changedDocuments: [{ documentId: `${TAG}-${label}`, title: 'Protocol, version 2', category: 'protocol', changeKind: 'revised', replacesLeafGuid: 'leaf-guid-1' }],
+});
+const amend = { open: '', priv: '' };
+
+describe('the amendment tracker, for a member of the organisation', () => {
+  it('tracks an amendment, planned by the server from the changed document', async () => {
+    const created = await post('memberA', `${sub(ind.open)}/amendments`, amendmentOf('amend-open'));
+    expect(created.status, show(created)).toBe(201);
+    expect(created.body).toMatchObject({ status: 'draft', indNumber: '999001', submissionId: ind.open, amendmentClasses: ['protocol'] });
+    expect(created.body.leafCount).toBeGreaterThanOrEqual(1);
+    amend.open = created.body.id;
+    const list = await get('memberA', `${sub(ind.open)}/amendments`);
+    expect(list.status, show(list)).toBe(200);
+    expect(list.body.map((r: { id: string }) => r.id)).toEqual([amend.open]);
+  });
+
+  it('a tracked amendment filed through the IND forms filing is filed in the register', async () => {
+    const filed = await post('memberA', '/api/ind-lifecycle/amendment/file',
+      { submissionId: ind.open, sequenceNumber: '0006', draftId: amend.open, ...amendmentOf('amend-open') });
+    expect(filed.status, show(filed)).toBe(201);
+    const list = await get('memberA', `${sub(ind.open)}/amendments`);
+    expect(list.body[0]).toMatchObject({ id: amend.open, status: 'filed', sequenceId: filed.body.sequence.id });
+  });
+});
+
+describe('the amendment tracker is refused to anyone who cannot open the project', () => {
+  beforeAll(async () => {
+    const created = await post('ownerA', `${sub(ind.priv)}/amendments`, amendmentOf('amend-private'));
+    expect(created.status, show(created)).toBe(201);
+    amend.priv = created.body.id;
+  });
+
+  it('another organisation', async () => {
+    expect((await get('memberB', `${sub(ind.priv)}/amendments`)).status).toBe(404);
+    expect((await post('memberB', `${sub(ind.priv)}/amendments`, amendmentOf('amend-theirs'))).status).toBe(404);
+  });
+
+  it('a colleague who can read the project but does not edit it tracks nothing', async () => {
+    expect((await get('readerA', `${sub(ind.open)}/amendments`)).status).toBe(200);
+    const res = await post('readerA', `${sub(ind.open)}/amendments`, amendmentOf('amend-reader'));
+    expect(res.status, show(res)).toBe(403);
+    expect(res.body.error?.code).toBe('PROJECT_PERMISSION_DENIED');
+  });
+
+  it('a colleague who is not on a private project', async () => {
+    for (const res of [
+      await get('memberA', `${sub(ind.priv)}/amendments`),
+      await post('memberA', `${sub(ind.priv)}/amendments`, amendmentOf('amend-colleague')),
+    ]) {
+      expect(res.status, show(res)).toBe(403);
+      expect(res.body.error?.code).toBe('PROJECT_PERMISSION_DENIED');
+    }
+    const owners = await get('ownerA', `${sub(ind.priv)}/amendments`);
+    expect(owners.body.map((r: { id: string }) => r.id)).toEqual([amend.priv]);
+  });
+});
+
 /** Every route the IND lifecycle routers mount, as a request carries it. */
 const ROUTES = listIndLifecycleRoutes().map((r) => ({ method: r.method.toLowerCase(), path: r.path.replace(/\{[^}]+\}/g, '7') }));
 const UNCLAIMED = ROUTES.filter((r) => launchScopeApiVerdict(r.path, buildPrefixMap(), NEVER_GATED) !== 'launch');

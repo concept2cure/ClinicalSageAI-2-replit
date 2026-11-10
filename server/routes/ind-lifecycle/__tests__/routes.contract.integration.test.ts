@@ -73,6 +73,7 @@ import indLifecycleRouter from '../../ind-lifecycle.routes';
 import { createSubmission } from '../../../services/submission-service/submission-service';
 import { persistAnnualReport } from '../../../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createAnnualReportDraft } from '../../../services/ind-lifecycle/ind-annual-report-persistence';
+import { createAmendmentDraft } from '../../../services/ind-lifecycle/ind-amendment-persistence';
 
 let harness: IndPgliteDb;
 let seededSubmissionId: number;
@@ -937,24 +938,28 @@ describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
     ],
   });
 
-  it('POST /submission/:id/amendments → 201 drafts a tracked amendment', async () => {
-    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`).send(amendment());
-    expect(res.status).toBe(201);
-    expect(res.body.status).toBe('draft');
-    expect(res.body.indNumber).toBe('123456');
-    expect(res.body.leafCount).toBeGreaterThanOrEqual(1);
-    draftId = res.body.id;
+  /* P-122 (2026-11-10): the tracker is served in production for the IND screen, so tracking an amendment and the
+     list admit the submission's project first. This harness installs no request scope and files no project, so they
+     are refused, never answered organisation-wide; the served tracker is tests/db/p122-ind-registers.dbtest.ts. The
+     draft the cases below read and file is tracked through the service. */
+  it('a tracked amendment is planned from its changed documents', async () => {
+    const row = await createAmendmentDraft({ submissionId: seededSubmissionId, amendment: amendment() }, { organizationId: 1, userId: 9 });
+    expect(row.status).toBe('draft');
+    expect(row.indNumber).toBe('123456');
+    expect(row.leafCount).toBeGreaterThanOrEqual(1);
+    draftId = row.id;
+  });
+
+  it.each(['POST', 'GET'] as const)('%s /submission/:id/amendments is refused without the project admitted', async (method) => {
+    const path = `/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`;
+    const res = method === 'GET' ? await request(app).get(path) : await request(app).post(path).send(amendment());
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(res.body.error.code).toBe('REQUEST_DB_CONTEXT_REQUIRED');
   });
 
   it('POST /amendments → 400 without indNumber/changedDocuments', async () => {
     const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`).send({ indNumber: '1' });
     expect(res.status).toBe(400);
-  });
-
-  it('GET /amendments → 200 lists the draft', async () => {
-    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`);
-    expect(res.status).toBe(200);
-    expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
   it('GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404', async () => {
