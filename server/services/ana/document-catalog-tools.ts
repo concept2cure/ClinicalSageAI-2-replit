@@ -159,7 +159,7 @@ async function handleListProjectDocuments(
   await requireProgramScopeStillCurrent(scope.executor, { organizationId: orgId, userId: scope.admittedScope.userId, programId }, scope.accessibleScope);
 
   return JSON.stringify({
-    ok: true,
+    ok: true, ...(programId ? { vaultFolders: await (await import('../vault/vault-folders.js')).projectFolderChoices(scope.executor, programId, orgId) } : {}),
     scope: programId ? { programId, actorFiltered: true } : scope.admittedScope.projectId !== null
       ? { openProject: true, programId: null, actorFiltered: true } : { accessibleProjects: true, actorFiltered: true },
     // `returned` is the page; `total` is the scope. They were one field named

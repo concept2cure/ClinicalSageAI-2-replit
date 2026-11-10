@@ -56,7 +56,10 @@ beforeAll(async () => {
     'migrations/20261006_document_data_dispositions.sql']) await pg.exec(readFileSync(file, 'utf8'));
   await pg.exec(`ALTER TABLE cre_evidence_sources ADD COLUMN created_by integer, ADD COLUMN extracted_text text,
     ADD COLUMN char_count integer, ADD COLUMN page_count integer, ADD COLUMN study_ref integer;
-    CREATE TABLE quality_fixture_state(id integer PRIMARY KEY,content text,visible boolean);`);
+    CREATE TABLE quality_fixture_state(id integer PRIMARY KEY,content text,visible boolean);
+    -- The catalog read names each source's project and study (S2, 2026-11-06): the columns it reads.
+    CREATE TABLE IF NOT EXISTS cdisc_prm_studies(id serial PRIMARY KEY,tenant_id integer NOT NULL,study_id varchar(100),protocol_title text);
+    ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS name text;`);
 }, 90_000);
 afterAll(async () => { await pg?.close(); });
 beforeEach(async () => {

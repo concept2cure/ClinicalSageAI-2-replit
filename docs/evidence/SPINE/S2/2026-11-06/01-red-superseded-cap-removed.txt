@@ -1,0 +1,10 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > grades a fully evidenced, confirmed, current document A, conformance not applying 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > earns nothing for a fact the system does not hold, and says so 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > caps a superseded capture at C and a withdrawn one at D 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > grades D when the Vault copy failed fixity 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > runs the CDISC validator over a dataset and names its errors per table 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > gives no conformance to a dataset with no CDISC standard recognized 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > is deterministic: the same facts give the same grade and fingerprint; a changed fact changes the fingerprint 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/data-room-grade.test.ts > gradeCapture > caps a superseded capture at C and a withdrawn one at D
+      Tests  1 failed | 6 passed (7)

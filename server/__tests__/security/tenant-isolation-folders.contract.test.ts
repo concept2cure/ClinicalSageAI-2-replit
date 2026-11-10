@@ -85,4 +85,28 @@ describe('Tenant isolation — folders', () => {
     await request(app).delete('/api/folders/f1').expect(403);
     expect(folderQueries()).toHaveLength(0);
   });
+
+  /* S6, 2026-11-10: a project's folders (program_id set) belong to its Vault and are reached only
+     through /api/c2c/project-vault/:id/folders, under that project's access. In a multi-tenant
+     organization (a CRO's sponsors) this organization-wide route must not list, rename, delete or
+     parent them. */
+  it('never reaches a project\'s folders: every statement excludes program_id rows', async () => {
+    await request(app).get('/api/folders');
+    await request(app).patch('/api/folders/f1').send({ name: 'x' });
+    await request(app).delete('/api/folders/f1');
+    const reached = folderQueries().filter(c => /SELECT id, name|UPDATE document_folders|DELETE FROM document_folders|SELECT id FROM document_folders/i.test(c.sql));
+    expect(reached.length).toBeGreaterThanOrEqual(4);
+    for (const c of reached) expect(c.sql).toMatch(/program_id IS NULL/);
+  });
+
+  it('refuses a project folder as the parent of an organization folder', async () => {
+    const { pool } = await import('../../db.js');
+    (pool.query as any).mockImplementationOnce(async (sql: string, params: any[]) => {
+      calls.push({ sql, params });
+      return { rows: [] };
+    });
+    const res = await request(app).post('/api/folders').send({ name: 'x', parentId: '12' });
+    expect(res.status).toBe(404);
+    expect(calls.some(c => /INSERT INTO document_folders/i.test(c.sql))).toBe(false);
+  });
 });

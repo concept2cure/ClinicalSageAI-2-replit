@@ -24,6 +24,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   reviewRows: [] as unknown[],
   docs: [] as unknown[],
@@ -210,6 +217,7 @@ describe('the register row shows and takes a review beyond the panel', () => {
     expect(last.textContent).toBe('Reviewed 2026-10-22');
     expect(last.parentElement!.getAttribute('title')).toBe(
       `v1.0 reviewed 2026-10-22 09:12 UTC by R. Reviewer: remains current. The date its approval signed: ${day(30)}.`);
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: 'Record review: SOP-018 Calibration' }));
     expect(screen.getByRole('dialog', { name: 'Record periodic review' }).textContent).toContain('You are reviewing v1.0');
   });

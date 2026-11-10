@@ -4,6 +4,8 @@ export interface ServerDoc {
   id:number;doc_number:string;title:string;doc_type:string;category:string|null;version:string;status:string;
   effective_date:string|null;next_review_date:string|null;updated_at:string|null;authoring_document_id?:string|null;
   metadata?:{programId?:string}|null;overdue?:boolean;
+  /** Who wrote it: the server refuses their approval (separation of duties). */
+  author_id?:number|null;
   /** The signed version still in force while this row's successor is drafted or reviewed. */
   in_force?:{version:string;effectiveDate:string|null}|null;
   /** When the version in force is next due, after its last signed periodic review (server periodic-review.ts). */
@@ -30,5 +32,6 @@ export function adaptDoc(r:ServerDoc):QmsDoc {
     updatedAt:r.updated_at,authoringDocumentId:r.authoring_document_id??null,programId:r.metadata?.programId??null,
     inForce:r.in_force?{version:r.in_force.version,effectiveDate:r.in_force.effectiveDate??null}:null,lastReview:adaptPeriodicReview(r),
     signedReviewDate:r.next_review_date,reviewRoute:r.review_route??null,reviewRouteUnread:r.review_route_unread===true,
-    approvalSignature:r.approval_signature??null,retirementSignature:r.retirement_signature??null};
+    approvalSignature:r.approval_signature??null,retirementSignature:r.retirement_signature??null,
+    authorId:Number.isSafeInteger(r.author_id)?r.author_id as number:null};
 }

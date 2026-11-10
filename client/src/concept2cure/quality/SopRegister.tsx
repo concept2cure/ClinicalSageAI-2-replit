@@ -37,26 +37,16 @@
  * @module client/src/concept2cure/quality/SopRegister
  */
 import * as React from 'react';
-import { I } from '../v2/icons';
-import { registerRowMinWidth } from './registerGrid';
-import {
-  deriveReviewDue,
-  DOC_TYPE_LABEL,
-  STATUS_LABEL,
-  STATUS_TONE,
-  formatDate,
-  isReviewOverdue,
-  coverageKpiOf,
-} from './data';
+import { deriveReviewDue, coverageKpiOf } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { postQmsApproval } from './qmsApproval';
 import { QmsRouteForm, QmsRoutePanel } from './QmsReviewRoute';
-import { myTurn, qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
-import { approvalShare, routeHeadline } from '../v2/reviewRoute/routeRound';
+import { qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
+import { approvalShare } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
-import { reviewRowOf, todayUtc, type QmsDoc } from './data';
-import { PeriodicReviewPanel, RecordPeriodicReview, canRecordReview, lastReviewLine, useRecordPeriodicReview } from './PeriodicReview';
+import { todayUtc, type QmsDoc } from './data';
+import { PeriodicReviewPanel, RecordPeriodicReview, useRecordPeriodicReview } from './PeriodicReview';
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
@@ -68,10 +58,9 @@ import {useControlledDocumentTarget,ControlledDocumentTargetStatus} from './Cont
 
 import { PersonalTrainingReader } from './PersonalTrainingReader';
 import { personalTrainingScope } from './qmsPersonalTraining';
-import { TrainingCoverage, DocumentReadButton, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
-import { QMS_TRAINABLE_DOCUMENT_TYPES } from '@shared/qms/training';
+import { TrainingCoverage, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
-import { RegisterSignatureLine } from './RegisterSignatureLine';
+import { SopRegisterRow, GRID, ROW_MIN, type RegisterRowActions } from './SopRegisterRow';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -95,10 +84,6 @@ export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'in_review', label: 'Under review' },
   { id: 'draft', label: 'Draft' },
 ];
-const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
-/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
-   resolves to 0px and the row's last columns are clipped away. */
-const ROW_MIN = registerRowMinWidth(GRID);
 /** "8 controlled documents: 1 in force, 7 draft; none overdue for review." */
 function registerSentence(total: number, inForce: number, inReview: number, draft: number, overdue: number): string {
   const parts = [
@@ -113,51 +98,6 @@ function registerSentence(total: number, inForce: number, inReview: number, draf
 const NO_DOCS: QmsDoc[] = [];
 const NO_TEMPLATES: NonNullable<ReturnType<typeof useSopTemplates>['templates']> = [];
 const NO_TRAINING: NonNullable<ReturnType<typeof useTrainingCompliance>['rows']> = [];
-
-/**
- * The register's Next review: when the version in force is next due. After a
- * signed periodic review that is the reviewer's date, not the one the approval
- * signed, so the cell says which review set it (PeriodicReview.tsx).
- */
-function NextReviewCell({ doc: d, overdue }: { doc: QmsDoc; overdue: boolean }) {
-  const review = d.lastReview;
-  const title = review
-    ? `${lastReviewLine(review)} The date its approval signed: ${d.signedReviewDate ? formatDate(d.signedReviewDate) : 'none'}.`
-    : undefined;
-  return (
-    <div className="qms-cell" title={title}>
-      {d.nextReviewDate ? (
-        <span className={overdue ? 'qms-overdue' : undefined}>
-          {formatDate(d.nextReviewDate)}
-          {overdue && <> {I.flag}</>}
-        </span>
-      ) : (
-        '—'
-      )}
-      {review && (
-        <span className="qms-review-by" data-testid="qms-register-last-review">
-          {review.outcome === 'current' ? 'Reviewed' : 'Revision required,'} {formatDate(review.reviewedAt)}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/** Approve on the row: a document in review with no route keeps today's Approve; on a route, only its named approver at their turn (RR4). */
-function approvableBy(d: QmsDoc, meId: number | null): boolean {
-  const view = qmsRouteView(d);
-  if (view.kind === 'legacy') return true;
-  return myTurn(view, meId)?.role === 'approver';
-}
-
-/** The route's round in one line under the status, so the register shows where each document stands (RR4). */
-function RouteLine({ doc, meId }: { doc: QmsDoc; meId: number | null }) {
-  const view = qmsRouteView(doc);
-  if (view.kind === 'unread') return <span className="qms-route-line" role="alert">Reviewers could not be read.</span>;
-  if (view.kind === 'legacy') return <span className="qms-route-line">Not assigned to one person.</span>;
-  if (view.kind === 'none' || (view.kind === 'closed' && doc.status !== 'draft')) return null;
-  return <span className="qms-route-line" data-testid="qms-route-line">{routeHeadline(view.round, meId)}</span>;
-}
 
 export function SopRegister(props: SopRegisterProps) {
   const user = useAuthUser();
@@ -250,6 +190,23 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     setSetup(null);
     reg.refresh?.();
     setEditingId(id);
+  };
+  /* Each row's actions: the register's own handlers, unchanged (SopRegisterRow.tsx). */
+  const rowActions: RegisterRowActions = {
+    meId,
+    canRead: (d) => personalTrainingScope(user, d.id) !== null,
+    open: openDocument,
+    read: openReader,
+    assign: setAssigning,
+    sendForReview: setReviewing,
+    showRoute: setRoutePanel,
+    approve: (d) => { setEffectiveFrom(todayUtc()); setApproving(d); },
+    revise: (d) => (d.authoringDocumentId ? setRevising(d) : setSetup({ document: d, revision: true })),
+    recordReview: recordReview.start,
+    retire: setRetiring,
+    controlledCopy: (d) => void downloadControlledCopy(d),
+    history: setHistory,
+    ask: onAsk,
   };
   const sent = (d: QmsDoc) => {
     setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review on its route. The people named are told when it is their turn.` });
@@ -372,125 +329,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
               {filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'}
             </div>
           )}
-          {visible.map((d) => {
-            const overdue = isReviewOverdue(d.nextReviewDate);
-            return (
-              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
-                <button
-                  className="qms-cell qms-num mono"
-                  title="Open the controlled document"
-                  onClick={() => openDocument(d)}
-                >
-                  {d.docNumber}
-                </button>
-                <div className="qms-cell qms-title" title={d.title}>{d.title}<RegisterSignatureLine doc={d} /></div>
-                <div className="qms-cell">
-                  <span className="qms-tag">{DOC_TYPE_LABEL[d.docType] ?? d.docType}</span>
-                </div>
-                <div className="qms-cell mono">{d.version}</div>
-                <div className="qms-cell" title={d.inForce ? (d.status === 'effective'
-                  ? `Version ${d.inForce.version} stays in force until version ${d.version} is effective.`
-                  : `Version ${d.inForce.version} stays in force until version ${d.version} is approved.`) : undefined}>
-                  {d.inForce && (
-                    <span className="qms-pill" data-tone="effective" data-testid="qms-in-force">v{d.inForce.version} in force</span>
-                  )}{d.inForce ? ' ' : null}
-                  <span className="qms-pill" data-tone={STATUS_TONE[d.status]}>
-                    {STATUS_LABEL[d.status]}
-                  </span>
-                  <RouteLine doc={d} meId={meId} />
-                </div>
-                <div className="qms-cell">
-                  {formatDate(d.inForce?.effectiveDate ?? d.effectiveDate)}
-                  {d.status === 'effective' && d.effectiveDate && d.effectiveDate.slice(0, 10) > todayUtc() && (
-                    <span className="qms-route-line" data-testid="qms-pending-effective">v{d.version} from {d.effectiveDate.slice(0, 10)} (pending)</span>
-                  )}
-                </div>
-                <NextReviewCell doc={d} overdue={overdue} />
-                <div className="qms-cell qms-rowacts">
-                  <DocumentReadButton doc={d} disabled={!personalTrainingScope(user, d.id)} onOpen={openReader} />
-                  <TrainingChip doc={d} onOpen={setAssigning} />
-                  {d.status === 'draft' && (
-                    <button
-                      className="qms-chip"
-                      title="Send this draft for review, naming its QMS approver and any reviewers. Only a document under review can be approved."
-                      onClick={() => setReviewing(d)}
-                    >
-                      {I.arrowRight} Send for review
-                    </button>
-                  )}
-                  {d.status === 'in_review' && (
-                    <button
-                      className="qms-chip"
-                      data-testid="qms-route-open"
-                      title="Who is named on this document's review route, and what each has done"
-                      onClick={() => setRoutePanel(d)}
-                    >
-                      {I.eye} Review route
-                    </button>
-                  )}
-                  {d.status === 'in_review' && approvableBy(d, meId) && (
-                    <button
-                      className="qms-chip"
-                      title="Approve with your electronic signature (password and second factor). The author cannot approve their own document."
-                      onClick={() => { setEffectiveFrom(todayUtc()); setApproving(d); }}
-                    >
-                      {I.check} Approve
-                    </button>
-                  )}
-                  {['effective','in_review','superseded','retired'].includes(d.status) && (
-                    <>
-                      <button
-                        className="qms-chip"
-                        title="Open a controlled revision with a reason for change: a new draft needs independent review and approval"
-                        onClick={() => d.authoringDocumentId ? setRevising(d) : setSetup({ document: d, revision: true })}
-                      >
-                        {I.history} Revise
-                      </button>
-                      {canRecordReview(reviewRowOf(d)) && <button
-                        className="qms-chip"
-                        aria-label={`Record review: ${d.docNumber} ${d.title}`}
-                        title="Record a periodic review with your electronic signature. The document and its approval are not changed."
-                        onClick={(event) => recordReview.start(reviewRowOf(d), event.currentTarget)}
-                      >
-                        {I.check} Record review
-                      </button>}
-                      {d.status === 'effective' && <button
-                        className="qms-chip"
-                        title="Retire with your electronic signature (password and second factor). Retirement is the terminal state; the document leaves use for everyone trained on it."
-                        onClick={() => setRetiring(d)}
-                      >
-                        {I.archive} Retire
-                      </button>}
-                    </>
-                  )}
-                  {(d.status === 'effective' || d.inForce) && (
-                    <button
-                      className="qms-chip ghost"
-                      aria-label={`Download a controlled copy of ${d.docNumber}`}
-                      title="Download the version in force as a controlled copy: its approval signature and CONTROLLED COPY marking on every page. The issue is recorded."
-                      onClick={() => void downloadControlledCopy(d)}
-                    >
-                      {I.download} Controlled copy
-                    </button>
-                  )}
-                  <button
-                    className="qms-chip ghost"
-                    aria-label={`View version history of ${d.docNumber}`}
-                    title="Read retained document versions" onClick={() => setHistory(d)}
-                  >
-                    {I.history} History
-                  </button>
-                  <button
-                    className="qms-chip ghost"
-                    title="Ask AnA about this document" aria-label="Ask AnA about this document"
-                    onClick={() => onAsk(`Summarize ${d.docNumber} ${d.title} and tell me what it needs next.`)}
-                  >
-                    {I.sparkles}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
         </div>
       </section>
 
@@ -572,11 +411,4 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       )}
     </>
   );
-}
-
-/** Who must train on this document (P-49): offered on a document that carries read-and-understood, until it is retired. */
-function TrainingChip({ doc, onOpen }: { doc: QmsDoc; onOpen: (doc: QmsDoc) => void }) {
-  if (doc.status === 'retired' || !(QMS_TRAINABLE_DOCUMENT_TYPES as readonly string[]).includes(doc.docType)) return null;
-  return <button type="button" className="qms-chip" title="Who must read and acknowledge this document: job roles and named people"
-    onClick={() => onOpen(doc)}>{I.users} Training</button>;
 }
