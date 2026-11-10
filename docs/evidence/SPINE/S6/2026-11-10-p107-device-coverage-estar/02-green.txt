@@ -1,0 +1,92 @@
+# 02-green: the same three suites with the change (2026-11-10)
+
+## 1. Real PostgreSQL, through the real Vault read: tests/db/vault-estar-required-sections.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > every section: the Library's mark and blocker are the mapper's answer for this device 4014ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty 145ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > D6 risk management is required, as the mapper requires it of every 510(k) 166ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > performance testing is one requirement: animal testing on file, so bench testing does not block 142ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > a section no mapper slot takes keeps its pack's flag: A2 and B3 stay required 133ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a 510(k): the Library and the eSTAR mapper give one answer > follows the device: once the project answers that it is not sterile, D4 is not applicable 149ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > every section: the Library's mark and blocker are the mapper's answer 140ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section no mapper slot takes keeps its pack's flag: B2, C2 and C4 stay required 147ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > a De Novo whose device questions were never answered > a section that turns on an unanswered question is not decided, never optional, and names the question 121ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > pma:fda fda-pma-21cfr814-20-v1.1 157ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > mdr:ema eu-mdr-2017-745-annex-ii-v1.0 121ms
+ ✓ tests/db/vault-estar-required-sections.dbtest.ts > where no eSTAR applies, the pack's flag is still the rule > ivdr:ema eu-ivdr-2017-746-annex-ii-v1.0 139ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  07:04:44
+   Duration  7.64s (transform 3.19s, setup 81ms, import 202ms, tests 7.09s, environment 0ms)
+
+## 2. The route, mocked database: server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a sterile device: D4 is required, D6 is required, and the reasons are said 41ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > a device answered not sterile: D4 is not applicable and does not block 14ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > device questions never answered: D4 is not decided, not optional 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — a 510(k) is marked by its device > the device answers could not be read: the Vault read fails, and no mark is shown 5ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > pma:fda keeps its pack's flags, and the device answers are not read 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > mdr:ema keeps its pack's flags, and the device answers are not read 6ms
+ ✓ server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts > GET /api/c2c/project-vault/:id — where no eSTAR applies > k510:ema keeps its pack's flags, and the device answers are not read 4ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+
+## 3. The rule: server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > a 510(k) and a De Novo for FDA 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for pma:fda, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for mdr:ema, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for ivdr:ema, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for cer:ema, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for ind:fda, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for k510:ema, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for denovo:null, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarFilingType: which governed documents an eSTAR applies to > none for null:fda, where the pack's flag stays the rule 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > a project with a 510(k) or De Novo document: one read, whatever else it holds 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > a project with none: the answers are not read 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > never answered stays never answered 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > a read that fails is thrown on, not read as never answered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > the ivd view selects the ivd slot registry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > the device view selects the device slot registry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > the service view selects the device slot registry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > the null view selects the device slot registry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > estarDeviceAnswers: the device answers are read once, and only when a document needs them > the undefined view selects the device slot registry 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > device questions never answered: the conditional sections are not decided 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > every question answered no 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > every question answered yes 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to sterile makes exactly ["D4","D5"] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to softwareAiMl makes exactly ["E2"] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to cyberDevice makes exactly ["E3"] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to clinicalData makes exactly ["A8"] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to combinationProduct makes exactly [] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to implantable makes exactly [] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped 510(k) outline, by device > answering yes to cliaWaived makes exactly [] required 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped De Novo outline, by device > device questions never answered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the shipped De Novo outline, by device > a sterile cyber device with clinical data, nothing else 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the outline is read as readiness reads it > 510k: each section supplies the slots it supplies when authored alone 7ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the outline is read as readiness reads it > de_novo: each section supplies the slots it supplies when authored alone 3ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the outline is read as readiness reads it > the document type of a label is the one the matchers compare 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a slot several sections supply is one requirement > names the sections that supply it, and blocks each while all are empty 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a slot several sections supply is one requirement > content in any one of them clears the blocker on all 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a slot several sections supply is one requirement > a heading that holds sections is not offered as a choice, but its content counts, as in readiness 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > required of every filing 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > required by a device answer 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > not decided: the question has no answer, and that blocks until the section holds content 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > when applicable: a property the intake does not ask, reported and never blocking 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > not applicable: the answer was no, and content here would contradict it 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > optional: the answer was no, and content here contradicts nothing 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > the words a reader shows > no section whose question is unanswered reads optional or not applicable 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a section no slot takes keeps its pack's flag > mandatory in the pack: required, and blocks while empty 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a section no slot takes keeps its pack's flag > optional in the pack 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > a section no slot takes keeps its pack's flag > the mandatory sections still decided by the pack are these 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > slots the outline has no section for are reported, not dropped > 510(k): the three flag-decided slots, as the device answers them 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > slots the outline has no section for are reported, not dropped > an IVD 510(k): analytical performance is required and the generic outline has no section for it 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > slots the outline has no section for are reported, not dropped > De Novo: reprocessing and the Class III certification have no section 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > inputs > no sections: no answers 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > inputs > a section with no key is not answered; a section with no label is read by its key 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts > inputs > content is absent unless the reader says it is there 0ms
+ Test Files  1 passed (1)
+      Tests  52 passed (52)

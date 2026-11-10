@@ -81,6 +81,11 @@ import {
   type BinderNode, type PersonFolder, type ProgramFolderIndex,
 } from '../../services/vault/vault-folders.js';
 import { regionalSubtree } from '../../../shared/regulatory/filing-scope.js';
+import {
+  estarDeviceAnswers, estarFilingType, estarOutlineRequirements,
+  type EstarDeviceAnswers, type EstarOutlineSectionAnswer,
+} from '../../services/pathway-engines/estar/estar-outline-requirements.js';
+import { loadProgramDeviceFlags } from '../../services/pathway-engines/estar/program-device-flags.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
@@ -1086,24 +1091,36 @@ function liveSectionPresentation(
   };
 }
 
-/** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
-function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
+/**
+ * A rule-pack section spec merged with its live row → a VaultDoc leaf.
+ *
+ * `estar` is given for a filing an eSTAR applies to (510(k), De Novo): the
+ * mark, the reason and the blocker are then the one answer filing readiness
+ * also reads (estar-outline-requirements, P-107 item 3), decided by the device.
+ * For every other filing they are the pack's flag, as before.
+ */
+function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined, estar?: EstarOutlineSectionAnswer): VaultDoc {
   const hasContent = live?.has_content ?? false;
   const mandatory = spec.mandatory ?? false;
   const docTitle = doc.title || doc.doc_type || 'Document';
   const label = spec.label ?? spec.key;
+  const rule = estar ?? {
+    mark: mandatory ? 'Required' : 'Optional',
+    reason: mandatory ? 'mandatory section' : '',
+    blocker: mandatory && !hasContent ? 'Mandatory section — no content yet' : null,
+  };
   const leaf: VaultDoc = {
     id: `sec-${doc.id}-${spec.key}`,
     filingSectionKey: spec.key,
     num: spec.key,
     title: label,
-    type: mandatory ? 'Required' : 'Optional',
+    type: rule.mark,
     ...liveSectionPresentation(live, hasContent),
-    preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
+    preview: `${docTitle} · ${spec.key} · ${label}${rule.reason ? ` · ${rule.reason}` : ''}`,
   };
-  if (mandatory && !hasContent) {
+  if (rule.blocker) {
     leaf.blocker = true;
-    leaf.flag = 'Mandatory section — no content yet';
+    leaf.flag = rule.blocker;
   }
   return leaf;
 }
@@ -1129,11 +1146,13 @@ function docLevelLeaf(doc: DocRow, hasSections: boolean): VaultDoc {
   };
 }
 
-/** Build the nested VaultFolder/VaultDoc tree for one document's sections. */
+/** Build the nested VaultFolder/VaultDoc tree for one document's sections.
+ *  `estar`: each section's answer when an eSTAR applies to the filing (see leafDoc). */
 function sectionsToNodes(
   doc: DocRow,
   specs: SectionSpec[],
   live: Map<string, LiveSection>,
+  estar?: ReadonlyMap<string, EstarOutlineSectionAnswer>,
 ): Array<VaultFolder | VaultDoc> {
   const sorted = [...specs].sort(
     (a, b) => (a.path_order ?? 0) - (b.path_order ?? 0),
@@ -1156,7 +1175,7 @@ function sectionsToNodes(
         children: n.children.map(toNode),
       };
     }
-    return leafDoc(doc, n.spec, live.get(n.spec.key));
+    return leafDoc(doc, n.spec, live.get(n.spec.key), estar?.get(n.spec.key));
   };
   return roots.map(toNode);
 }
@@ -1165,14 +1184,35 @@ function sectionsToNodes(
  *  (F22) holds only its own part of the filing, Module 1 and 3.2.R, so its
  *  folder is that part of its pack; the home filing holds the rest. It was the
  *  whole market pack, which showed every Module 2-5 section of an MAA as
- *  "Mandatory section — no content yet" (F23 7/9). */
-function documentFolder(doc: DocRow, live: Map<string, LiveSection>): VaultFolder {
+ *  "Mandatory section — no content yet" (F23 7/9).
+ *
+ *  A 510(k) or De Novo is filed as an eSTAR, and which of its sections a device
+ *  owes turns on the device. For those two the whole outline is put to the one
+ *  rule (estar-outline-requirements, P-107 item 3) with the project's device
+ *  answers; `device` is not read for any other filing. */
+function documentFolder(
+  doc: DocRow,
+  live: Map<string, LiveSection>,
+  device: EstarDeviceAnswers,
+): VaultFolder {
   const pack = Array.isArray(doc.required_sections)
     ? (doc.required_sections as SectionSpec[])
     : [];
   const specs = doc.filing_scope === 'market' ? regionalSubtree<SectionSpec>(pack) : pack;
+  const estarType = estarFilingType(doc.doc_type, doc.agency);
+  const estar = estarType
+    ? estarOutlineRequirements({
+        type: estarType,
+        variant: device.variant,
+        flags: device.flags,
+        sections: pack.map((s) => ({
+          key: s.key, label: s.label, parentKey: s.parent_key, mandatory: s.mandatory,
+          hasContent: live.get(s.key)?.has_content,
+        })),
+      }).byKey
+    : undefined;
   const children = specs.length > 0
-    ? sectionsToNodes(doc, specs, live)
+    ? sectionsToNodes(doc, specs, live, estar)
     : [docLevelLeaf(doc, live.size > 0)];
   return {
     id: `vaultdoc-${doc.id}`,
@@ -1853,10 +1893,15 @@ export default function createProjectVaultRoutes(): Router {
           forDoc.set(r.section_key, r);
         }
       }
+      // The device answers a 510(k)'s or De Novo's required sections turn on
+      // (P-107 item 3): read once, and only when the project holds such a
+      // filing. A read that fails fails this read; it is never shown as
+      // "not answered".
+      const estarDevice = await estarDeviceAnswers(docsRes.rows as DocRow[], view, () => loadProgramDeviceFlags(orgId, id));
       for (const doc of docsRes.rows as DocRow[]) {
         // A document with no rows in the result has no live sections — the same
         // empty map the per-document query produced for it.
-        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>()));
+        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>(), estarDevice));
       }
 
       // 5) Derived branches: what the pipelines file for this program. ONE

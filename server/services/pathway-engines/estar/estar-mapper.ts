@@ -141,6 +141,22 @@ export interface EstarResult {
   };
 }
 
+/**
+ * A section's category or key as the `documentType` token the matchers below
+ * compare ('device_description', 'labeling', …): trimmed, lower-cased, each run
+ * of spaces, hyphens and slashes folded to one underscore.
+ *
+ * In one place so that a leaf built from an authored section
+ * (estar-content-leaves) and a leaf built from an outline section
+ * (estar-outline-requirements) carry the same token, and a section cannot be
+ * required by one reader and uncounted by the other.
+ */
+export function leafDocumentType(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const t = raw.trim().toLowerCase().replace(/[\s\-/]+/g, '_');
+  return t.length > 0 ? t : undefined;
+}
+
 type Matcher = (l: EstarInputLeaf) => boolean;
 const dt = (...t: string[]): Matcher => (l) => !!l.documentType && t.includes(l.documentType);
 const ti = (...n: string[]): Matcher => (l) => n.some((x) => l.title.toLowerCase().includes(x));
