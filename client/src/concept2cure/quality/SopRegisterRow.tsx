@@ -173,7 +173,10 @@ export function SopRegisterRow({ doc: d, actions: act }: { doc: QmsDoc; actions:
   const step = nextStepOf(d, act.meId);
   const primary = all.find((a) => a.key === step) ?? null;
   const rest = all.filter((a) => a !== primary);
-  const overdue = isReviewOverdue(d.nextReviewDate);
+  /* Only a document the review schedule can hold is overdue (the server's rule, mdx-qms.ts review-due): a retired
+     or superseded row past its signed date is not, and saying so contradicted the figure line (review C1-2). */
+  const canBeDue = d.status === 'effective' || d.status === 'in_review' || (d.status === 'draft' && !!d.inForce);
+  const overdue = canBeDue && isReviewOverdue(d.nextReviewDate);
   return (
     <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status} data-more={more || undefined}>
       <button type="button" className="qms-cell qms-num mono" title="Open the controlled document" onClick={() => act.open(d)}>
