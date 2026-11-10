@@ -1,0 +1,7 @@
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the log carries no AnA request of its own above its rows
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters by lifecycle stage with one segmented control whose items carry the stage and its count
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > keeps how a change is raised in a closed disclosure under the log, with no AnA button of its own
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > keeps each tab's own AnA request as a starter: Change control's procedure, a record register's read-out
+ Test Files  3 failed (3)
+      Tests  5 failed | 25 passed (30)

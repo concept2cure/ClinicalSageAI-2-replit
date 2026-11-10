@@ -6,6 +6,7 @@
  *
  * @module server/startup/operator-endpoints
  */
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 
 /**
@@ -22,12 +23,24 @@ import type { NextFunction, Request, Response } from 'express';
  * If METRICS_TOKEN is unset, only a platform administrator is accepted. The
  * token path is checked first so a scrape never pays the JWT-verification cost.
  */
+/**
+ * Compare a presented secret with the configured one in constant time (MR-03 OPS-29).
+ * `===` returns at the first differing character, so response timing leaked how much of a
+ * guess was right. Hashing first gives both buffers the same length, which timingSafeEqual
+ * requires, without revealing the secret's length either.
+ */
+function sameSecret(given: string, expected: string): boolean {
+  const a = createHash('sha256').update(given).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
+}
+
 export function requireMetricsAuth(req: Request, res: Response, next: NextFunction): void {
   const metricsToken = process.env.METRICS_TOKEN;
   if (metricsToken) {
     const auth = req.headers.authorization;
     const match = auth ? /^Bearer\s+(\S+)$/i.exec(auth) : null;
-    if (match && match[1] === metricsToken) {
+    if (match && sameSecret(match[1], metricsToken)) {
       return next();
     }
   }

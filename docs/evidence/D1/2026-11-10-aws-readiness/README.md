@@ -72,5 +72,19 @@ AWS account or credential in this session.**
    B4, NEW-3, retention, revoking the live credentials, and the apply.
 3. **Not done here (engineering):**
    - MR-03 Stage 6 (OPS-17);
-   - Stage 7's `/readyz` half (OPS-22);
+   - Stage 7 steps 2–4 and 8;
+   - wiring `READYZ_TOKEN` into the task and the smoke test;
    - the switch of the common rule set to block, two weeks after the first apply.
+
+## Also landed: MR-03 Stage 7 steps 5 and 6
+
+| Finding | Commit | Red | Green |
+|---|---|---|---|
+| OPS-22, public `/readyz` expensive and chatty | `5e8a7317ce`, then the I/O-only cache in the next commit | 5 hits ran 5 queries, 10 concurrent ran 10, and the detail went to everyone (`readyz-red.txt`: 7 failing) | 81/81 across the readyz, diagnostics and AnA-readiness suites (`readyz-green.txt`) |
+| OPS-29, metrics token compared with `===` | `8a5eb16b27` | the source check fails on `===` (`metrics-token-red.txt`) | 11/11 (`metrics-token-green.txt`) |
+
+The first version cached the whole verdict, which also delayed in-memory state changes by up to 5 s. Two existing
+suites showed it: the scanner's 30 s boundary and an AnA lane recovering. So only the round trips are cached: the
+database query and the Vault-store probe. Schema, AnA and the other in-memory state are read on every hit, and the
+scanner keeps its own 30 s ping cache. Both suites pass unmodified. The verdict and its access rule live in
+`server/startup/readyz.ts`, split out of `inline-endpoints.ts`, which would otherwise exceed the file's line limit.
