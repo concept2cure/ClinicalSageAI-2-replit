@@ -71,6 +71,23 @@ c2c_install_postgres() {
   c2c_pgvector_present || { c2c_log "BLOCKED: pgvector is not installed for PostgreSQL $C2C_PG_VERSION."; return 1; }
 }
 
+# The fonts report PDFs embed (server/services/report-os/pdf/writer.ts): Noto, from the OS packages the production
+# image (Dockerfile.optimized) and CI install. Without them every PDF export in Reporting, a run's or a bundle's,
+# answers 503 REPORT_PDF_FONTS_UNAVAILABLE (found on the 2026-11-10 showcase sweep). The app runs without them, so a
+# failed install is logged and never blocks the start. The writer reads the font files at export, so no restart.
+C2C_REPORT_FONT="${C2C_REPORT_FONT:-/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf}"
+c2c_install_report_fonts() {
+  [[ -f "$C2C_REPORT_FONT" ]] && return 0
+  export DEBIAN_FRONTEND=noninteractive
+  c2c_log "Installing the fonts report PDFs embed (fonts-noto-core, fonts-noto-cjk)."
+  if c2c_sudo apt-get update -qq && c2c_sudo apt-get install -y -qq fonts-noto-core fonts-noto-cjk >/dev/null && [[ -f "$C2C_REPORT_FONT" ]]; then
+    c2c_log "Report PDF fonts installed."
+  else
+    c2c_log "The report PDF fonts could not be installed; Reporting's PDF exports answer 'fonts are unavailable' until they are. Everything else starts."
+  fi
+  return 0
+}
+
 # Start (creating if needed) the cluster, listening on localhost only. The
 # packaged pg_hba.conf (peer for the postgres OS user, scram-sha-256 on
 # 127.0.0.1) is used unchanged.
@@ -336,6 +353,7 @@ c2c_post_create_main() {
   npm run codespaces:doctor:test
 
   c2c_install_postgres
+  c2c_install_report_fonts
   c2c_start_postgres
   c2c_write_state
   c2c_ensure_database
