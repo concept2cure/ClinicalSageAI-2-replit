@@ -358,9 +358,13 @@ describe('Quality records', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'CAPA-007' }));
     expect(screen.getByText('Replace the HPLC column')).toBeTruthy();
-    const moves = ['Done', 'Blocked', 'Cancelled'].map((n) => screen.getByRole('button', { name: n }));
-    expect(moves).toHaveLength(3);
-    expect(screen.queryByRole('button', { name: 'Planned' })).toBeNull();
+    // C13: the action items are a table, and each move is named by the act on its action.
+    const items = screen.getByRole('table', { name: 'Action items of CAPA-007' });
+    expect(within(items).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['#', 'Type', 'Action', 'Owner · due', 'State', 'Moves']);
+    const moves = ['Mark done: action 1', 'Mark blocked: action 1', 'Cancel action: action 1'].map((n) => within(items).getByRole('button', { name: n }));
+    expect(moves.map((b) => b.textContent)).toEqual(['Mark done', 'Mark blocked', 'Cancel action']);
+    expect(screen.queryByRole('button', { name: /^(Done|Blocked|Cancelled|Planned)$/ })).toBeNull();
+    expect(document.querySelector('.qcc-actions, .qcc-action, .qms-chip')).toBeNull();
 
     fireEvent.click(moves[0]);
     fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Evidence of completion/), { target: { value: '   ' } });
@@ -387,7 +391,8 @@ describe('Quality records', () => {
     expect(screen.getByText('1 open · 0 closed')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'H2-2026' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.getByRole('table', { name: 'Action items of the H2-2026 management review' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Close action 1' }));
     fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/How it was closed/), { target: { value: 'short' } });
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close action' }));
     await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/closure note of at least/)).toBeTruthy());
