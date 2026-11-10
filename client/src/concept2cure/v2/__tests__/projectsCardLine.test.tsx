@@ -37,6 +37,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 import * as filters from '../surfaces/ProjectPortfolioFilters';
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
@@ -123,13 +126,15 @@ describe('the card’s one line says what the project is, from what is stated', 
     expect(foot('Project older')).not.toMatch(/Due/);
   });
 
-  it('carries no readiness bar, no chip and no readiness line', async () => {
+  /* P-122 (2026-11-10): the readiness line is back, as words; the bar and the
+     chips stay off (p122ProjectsFiguresByDefault.test.tsx). */
+  it('carries no readiness bar and no chip; its readiness is a line of words', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(card('Project described')).toBeTruthy());
     for (const c of Array.from(document.querySelectorAll('.pj-cards > .pj-card'))) {
       expect(c.querySelector('.ph-bar-track')).toBeNull();
       expect(c.querySelector('.rd-chip')).toBeNull();
-      expect(c.textContent).not.toMatch(/readiness/i);
+      expect(c.querySelector('.pj-card-facts')?.textContent).toMatch(/^Dossier readiness /);
     }
   });
 });
@@ -160,10 +165,12 @@ describe('the Projects header holds the title and one primary action', () => {
 });
 
 describe('the list view holds what the cards dropped, as text', () => {
-  it('names the client type in words and puts the portfolio figures after the table', async () => {
+  /* Was "puts the portfolio figures after the table": P-122 puts them above the
+     projects in both views. */
+  it('names the client type in words, with the portfolio figures above the table', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(card('Project described')).toBeTruthy());
-    expect(document.querySelector('.pj-summary')).toBeNull();
+    expect(document.querySelector('.pj-summary')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
     await waitFor(() => expect(document.querySelector('.ctable')).toBeTruthy());
     expect(screen.getByRole('button', { name: 'List' }).getAttribute('aria-pressed')).toBe('true');
@@ -172,8 +179,8 @@ describe('the list view holds what the cards dropped, as text', () => {
     const table = document.querySelector('.ctable') as HTMLElement;
     const summary = document.querySelector('.pj-summary') as HTMLElement;
     expect(summary).toBeTruthy();
-    // The figures are the table's footing: after it in document order.
-    expect(table.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The figures head the projects: before the table in document order.
+    expect(summary.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(document.querySelector('.ctable .rd-chip')).toBeNull();
   });
 });

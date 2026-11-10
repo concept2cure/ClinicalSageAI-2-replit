@@ -8,7 +8,7 @@ import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
 import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
-import { PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, countFloor, daysUntil, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder } from './ProjectPortfolioFilters';
+import { CardFacts, PortfolioFigures, PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder, stated, useRememberedView } from './ProjectPortfolioFilters';
 import { NewProjectObjectiveField, NewProjectObjectiveReview } from './ProjectObjective';
 import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
@@ -29,7 +29,7 @@ import {
 import type { SurfaceViewProps } from '../surfaceViews';
 import { openProjectHome, publishShellProject } from '../shellProject';
 import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
-import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
+import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
   notifySurfaceActionReady,
@@ -1235,31 +1235,10 @@ interface ProjPortfolioEntry {
   program_type?: string | null;
 }
 
-/**
- * The portfolio's mean dossier readiness, over the programs measured, and how
- * many it covers when that is not all of them (`cover`, '' until the read has
- * settled). A mean over no programmes has no value: `kv` covers a read that has
- * not settled, and this covers one that settled with nothing measured, where a
- * `|| 1` divisor once produced a confident "0%".
- */
-function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean: string; cover: string } {
-  const measured = projects.filter((p): p is ProjPortfolioEntry & { readiness: number } => isMeasuredReadiness(p.readiness, p.readinessState));
-  const missing = projects.some(project => project.readinessState === 'unavailable') ? 'unavailable' : 'Not recorded';
-  const mean = measured.length ? Math.round(measured.reduce((s, p) => s + p.readiness, 0) / measured.length) + '%' : missing;
-  const partial = settled && measured.length > 0 && measured.length < projects.length;
-  return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
-}
-
 /** The list view's columns: project, client type, stage, dossier readiness,
  *  status, lead, target date. The list is the dense view: it holds, as text,
  *  what the cards leave out (D2 §1.4 item 6). */
 const LIST_COLUMNS = '1.8fr 150px 110px 130px 100px 120px 120px';
-
-/** A stated text value, or null for none: blank, or the server's '—'. */
-function stated(value: string | null | undefined): string | null {
-  const v = value?.trim();
-  return v && v !== '—' ? v : null;
-}
 
 /**
  * The card's one line: what the project is (D2 §1.4 item 5; ONE_DESIGN_PLAN §2
@@ -1311,7 +1290,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [pathway, setPathway] = useState('all');
   const [status, setStatus] = useState('all');
   const [clientWorkspaceId, setClientWorkspaceId] = useState('all');
-  const [view, setView] = useState('grid');
+  const [view, setView] = useRememberedView();
   const [q, setQ] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardContext, setWizardContext] = useState<WizardScreenContext | null>(null);
@@ -1352,35 +1331,12 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         p.title.toLowerCase().includes(needle) ||
         p.code.toLowerCase().includes(needle)),
   );
-  /* Gated on the read, not just on the row count.
-     `projects` is empty while the portfolio read is in flight AND when it has
-     failed, so every figure here resolved to a settled 0 — and the `|| 1`
-     divisor turned what would at least have been a visible NaN into a clean
-     "0%", a portfolio-mean readiness computed over no programs. A director
-     reading the header learned they run nothing and have nothing blocked.
-     `settled` also gates the search placeholder's count and the paged note. */
+  /* Gated on the read: `projects` is empty while the read is in flight AND when it
+     failed. `settled` gates the figures, the search placeholder's count and the
+     paged note. The figures are the server's counts (PortfolioFigures, P-122):
+     no "Blocked" figure (nothing writes that status or computes a blocker), and
+     no average readiness (the server sends none; the page mean was the browser's). */
   const settled = !live.loading && !live.error;
-  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, settled);
-  /* No "Blocked" figure. A program's status is only ever written as active or
-     archived (POST and the close-out routes in server/routes/c2c/projects.ts),
-     and the list computes no blocker, so the count could only read 0: an
-     all-clear nothing had assessed. Readiness is assessed per program, on
-     Project home and in Submission Center. */
-  const filingSoon = projects.filter(p => {
-    const d = daysUntil(p.due_date);
-    return d != null && d >= 0 && d < 60;
-  }).length;
-  const health = useMemo(() => {
-    const kv = (value: string) => (live.loading || live.error ? '—' : value);
-    const active = kv(counts ? String(counts.total) : countFloor(projects.length, truncated));
-    return [
-    // "1 active project", never "1 active projects" (2026-10-31).
-    { l: active === '1' ? 'Active project' : 'Active projects', n: active, m: 'matching the selected server filters', t: '' },
-    // A mean over some of the programs says how many it covers (`q`).
-    { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
-    { l: 'Filing within 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
-    ];
-  }, [live.loading, live.error, counts, projects.length, truncated, meanReadiness, measuredCover, filingSoon]);
   /* The status filter offers the statuses the portfolio actually holds. It
      offered Blocked and Complete, which nothing writes, so both always showed
      an empty list. One status (or none) needs no filter. */
@@ -1441,8 +1397,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         `Projects portfolio: ${counts?.total ?? projects.length} regulatory project(s)` +
         (truncated ? ` — showing the first ${projects.length} only; more exist. Readiness, status and search cover this page${counts ? '; total and filing counts cover all matching projects' : '; counts are page floors'}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
-        `. Average readiness ${health[1].n}${measuredCover ? ` (${measuredCover})` : ''}; ${health[2].n} with a target filing date in the next 60 days. ` +
-        'Blockers are not assessed on this list; each project\'s readiness is on its project home. ' +
+        (counts ? `; ${counts.filingWithin60Days} with a target filing date in the next 60 days, as the server counted. ` : '. The portfolio figures could not be read. ') +
+        'No portfolio average readiness is computed; each project\'s dossier readiness is listed. Blockers are not assessed on this list. ' +
         `Shown as a ${view}.`,
       facts: {
         totalPrograms: counts?.total ?? projects.length,
@@ -1457,8 +1413,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         statusFilter: status,
         ...clientContext.facts,
         searchQuery: q.trim() || null,
-        averageReadiness: health[1].n,
-        filingWithin60Days: health[2].n,
+        filingWithin60Days: counts?.filingWithin60Days ?? null,
         blockersAssessed: false,
         // Enough to name a programme back to the user, not the whole row set.
         // `p.lead` is deliberately NOT published: the server projects it as
@@ -1475,11 +1430,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Open a project to enter its project home',
         'Filter the portfolio by client type (medical device & IVD, biotech, pharma), pathway or client; filter the loaded page by status',
         'Search the portfolio by project title or code',
-        'Switch between the grid and list views; the list shows readiness, status, lead and the portfolio figures',
+        'Switch between the grid and list views; both show the portfolio figures and each project’s readiness, stage, lead and status',
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, wizardContext, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, health, measuredCover, truncated, counts]);
+  }, [wizardOpen, wizardContext, live.loading, live.error, projects, list, ws, pathway, status, clientContext, q, needle, view, truncated, counts]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
@@ -1627,6 +1582,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
       </div>
 
+      <PortfolioFigures settled={settled} counts={counts} />
       {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">
@@ -1690,10 +1646,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           }
         />
       ) : view === 'grid' ? (
-        /* A calm card: the name, one line of what the project is, and its code
-           and last update (the device portfolio's "last activity", folded into
-           Projects: D2, fold F6, 2026-10-30). Readiness, client type, stage and
-           lead are the list view's columns (D2 §1.5). */
+        /* A calm card: the name, one line of what the project is, its plan line, its
+           readiness, stage, lead and status (P-122 §3.2: D2-1 had left these to the
+           list), and its code and last update (the device portfolio's "last
+           activity", folded into Projects: D2, fold F6, 2026-10-30). */
         <div className="pj-cards">
           <PortfolioLinesNote error={plans.error} />
           {list.map(p => {
@@ -1703,26 +1659,26 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
                 <div className="pj-card-t">{p.title}</div>
                 {line && <div className="pj-card-m">{line}</div>}
                 <PortfolioLine line={plans.lines[p.id]} />
+                <CardFacts p={p} />
                 <div className="pj-card-r">
                   <span>{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</span>
                   {p.due_date && <span>Due {p.due}</span>}
                 </div>
-                {/* Active is the default and is not stated. The list assesses no
-                    blockers, so a status of blocked (NM-512 in the QA
-                    organisation, QA 2026-10-08 j1) says in words that no cause is
-                    recorded: a red chip alone read as a finding with its cause
-                    withheld. */}
+                {/* The status is a fact above. The list assesses no blockers, so a
+                    status of blocked (NM-512 in the QA organisation, QA 2026-10-08 j1)
+                    says in words that no cause is recorded: a red chip alone read as a
+                    finding with its cause withheld. */}
                 {p.status === 'blocked' && (
                   <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} Blocked · {BLOCKED_NO_CAUSE}</span>
-                )}
-                {p.status && p.status !== 'active' && p.status !== 'blocked' && (
-                  <span className="pj-card-foot">{enumWords(p.status)}</span>
                 )}
               </button>
             );
           })}
         </div>
       ) : (
+        <>
+        {/* The plans' failed read is said in the list too, which a remembered list view now opens on (P-122). */}
+        <PortfolioLinesNote error={plans.error} />
         <div className="ctable">
           {/* Status, where a Blocker column read "—" on every row: the list
               assesses no blockers (2026-10-31). The figure is text under the
@@ -1751,21 +1707,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             </button>
           ))}
         </div>
+        </>
       )}
 
-      {/* The portfolio figures are the list's footing, not the page's chrome
-          (plan §2: no stat strip). `kv()` still resolves every one of them to
-          an em dash while the read is in flight or has failed, so a failed
-          portfolio read cannot render as a real "0%" portfolio mean. */}
-      {view === 'list' && (
-        <div className="pj-summary">
-          {health.map((h, i) => (
-            <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
-              <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
-            </span>
-          ))}
-        </div>
-      )}
       <PortfolioPagedNote paged={truncated} settled={settled} count={projects.length} scopedCounts={counts !== null} />
     </div>
   );

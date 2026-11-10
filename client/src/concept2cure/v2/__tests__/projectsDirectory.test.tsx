@@ -21,9 +21,12 @@
  *    one character at a time. Search covers title and code only — the same
  *    reason the surface's AnA publisher drops the field (anaSeesScreens).
  *
- * D2-1 (2026-11-01): the summary line is the list view's footing, not the
- * page's chrome (.design/claude-convergence/D2.md §1.4 items 2 and 7), so the
- * figure checks switch to the list first. The guard is the same `kv()`.
+ * D2-1 (2026-11-01) made the summary line the list view's footing. P-122
+ * (2026-11-10) put it back above the projects in both views, with the server's
+ * counts only: no figure while the read is in flight or failed, and no average
+ * readiness, which was the browser's mean over the page
+ * (p122ProjectsFiguresByDefault.test.tsx). The guard against a confident figure
+ * over no read is pinned here, forced as before.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,6 +47,9 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
+
+/* Projects remembers the grid or list choice (P-122): each case starts from the default. */
+beforeEach(() => { try { window.localStorage.removeItem('c2c-v2-projects-view'); } catch { /* none */ } });
 
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
 const fail = (status: number) =>
@@ -77,14 +83,13 @@ describe('Projects — the summary line stays honest when the read fails', () =>
     render(<Projects {...props()} />);
 
     await waitFor(() => expect(screen.getByText(/Couldn.t load the project portfolio/i)).toBeTruthy());
-    expect(document.querySelector('.pj-summary'), 'the figures are the list view’s footing (D2-1)').toBeNull();
+    /* The specific regression: a figure over a failed read rendering as a real,
+       confident one ("0 active projects", "0%"). The failure is said once, by the
+       page; the figures line says nothing in either view. */
+    expect(document.querySelector('.pj-summary')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    expect(document.querySelector('.pj-summary')).toBeTruthy();
-
-    /* The specific regression: a portfolio mean over zero programmes rendering
-       as a real, confident figure. Not "0%" and not any other percentage. */
-    expect(document.body.textContent).not.toMatch(/\d+%/);
-    expect(document.body.textContent).toContain('—');
+    expect(document.querySelector('.pj-summary')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\d+%|\b0 active/);
   });
 
   it('renders no percentage while the read is still in flight', async () => {
@@ -99,26 +104,28 @@ describe('Projects — the summary line stays honest when the read fails', () =>
     });
     render(<Projects {...props()} />);
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    expect(document.querySelector('.pj-summary')?.textContent).toContain('—');
+    expect(document.querySelector('.pj-summary')).toBeNull();
 
     expect(document.body.textContent).not.toMatch(/\d+%/);
     expect(screen.getByText(/Loading projects/i)).toBeTruthy();
 
     release(null);
-    await waitFor(() => expect(document.body.textContent).toContain('60%'));
+    // Settled, the rows' own figures show (each project's readiness in its row).
+    await waitFor(() => expect(document.body.textContent).toContain('80%'));
   });
 
-  it('does render the real figures once the read succeeds', async () => {
+  it('does render the server’s figures once the read succeeds', async () => {
+    const counts = { total: 2, filingWithin60Days: 0, byWorkstream: { Pharma: 1, Biotech: 1 }, byPathway: { other: 2 } };
     apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === '/api/c2c/projects' ? ok({ data: [ZX, KP] }) : ok({ data: [] }),
+      url === '/api/c2c/projects' ? ok({ data: [ZX, KP], meta: { counts } }) : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
     await screen.findByText('Companion assay');
-    fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    /* (40 + 80) / 2 = 60. Proves the em dashes above are the guard firing and
-       not the figures having been removed by the redesign. */
-    await waitFor(() => expect(document.querySelector('.pj-summary')?.textContent).toContain('60%'));
-    expect(document.body.textContent).toContain('2');
+    /* Proves the empty line above is the guard firing and not the figures having
+       been removed: the same line, settled, says the server's counts. */
+    await waitFor(() => expect(document.querySelector('.pj-summary')?.textContent).toContain('2 active projects'));
+    expect(document.querySelector('.pj-summary')?.textContent).toContain('0 filings due within 60 days');
+    expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/%/);
   });
 });
 
