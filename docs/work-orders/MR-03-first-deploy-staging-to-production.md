@@ -58,6 +58,87 @@ C2C runs in two AWS environments the founder controls, staging and production, e
 - One vCPU carries Node, clamd, LibreOffice, OCR and veraPDF with no cap on converters. One large submission package can fail the container health check, and ECS then replaces the task mid-job and drops every session on it (OPS-13).
 - A GxP buyer's computer-system-validation reviewer asks two questions: is what runs in production what you tested, and how do you roll back? Today production rebuilds from source with unpinned apt packages, there is no staging, and rollback is a comment (OPS-10, OPS-23).
 
+## Re-confirmed at head, 2026-11-10 (session `…01QoxbLaF`): what stands between this repository and AWS
+
+The table below is from `94b4f9238`. Since then Stages 1–4 have landed (`docs/work-orders/README.md`, MR-03 rows). Measured
+today, at `59dc4f9f58` plus the WAF change below; evidence `docs/evidence/D1/2026-11-10-aws-readiness/`.
+
+**Green, measured**
+- **Terraform:** 121 offline tests pass (`stack` 84, `cloudfront` 15, `github-deploy-roles` 10, `compliance-evidence` 5, `alb` 4,
+  `vpc-secure` 3). Every root validates, and both environments validate with `-lockfile=readonly`. Terraform 1.11.4, `aws`
+  5.100.0, `random` 3.6.3, from a checksum-verified local mirror.
+- **The deploy's own preflight** (`scripts/ops/terraform-preflight-proof.mjs`) holds, including:
+  - the API task refuses `DATABASE_URL` and `APP_SERVICE_DB_PASSWORD` (OPS-16, done);
+  - the pinned revisions;
+  - the 54 job×action IAM pairs.
+- **The deploy contracts** `deploy-refuses-unproven-sha`, `deploy-staging-promote` and `deploy-rollback` pass. So Stage 4's
+  staging target, promote-by-digest and rollback are on trunk.
+- **CI on GitHub's runners** (run `42538903005`): Production Image Boot, Blank DB Provisioning + Deploy Migration,
+  Production Boot Smoke, Security Scan, and the Codespace job all pass. The Codespace job runs post-create and post-start in
+  the devcontainer image.
+
+**Landed today: P-11, the WAF.** `terraform/modules/cloudfront` now carries an `aws_wafv2_web_acl` on the distribution:
+- IP reputation and known bad inputs block;
+- a per-IP rate rule blocks (2000 per 5 minutes);
+- the common rule set counts, with `waf_common_rule_set_action = "block"` after two weeks;
+- its 8 KB body-size rule counts in both modes, because it would refuse uploads, AnA turns and editor saves;
+- any region other than `us-east-1` is refused.
+
+The `#trivy:ignore:AWS-0011` exception is deleted. Red first: 11 passed, 1 failed. Then green: 15 of 15. Trivy over
+`terraform/` before and after: AWS-0011 gone, nothing new.
+
+**Blocks a deploy today, in order**
+1. **Trunk CI is red, and `deploy-aws.yml` deploys only a SHA whose whole `ci.yml` run concluded success**
+   (`ci-verdict`, `deploy-aws.yml:179`).
+   - Red on the latest finished run: Secret scan (8 findings; 3 credentials recorded as live in `.gitleaksignore`), Lint (a
+     proof tier and several guardrails), Integration Tests, and Test (447 of 79,560 failing across all 8 shards).
+   - A run also takes about a day from push to verdict.
+   - The MR-02 lanes own this (Stage 1 `…01471vSK`, Stage 3 `…01J935DZ`).
+   - No deploy, staging or production, can run until one trunk SHA is green.
+2. **The founder's inputs and decisions.** Nothing below can be done from this repository; the checklist follows.
+
+**Founder checklist for the first apply (Stage 5, in order)**
+1. **Decide:**
+   - the region: `us-east-1` is hard-coded in `deploy-aws.yml` and `provision-database.yml` (F-25);
+   - separate staging and production AWS accounts (F-4);
+   - the domain;
+   - the error-reporting route: Sentry under a DPA, or CloudWatch only (NEW-3);
+   - how long deleted Vault versions are kept;
+   - Anthropic's entry in `ai_provider_placement_approvals` (B4). It is deliberately not defaulted; record the value and
+     date in the D1 evidence.
+2. **Revoke and rotate** the three credentials `.gitleaksignore` records as live (security plan P0-17). They stay readable
+   in history until revoked.
+3. **Per account:**
+   - certificates: an ACM certificate for the ALB in the region, and one for CloudFront in `us-east-1`, both covering the
+     domain;
+   - SES (or another SMTP provider on port 465): production access, with DKIM, SPF and DMARC on the sending domain;
+   - an Anthropic API key under the BAA.
+4. **Bootstrap** each account's state bucket: `terraform -chdir=terraform/bootstrap init && … apply`. Commit each root's
+   `backend.hcl` naming it (README step 1).
+5. **Fill** `terraform/environments/<env>/terraform.tfvars` from its `.example` (never committed), and export every `TF_VAR_`
+   secret the example lists. Eight are `openssl rand -hex 32`, and the noted pairs must differ. The others are
+   `smtp_user`/`smtp_pass`, `anthropic_api_key`, `cloudfront_origin_secret` and `ai_provider_placement_approvals`.
+6. **Staging first:**
+   - `terraform plan -out tfplan`, then `apply`, then a second `plan` that must say "No changes";
+   - point DNS at `cloudfront_domain`;
+   - set the GitHub `staging` environment's `AWS_DEPLOY_ROLE_ARN`, `AWS_BUILD_ROLE_ARN` and `CLOUDFRONT_DISTRIBUTION_ID`,
+     and the variable `FRONTEND_BUCKET`, from `terraform output`;
+   - dispatch `provision-database.yml` with its confirmation phrase;
+   - tag a green SHA `rc-<x.y.z>`.
+7. **Production:** the same, with required reviewers on the GitHub `production` environment. Then tag the same SHA
+   `v<x.y.z>`, which promotes staging's digest and builds nothing.
+8. **After the first boot:**
+   - one `POST /api/setup/initialize` with the `first_run_setup` output's token;
+   - `npm run pilot:verify-otp -- <real inbox>`;
+   - sign in through the CloudFront alias;
+   - file the apply logs, both no-change plans and the run URLs under `docs/evidence/D1/<date>-first-apply/`.
+
+**Still open in this order, engineering, no founder input:**
+- Stage 6 (OPS-17: long submission work behind the 60 s edge; SSE heartbeats).
+- Stage 7's code half (OPS-22: an uncached `/readyz` before rate limiting). Its Redis and Sentry halves wait for NEW-2 and
+  NEW-3.
+- Stage 8 (OPS-12: a second NAT and interface endpoints) is a founder budget decision.
+
 ## State at head
 
 | Finding | Status at head | Severity (pilot) | Tester impact | Evidence at head |
