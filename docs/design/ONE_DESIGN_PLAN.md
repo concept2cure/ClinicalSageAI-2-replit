@@ -1428,7 +1428,9 @@ Vault features yet … this is a multi tenant environment").
   and afterwards the server narrows from the verified sponsor. Red first; walked. Found walking: the list's `ws` is
   the segment, not the sponsor.
 - **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
-- **Open, not held:** device coverage converged onto the eSTAR mapper; a PDF rendition per version.
+- **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
+  with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
+- **Open, not held:** device coverage converged onto the eSTAR mapper; renditions of formats other than Word.
 
 **Open, for the next session:**
 
