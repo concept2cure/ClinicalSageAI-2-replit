@@ -214,7 +214,37 @@ async function ensureReview({ api, run, tally, signer }, rec) {
 }
 
 /** program: { id } of LMN-201. ctx: { api, run, tally, identity, signer? }. */
+/**
+ * Correction, 2026-11-10. For about an hour the shared protocol seed (biotech-protocol.mjs ensureComponents) wrote
+ * the psoriasis study's eligibility criteria onto this protocol: its criteria line read the biotech content, not the
+ * calling pack's. The seed is fixed. A copy already seeded that way cannot be repaired, because the protocol
+ * workspace has no route that removes a criterion. So that copy is renamed "SET ASIDE" through the cover-page route
+ * (PATCH /api/protocol-development/documents/:id), and the protocol is seeded again under its own title. Nothing is
+ * deleted, and the set-aside copy says what it is. With no such copy this does nothing.
+ */
+const SET_ASIDE = `SET ASIDE, do not use: an earlier seed copy of protocol ${STUDY} with another study's eligibility criteria (SYNTHETIC)`;
+
+async function setAsideMisseededCopy({ api, run, tally }) {
+  await run.step('Protocol development: a copy seeded with another study\'s eligibility criteria is set aside', async () => {
+    const list = asArray(must(await api('GET', '/api/protocol-development/documents?kind=clinical'), 200, 'list protocol documents'), 'data', 'documents');
+    const doc = find(list, PROTOCOL.name);
+    if (!doc) return 'none';
+    const view = must(await api('GET', `/api/protocol-development/documents/${doc.id}`), 200, 'read protocol document');
+    const own = new Set([...PROTOCOL.inclusion, ...PROTOCOL.exclusion]);
+    const foreign = asArray(view, 'eligibility', 'eligibilityCriteria').filter((c) => !own.has(c.criterion));
+    if (!foreign.length) return 'none';
+    must(await api('PATCH', `/api/protocol-development/documents/${doc.id}`, {
+      title: T(SET_ASIDE), protocolNumber: `${STUDY}-SET-ASIDE`,
+      reason: `Demo seed correction: this copy holds ${foreign.length} eligibility criteria from another demo study, and a criterion cannot be removed. It is set aside and the protocol is seeded again.`,
+    }), [200, 201], 'set the mis-seeded protocol copy aside');
+    tally.created('protocol-set-aside');
+    run.note(`Protocol #${doc.id} was seeded with ${foreign.length} eligibility criteria from another demo study (a seed defect, fixed 2026-11-10). It is renamed "SET ASIDE" and a correct copy is seeded; the product has no route to remove it.`);
+    return `#${doc.id} set aside (${foreign.length} foreign criteria)`;
+  });
+}
+
 export async function ensureLumenProtocol(ctx, program) {
+  await setAsideMisseededCopy(ctx);
   const rec = await ensureProtocol(ctx, program, SPEC);
   await bindDesign(ctx, program, rec);
   await ensureDeviations(ctx, rec);
