@@ -18,9 +18,8 @@
  */
 
 import * as React from 'react';
-import { I } from '../v2/icons';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
-import { registerRowMinWidth } from './registerGrid';
+import { RegisterBody, RegisterTable } from './SopRegisterRow';
 import { listOf } from './qmsList';
 import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
@@ -68,8 +67,6 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       },
     }]
     : config.columns;
-  const grid = config.grid + (config.capaSourceKind ? ' 120px' : '') + ' 230px';
-  const rowMin = registerRowMinWidth(grid);
 
   const headId = React.useId();
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
@@ -148,37 +145,49 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         )}
         {!failed && !loaded && <EmptyState title="Loading the register…" busy />}
         {loaded && rows.length === 0 && <EmptyState title={`No ${config.noun[1]} recorded yet.`} />}
-        {loaded && rows.length > 0 && <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-            {columns.map((c) => <div key={c.label}>{c.label}</div>)}
-            <div />
-          </div>
-          {loaded && rows.map((r) => (
-            <React.Fragment key={r.id}>
-            <div className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
-              {columns.map((c, i) => (i === 0 && config.detail ? (
-                <button key={c.label} className="qms-cell qms-num" aria-expanded={openId === r.id} title={config.detail.label}
-                  onClick={() => setOpenId(openId === r.id ? null : r.id)}>
-                  {c.cell(r, ctx)}
+        {/* D0's table (C11), as the SOP register and the change log: a row shows its first action as its next step,
+            and More holds the rest and Ask AnA. Until 2026-11-10 each row carried every action as an arrow chip and a
+            sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}
+        {loaded && rows.length > 0 && (
+          <RegisterTable columns={columns.map((c) => c.label)}>
+            {rows.map((r) => {
+              const isOpen = openId === r.id;
+              const acts = (config.rowActions ?? []).filter((a) => a.show?.(r) ?? true).map((a) => (
+                <button key={a.label} type="button" className="btn ghost small" title={a.title} onClick={() => open({ kind: 'row', row: r, action: a })}>
+                  {a.label}
                 </button>
-              ) : <div key={c.label} className="qms-cell">{c.cell(r, ctx)}</div>))}
-              <div className="qms-cell qms-rowacts">
-                {config.rowActions?.filter((a) => a.show?.(r) ?? true).map((a) => (
-                  <button key={a.label} className="qms-chip" title={a.title} onClick={() => open({ kind: 'row', row: r, action: a })}>
-                    {I.arrowRight} {a.label}
-                  </button>
-                ))}
-                <button className="qms-chip ghost" title="Ask AnA about this record" aria-label="Ask AnA about this record" onClick={() => onAsk(config.askRow(r))}>
-                  {I.sparkles}
+              ));
+              const ask = (
+                <button key="ask" type="button" className="btn ghost small" aria-label="Ask AnA about this record" title="Ask AnA about this record"
+                  onClick={() => onAsk(config.askRow(r))}>
+                  Ask AnA
                 </button>
-              </div>
-            </div>
-            {config.detail && openId === r.id && (
-              <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); read.refresh(); })}</div>
-            )}
-            </React.Fragment>
-          ))}
-        </div>}
+              );
+              return (
+                <RegisterBody key={r.id} name={config.name(r)} className="qms-rec" columns={columns.length}
+                  primary={acts[0] ?? null} rest={[...acts.slice(1), ask]}
+                  cells={columns.map((c, n) => (
+                    <td key={c.label} className={c.text ? 'qms-title' : undefined}>
+                      {n === 0 && config.detail ? (
+                        <button type="button" className="qms-num mono" aria-expanded={isOpen} title={config.detail.label}
+                          onClick={() => setOpenId(isOpen ? null : r.id)}>
+                          {c.cell(r, ctx)}
+                        </button>
+                      ) : c.cell(r, ctx)}
+                    </td>
+                  ))}
+                  after={config.detail && isOpen && (
+                    <tr className="qcc-detail-tr">
+                      <td colSpan={columns.length + 1}>
+                        <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); read.refresh(); })}</div>
+                      </td>
+                    </tr>
+                  )}
+                />
+              );
+            })}
+          </RegisterTable>
+        )}
       </section>
       <C2CToast msg={toast} />
 

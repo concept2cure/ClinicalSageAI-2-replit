@@ -82,16 +82,16 @@ export const CAPAS: RegisterConfig<CapaRow> = {
     'the server enforces, recorded with its reason under your name. A CAPA belongs to a project.',
   noun: ['CAPA', 'CAPAs'],
   listPath: '/api/capa-mdr/capa',
-  grid: '120px minmax(0, 1fr) 150px 130px 84px 150px 104px',
+  name: (r) => r.capaCode,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.capaCode}</span> },
-    { label: 'Title', cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
+    { label: 'Title', text: true, cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
     { label: 'Type', cell: (r) => CAPA_TYPE_LABEL[r.type] ?? r.type },
     {
       label: 'Source',
       cell: (r) => (
         <span title={r.sourceRefs?.map((s) => s.label).join(', ') || undefined}>
-          <span className="qms-tag">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span>
+          <span className="rd-chip">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span>
           {r.sourceRefs?.[0] ? <span className="mono"> {r.sourceRefs[0].label}</span> : null}
         </span>
       ),

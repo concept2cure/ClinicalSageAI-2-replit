@@ -11,7 +11,7 @@ import type { EsigMeaning } from '../hooks/useEsignature';
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type Tone = 'ok' | 'warn' | 'err';
-export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
+export type PillTone = 'draft' | 'review' | 'effective' | 'muted' | 'err' | 'warn';
 
 /** One row as AnA is told it (QualityApp's published surface context). */
 export type RecordFacts = Record<string, string | number | null>;
@@ -30,8 +30,9 @@ export interface RecordRegisterContext {
   truncated: boolean;
 }
 
-/** A cell, form or fact may read what the register read beside its rows (registerContext.ts). */
-export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode }
+/** A cell, form or fact may read what the register read beside its rows (registerContext.ts). `text` marks a column of
+ *  prose: it wraps at a readable width, while the facts beside it (numbers, dates, states) stay on one line (C11). */
+export interface Column<R> { label: string; cell: (r: R, ctx: RegisterContext) => React.ReactNode; text?: true }
 export interface KpiSpec { label: string; val: string; sub: string; tone?: Tone }
 
 /**
@@ -68,7 +69,8 @@ export interface RegisterConfig<R extends { id: number | string }> {
   /** Singular and plural, lower case. */
   noun: [string, string];
   listPath: string;
-  grid: string;
+  /** The record's number or name: its row's "More actions for …" and the group it opens say it. */
+  name: (r: R) => string;
   columns: Column<R>[];
   kpis: (rows: R[], today: string) => KpiSpec[];
   createLabel: string;
@@ -91,7 +93,10 @@ export interface RegisterConfig<R extends { id: number | string }> {
 }
 
 export const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
-export const pill = (tone: PillTone, text: string) => <span className="qms-pill" data-tone={tone}>{text}</span>;
+/** D0's chip for a record's state (C11): effective is ok, a failure red, a warning amber, an ended record dimmed; a
+ *  state in flight is neutral. Until 2026-11-10 Quality kept its own pill, amber for every state in progress. */
+const PILL_CHIP: Record<PillTone, string> = { effective: ' tone-ok', err: ' tone-err', warn: ' tone-warn', muted: ' tone-dim', draft: '', review: '' };
+export const pill = (tone: PillTone, text: string) => <span className={`rd-chip${PILL_CHIP[tone] ?? ''}`}>{text}</span>;
 export const plural = (n: number, [one, many]: [string, string]) => `${n} ${n === 1 ? one : many}`;
 export const num = (s: string) => (s.trim() === '' ? undefined : Math.max(0, Math.trunc(Number(s))));
 

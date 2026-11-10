@@ -44,6 +44,9 @@ vi.mock('@/lib/queryClient', () => ({
 }));
 
 import { QmsRecords } from '../QmsRecords';
+import { CAPAS } from '../qmsCapaRegister';
+import { DEVIATIONS } from '../qmsDeviationRegister';
+import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from '../qmsRecordRegisters';
 
 const NC = {
   id: 4, nc_number: 'NC-2026-004', device_name: 'Drug substance', lot_or_serial: 'B-1021', source: 'final_inspection',
@@ -59,14 +62,52 @@ const CAPA = {
 
 afterEach(() => { cleanup(); H.apiRequest.mockReset(); H.reads = {}; H.program = null; H.programName = null; });
 
+/** C11: a row shows its first action; the rest are under its More. Open every row's More, so an action can be found
+ *  wherever it sits, as every action was on the row before. */
+function openMore() {
+  for (const more of screen.queryAllByRole('button', { name: /^More actions for / })) {
+    if (more.getAttribute('aria-expanded') !== 'true') fireEvent.click(more);
+  }
+}
+
+/* C11: the row's own actions column is "Actions" (visually hidden); a register column may not take that name too, or a
+   screen reader hears two "Actions" columns (management reviews' decided actions were "Actions" until 2026-11-10). */
+describe('every quality register names its columns once', () => {
+  it.each(Object.entries({ CAPAS, DEVIATIONS, NONCONFORMANCES, SUPPLIERS, AUDITS, REVIEWS }))('%s', (_name, config) => {
+    const labels = (config.columns as { label: string }[]).map((c) => c.label);
+    expect(labels).not.toContain('Actions');
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
 describe('Quality records', () => {
+  it('is a table: column headers, one body per record, its first action as its next step and the rest under More', () => {
+    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    const { container } = render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+    const table = screen.getByRole('table');
+    expect(table.classList.contains('reg-tbl')).toBe(true);
+    const heads = within(table).getAllByRole('columnheader').map((h) => h.textContent);
+    expect(heads[0]).toBe('Number');
+    expect(heads).toContain('What was found');
+    expect(heads.at(-1)).toBe('Actions');
+    expect(container.querySelectorAll('tbody.qms-rec')).toHaveLength(1);
+    const body = container.querySelector('tbody.qms-rec') as HTMLElement;
+    const more = within(body).getByRole('button', { name: 'More actions for NC-2026-004' });
+    expect(within(body).queryByRole('button', { name: 'Ask AnA about this record' })).toBeNull();
+    fireEvent.click(more);
+    expect(within(within(body).getByRole('group', { name: 'Actions for NC-2026-004' })).getByRole('button', { name: 'Ask AnA about this record' })).toBeTruthy();
+    expect(container.querySelector('.qms-row, .qms-thead, .qms-pill, .qms-tag, .qms-table')).toBeNull();
+  });
+
   it('lists nonconformances and dispositions one only through a signature, its reason the rationale', async () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...NC, disposition: 'rework' }, signedAt: '2026-10-29T12:00:00.000Z', meaning: 'approval' }) });
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
 
     expect(screen.getByText('NC-2026-004')).toBeTruthy();
-    expect(screen.getByText('Awaiting disposition', { selector: '.qms-pill' })).toBeTruthy();
+    expect(screen.getByText('Awaiting disposition', { selector: '.rd-chip' })).toBeTruthy();
+
+    openMore();
 
     fireEvent.click(screen.getByRole('button', { name: /Disposition/ }));
     const drawer = screen.getByRole('dialog');
@@ -101,6 +142,7 @@ describe('Quality records', () => {
     expect(screen.getByText('DEV-2026-001')).toBeTruthy();
     // Only the moves the server allows: from under investigation, to pending approval. No close yet.
     expect(screen.queryByRole('button', { name: /^Close$/ })).toBeNull();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Investigate/ }));
     const d = screen.getByRole('dialog');
     const moves = [...(within(d).getByLabelText(/Move to/) as HTMLSelectElement).options].map((o) => o.value).filter(Boolean);
@@ -118,6 +160,7 @@ describe('Quality records', () => {
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...DEV, status: 'closed' }, signedAt: '2026-10-29T12:00:00.000Z' }) });
     H.reads['/api/mdx/qms/deviations'] = { data: { data: [{ ...DEV, status: 'pending_approval', root_cause: 'HEPA seal gap.', resolution_description: 'Seal replaced.' }] }, loading: false, error: null };
     view.rerender(<QmsRecords tab="deviations" onAsk={vi.fn()} />);
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Continue to sign' }));
     const signing = await screen.findByRole('dialog', { name: 'Close deviation' });
@@ -153,6 +196,7 @@ describe('Quality records', () => {
     render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
 
     expect(screen.getByText('QA-0007')).toBeTruthy();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Update/ }));
     const drawer = screen.getByRole('dialog');
     fireEvent.change(within(drawer).getByLabelText(/^Quality agreement/), { target: { value: '32' } });
@@ -171,6 +215,8 @@ describe('Quality records', () => {
     H.reads['/api/mdx/qms/documents'] = { data: { data: [] }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...PENDING, approval_status: 'approved' }, signedAt: '2026-10-29T12:00:00.000Z' }) });
     render(<QmsRecords tab="suppliers" onAsk={vi.fn()} />);
+
+    openMore();
 
     fireEvent.click(screen.getByRole('button', { name: /Approval/ }));
     const drawer = screen.getByRole('dialog');
@@ -207,6 +253,8 @@ describe('Quality records', () => {
     H.apiRequest.mockResolvedValue({ status: 200, json: async () => ({ ...CAPA, state: 'closed_effective', meta: {} }) });
     render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
 
+    openMore();
+
     fireEvent.click(screen.getByRole('button', { name: /Advance/ }));
     const moveTo = within(screen.getByRole('dialog')).getByLabelText(/^Move to/) as HTMLSelectElement;
     expect([...moveTo.options].map((o) => o.value).filter(Boolean)).toEqual(['closed_effective', 'closed_not_effective', 'escalated']);
@@ -235,6 +283,7 @@ describe('Quality records', () => {
     H.reads['/api/capa-mdr/capa'] = { data: { rows: [], count: 0 }, loading: false, error: null };
     render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
     expect(screen.getByText('No CAPAs recorded yet.')).toBeTruthy();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Raise CAPA/ }));
     const d = screen.getByRole('dialog');
     // J5-04: said before the form is filled, not only after it is submitted.
@@ -254,6 +303,8 @@ describe('Quality records', () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ ...CAPA, capaCode: 'CAPA-008', meta: {} }) });
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+
+    openMore();
 
     fireEvent.click(screen.getByRole('button', { name: /Raise CAPA/ }));
     const d = screen.getByRole('dialog');
@@ -307,9 +358,13 @@ describe('Quality records', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'CAPA-007' }));
     expect(screen.getByText('Replace the HPLC column')).toBeTruthy();
-    const moves = ['Done', 'Blocked', 'Cancelled'].map((n) => screen.getByRole('button', { name: n }));
-    expect(moves).toHaveLength(3);
-    expect(screen.queryByRole('button', { name: 'Planned' })).toBeNull();
+    // C13: the action items are a table, and each move is named by the act on its action.
+    const items = screen.getByRole('table', { name: 'Action items of CAPA-007' });
+    expect(within(items).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['#', 'Type', 'Action', 'Owner · due', 'State', 'Moves']);
+    const moves = ['Mark done: action 1', 'Mark blocked: action 1', 'Cancel action: action 1'].map((n) => within(items).getByRole('button', { name: n }));
+    expect(moves.map((b) => b.textContent)).toEqual(['Mark done', 'Mark blocked', 'Cancel action']);
+    expect(screen.queryByRole('button', { name: /^(Done|Blocked|Cancelled|Planned)$/ })).toBeNull();
+    expect(document.querySelector('.qcc-actions, .qcc-action, .qms-chip')).toBeNull();
 
     fireEvent.click(moves[0]);
     fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/Evidence of completion/), { target: { value: '   ' } });
@@ -336,7 +391,8 @@ describe('Quality records', () => {
     expect(screen.getByText('1 open · 0 closed')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'H2-2026' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.getByRole('table', { name: 'Action items of the H2-2026 management review' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Close action 1' }));
     fireEvent.change(within(screen.getByRole('dialog')).getByLabelText(/How it was closed/), { target: { value: 'short' } });
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close action' }));
     await waitFor(() => expect(within(screen.getByRole('dialog')).getByText(/closure note of at least/)).toBeTruthy());
@@ -354,14 +410,14 @@ describe('Quality records', () => {
     H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC, { ...NC, id: 5, nc_number: 'NC-2026-005' }] }, loading: false, error: null };
     H.reads['/api/capa-mdr/capa'] = { data: { rows: [{ ...CAPA, capaCode: 'CAPA-008', sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }] }] }, loading: false, error: null };
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
-    const row = (nc: string) => screen.getByText(nc).closest('.qms-row') as HTMLElement;
+    const row = (nc: string) => screen.getByText(nc).closest('tbody') as HTMLElement;
     expect(within(row('NC-2026-004')).getByText('CAPA-008')).toBeTruthy();
     expect(within(row('NC-2026-005')).queryByText(/CAPA-/)).toBeNull();
     cleanup();
 
     H.reads['/api/capa-mdr/capa'] = { data: null, loading: false, error: 'HTTP 500' };
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
-    expect(within(screen.getByText('NC-2026-004').closest('.qms-row') as HTMLElement).getByText('not read')).toBeTruthy();
+    expect(within(screen.getByText('NC-2026-004').closest('tbody') as HTMLElement).getByText('not read')).toBeTruthy();
   });
 
   it('tells the shell for AnA what the register read, and that a failed read is a failure', async () => {

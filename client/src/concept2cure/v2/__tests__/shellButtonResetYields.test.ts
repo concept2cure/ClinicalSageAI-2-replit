@@ -95,8 +95,9 @@ describe('the shell’s button reset', () => {
   });
 
   /* D7-B (2026-11-06) deleted .qms-tab, .qms-tpl-card and .qms-tb-btn with the topbar, the type cards and the icon
-     tabs (Quality's tabs are D0's .tabs/.tab now); the buttons Quality still styles itself are these two. */
-  it.each(['.qms-btn', '.qms-chip'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
+     tabs (Quality's tabs are D0's .tabs/.tab now). C13 (2026-11-10) deleted .qms-chip with its last use: the action
+     items' moves are D0's .btn ghost small. The button Quality still styles itself is this one (until C18). */
+  it.each(['.qms-btn'])('Quality’s %s keeps the box its own rule gives it', (cls) => {
     const own = topLevelRules(qualityCss).filter((r) => r.selectors.includes(cls) && /padding:/.test(r.decls));
     expect(own.length, `${cls} has no padding rule in quality/app.css`).toBeGreaterThan(0);
     expect(outranks(specificity(cls), specificity(reset!.selectors[0])), `${cls} vs ${reset!.selectors[0]}`).toBe(true);

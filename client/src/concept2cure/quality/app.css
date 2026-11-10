@@ -78,47 +78,15 @@
 .qms-sec-head .spacer { flex: 1; }
 .qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms var(--ease); }
 .qms-link:hover { color: var(--accent-main-100); }
-.qms-chip[data-on="true"] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
 
-/* ─── Register table ───────────────────────────────────────────── */
-/* Scrolls rather than clips. `overflow:hidden` was here for the corner radius,
-   and it also silently cut off the last two columns of every row once the
-   grid stopped fitting the 738px a surface pane really gives it. `auto`
-   still clips to the radius. `overflow-y:hidden` is explicit because setting
-   only the x axis computes y to auto. Rows carry their own min-width from
-   registerGrid.ts, so all of them scroll as one and the columns stay aligned. */
-.qms-table { border: 1px solid var(--bg-200); border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--background); }
-.qms-thead, .qms-row { display: grid; align-items: center; gap: 10px; padding: 9px 14px; }
-.qms-thead { font-size: var(--fs-small); color: var(--text-300); font-weight: 500; background: var(--bg-100); border-bottom: 1px solid var(--bg-200); }
-.qms-row { border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
-.qms-row:last-child { border-bottom: 0; }
-.qms-cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ─── Register cells (the registers are D0's .reg-tbl since C6, C8 and C11) ─── */
 .qms-num { color: var(--text-200); font-weight: 600; text-align: left; }
 .qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 .qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
 
-/* status pill */
-.qms-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
-.qms-pill[data-tone="effective"] { background: var(--success-muted); color: var(--success); }
-.qms-pill[data-tone="review"]    { background: var(--warning-muted); color: var(--warning); }
-.qms-pill[data-tone="draft"]     { background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
-.qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-300); }
-
-/* row actions — AnA-first */
-/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. It was declared twice,
-   wrap here and nowrap below, and the later one won silently. */
+/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. */
 .qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
-.qms-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-md);
-  color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background); white-space: nowrap;
-  transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
-}
-.qms-chip:hover { background: var(--bg-100); color: var(--text-100); }
-.qms-chip.ghost { border-color: transparent; padding: 3px 6px; }
-.qms-chip.ghost:hover { color: var(--accent-main-100); }
 
 /* The review schedule's rows: a plain list under its section head, no box (C1). */
 .qms-review { border-top: 1px solid var(--border-subtle); }
@@ -206,9 +174,6 @@
 .qms-train-pct { color: var(--text-300); text-align: right; }
 .qms-train-when { color: var(--text-300); font-size: 11px; text-align: right; }
 
-/* status pill — extra tone for rejected changes */
-.qms-pill[data-tone="err"] { background: var(--error-muted); color: var(--error); }
-
 /* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
 .qcc-stages { margin: 0 0 12px; }
 .qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
@@ -255,14 +220,10 @@
 /* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
 .qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 
-/* CAPA action items (CapaActions.tsx), inside the .qcc-detail panel. */
-.qcc-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.qcc-action {
-  display: grid; grid-template-columns: 36px auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 10px;
-  padding: 8px 10px; background: var(--background); border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 12.5px;
-}
-.qcc-action-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-100); }
-.qcc-action-meta { color: var(--text-400); font-size: 12px; white-space: nowrap; }
+/* CAPA and review action items (CapaActions.tsx, ReviewActions.tsx): D0's table inside the record's own row (C13). */
+.c2c-v2 .reg-tbl.qcc-action-tbl { margin: 4px 0 0; }
+.c2c-v2 .reg-tbl.qcc-action-tbl td { vertical-align: top; }
+.c2c-v2 .reg-tbl.qcc-action-tbl td.qms-title { min-width: 180px; color: var(--text-100); }
 
 /* The review route in the register (RR4, docs/design/REVIEW_ROUTING_2026-10-23.md §2.12):
    the round in one line under a document's status, and the route sheet's acts. The sheet
@@ -296,6 +257,9 @@
 .c2c-v2 .reg-tbl.qms-reg { position: relative; }
 .c2c-v2 .reg-tbl.qms-reg .qms-num { font-size: 13px; padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap; }
 .c2c-v2 .reg-tbl.qms-reg td.qms-title { min-width: 180px; color: var(--text-100); }
+/* A record's prose wraps at a readable width; its facts (numbers, dates, states) stay on one line, so at 390 a date no
+   longer broke at its hyphen across two lines (walked, C11). */
+.c2c-v2 .reg-tbl.qms-reg tbody.qms-rec td:not(.qms-title) { white-space: nowrap; }
 .c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
 .c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }
