@@ -187,7 +187,10 @@ async function checkCsrCatalog() {
 async function openVersions(page, file) {
   await page.goto(`${BASE}/concept2cure/vault?program=${state.data.programId}`, { waitUntil: 'networkidle' });
   await page.getByText(/^Uploads · \d+/).first().click();
-  await page.locator('main').getByText(file, { exact: true }).first().click();
+  // The visible row: since 2026-11-10 the Library's list stays in the page, hidden, while Uploads shows, so the first
+  // match was a hidden copy of the file's name and the click never landed. Every fresh Codespace's CSR study
+  // preparation stopped here ("adsl.xpt sent: locator.click: Timeout 30000ms exceeded"; found by `011Dpx…`).
+  await page.locator('main').getByText(file, { exact: true }).filter({ visible: true }).first().click();
   const versions = page.locator('aside.vd-detail details', { has: page.locator('summary', { hasText: /^Versions/ }) });
   await versions.waitFor();
   if (!(await versions.evaluate((d) => d.open))) await versions.locator('summary').click();
