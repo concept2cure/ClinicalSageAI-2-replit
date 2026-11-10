@@ -1,8 +1,9 @@
 /**
- * Hops 1–6 of the founder-path lineage walk: project → Data Room → AnA draft →
- * editor save → seal → Vault. Support for
- * tests/lineage/founder-path-lineage.pglite.test.ts — not a test file; the
- * header there names every route and service line these hops drive.
+ * Hops 1–3 and 6 of the founder-path lineage walk (project → Data Room → AnA
+ * draft, then the sealed document into the Vault) and the adopt hop. Hops 4–5,
+ * the person's rewrite and the seal, are in founder-path-lineage.hops-review.ts.
+ * Support for tests/lineage/founder-path-lineage.pglite.test.ts — not a test
+ * file; the header there names every route and service line these hops drive.
  */
 import { expect, vi } from 'vitest';
 import request from 'supertest';
@@ -10,9 +11,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  Hop, ORG_A, PASSWORD, REVIEWER, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
+  Hop, ORG_A, PASSWORD, APPROVER, REVIEWER, SERVED_MODEL, QUOTE, X, SHA256_X, HEX64,
   sha256, json, asPrincipal, type World,
 } from './founder-path-lineage.world';
+import { runIndependentCheck } from './founder-path-lineage.hops-review';
 
 /** 1 · POST /api/c2c/projects (server/routes/c2c/projects.ts:613, audit :913). */
 export async function hopProject(w: World): Promise<void> {
@@ -278,118 +280,32 @@ export async function hopAnaDraft(w: World): Promise<void> {
     observe(citing.length);
     expect(citing.length).toBeGreaterThanOrEqual(1);
   });
-  hop.verdict();
-}
-
-/** 4 · PATCH /api/authoring/sections/:id (authoring.router.ts:1647; :1798, :1870, :1889, :1904). */
-export async function hopEditSave(w: World): Promise<void> {
-  const { k, q } = w;
-  const hop = new Hop('edit-save');
-  const [section] = await q<{ id: string; updated_at: Date }>(
-    `SELECT id, updated_at FROM authoring_sections WHERE doc_id = $1 AND code = '2.5.2' AND tenant_id = $2`, [k.docId, ORG_A]);
-  const [genesis] = await q<{ id: string; chain_sha256: string }>('SELECT id, chain_sha256 FROM doc_revisions WHERE section_id = $1', [section.id]);
-  // An ordinary human edit: a sentence inserted ABOVE the quote.
-  const edited = `<p>Two oral formulations were studied in the biopharmaceutics programme.</p><p>${QUOTE}</p>`;
-  const res = await w.asAuthor(request(w.app).patch(`/api/authoring/sections/${section.id}`)).send({
-    content: edited,
-    changeReason: 'Added the formulation context the reviewer asked for above the bioavailability finding.',
-    expectedUpdatedAt: new Date(section.updated_at).toISOString(),
-  });
-
-  await hop.check('save-accepted', 'the save is accepted', async (observe) => {
-    observe({ status: res.status, code: res.body?.error?.code ?? null });
-    expect(res.status).toBe(200);
-  });
-  await hop.check('revision-chained', 'doc_revisions grows by the edit, chained to the genesis row and hashing the saved text', async (observe) => {
-    const revs = await q<{ id: string }>('SELECT id, origin, content_sha256, prev_chain_sha256 FROM doc_revisions WHERE section_id = $1', [section.id]);
-    observe(revs.length);
-    expect(revs).toHaveLength(2);
-    expect(revs.find((r) => r.id !== genesis.id)).toMatchObject({ origin: 'human-edit', prev_chain_sha256: genesis.chain_sha256, content_sha256: sha256(edited) });
-  });
-  await hop.check('source-span-survives', 'after the edit, a cre_evidence_source span still cites the source', async (observe) => {
-    const [n] = await q<{ n: number }>(
-      `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE organization_id = $1 AND document_table = 'authoring_sections' AND document_id = $2
-          AND provenance_kind = 'cre_evidence_source' AND reference_id = $3 AND deleted_at IS NULL`,
-      [ORG_A, section.id, String(k.sourceId)]);
-    observe(n.n);
-    expect(n.n).toBeGreaterThanOrEqual(1);
-  });
-  await hop.check('spans-bound-to-revision', 'the section’s live spans name the doc_revisions row they describe', async (observe) => {
-    const spans = await q<{ document_version: string | null }>(
-      `SELECT document_version FROM document_span_lineage WHERE document_table = 'authoring_sections' AND document_id = $1 AND deleted_at IS NULL`, [section.id]);
-    const revIds = (await q<{ id: string }>('SELECT id FROM doc_revisions WHERE section_id = $1', [section.id])).map((r) => r.id);
-    observe([...new Set(spans.map((s) => s.document_version))].sort());
-    expect(spans.length).toBeGreaterThan(0);
-    for (const s of spans) expect(revIds).toContain(s.document_version);
+  /* The designed refusal, not a defect, so it is not baselined. AnA states the
+     source's figure with no citation: the independent check, run on the draft
+     as saved (POST /documents/:id/review, run_independent_checks), holds it as
+     a hard grounding finding, and no signature is taken while one is open
+     (workflow-import-governance.ts assertIndependentCheckRelease). Behind it
+     stands the second refusal the person's rewrite answers: text a model wrote
+     is released only with a receipt naming a PQ-passed model, and none has
+     passed (assertOrdinaryMachineRelease, WORKFLOW_MODEL_QUALIFICATION_REQUIRED). */
+  await hop.check('draft-not-signed-as-drafted', 'the independent check holds AnA’s uncited figure as a hard finding, and a review signature on the draft is refused 409 INDEPENDENT_CHECK_REQUIRED: nothing is signed', async (observe) => {
+    const checked = await runIndependentCheck(w, 'author');
+    const hard = checked.findings.filter((f) => f.hard && f.open);
+    const refused = await w.asReviewer(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
+      password: PASSWORD, meaning: 'REVIEWER', intent: 'Reviewed for the C2C-101 IND original sequence',
+    });
+    const signatures = await q('SELECT id FROM authoring_signatures WHERE doc_id = $1 AND tenant_id = $2', [k.docId, ORG_A]);
+    observe({ standing: checked.standing, hard: hard.map((f) => f.category), status: refused.status, code: refused.body?.code ?? null, signatures: signatures.length });
+    expect(checked.standing).toBe('current');
+    expect(hard.map((f) => ({ category: f.category, sectionId: f.sectionId }))).toEqual([{ category: 'grounding', sectionId: k.sectionIds![1] }]);
+    expect(refused.status).toBe(409);
+    expect(refused.body.code).toBe('INDEPENDENT_CHECK_REQUIRED');
+    expect(signatures).toHaveLength(0);
   });
   hop.verdict();
 }
 
-/** 5 · POST /docs/:id/freeze (authoring.router.ts:3700, :3843) and POST /docs/:id/e-sign (:3916, :3994, :4065). */
-export async function hopSeal(w: World): Promise<void> {
-  const { k, q } = w;
-  const hop = new Hop('seal');
-  // P-95 (2026-11-09): an approval follows a completed review. The author sends the document for review to the QA
-  // reviewer (POST /documents/:id/request-review opens its RR5 route), and the reviewer signs the review on it.
-  // The request-review writer runs on the request's pinned connection, which the walk attaches from its principal headers.
-  const sent = await w.asAuthor(asPrincipal(ORG_A, 3)(request(w.app).post(`/api/authoring/documents/${k.docId}/request-review`))).send({
-    reviewers: [{ id: Number(REVIEWER.id), name: REVIEWER.name, email: REVIEWER.email }],
-    route: { reviewDueDate: new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10) },
-    reason: 'Send the C2C-101 IND section for QA review before approval.',
-  });
-  expect(sent.status, JSON.stringify(sent.body)).toBeLessThan(300);
-  const reviewed = await w.asReviewer(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
-    password: PASSWORD, meaning: 'REVIEWER', intent: 'Reviewed for the C2C-101 IND original sequence',
-  });
-  expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
-  // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
-  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
-    reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,
-  });
-  expect(fr.status, JSON.stringify(fr.body)).toBe(200);
-  k.freezeHash = String(fr.body.contentHash);
-  const es = await w.asApprover(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
-    password: PASSWORD, meaning: 'APPROVER', intent: 'Approved for the C2C-101 IND original sequence',
-  });
-  expect(es.status, JSON.stringify(es.body)).toBe(200);
-
-  await hop.check('seal-hash-verifies', 'frozen_documents holds the freeze and the approval seal, each hashing its own content', async (observe) => {
-    const seals = await q<{ version: string; content_hash: string; frozen_content: string }>(
-      'SELECT version, content_hash, frozen_content FROM frozen_documents WHERE document_id = $1 AND tenant_id = $2', [k.docId, ORG_A]);
-    observe(seals.map((s) => s.version).sort());
-    const freeze = seals.find((s) => s.version === 'v1.0.frozen');
-    const approved = seals.find((s) => s.version === 'approved');
-    expect(freeze?.content_hash).toBe(k.freezeHash);
-    for (const s of [freeze, approved]) expect(s && sha256(s.frozen_content)).toBe(s?.content_hash);
-    k.approvedSealHash = approved?.content_hash;
-    expect((await q<{ status: string }>('SELECT status FROM authoring_documents WHERE id = $1', [k.docId]))[0].status).toBe('APPROVED');
-  });
-  // Since a056eb9ea (QA 2026-10-08, j4) the approval writes its own sealed
-  // snapshot BEFORE the signature and the signature is bound to it: the approval
-  // attests to the snapshot it sealed, not to the earlier freeze.
-  await hop.check('signature-binds-seal', 'the APPROVER signature names the snapshot its approval sealed, by version and content hash', async (observe) => {
-    const [sig] = await q('SELECT meaning, covered_freeze_version, covered_content_hash, signature_digest FROM authoring_signatures WHERE id = $1', [es.body.signatureId]);
-    observe(sig?.covered_freeze_version);
-    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'approved', covered_content_hash: k.approvedSealHash });
-    expect(String(sig.signature_digest)).toMatch(HEX64);
-  });
-  await hop.check('seal-binds-revision-and-lineage', 'the seal names each section’s doc_revisions head, and each head carries a lineage digest', async (observe) => {
-    const [approved] = await q<{ frozen_content: string }>(`SELECT frozen_content FROM frozen_documents WHERE document_id = $1 AND version = 'approved'`, [k.docId]);
-    const heads = await q<{ id: string; chain_sha256: string; inputs: unknown }>(
-      `SELECT r.id, r.chain_sha256, r.inputs FROM doc_revisions r
-        WHERE r.section_id = ANY($1) AND NOT EXISTS (SELECT 1 FROM doc_revisions n WHERE n.prev_chain_sha256 = r.chain_sha256)`, [k.sectionIds]);
-    const bound = heads.filter((r) => approved.frozen_content.includes(r.chain_sha256) || approved.frozen_content.includes(r.id));
-    const digests = heads.filter((r) => typeof (json(r.inputs).lineage as { digest?: unknown } | undefined)?.digest === 'string');
-    observe({ heads: heads.length, bound: bound.length, lineageDigests: digests.length });
-    expect(heads).toHaveLength(k.sectionIds!.length);
-    expect(bound).toHaveLength(heads.length);
-    expect(digests).toHaveLength(heads.length);
-  });
-  hop.verdict();
-}
-
-/** 6 · POST /docs/:id/file-to-vault (authoring.router.ts:5145; authoring-file-to-vault.ts:261, :344). */
+/** 6 · POST /docs/:id/file-to-vault (authoring.router.ts:7160; authoring-file-to-vault.ts), where the approval carries (authoring-approval-carryover.ts). */
 export async function hopFileToVault(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('file-to-vault');
@@ -397,11 +313,13 @@ export async function hopFileToVault(w: World): Promise<void> {
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.vaultDocumentId = String(res.body.data.vaultDocumentId);
 
-  await hop.check('approval-carry-decided', 'approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))', async (observe) => {
+  /* Until 2026-11-10 this check held the other branch: approved with no review, so nothing carried. Since P-95
+     (33c3e4de9e) the seal hop has a review; the QA reviewer and the approver each signed the content that was
+     filed, neither wrote it, and the approval carries (authoring-approval-carryover.ts chooseCarriedSignOffs). */
+  await hop.check('approval-carry-decided', 'reviewed and approved in Authoring by two people who did not write it, so the approval carries to the Vault copy, and the filing says whose (FD5 (c))', async (observe) => {
     const approval = res.body.data.approval as { carried?: boolean; reason?: string } | undefined;
     observe(approval?.carried);
-    expect(approval).toMatchObject({ carried: false });
-    expect(approval?.reason).toMatch(/No review signature covers this content/);
+    expect(approval, approval?.reason).toMatchObject({ carried: true, reviewedBy: REVIEWER.name, approvedBy: APPROVER.name });
   });
 
   await hop.check('vault-row-in-project', 'vault.documents holds the filed bytes in the same project, under their content hash', async (observe) => {
@@ -430,6 +348,61 @@ export async function hopFileToVault(w: World): Promise<void> {
     ]);
     observe(recorded.includes(k.approvedSealHash!));
     expect(recorded).toContain(k.approvedSealHash);
+  });
+  hop.verdict();
+}
+
+/**
+ * 6b · The Vault copy stands approved by the Authoring approval (VR-14; FD5 (c)).
+ *
+ * Since 2026-10-01 only an approved, current Vault version is transmitted
+ * (leaf-source-resolver.ts, vaultVersionNotTransmittable). Under FD5 (c) an
+ * Authoring approval carries to the Vault copy after an independent Authoring
+ * review (authoring-approval-carryover.ts). The document was reviewed by the
+ * QA reviewer and approved by the approver, neither its author (hop 5), so
+ * the filing carried the approval: the Vault version's lifecycle record went
+ * authoring → in_review → approved through the one gate, its sign-offs naming
+ * the Authoring signatures, and nobody approves it a second time in the Vault.
+ * Opening the version's record (POST /api/regulatory/documents,
+ * document-lifecycle.ts) finds that record and creates none.
+ *
+ * Until 2026-11-10 this hop approved the copy in the Vault on a named route
+ * (RR1b), because the walk's document had no review. That route is no longer
+ * walked here; tests/db/vault-lifecycle.dbtest.ts and tests/db/review-route-vault-rr1b.dbtest.ts hold it.
+ */
+export async function hopVaultApproval(w: World): Promise<void> {
+  const { k, q } = w;
+  const hop = new Hop('vault-approval');
+  const opened = await asPrincipal(ORG_A, 3)(request(w.app).post('/api/regulatory/documents'))
+    .send({ sources: { vault_documents: { nativeId: k.vaultDocumentId, role: 'artifact' } } });
+  expect(opened.status, JSON.stringify(opened.body)).toBe(200);
+  expect(opened.body).toMatchObject({ ok: true, created: false });
+  const canonicalId = String(opened.body.canonicalId);
+
+  await hop.check('vault-copy-approved-for-its-bytes', 'the Vault copy\'s lifecycle record is approved, for the bytes the Vault holds', async (observe) => {
+    const [row] = await q<{ stage: string; content_hash: string; vault_hash: string }>(
+      `SELECT c.stage, c.content_hash, d.content_hash AS vault_hash
+         FROM canonical_documents c JOIN vault.documents d ON d.id::text = c.source_refs -> 'vault_documents' ->> 'nativeId'
+        WHERE c.canonical_id = $1`, [canonicalId]);
+    observe(row?.stage);
+    expect(row).toMatchObject({ stage: 'approved' });
+    expect(row.content_hash).toBe(row.vault_hash);
+  });
+  await hop.check('carried-approval-names-authoring-signatures', 'one chained vault.version.approval_carried row names the Authoring review and approval signatures, their signers and the bytes they are bound to', async (observe) => {
+    const rows = await q<{ record_id: string; sha256_chain: string; new_values: unknown }>(
+      `SELECT record_id, sha256_chain, new_values FROM audit_logs WHERE tenant_id = $1 AND action = 'vault.version.approval_carried'`, [ORG_A]);
+    const signed = await q<{ id: string; meaning: string }>('SELECT id::text AS id, meaning FROM authoring_signatures WHERE doc_id = $1 AND tenant_id = $2', [k.docId, ORG_A]);
+    const [vault] = await q<{ content_hash: string }>('SELECT content_hash FROM vault.documents WHERE id = $1', [k.vaultDocumentId]);
+    const id = (meaning: string) => signed.find((s) => s.meaning === meaning)?.id;
+    observe(rows.length);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].record_id).toBe(k.vaultDocumentId);
+    expect(rows[0].sha256_chain).toMatch(HEX64);
+    expect(json(rows[0].new_values)).toMatchObject({
+      canonicalId, authoringDocumentId: k.docId, artifactSha256: vault.content_hash,
+      review: { signatureId: id('REVIEWER'), signer: Number(REVIEWER.id) },
+      approval: { signatureId: id('APPROVER'), signer: Number(APPROVER.id) },
+    });
   });
   hop.verdict();
 }

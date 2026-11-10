@@ -1,0 +1,71 @@
+npx vitest run tests/lineage/founder-path-lineage.pglite.test.ts
+at a991d654a3 (trunk, before this change), 2026-11-10
+
+== per case ==
+ ✓ hop 1 · project — a project of org A, created the way the Projects surface creates it 1520ms
+ ✓ hop 2 · capture — bytes X into the project’s Data Room through the upload route 661ms
+ ✓ hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 165ms
+ ✓ hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 67ms
+ × hop 5 · seal — the document is frozen and approved under a Part 11 signature 224ms
+   → {"success":false,"code":"INDEPENDENT_CHECK_REQUIRED","error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}: expected 409 to be 200 // Object.is equality
+ × hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 21ms
+   → {"success":false,"error":{"code":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected 409 to be 201 // Object.is equality
+ × hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault) 5ms
+   → {"ok":false,"error":"VAULT_SOURCE_NOT_FOUND","message":"This version is not in the Vault. Reload the Vault to see its current versions. Nothing was created."}: expected 422 to be 201 // Object.is equality
+ × hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 68ms
+   → {"ok":false,"httpStatus":409,"body":{"error":"INDEPENDENT_CHECK_REQUIRED","message":"Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing."}}: expected false to be true // Object.is equality
+ × hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 7ms
+   → {"error":{"code":"BAD_REQUEST","message":"Invalid sequence id."}}: expected 400 to be 200 // Object.is equality
+ × walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 12ms
+   → walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+ × walk forward · from the project and from the source to the transmittal 173ms
+   → walk-forward/project-to-its-records FAILS and is not baselined — from the project: its Data Room source, its authoring document, its Vault copy and its submission
+ ✓ adopt · a conversation file becomes a project’s source only through one audited adopt 233ms
+ × retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 166ms
+   → retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+ ✓ the database the walk ran on held every table and column the code asked for 1ms
+ × the baseline names only real checks, each with its verified finding and LX fix, and never grows 4ms
+   → seal/seal-binds-revision-and-lineage: no such check ran
+
+== per check (the hops that reached their verdict) ==
+[founder-path] project
+  green  program-recorded — regulatory_programs holds the project, owned by org A
+  green  creation-audited-with-its-keys — the chained c2c.project.create row names the project and the submission spine it created
+  green  submission-anchored-to-project — the submission spine intake created carries the project as a column (submissions.program_id), not only in the audit JSON
+  green  filing-scaffolded-in-project — the project’s governed filing (c2c_documents) is keyed to the project
+[founder-path] capture
+  green  source-recorded — cre_evidence_sources holds X under checksum = sha256(X), in org A
+  green  source-in-project — the source carries the project’s key
+  green  data-room-lists-source — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+  green  bytes-durable — the bytes behind stored_artifact_ref read back through the storage provider and hash to the checksum
+[founder-path] ana-draft
+  RED    tool-accepts-sources — baselined AC-02, DR-ANA-13 → LX-06; observed false
+  green  document-in-project — the authoring document carries the project’s key
+  green  genesis-revision-per-section — every section has a genesis doc_revisions row hashing its content
+  green  model-recorded — provenance names the model the gateway served
+  green  turn-recorded — provenance names the conversation and turn that drafted it
+  RED    source-span — baselined AC-02, DR-ANA-13 → LX-06; observed 0
+[founder-path] edit-save
+  green  save-accepted — the save is accepted
+  green  revision-chained — doc_revisions grows by the edit, chained to the genesis row and hashing the saved text
+  RED    source-span-survives — baselined AC-02, AC-03 → LX-06 then LX-08; observed 0
+  RED    spans-bound-to-revision — baselined AC-04 → LX-08; observed [null]
+[founder-path] walk-back
+  green  audit-ledger-verifies — the tenant’s chained audit ledger — which several steps below read keys from — verifies
+  RED    document-to-source-checksum — baselined AC-02, DR-ANA-13, AC-03 → LX-06 then LX-08; observed 0
+[founder-path] walk-forward
+  RED    source-to-documents — baselined AC-02, DR-ANA-13, AC-03, SUB-14 → LX-06 then LX-08; observed 0
+  RED    data-room-shows-use — baselined DR-ANA-14 → LX-06 then LX-08 then LX-14; observed 0
+[founder-path] adopt
+  green  unscoped-upload-is-a-conversation-file — an upload with no project open records no Data Room source
+  green  project-offers-the-conversation-file — the project lists the caller's conversation file for adoption, and only the caller's
+  green  adopt-makes-it-the-projects-source — one audited adopt makes the file a source of the project, keyed to it
+  green  adopt-is-once — adopting the same file again is not a second source and writes no second audit row
+  green  adopted-file-is-no-longer-offered — once in a project's Data Room, the file is not offered as a conversation file
+[founder-path] retention
+  green  legacy-delete-needs-writing-role — the legacy project delete answers 403 to a viewer, and deletes nothing
+  green  legacy-draft-project-deleted — a legacy project holding only drafts is still deleted by the same route
+  green  draft-project-deleted — a project that holds only drafts can be deleted, and the deletion is audited
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 6 passed (15)

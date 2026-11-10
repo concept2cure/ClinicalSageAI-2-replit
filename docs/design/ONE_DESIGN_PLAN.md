@@ -1484,15 +1484,20 @@ Vault features yet … this is a multi tenant environment").
 - **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
 - **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
   with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
-- **Open, not held:** device coverage converged onto the eSTAR mapper; renditions of formats other than Word.
+- **Device coverage follows the eSTAR registry**: landed on trunk by session `01KnUGoX3g…`
+  (`estar-outline-requirements.ts`); this session's copy was withdrawn unpushed. This session decided what that slice
+  left open (P-123, 2026-11-10): a 510(k)'s risk management follows FDA's template and reads "When applicable" (a
+  Special 510(k)), no longer required of every 510(k). Red first; walked on the 510(k) demo project.
+- **The organisation-wide `/api/folders` route is retired (P-123).** Folders are a project's, through its Vault.
+- **Decided, not built (P-123):** renditions stay Word to PDF; search filters stay one value each.
 
 **Open, for the next session:**
 
 1. AnA over folders walked in a conversation, once a model key is present.
 2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
-3. Org-level folders (`/api/folders`) have no UI and no caller: keep or retire is a founder decision.
-4. Search selects send one value per filter (several arrive through a saved view); the library search's project
-   filter (`programId=`) is never sent.
+3. A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake; until it is, risk management reads
+   "When applicable" (P-123 item 2; the device lane's).
+4. The library search's project filter (`programId=`) is never sent.
 5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
@@ -1695,9 +1700,18 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
-The founder-path walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) is 6 of 15 at head. Its seal hop is
-refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it do not run. Read from the code and run, not
-inferred:
+**Update, later on 2026-11-10: the walk is 15 of 15** (`60b1d53767`,
+`docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/`). It follows the path a person can take before a model is
+qualified: AnA drafts; the person rewrites both sections in their own words and cites the Data Room source; the
+independent check is run; the reviewer decides the earlier finding, approves and signs; then freeze, approval,
+filing and transmit. A new check states that AnA's draft is not signed as drafted (409). The approval now carries
+to the Vault copy (FD5 (c)), because the document is reviewed (P-95). Baseline 11 → 10. The walk no longer proves
+that text AnA wrote survives to the seal, nor AC-03: both wait for a PQ-passed model. Found, not fixed: the review
+route answers `INDEPENDENT_CHECK_REQUIRED` as 503 `REVIEW_UNAVAILABLE` (`authoring.router.ts:3075`).
+
+When this entry was first written the walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) was 6 of 15: its
+seal hop was refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it did not run. Read from the code
+and run, not inferred:
 
 - **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
   `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
@@ -1747,8 +1761,7 @@ inferred:
 
 1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
 2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
-3. The walk follows the path a person can take before a model is qualified: rewrite AnA's text, cite the source,
-   run the check, review, sign, seal, file. That restores the seven cases behind the seal hop.
+3. ~~The walk follows the path a person can take before a model is qualified.~~ Done (`60b1d53767`), above.
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 

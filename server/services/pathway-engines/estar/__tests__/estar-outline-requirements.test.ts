@@ -109,8 +109,10 @@ describe('estarDeviceAnswers: the device answers are read once, and only when a 
 });
 
 describe('the shipped 510(k) outline, by device', () => {
-  const ALWAYS = ['A1', 'A5', 'A6', 'A9', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'D', 'D2', 'D6', 'E1', 'E5', 'E6', 'E7'];
-  const WHEN_APPLICABLE = ['A4', 'A7', 'D3', 'E4', 'E8'];
+  /* D6 (risk management) moved from ALWAYS to WHEN_APPLICABLE on 2026-11-10 (P-123): FDA's eSTAR asks for it in a
+     Special 510(k) and hides it in a Traditional or Abbreviated one, and the mapper now says so. */
+  const ALWAYS = ['A1', 'A5', 'A6', 'A9', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'D', 'D2', 'E1', 'E5', 'E6', 'E7'];
+  const WHEN_APPLICABLE = ['A4', 'A7', 'D3', 'D6', 'E4', 'E8'];
   const PACK = ['A', 'A2', 'A3', 'B3', 'D1', 'E', 'F', 'F1', 'G', 'G1', 'G2'];
 
   it('device questions never answered: the conditional sections are not decided', () => {
@@ -139,7 +141,7 @@ describe('the shipped 510(k) outline, by device', () => {
 
   it('every question answered yes', () => {
     expect(ledger(ask('510k', K510, ALL_YES))).toEqual({
-      required: ['A1', 'A5', 'A6', 'A8', 'A9', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'D', 'D2', 'D4', 'D5', 'D6', 'E1', 'E2', 'E3', 'E5', 'E6', 'E7'],
+      required: ['A1', 'A5', 'A6', 'A8', 'A9', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'D', 'D2', 'D4', 'D5', 'E1', 'E2', 'E3', 'E5', 'E6', 'E7'],
       undetermined: [],
       whenApplicable: WHEN_APPLICABLE,
       notApplicable: [],
