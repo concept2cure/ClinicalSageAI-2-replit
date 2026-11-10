@@ -221,6 +221,19 @@ async function phaseUse(page, width, a, b) {
   void b;
 }
 
+const PHASES = {
+  setup: (page, _width, a, b) => setup(page, a, b),
+  before: (page, width, a) => phaseBefore(page, width, a),
+  catalog: phaseCatalog,
+  use: phaseUse,
+  reach: (page, width, a) => phaseReach(page, width, a),
+};
+function runPhase(page, width, a, b) {
+  const run = PHASES[PHASE];
+  expect(run, `a phase: ${Object.keys(PHASES).join(', ')}`);
+  return run(page, width, a, b);
+}
+
 (async () => {
   fs.mkdirSync(SHOTS, { recursive: true });
   const setupState = fs.existsSync(SETUP) ? JSON.parse(fs.readFileSync(SETUP, 'utf8')) : {};
@@ -235,11 +248,7 @@ async function phaseUse(page, width, a, b) {
       page.on('response', (r) => { if (r.status() >= 400 && r.url().includes('/api/')) log.apiErrors.push(`${width} ${r.status()} ${r.request().method()} ${r.url().replace(BASE, '')}`); });
       await signIn(page);
       try {
-        if (PHASE === 'setup') await setup(page, a, b);
-        else if (PHASE === 'before') await phaseBefore(page, width, a);
-        else if (PHASE === 'catalog') await phaseCatalog(page, width, a, b);
-        else if (PHASE === 'use') await phaseUse(page, width, a, b);
-        else if (PHASE === 'reach') await phaseReach(page, width, a);
+        await runPhase(page, width, a, b);
       } catch (e) {
         await shoot(page, `${PHASE}-${width}-FAILED`).catch(() => undefined);
         throw e;

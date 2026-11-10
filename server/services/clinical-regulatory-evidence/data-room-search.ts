@@ -184,6 +184,12 @@ function readableScopeInput(orgId: number, p: DataRoomQuery, actor: { userId: nu
   return { organizationId: orgId, userId: actor.userId, ...(Array.isArray(p.programIds) ? {} : { programId: p.programId }) };
 }
 
+/** The person's readable sources did not change while the page was read; a change refuses the read. */
+async function confirmSourceScope(orgId: number, p: DataRoomQuery, actor: { userId: number | undefined } | undefined,
+  readable: Awaited<ReturnType<typeof prepareSourceScope>>): Promise<void> {
+  if (actor && readable) await requireSourceReadScopeStillCurrent(pool, readableScopeInput(orgId, p, actor), readable);
+}
+
 /** Which captures a query matches: the organization's visible, live client documents of the project (or the catalog's projects), filtered. */
 function roomWhere(orgId: number, p: DataRoomQuery, readable: { sourceIds: number[] } | null): { args: unknown[]; where: string } {
   const c = visibleOrgClause(orgId, 1);
@@ -248,7 +254,7 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { 
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
-  if (actor && readable) await requireSourceReadScopeStillCurrent(pool, readableScopeInput(orgId, p, actor), readable);
+  await confirmSourceScope(orgId, p, actor, readable);
   const facets = catalog ? await catalogFacets(counted.rows[0]?.facets ?? []) : undefined;
   return {
     ...(facets ? { facets } : {}),
