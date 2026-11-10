@@ -76,8 +76,12 @@ export async function ensureTasks({ api, run, tally }, program, tasks, label) {
     // A title is an idempotency key only when unique within this project's
     // actual board rows. Never pick an arbitrary duplicate by Map overwrite.
     const withinProject = board.data.filter((t) => String(t.project) === String(projectId));
+    // Only the seed's own titles are its keys. Other rows may share a title by design: an effective SOP gives each
+    // member a "Read and acknowledge" task, and two of them stopped every re-run (2026-11-10).
+    const ownTitles = new Set(tasks.map((t) => t.title));
     const have = new Map();
     for (const row of withinProject) {
+      if (typeof row.title === 'string' && !ownTitles.has(row.title)) continue;
       if (typeof row.title !== 'string' || !row.title.trim() || have.has(row.title)) {
         throw new Error('The project Task Board contains malformed or duplicate task titles. Reconcile the task records before demo seeding.');
       }
