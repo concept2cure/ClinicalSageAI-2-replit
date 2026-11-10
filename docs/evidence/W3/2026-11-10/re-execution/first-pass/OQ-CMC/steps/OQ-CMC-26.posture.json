@@ -1,0 +1,5 @@
+{
+  "anaDependency": "down",
+  "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve.",
+  "launchScopeEnforced": true
+}

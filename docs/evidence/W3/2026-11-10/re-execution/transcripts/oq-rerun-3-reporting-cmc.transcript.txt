@@ -1,0 +1,72 @@
+
+=== reporting ===
+  OQ-RPT-01  pass
+  OQ-RPT-02  pass
+  OQ-RPT-03  pass
+  OQ-RPT-04  pass
+  OQ-RPT-05  pass
+  OQ-RPT-06  pass
+  OQ-RPT-07  pass
+    (429 on POST /api/report-os/runs/23/finalize; waiting 137s, retry 1)
+    (429 on POST /api/report-os/runs/23/finalize; waiting 67s, retry 2)
+  OQ-RPT-08  pass
+  OQ-RPT-09  pass
+  OQ-RPT-10  pass
+  OQ-RPT-11  pass
+  OQ-RPT-12  pass
+  OQ-RPT-13  pass
+  OQ-RPT-14  pass
+  OQ-RPT-15  pass
+  OQ-RPT-16  deviation  (partly executed — the organisation is on the enterprise plan, which covers all 54 types, and each type's entitled flag follows its requiredTier. No type is above the plan, so the 403 plan refusal was not observed. Observe it with an organisation on a lower plan.)
+  OQ-RPT-17  pass
+  OQ-RPT-18  pass
+OQ-007 step modules: steps-access.mjs → steps-finalize.mjs → steps-compliance.mjs → steps-surface.mjs
+
+OQ-007 Reporting & analytics: 17 pass, 0 fail, 1 deviation, 0 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-REPORTING
+
+=== cmc ===
+  OQ-CMC-01  pass
+  OQ-CMC-03  pass
+  OQ-CMC-02  pass
+  OQ-CMC-04  pass
+  OQ-CMC-05  pass
+  OQ-CMC-06  pass
+  OQ-CMC-07  pass
+  OQ-CMC-08  pass
+  OQ-CMC-09  pass
+  OQ-CMC-10  pass
+  OQ-CMC-11  pass
+  OQ-CMC-12  pass
+  OQ-CMC-13  pass
+  OQ-CMC-14  pass
+  OQ-CMC-15  pass
+  OQ-CMC-16  pass
+  OQ-CMC-17  deviation  (not executed — the reference records raise no critical contradiction, so the credentialed resolve has nothing to act on.)
+  OQ-CMC-18  pass
+  OQ-CMC-19  deviation  (not executed — the placement was refused 409 by the final-export gate (1 of 21 sections approved, 3 without source lineage) and wrote no leaf, which is the designed answer. The reference records do not compose a Module 3 whose every section can be approved, so the positive placement and its idempotent retry were not observed. A fixture for it is owed.)
+  OQ-CMC-20  pass
+  OQ-CMC-21  pass
+  OQ-CMC-22  pass
+  OQ-CMC-23  pass
+  OQ-CMC-24  pass
+  OQ-CMC-25  pass
+  OQ-CMC-26  deviation  (not executed — the interview and its refusal are both reachable only through an AnA turn, and no AI provider is configured (/readyz reports ana down), so every AnA turn answers 503 GATEWAY_UNAVAILABLE and no interview starts. Observe this under the W3 posture with a provider configured.)
+  OQ-CMC-27  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-28  not-executed  (prerequisite step OQ-CMC-19 did not pass)
+  OQ-CMC-29  pass
+  OQ-CMC-30  deviation  (not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered 400 invalid_request), the documented development behaviour. The refusal is a production control; observe it on a production build.)
+  OQ-CMC-32  pass
+  OQ-CMC-33  pass
+  OQ-CMC-31  pass
+  OQ-CMC-34  pass
+  OQ-CMC-35  pass
+  OQ-CMC-36  pass
+  OQ-CMC-37  pass
+  OQ-CMC-38  pass
+  OQ-CMC-39  pass
+  OQ-CMC-40  pass
+  OQ-CMC-41  pass
+  OQ-CMC-42  pass
+OQ-008 step modules: steps-access.mjs, steps-access.mjs → steps-compile.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs, steps-access.mjs → steps-compile.mjs → steps-approval.mjs → steps-filing.mjs → steps-surface.mjs → steps-registers.mjs → steps-attribution.mjs → steps-correspondence.mjs
+
+OQ-008 CMC / Module 3: 36 pass, 0 fail, 4 deviation, 2 not-executed → docs/evidence/W3/2026-11-10/re-execution/OQ-CMC

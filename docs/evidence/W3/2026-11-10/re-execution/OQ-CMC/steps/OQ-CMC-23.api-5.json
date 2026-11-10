@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/specifications/87bbd9d8-5746-4a94-a38d-9aecdf9f1971",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [],
+      "count": 0,
+      "timestamp": "2026-11-10T03:42:31.466Z"
+    }
+  }
+}

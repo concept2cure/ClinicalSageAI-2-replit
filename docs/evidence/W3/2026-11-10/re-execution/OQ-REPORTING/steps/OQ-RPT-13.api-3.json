@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/audit/reports/access-review",
+    "anonymous": false,
+    "identity": "oq-member@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "AUDIT_READ_RESTRICTED",
+      "message": "The audit trail is read by organisation administrators and managers."
+    }
+  }
+}

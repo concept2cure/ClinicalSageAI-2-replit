@@ -412,7 +412,7 @@ function describeRun(run) {
 await step(
   {
     id: 'OQ-SUBC-15',
-    urs: ['URS-SUBC-006', 'URS-SUBC-007'],
+    urs: ['URS-SUBC-013'],
     title: 'A Shadow Review waiver is offered only after a provider outage, and only by signature (P-34)',
     action:
       'POST /api/submissions/sequences/:id/shadow-review; GET …/shadow-review; GET …/dispatch-readiness; ' +

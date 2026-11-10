@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "outcome": "Comparable on every attribute against the pre-change criteria."
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 41,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "28a35007-b94c-459f-ae66-17d33aa60c9d",
+        "project_id": "51e1fef6-b4ad-4a31-92b6-da93122fd087",
+        "title": "OQ probe comparability",
+        "product": "Scale",
+        "type": "process",
+        "status": "draft",
+        "createdAt": "2026-11-10T02:56:21.188Z",
+        "updatedAt": "2026-11-10T02:58:30.876Z",
+        "methods": [],
+        "outcome": "Comparable on every attribute against the pre-change criteria.",
+        "owner": null
+      },
+      "module3Linked": true
+    }
+  }
+}

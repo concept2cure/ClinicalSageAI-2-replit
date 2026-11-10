@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/agency-questions",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "questionText": "OQ probe question.",
+      "sectionReference": "3.2.P.7"
+    }
+  },
+  "response": {
+    "status": 410,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "CMC_QUESTION_FILE_READ_ONLY",
+        "message": "The CMC question file is read-only since 2026-10-19. Record agency questions on the letter they came in, in Communication, where each response is approved by signature. Nothing was written."
+      }
+    }
+  }
+}

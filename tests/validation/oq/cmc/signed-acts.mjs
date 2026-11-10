@@ -69,6 +69,18 @@ export const isFiledUnder = (row, projectId) =>
 export const completenessOf = (section) =>
   section?.completeness ?? section?.deterministicJson?.completeness ?? null;
 
+/**
+ * A complete section that is not the approved one, a drug-substance section first: the register rows it cites are
+ * the run identity's own (OQ-CMC-03). OQ-CMC-33 approves it as that identity. Until v0.12 the step took the first
+ * unapproved key, an incomplete section, and met the completeness refusal (409) before the control under test.
+ */
+export function completeUnapprovedKey(sections, approvedKey) {
+  const keyOf = (s) => s.sectionKey ?? s.section_key;
+  const complete = (sections ?? []).filter((s) => Number(completenessOf(s)) === 100 && keyOf(s) !== approvedKey);
+  const pick = complete.find((s) => String(keyOf(s)).startsWith('3.2.S')) ?? complete[0];
+  return pick ? keyOf(pick) : null;
+}
+
 /** Every section key the compile returned, sorted, for a stable record. */
 export const sectionKeys = (sections) =>
   (sections ?? []).map((s) => s.sectionKey ?? s.section_key).filter(Boolean).sort();
