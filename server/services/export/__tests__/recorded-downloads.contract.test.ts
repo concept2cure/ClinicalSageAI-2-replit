@@ -84,7 +84,6 @@ const NOT_SERVED: Array<{ file: string; handler: string; path?: string; unmounte
   { file: 'server/routes/c2c/exports.ts', handler: "get('/documents/download/:filename'", path: '/api/concept2cure/documents/download/x.pdf' },
   { file: 'server/routes/decision-lineage.ts', handler: "get('/:entityType/:entityId/export'", path: '/api/decision-lineage/document/1/export' },
   { file: 'server/routes/documentOrchestrationRoutes.ts', handler: "get('/api/510k/documents/:documentId/pdf/3881'", path: '/api/510k/documents/1/pdf/3881' },
-  { file: 'server/routes/etmf.routes.ts', handler: "get('/trials/:trialId/inspection-package'", path: '/api/etmf/trials/1/inspection-package' },
   { file: 'server/routes/ind-lifecycle/submission.routes.ts', handler: "get('/portfolio/drift/csv'", path: '/api/ind-lifecycle/portfolio/drift/csv' },
   { file: 'server/routes/intelligent-reports.ts', handler: "get('/:reportId/export/:format'", path: '/api/intelligent-reports/1/export/pdf' },
   { file: 'server/routes/knowledge-base.ts', handler: "get('/search-connectors'", path: '/api/knowledge-base/search-connectors' },
